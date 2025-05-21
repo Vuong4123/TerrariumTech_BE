@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace TerrariumTech.API.Controllers
+namespace TerrariumGardenTech.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]

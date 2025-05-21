@@ -1,6 +1,0 @@
-@TerrariumTech.API_HostAddress = http://localhost:5157
-
-GET {{TerrariumTech.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

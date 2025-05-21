@@ -1,4 +1,4 @@
-namespace TerrariumTech.API
+namespace TerrariumGardenTech.API
 {
     public class WeatherForecast
     {

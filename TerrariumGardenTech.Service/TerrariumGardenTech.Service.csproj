@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TerrariumTech.Repositories\TerrariumTech.Repositories.csproj" />
+    <ProjectReference Include="..\TerrariumGardenTech.Repositories\TerrariumGardenTech.Repositories.csproj" />
   </ItemGroup>
 
   <ItemGroup>

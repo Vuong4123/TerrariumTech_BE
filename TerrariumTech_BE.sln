@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36109.1 d17.14
+VisualStudioVersion = 17.14.36109.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumTech.API", "TerrariumTech.API\TerrariumTech.API.csproj", "{ECF78BBF-5EAE-40D6-8BB8-7E2C950362D0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumGardenTech.API", "TerrariumGardenTech.API\TerrariumGardenTech.API.csproj", "{D6BDFEEE-9A8B-48D8-A609-434795BF04D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumTech.Repositories", "TerrariumTech.Repositories\TerrariumTech.Repositories.csproj", "{6C0DCE72-E22C-40DB-9B6C-180C36392D2B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumGardenTech.Repositories", "TerrariumGardenTech.Repositories\TerrariumGardenTech.Repositories.csproj", "{08C58702-839B-470F-89DE-0C1BD3F9871C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumTech.Service", "TerrariumTech.Service\TerrariumTech.Service.csproj", "{189E56BA-EC6D-4497-9A97-1668B7845C58}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumGardenTech.Service", "TerrariumGardenTech.Service\TerrariumGardenTech.Service.csproj", "{00C42277-CCD0-473B-941B-7167938D1968}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,18 +15,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ECF78BBF-5EAE-40D6-8BB8-7E2C950362D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ECF78BBF-5EAE-40D6-8BB8-7E2C950362D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ECF78BBF-5EAE-40D6-8BB8-7E2C950362D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ECF78BBF-5EAE-40D6-8BB8-7E2C950362D0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6C0DCE72-E22C-40DB-9B6C-180C36392D2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6C0DCE72-E22C-40DB-9B6C-180C36392D2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6C0DCE72-E22C-40DB-9B6C-180C36392D2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6C0DCE72-E22C-40DB-9B6C-180C36392D2B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{189E56BA-EC6D-4497-9A97-1668B7845C58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{189E56BA-EC6D-4497-9A97-1668B7845C58}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{189E56BA-EC6D-4497-9A97-1668B7845C58}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{189E56BA-EC6D-4497-9A97-1668B7845C58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6BDFEEE-9A8B-48D8-A609-434795BF04D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6BDFEEE-9A8B-48D8-A609-434795BF04D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6BDFEEE-9A8B-48D8-A609-434795BF04D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6BDFEEE-9A8B-48D8-A609-434795BF04D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08C58702-839B-470F-89DE-0C1BD3F9871C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08C58702-839B-470F-89DE-0C1BD3F9871C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08C58702-839B-470F-89DE-0C1BD3F9871C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08C58702-839B-470F-89DE-0C1BD3F9871C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00C42277-CCD0-473B-941B-7167938D1968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00C42277-CCD0-473B-941B-7167938D1968}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00C42277-CCD0-473B-941B-7167938D1968}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00C42277-CCD0-473B-941B-7167938D1968}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
