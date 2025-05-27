@@ -6,8 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TerrariumGardenTech.Repositories\TerrariumGardenTech.Repositories.csproj" />
-  </ItemGroup>
-
 </Project>

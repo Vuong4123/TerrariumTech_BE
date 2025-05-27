@@ -14,9 +14,9 @@ namespace TerrariumGardenTech.Repositories.Base
         protected TerrariumGardenTechDBContext _context;
 
         // Chỉ giữ hàm tạo có tham số
-        public GenericRepository(TerrariumGardenTechDBContext context)
+        public GenericRepository()
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context ??= new TerrariumGardenTechDBContext();
         }
 
         public TerrariumGardenTechDBContext Context()
