@@ -12,7 +12,7 @@ using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel;
+using TerrariumGardenTech.Service.RequestModel.Auth;
 
 
 namespace TerrariumGardenTech.Service.Service

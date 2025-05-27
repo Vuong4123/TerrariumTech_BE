@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.RequestModel;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.Auth;
 
 namespace TerrariumGardenTech.API.Controller
 {
