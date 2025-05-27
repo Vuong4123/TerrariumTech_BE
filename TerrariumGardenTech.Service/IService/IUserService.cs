@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.RequestModel;
+using TerrariumGardenTech.Service.RequestModel.Auth;
 
 namespace TerrariumGardenTech.Service.IService
 {
