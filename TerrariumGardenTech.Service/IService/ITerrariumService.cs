@@ -12,10 +12,8 @@ namespace TerrariumGardenTech.Service.IService
     {
         Task<IBusinessResult> GetAll();
         Task<IBusinessResult> GetById(int id);
-        Task<IBusinessResult> GetClubName();
-
-        Task<IBusinessResult> CreateClub();
-        Task<IBusinessResult> UpdateClub();
+        Task<IBusinessResult> CreateTerrarium();
+        Task<IBusinessResult> UpdateTerrarium();
         Task<IBusinessResult> Save(Terrarium terrarium);
         Task<IBusinessResult> DeleteById(int id);
     }
