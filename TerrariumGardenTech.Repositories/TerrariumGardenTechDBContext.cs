@@ -9,6 +9,10 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class TerrariumGardenTechDBContext : DbContext
 {
+    public TerrariumGardenTechDBContext()
+    {
+
+    }
     public TerrariumGardenTechDBContext(DbContextOptions<TerrariumGardenTechDBContext> options)
         : base(options)
     {

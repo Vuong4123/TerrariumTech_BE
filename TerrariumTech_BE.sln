@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumGardenTech.Reposit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumGardenTech.Service", "TerrariumGardenTech.Service\TerrariumGardenTech.Service.csproj", "{00C42277-CCD0-473B-941B-7167938D1968}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrariumGardenTech.Common", "TerrariumGardenTech.Common\TerrariumGardenTech.Common.csproj", "{B1E58377-4363-4407-A2C1-2293EF16A068}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{00C42277-CCD0-473B-941B-7167938D1968}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00C42277-CCD0-473B-941B-7167938D1968}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00C42277-CCD0-473B-941B-7167938D1968}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1E58377-4363-4407-A2C1-2293EF16A068}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1E58377-4363-4407-A2C1-2293EF16A068}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1E58377-4363-4407-A2C1-2293EF16A068}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1E58377-4363-4407-A2C1-2293EF16A068}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
