@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class ReturnExchangeRequest
 {
-    public long RequestId { get; set; }
+    public int RequestId { get; set; }
 
-    public long? OrderId { get; set; }
+    public int? OrderId { get; set; }
 
     public string RequestType { get; set; }
 

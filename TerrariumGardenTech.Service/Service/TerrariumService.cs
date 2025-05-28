@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common;
@@ -8,6 +9,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.Terrarium;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -87,11 +89,36 @@ namespace TerrariumGardenTech.Service.Service
             
         }
 
-        public Task<IBusinessResult> UpdateTerrarium()
+        public async Task<IBusinessResult> UpdateTerrarium(TerrariumUpdateRequest terrariumUpdateRequest)
         {
-            throw new NotImplementedException();
+            try
+            {
+                int result = -1;
+                var terra = _unitOfWork.Terrarium.GetById(terrariumUpdateRequest.TerrariumId);
+                if (terra != null)
+                {
+                    _unitOfWork.Terrarium.Context().Entry(terra).CurrentValues.SetValues(terrariumUpdateRequest);
+                    result = await _unitOfWork.Terrarium.UpdateAsync(terra);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, terra);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                    }
+                }
+                else
+                {
+                    return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
         }
-        public Task<IBusinessResult> CreateTerrarium()
+        public Task<IBusinessResult> CreateTerrarium(TerrariumCreateRequest terrariumCreateRequest)
         {
             throw new NotImplementedException();
         }

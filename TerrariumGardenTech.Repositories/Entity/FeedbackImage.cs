@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class FeedbackImage
 {
-    public long ImageId { get; set; }
+    public int ImageId { get; set; }
 
-    public long? FeedbackId { get; set; }
+    public int? FeedbackId { get; set; }
 
     public string ImageUrl { get; set; }
 

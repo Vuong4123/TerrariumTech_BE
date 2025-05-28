@@ -13,10 +13,13 @@ public partial class TerrariumGardenTechDBContext : DbContext
     {
 
     }
+
     public TerrariumGardenTechDBContext(DbContextOptions<TerrariumGardenTechDBContext> options)
         : base(options)
     {
     }
+
+    
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -32,6 +35,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .AddJsonFile("appsettings.json", true, true).Build();
         return configuration["ConnectionStrings:DefaultConnectionString"];
     }
+
     public virtual DbSet<Accessory> Accessories { get; set; }
 
     public virtual DbSet<AccessoryImage> AccessoryImages { get; set; }
@@ -94,7 +98,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
     {
         modelBuilder.Entity<Accessory>(entity =>
         {
-            entity.HasKey(e => e.AccessoryId).HasName("PK__Accessor__09C3F0FB38EAD82B");
+            entity.HasKey(e => e.AccessoryId).HasName("PK__Accessor__09C3F0FB4DE3A89C");
 
             entity.ToTable("Accessory");
 
@@ -120,7 +124,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<AccessoryImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__Accessor__7516F4ECAF008109");
+            entity.HasKey(e => e.ImageId).HasName("PK__Accessor__7516F4EC20712C03");
 
             entity.ToTable("AccessoryImage");
 
@@ -140,7 +144,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2A1BF92DCEB3");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2A1B1F59902B");
 
             entity.ToTable("Address");
 
@@ -173,7 +177,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<AddressDelivery>(entity =>
         {
-            entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__B9EF3DE7FBABE0E5");
+            entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__B9EF3DE7E86410B0");
 
             entity.ToTable("AddressDelivery");
 
@@ -213,7 +217,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<AiSuggestLayout>(entity =>
         {
-            entity.HasKey(e => e.SuggestionId).HasName("PK__AI_Sugge__94099528F42E8F79");
+            entity.HasKey(e => e.SuggestionId).HasName("PK__AI_Sugge__9409952860CEFABD");
 
             entity.ToTable("AI_Suggest_layout");
 
@@ -245,7 +249,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Blog>(entity =>
         {
-            entity.HasKey(e => e.BlogId).HasName("PK__Blog__54379E502BA7CBDF");
+            entity.HasKey(e => e.BlogId).HasName("PK__Blog__54379E508C8FD30D");
 
             entity.ToTable("Blog");
 
@@ -278,11 +282,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<BlogCategory>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__BlogCate__19093A2BF44DABA5");
+            entity.HasKey(e => e.CategoryId).HasName("PK__BlogCate__19093A2BB2CEBEC0");
 
             entity.ToTable("BlogCategory");
 
-            entity.HasIndex(e => e.CategoryName, "UQ__BlogCate__8517B2E0E00A5B98").IsUnique();
+            entity.HasIndex(e => e.CategoryName, "UQ__BlogCate__8517B2E0E19BA338").IsUnique();
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.CategoryName)
@@ -294,11 +298,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A2B86C3C650");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A2B4387190B");
 
             entity.ToTable("Category");
 
-            entity.HasIndex(e => e.CategoryName, "UQ__Category__8517B2E0B94E9AF8").IsUnique();
+            entity.HasIndex(e => e.CategoryName, "UQ__Category__8517B2E05F6C97D5").IsUnique();
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.CategoryName)
@@ -310,7 +314,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Feedback>(entity =>
         {
-            entity.HasKey(e => e.FeedbackId).HasName("PK__Feedback__6A4BEDF6B087FA8A");
+            entity.HasKey(e => e.FeedbackId).HasName("PK__Feedback__6A4BEDF6300147F7");
 
             entity.ToTable("Feedback");
 
@@ -331,7 +335,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<FeedbackImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__Feedback__7516F4EC21E46389");
+            entity.HasKey(e => e.ImageId).HasName("PK__Feedback__7516F4EC4F87C9AE");
 
             entity.ToTable("FeedbackImage");
 
@@ -351,7 +355,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<LayoutTerrarium>(entity =>
         {
-            entity.HasKey(e => e.LayoutId).HasName("PK__LayoutTe__203586F5F03DC2A1");
+            entity.HasKey(e => e.LayoutId).HasName("PK__LayoutTe__203586F5FEA498F6");
 
             entity.ToTable("LayoutTerrarium");
 
@@ -374,7 +378,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Membership>(entity =>
         {
-            entity.HasKey(e => e.MembershipId).HasName("PK__Membersh__92A78599235A7BAA");
+            entity.HasKey(e => e.MembershipId).HasName("PK__Membersh__92A7859923B7EAC0");
 
             entity.ToTable("Membership");
 
@@ -398,7 +402,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E32142A501D");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E32CF369F59");
 
             entity.ToTable("Notification");
 
@@ -425,7 +429,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Order__C3905BAFC3D2CC65");
+            entity.HasKey(e => e.OrderId).HasName("PK__Order__C3905BAFE59A89FE");
 
             entity.ToTable("Order");
 
@@ -460,7 +464,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED06A12B600054");
+            entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED06A11609729B");
 
             entity.ToTable("OrderItem");
 
@@ -486,7 +490,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<OrderItemDetail>(entity =>
         {
-            entity.HasKey(e => e.DetailId).HasName("PK__OrderIte__135C314DE1F3A820");
+            entity.HasKey(e => e.DetailId).HasName("PK__OrderIte__135C314DFC9C3803");
 
             entity.ToTable("OrderItemDetail");
 
@@ -506,7 +510,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<PaymentTransaction>(entity =>
         {
-            entity.HasKey(e => e.TransactionId).HasName("PK__PaymentT__55433A4BDD072382");
+            entity.HasKey(e => e.TransactionId).HasName("PK__PaymentT__55433A4BD4268260");
 
             entity.ToTable("PaymentTransaction");
 
@@ -531,7 +535,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Personalize>(entity =>
         {
-            entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__DBBD5673F3E16B6F");
+            entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__DBBD56736673B6D8");
 
             entity.ToTable("Personalize");
 
@@ -553,7 +557,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Promotion>(entity =>
         {
-            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2FD54A967A");
+            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2F61E54C10");
 
             entity.ToTable("Promotion");
 
@@ -578,7 +582,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<PromotionTerrariumVariant>(entity =>
         {
-            entity.HasKey(e => e.PromotionVariantId).HasName("PK__Promotio__DE9C41969D4DBE21");
+            entity.HasKey(e => e.PromotionVariantId).HasName("PK__Promotio__DE9C419615B39DEE");
 
             entity.ToTable("PromotionTerrariumVariant");
 
@@ -597,7 +601,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<ReturnExchangeRequest>(entity =>
         {
-            entity.HasKey(e => e.RequestId).HasName("PK__ReturnEx__33A8519AFD4E3B66");
+            entity.HasKey(e => e.RequestId).HasName("PK__ReturnEx__33A8519A55DF3E21");
 
             entity.ToTable("ReturnExchangeRequest");
 
@@ -624,7 +628,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<ReturnExchangeRequestItem>(entity =>
         {
-            entity.HasKey(e => e.RequestItemId).HasName("PK__ReturnEx__3F51AD77ECFB570D");
+            entity.HasKey(e => e.RequestItemId).HasName("PK__ReturnEx__3F51AD77660A2559");
 
             entity.ToTable("ReturnExchangeRequestItem");
 
@@ -646,11 +650,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__8AFACE3A731793A0");
+            entity.HasKey(e => e.RoleId).HasName("PK__Role__8AFACE3A3E87691A");
 
             entity.ToTable("Role");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Role__8A2B6160AF8D5B74").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ__Role__8A2B61603B14FDD4").IsUnique();
 
             entity.Property(e => e.RoleId).HasColumnName("RoleID");
             entity.Property(e => e.Description).HasColumnType("text");
@@ -663,7 +667,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Terrarium>(entity =>
         {
-            entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__B9CAABD6ACE8C14D");
+            entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__B9CAABD613B9A0B8");
 
             entity.ToTable("Terrarium");
 
@@ -689,11 +693,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<TerrariumCategory>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Terrariu__19093A2B95676CA8");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Terrariu__19093A2BF60CFF19");
 
             entity.ToTable("TerrariumCategory");
 
-            entity.HasIndex(e => e.CategoryName, "UQ__Terrariu__8517B2E0B7FA9DA6").IsUnique();
+            entity.HasIndex(e => e.CategoryName, "UQ__Terrariu__8517B2E093BE5FFE").IsUnique();
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.CategoryName)
@@ -705,7 +709,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<TerrariumImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__Terrariu__7516F4EC97F3CE61");
+            entity.HasKey(e => e.ImageId).HasName("PK__Terrariu__7516F4ECE3D560BA");
 
             entity.ToTable("TerrariumImage");
 
@@ -725,7 +729,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<TerrariumVariant>(entity =>
         {
-            entity.HasKey(e => e.VariantId).HasName("PK__Terrariu__0EA233E4BCE6179D");
+            entity.HasKey(e => e.VariantId).HasName("PK__Terrariu__0EA233E4C9D9142A");
 
             entity.ToTable("TerrariumVariant");
 
@@ -746,13 +750,13 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__User__1788CCAC362FB9B1");
+            entity.HasKey(e => e.UserId).HasName("PK__User__1788CCAC17783A9F");
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.Username, "UQ__User__536C85E45FFBE284").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__User__536C85E4A46A2C3C").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__User__A9D105343D45620C").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__User__A9D105343C80CA42").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
@@ -779,6 +783,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasDefaultValue("Active");
+            entity.Property(e => e.Token)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.Username)
                 .IsRequired()
@@ -792,11 +799,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Voucher>(entity =>
         {
-            entity.HasKey(e => e.VoucherId).HasName("PK__Voucher__3AEE79C1C81CEBFA");
+            entity.HasKey(e => e.VoucherId).HasName("PK__Voucher__3AEE79C1EDB38171");
 
             entity.ToTable("Voucher");
 
-            entity.HasIndex(e => e.Code, "UQ__Voucher__A25C5AA72ACFB5E2").IsUnique();
+            entity.HasIndex(e => e.Code, "UQ__Voucher__A25C5AA7A1CF3634").IsUnique();
 
             entity.Property(e => e.VoucherId).HasColumnName("VoucherID");
             entity.Property(e => e.Code)

@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Address
 {
-    public long AddressId { get; set; }
+    public int AddressId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string AddressLine { get; set; }
 

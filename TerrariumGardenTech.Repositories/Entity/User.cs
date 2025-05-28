@@ -7,7 +7,7 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class User
 {
-    public long UserId { get; set; }
+    public int UserId { get; set; }
 
     public string Username { get; set; }
 
@@ -29,7 +29,13 @@ public partial class User
 
     public string Status { get; set; }
 
-    public long? RoleId { get; set; }
+    public int? RoleId { get; set; }
+
+    public string Token { get; set; }
+
+    public DateTime? StartToken { get; set; }
+
+    public DateTime? EndToken { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 

@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Order
 {
-    public long OrderId { get; set; }
+    public int OrderId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public DateTime? OrderDate { get; set; }
 
@@ -21,9 +21,9 @@ public partial class Order
 
     public decimal? ShippingFee { get; set; }
 
-    public long? VoucherId { get; set; }
+    public int? VoucherId { get; set; }
 
-    public long? AddressDeliveryId { get; set; }
+    public int? AddressDeliveryId { get; set; }
 
     public virtual ICollection<AddressDelivery> AddressDeliveries { get; set; } = new List<AddressDelivery>();
 

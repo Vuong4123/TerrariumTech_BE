@@ -17,7 +17,7 @@ public partial class Terrarium
 
     public int Stock { get; set; }
 
-    public long? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

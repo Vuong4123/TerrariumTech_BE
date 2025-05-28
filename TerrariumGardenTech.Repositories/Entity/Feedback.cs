@@ -7,11 +7,11 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Feedback
 {
-    public long FeedbackId { get; set; }
+    public int FeedbackId { get; set; }
 
-    public long? OrderId { get; set; }
+    public int? OrderId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public int Rating { get; set; }
 
