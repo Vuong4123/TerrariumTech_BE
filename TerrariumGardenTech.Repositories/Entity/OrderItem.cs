@@ -7,13 +7,13 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class OrderItem
 {
-    public long OrderItemId { get; set; }
+    public int OrderItemId { get; set; }
 
-    public long? OrderId { get; set; }
+    public int? OrderId { get; set; }
 
-    public long? TerrariumId { get; set; }
+    public int? TerrariumId { get; set; }
 
-    public long? AccessoryId { get; set; }
+    public int? AccessoryId { get; set; }
 
     public int Quantity { get; set; }
 

@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Personalize
 {
-    public long PersonalizeId { get; set; }
+    public int PersonalizeId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string PreferenceType { get; set; }
 

@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Voucher
 {
-    public long VoucherId { get; set; }
+    public int VoucherId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string Code { get; set; }
 

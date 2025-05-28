@@ -7,7 +7,7 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Accessory
 {
-    public long AccessoryId { get; set; }
+    public int AccessoryId { get; set; }
 
     public string Name { get; set; }
 
@@ -17,7 +17,7 @@ public partial class Accessory
 
     public int Stock { get; set; }
 
-    public long? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

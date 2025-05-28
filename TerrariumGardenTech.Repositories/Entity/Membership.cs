@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Membership
 {
-    public long MembershipId { get; set; }
+    public int MembershipId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string MembershipType { get; set; }
 

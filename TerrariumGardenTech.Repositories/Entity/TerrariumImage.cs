@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class TerrariumImage
 {
-    public long ImageId { get; set; }
+    public int ImageId { get; set; }
 
-    public long? TerrariumId { get; set; }
+    public int? TerrariumId { get; set; }
 
     public string ImageUrl { get; set; }
 

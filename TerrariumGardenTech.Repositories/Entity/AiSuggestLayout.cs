@@ -7,15 +7,15 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class AiSuggestLayout
 {
-    public long SuggestionId { get; set; }
+    public int SuggestionId { get; set; }
 
-    public long? PersonalizeId { get; set; }
+    public int? PersonalizeId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
-    public long? TerrariumId { get; set; }
+    public int? TerrariumId { get; set; }
 
-    public long? LayoutId { get; set; }
+    public int? LayoutId { get; set; }
 
     public string SuggestionDetails { get; set; }
 

@@ -7,7 +7,7 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Promotion
 {
-    public long PromotionId { get; set; }
+    public int PromotionId { get; set; }
 
     public string Name { get; set; }
 

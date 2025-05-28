@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class PaymentTransaction
 {
-    public long TransactionId { get; set; }
+    public int TransactionId { get; set; }
 
-    public long? OrderId { get; set; }
+    public int? OrderId { get; set; }
 
     public decimal Amount { get; set; }
 

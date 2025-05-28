@@ -7,11 +7,11 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class PromotionTerrariumVariant
 {
-    public long PromotionVariantId { get; set; }
+    public int PromotionVariantId { get; set; }
 
-    public long? PromotionId { get; set; }
+    public int? PromotionId { get; set; }
 
-    public long? TerrariumVariantId { get; set; }
+    public int? TerrariumVariantId { get; set; }
 
     public virtual Promotion Promotion { get; set; }
 

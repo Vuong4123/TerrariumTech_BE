@@ -7,15 +7,15 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Blog
 {
-    public long BlogId { get; set; }
+    public int BlogId { get; set; }
 
     public string Title { get; set; }
 
     public string Content { get; set; }
 
-    public long? AuthorId { get; set; }
+    public int? AuthorId { get; set; }
 
-    public long? CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

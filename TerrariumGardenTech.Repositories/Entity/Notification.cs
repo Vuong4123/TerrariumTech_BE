@@ -7,9 +7,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Notification
 {
-    public long NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string Title { get; set; }
 
