@@ -29,6 +29,9 @@ builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITerrariumService, TerrariumService>();
 
+// Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
+builder.Services.AddScoped<IAccountService, AccountService>();
+
 // Đăng ký cấu hình SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 

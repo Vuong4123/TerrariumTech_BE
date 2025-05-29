@@ -2,6 +2,7 @@
 using MailKit.Net.Smtp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit;
@@ -23,12 +24,15 @@ namespace TerrariumGardenTech.Service.Service
         private readonly GenericRepository<User> _userRepository;
         private readonly IConfiguration _configuration;
         private readonly SmtpSettings _smtpSettings;
+        private readonly ILogger<UserService> _logger;
 
-        public UserService(GenericRepository<User> userRepository, IConfiguration configuration, IOptions<SmtpSettings> smtpOptions)
+
+        public UserService(GenericRepository<User> userRepository, IConfiguration configuration, IOptions<SmtpSettings> smtpOptions, ILogger<UserService> logger)
         {
             _userRepository = userRepository;
             _configuration = configuration;
             _smtpSettings = smtpOptions.Value;
+            _logger = logger;
         }
 
         public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
@@ -52,14 +56,21 @@ namespace TerrariumGardenTech.Service.Service
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
                     Status = "Active",
-                    RoleId = 1  // Mặc định role User, bạn có thể thay đổi logic gán role nếu cần
+                    RoleId = 1  // Mặc định role User, có thể thay đổi theo logic của bạn
                 };
 
                 await _userRepository.CreateAsync(newUser);
                 return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
             }
-            catch (Exception)
+            catch (DbUpdateException dbEx)
             {
+                var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+                _logger.LogError(dbEx, "Lỗi khi tạo tài khoản: {Message}", innerMessage);
+                return (Const.ERROR_EXCEPTION, $"Lỗi dữ liệu: {innerMessage}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi hệ thống khi tạo tài khoản");
                 return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
             }
         }
