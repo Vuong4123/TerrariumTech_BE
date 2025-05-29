@@ -6,17 +6,17 @@ using System.Threading.Tasks;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.RequestModel.Accessory;
-using TerrariumGardenTech.Service.RequestModel.Terrarium;
+using TerrariumGardenTech.Service.RequestModel.Category;
 
 namespace TerrariumGardenTech.Service.IService
 {
-    public interface  IAccessoryService
+    public interface ICategoryService
     {
         Task<IBusinessResult> GetAll();
         Task<IBusinessResult> GetById(int id);
-        Task<IBusinessResult> CreateAccessory(AccessoryCreateRequest accessoryCreateRequest);
-        Task<IBusinessResult> UpdateAccessory(AccessoryUpdateRequest accessoryUpdateRequest);
-        Task<IBusinessResult> Save(Accessory accessory);
+        Task<IBusinessResult> CreateCategory(CategoryRequest categoryRequest);
+        Task<IBusinessResult> UpdateCategory(CategoryRequest categoryRequest);
+        Task<IBusinessResult> Save(Category category);
         Task<IBusinessResult> DeleteById(int id);
     }
 }

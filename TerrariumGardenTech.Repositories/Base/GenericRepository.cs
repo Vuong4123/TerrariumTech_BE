@@ -103,7 +103,11 @@ namespace TerrariumGardenTech.Repositories.Base
         {
             return await _context.Set<T>().FindAsync(code);
         }
-
+        // Hàm SaveChangesAsync
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
         public async Task<T?> FindOneAsync(Expression<Func<T, bool>> expression, bool hasTrackings = true)
         {
             return hasTrackings ? await _context.Set<T>().FirstOrDefaultAsync(expression)
