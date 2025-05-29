@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TerrariumGardenTech.Repositories.Entity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.IdentityModel.Tokens.Jwt;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
 
@@ -16,6 +19,7 @@ namespace TerrariumGardenTech.API.Controller
             _userService = userService;
         }
 
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
         {
@@ -24,23 +28,89 @@ namespace TerrariumGardenTech.API.Controller
                 return BadRequest(ModelState);
             }
 
-            var result = await _userService.RegisterUserAsync(userRequest);
-            if (!result)
+            var (code, message) = await _userService.RegisterUserAsync(userRequest);
+            if (code != Const.SUCCESS_CREATE_CODE)
             {
-                return Conflict(new { message = "Username or Email already exists." });
+                if (code == Const.FAIL_CREATE_CODE)
+                    return Conflict(new { message });
+                return BadRequest(new { message });
             }
 
-            return Ok(new { message = "User registered successfully." });
+            return Ok(new { message });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
-            var token = await _userService.LoginAsync(loginRequest.Username, loginRequest.Password);
-            if (token == null)
-                return Unauthorized(new { message = "Invalid username or password." });
+            var (code, message, token) = await _userService.LoginAsync(loginRequest.Username, loginRequest.Password);
+            if (code != Const.SUCCESS_READ_CODE || string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message });
+            }
 
             return Ok(new { token });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var (code, message) = await _userService.SendPasswordResetTokenAsync(request.Email);
+            if (code != Const.SUCCESS_CREATE_CODE)
+            {
+                return BadRequest(new { message });
+            }
+
+            return Ok(new { message });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return BadRequest(new { message = "Mật khẩu xác nhận không khớp." });
+            }
+
+            var (code, message) = await _userService.ResetPasswordAsync(request.Token, request.NewPassword);
+            if (code != Const.SUCCESS_CREATE_CODE)
+            {
+                return BadRequest(new { message });
+            }
+
+            return Ok(new { message });
+        }
+
+        // API yêu cầu user đã đăng nhập (tất cả role)
+        [Authorize(Roles = "User,Staff,Manager,Admin")]
+        [HttpGet("profile")]
+        public IActionResult GetProfile()
+        {
+            var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown";
+            return Ok(new { message = $"Hello {username}, đây là profile của bạn." });
+        }
+
+        // API chỉ cho phép Admin truy cập
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin-data")]
+        public IActionResult GetAdminData()
+        {
+            return Ok(new { message = "Dữ liệu dành riêng cho Admin." });
+        }
+
+        // API cho phép Manager hoặc Admin truy cập
+        [Authorize(Roles = "Manager,Admin")]
+        [HttpGet("manage-data")]
+        public IActionResult GetManageData()
+        {
+            return Ok(new { message = "Dữ liệu dành cho Manager hoặc Admin." });
+        }
+
+        // API cho phép Staff, Manager, Admin truy cập
+        [Authorize(Roles = "Staff,Manager,Admin")]
+        [HttpGet("staff-data")]
+        public IActionResult GetStaffData()
+        {
+            return Ok(new { message = "Dữ liệu dành cho Staff, Manager hoặc Admin." });
         }
     }
 }

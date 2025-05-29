@@ -10,7 +10,10 @@ namespace TerrariumGardenTech.Service.IService
 {
     public interface IUserService
     {
-        Task<bool> RegisterUserAsync(UserRegisterRequest userRequest);
-        Task<string> LoginAsync(string username, string password);
+        Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest);
+        Task<(int, string, string)> LoginAsync(string username, string password);
+        Task<(int, string)> SendPasswordResetTokenAsync(string email);
+        Task<(int, string)> ResetPasswordAsync(string token, string newPassword);
     }
+
 }
