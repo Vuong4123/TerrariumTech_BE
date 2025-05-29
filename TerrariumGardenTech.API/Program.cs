@@ -1,16 +1,15 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.Options;
 using System.Text;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
-using TerrariumGardenTech.Common; // Namespace chứa SmtpSettings
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +32,7 @@ builder.Services.AddScoped<ITerrariumService, TerrariumService>();
 // Đăng ký cấu hình SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
-// Cấu hình Authentication với JWT Bearer
+// Cấu hình Authentication với JWT Bearer và logging
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -52,14 +51,43 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         ClockSkew = TimeSpan.Zero
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(context.Exception, "Authentication failed.");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("Unauthorized request: {Path}", context.HttpContext.Request.Path);
+
+            // Trả về JSON rõ ràng khi lỗi 401
+            context.HandleResponse();
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Chưa xác thực, vui lòng đăng nhập." });
+            return context.Response.WriteAsync(result);
+        },
+        OnForbidden = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("Forbidden request: {Path} - User does not have permission.", context.HttpContext.Request.Path);
+
+            // Trả về JSON rõ ràng khi lỗi 403
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Bạn không có quyền truy cập tài nguyên này." });
+            return context.Response.WriteAsync(result);
+        }
+    };
 });
 
 // Đăng ký Controller
 builder.Services.AddControllers();
 
 // Cấu hình Swagger/OpenAPI
-builder.Services.AddOpenApi();
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TerrariumGardenTech API", Version = "v1" });
@@ -97,11 +125,26 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Middleware pipeline
+// Middleware trả về JSON khi lỗi 401 hoặc 403
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Response.StatusCode == 401)
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"message\":\"Chưa xác thực, vui lòng đăng nhập.\"}");
+    }
+    else if (context.Response.StatusCode == 403)
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
+    }
+});
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();  // Thêm middleware xác thực
+app.UseAuthentication();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())

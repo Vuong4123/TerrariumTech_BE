@@ -1,5 +1,6 @@
 ﻿using BCrypt.Net;
 using MailKit.Net.Smtp;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -51,7 +52,7 @@ namespace TerrariumGardenTech.Service.Service
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
                     Status = "Active",
-                    RoleId = 1  
+                    RoleId = 1  // Mặc định role User, bạn có thể thay đổi logic gán role nếu cần
                 };
 
                 await _userRepository.CreateAsync(newUser);
@@ -63,12 +64,15 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-
         public async Task<(int, string, string)> LoginAsync(string username, string password)
         {
             try
             {
-                var user = await _userRepository.FindOneAsync(u => u.Username == username, false);
+                // Load user kèm Role để phân quyền chính xác
+                var user = await _userRepository.Context().Users
+                                  .Include(u => u.Role)
+                                  .FirstOrDefaultAsync(u => u.Username == username);
+
                 if (user == null)
                     return (Const.FAIL_READ_CODE, "Tên đăng nhập không tồn tại", null);
 
@@ -85,7 +89,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
                     new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")
+                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")  // Phân quyền theo RoleName
                 };
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
