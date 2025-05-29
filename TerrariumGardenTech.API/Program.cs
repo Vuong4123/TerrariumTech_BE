@@ -28,6 +28,9 @@ builder.Services.AddScoped<UnitOfWork>();
 // Đăng ký Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITerrariumService, TerrariumService>();
+builder.Services.AddScoped<IAccessoryService, AccessoryService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ITerrariumCategoryService, TerrariumCategoryService>();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
