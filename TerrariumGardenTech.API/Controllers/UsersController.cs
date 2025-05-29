@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.IdentityModel.Tokens.Jwt;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
 
@@ -17,6 +19,7 @@ namespace TerrariumGardenTech.API.Controller
             _userService = userService;
         }
 
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
         {
@@ -76,6 +79,38 @@ namespace TerrariumGardenTech.API.Controller
 
             return Ok(new { message });
         }
-    }
 
+        // API yêu cầu user đã đăng nhập (tất cả role)
+        [Authorize(Roles = "User,Staff,Manager,Admin")]
+        [HttpGet("profile")]
+        public IActionResult GetProfile()
+        {
+            var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown";
+            return Ok(new { message = $"Hello {username}, đây là profile của bạn." });
+        }
+
+        // API chỉ cho phép Admin truy cập
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin-data")]
+        public IActionResult GetAdminData()
+        {
+            return Ok(new { message = "Dữ liệu dành riêng cho Admin." });
+        }
+
+        // API cho phép Manager hoặc Admin truy cập
+        [Authorize(Roles = "Manager,Admin")]
+        [HttpGet("manage-data")]
+        public IActionResult GetManageData()
+        {
+            return Ok(new { message = "Dữ liệu dành cho Manager hoặc Admin." });
+        }
+
+        // API cho phép Staff, Manager, Admin truy cập
+        [Authorize(Roles = "Staff,Manager,Admin")]
+        [HttpGet("staff-data")]
+        public IActionResult GetStaffData()
+        {
+            return Ok(new { message = "Dữ liệu dành cho Staff, Manager hoặc Admin." });
+        }
+    }
 }
