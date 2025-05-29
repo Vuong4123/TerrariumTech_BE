@@ -56,7 +56,7 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 int result = -1;
-                var terrariumEntity = _unitOfWork.Terrarium.GetById(terrarium.TerrariumId);
+                var terrariumEntity = _unitOfWork.Terrarium.GetByIdAsync(terrarium.TerrariumId);
                 if (terrariumEntity != null)
                 {
                     result = await _unitOfWork.Terrarium.UpdateAsync(terrarium);
@@ -94,6 +94,12 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
+                var categoryExists = await _unitOfWork.TerrariumCategory.AnyAsync(c => c.CategoryId == terrariumUpdateRequest.CategoryId);
+
+                if (!categoryExists)
+                {
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
+                }
                 int result = -1;
                 var terra = await _unitOfWork.Terrarium.GetByIdAsync(terrariumUpdateRequest.TerrariumId);
                 if (terra != null)
