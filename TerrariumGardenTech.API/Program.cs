@@ -27,6 +27,9 @@ builder.Services.AddScoped<UnitOfWork>();
 // Đăng ký Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITerrariumService, TerrariumService>();
+builder.Services.AddScoped<IAccessoryService, AccessoryService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ITerrariumCategoryService, TerrariumCategoryService>();
 
 // Cấu hình Authentication với JWT Bearer
 builder.Services.AddAuthentication(options =>
