@@ -11,15 +11,12 @@ public partial class TerrariumGardenTechDBContext : DbContext
 {
     public TerrariumGardenTechDBContext()
     {
-
     }
-
     public TerrariumGardenTechDBContext(DbContextOptions<TerrariumGardenTechDBContext> options)
         : base(options)
     {
     }
 
-    
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -44,8 +41,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<AddressDelivery> AddressDeliveries { get; set; }
 
-    public virtual DbSet<AiSuggestLayout> AiSuggestLayouts { get; set; }
-
     public virtual DbSet<Blog> Blogs { get; set; }
 
     public virtual DbSet<BlogCategory> BlogCategories { get; set; }
@@ -68,8 +63,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<OrderItemDetail> OrderItemDetails { get; set; }
 
-    public virtual DbSet<PaymentTransaction> PaymentTransactions { get; set; }
-
     public virtual DbSet<Personalize> Personalizes { get; set; }
 
     public virtual DbSet<Promotion> Promotions { get; set; }
@@ -84,8 +77,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<Terrarium> Terraria { get; set; }
 
-    public virtual DbSet<TerrariumCategory> TerrariumCategories { get; set; }
-
     public virtual DbSet<TerrariumImage> TerrariumImages { get; set; }
 
     public virtual DbSet<TerrariumVariant> TerrariumVariants { get; set; }
@@ -98,363 +89,348 @@ public partial class TerrariumGardenTechDBContext : DbContext
     {
         modelBuilder.Entity<Accessory>(entity =>
         {
-            entity.HasKey(e => e.AccessoryId).HasName("PK__Accessor__09C3F0FB4DE3A89C");
+            entity.HasKey(e => e.AccessoryId).HasName("PK__Accessor__77E65FD722D6ED59");
 
             entity.ToTable("Accessory");
 
-            entity.Property(e => e.AccessoryId).HasColumnName("AccessoryID");
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
+            entity.Property(e => e.CategoryId).HasColumnName("categoryId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Available");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
+                .HasMaxLength(150)
+                .HasColumnName("name");
+            entity.Property(e => e.Price)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("price");
+            entity.Property(e => e.StockQuantity).HasColumnName("stockQuantity");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("updatedAt");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Accessories)
                 .HasForeignKey(d => d.CategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Accessory_Category");
         });
 
         modelBuilder.Entity<AccessoryImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__Accessor__7516F4EC20712C03");
+            entity.HasKey(e => e.AccessoryImageId).HasName("PK__Accessor__FC8A6368CD989764");
 
             entity.ToTable("AccessoryImage");
 
-            entity.Property(e => e.ImageId).HasColumnName("ImageID");
-            entity.Property(e => e.AccessoryId).HasColumnName("AccessoryID");
-            entity.Property(e => e.ImageUrl)
-                .IsRequired()
+            entity.Property(e => e.AccessoryImageId).HasColumnName("accessoryImageId");
+            entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
+            entity.Property(e => e.AltText)
                 .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("ImageURL");
-            entity.Property(e => e.IsPrimary).HasDefaultValue(false);
+                .HasColumnName("altText");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(255)
+                .HasColumnName("imageUrl");
+            entity.Property(e => e.IsPrimary)
+                .HasDefaultValue(false)
+                .HasColumnName("isPrimary");
 
             entity.HasOne(d => d.Accessory).WithMany(p => p.AccessoryImages)
                 .HasForeignKey(d => d.AccessoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AccessoryImage_Accessory");
         });
 
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2A1B1F59902B");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__26A111ADDFE0EDC0");
 
             entity.ToTable("Address");
 
-            entity.Property(e => e.AddressId).HasColumnName("AddressID");
-            entity.Property(e => e.AddressLine)
-                .IsRequired()
+            entity.Property(e => e.AddressId).HasColumnName("addressId");
+            entity.Property(e => e.AddressLine1)
                 .HasMaxLength(255)
-                .IsUnicode(false);
+                .HasColumnName("addressLine1");
+            entity.Property(e => e.AddressLine2)
+                .HasMaxLength(255)
+                .HasColumnName("addressLine2");
             entity.Property(e => e.City)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
+                .HasMaxLength(100)
+                .HasColumnName("city");
             entity.Property(e => e.Country)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.IsDefault).HasDefaultValue(false);
+                .HasMaxLength(100)
+                .HasColumnName("country");
             entity.Property(e => e.PostalCode)
                 .HasMaxLength(20)
-                .IsUnicode(false);
+                .HasColumnName("postalCode");
             entity.Property(e => e.State)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+                .HasMaxLength(100)
+                .HasColumnName("state");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
             entity.HasOne(d => d.User).WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Address_User");
         });
 
         modelBuilder.Entity<AddressDelivery>(entity =>
         {
-            entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__B9EF3DE7E86410B0");
+            entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__F090623D8858B94B");
 
             entity.ToTable("AddressDelivery");
 
-            entity.Property(e => e.AddressDeliveryId).HasColumnName("AddressDeliveryID");
-            entity.Property(e => e.AddressLine)
-                .IsRequired()
+            entity.Property(e => e.AddressDeliveryId).HasColumnName("addressDeliveryId");
+            entity.Property(e => e.AddressLine1)
                 .HasMaxLength(255)
-                .IsUnicode(false);
+                .HasColumnName("addressLine1");
+            entity.Property(e => e.AddressLine2)
+                .HasMaxLength(255)
+                .HasColumnName("addressLine2");
             entity.Property(e => e.City)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
+                .HasMaxLength(100)
+                .HasColumnName("city");
             entity.Property(e => e.Country)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
+                .HasMaxLength(100)
+                .HasColumnName("country");
+            entity.Property(e => e.OrderId).HasColumnName("orderId");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(15)
+                .HasColumnName("phoneNumber");
             entity.Property(e => e.PostalCode)
                 .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.ReceiverName)
-                .IsRequired()
+                .HasColumnName("postalCode");
+            entity.Property(e => e.RecipientName)
                 .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.ReceiverPhone)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false);
+                .HasColumnName("recipientName");
             entity.Property(e => e.State)
-                .HasMaxLength(50)
-                .IsUnicode(false);
+                .HasMaxLength(100)
+                .HasColumnName("state");
 
             entity.HasOne(d => d.Order).WithMany(p => p.AddressDeliveries)
                 .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AddressDelivery_Order");
-        });
-
-        modelBuilder.Entity<AiSuggestLayout>(entity =>
-        {
-            entity.HasKey(e => e.SuggestionId).HasName("PK__AI_Sugge__9409952860CEFABD");
-
-            entity.ToTable("AI_Suggest_layout");
-
-            entity.Property(e => e.SuggestionId).HasColumnName("SuggestionID");
-            entity.Property(e => e.ConfidenceScore).HasColumnType("decimal(3, 2)");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.LayoutId).HasColumnName("LayoutID");
-            entity.Property(e => e.PersonalizeId).HasColumnName("PersonalizeID");
-            entity.Property(e => e.SuggestionDetails).HasColumnType("text");
-            entity.Property(e => e.TerrariumId).HasColumnName("TerrariumID");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-
-            entity.HasOne(d => d.Layout).WithMany(p => p.AiSuggestLayouts)
-                .HasForeignKey(d => d.LayoutId)
-                .HasConstraintName("FK_AISuggestLayout_Layout");
-
-            entity.HasOne(d => d.Personalize).WithMany(p => p.AiSuggestLayouts)
-                .HasForeignKey(d => d.PersonalizeId)
-                .HasConstraintName("FK_AISuggestLayout_Personalize");
-
-            entity.HasOne(d => d.Terrarium).WithMany(p => p.AiSuggestLayouts)
-                .HasForeignKey(d => d.TerrariumId)
-                .HasConstraintName("FK_AISuggestLayout_Terrarium");
-
-            entity.HasOne(d => d.User).WithMany(p => p.AiSuggestLayouts)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK_AISuggestLayout_User");
         });
 
         modelBuilder.Entity<Blog>(entity =>
         {
-            entity.HasKey(e => e.BlogId).HasName("PK__Blog__54379E508C8FD30D");
+            entity.HasKey(e => e.BlogId).HasName("PK__Blog__FA0AA72DCF7A4E3E");
 
             entity.ToTable("Blog");
 
-            entity.Property(e => e.BlogId).HasColumnName("BlogID");
-            entity.Property(e => e.AuthorId).HasColumnName("AuthorID");
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.Content)
-                .IsRequired()
-                .HasColumnType("text");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.BlogId).HasColumnName("blogId");
+            entity.Property(e => e.BlogCategoryId).HasColumnName("blogCategoryId");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Draft");
+                .HasDefaultValue("draft")
+                .HasColumnName("status");
             entity.Property(e => e.Title)
-                .IsRequired()
-                .HasMaxLength(255)
-                .IsUnicode(false);
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.Views).HasDefaultValue(0);
+                .HasMaxLength(150)
+                .HasColumnName("title");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("updatedAt");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
-            entity.HasOne(d => d.Author).WithMany(p => p.Blogs)
-                .HasForeignKey(d => d.AuthorId)
-                .HasConstraintName("FK_Blog_Author");
+            entity.HasOne(d => d.BlogCategory).WithMany(p => p.Blogs)
+                .HasForeignKey(d => d.BlogCategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Blog_BlogCategory");
 
-            entity.HasOne(d => d.Category).WithMany(p => p.Blogs)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_Blog_Category");
+            entity.HasOne(d => d.User).WithMany(p => p.Blogs)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Blog_User");
         });
 
         modelBuilder.Entity<BlogCategory>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__BlogCate__19093A2BB2CEBEC0");
+            entity.HasKey(e => e.BlogCategoryId).HasName("PK__BlogCate__60848B8FC9999236");
 
             entity.ToTable("BlogCategory");
 
-            entity.HasIndex(e => e.CategoryName, "UQ__BlogCate__8517B2E0E19BA338").IsUnique();
-
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+            entity.Property(e => e.BlogCategoryId).HasColumnName("blogCategoryId");
             entity.Property(e => e.CategoryName)
                 .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Description).HasColumnType("text");
+                .HasMaxLength(100)
+                .HasColumnName("categoryName");
+            entity.Property(e => e.Description).HasColumnName("description");
         });
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A2B4387190B");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__23CAF1D819300390");
 
             entity.ToTable("Category");
 
-            entity.HasIndex(e => e.CategoryName, "UQ__Category__8517B2E05F6C97D5").IsUnique();
-
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CategoryName)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.CategoryId).HasColumnName("categoryId");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Feedback>(entity =>
         {
-            entity.HasKey(e => e.FeedbackId).HasName("PK__Feedback__6A4BEDF6300147F7");
+            entity.HasKey(e => e.FeedbackId).HasName("PK__Feedback__2613FD244B84BCD6");
 
             entity.ToTable("Feedback");
 
-            entity.Property(e => e.FeedbackId).HasColumnName("FeedbackID");
-            entity.Property(e => e.Comment).HasColumnType("text");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.FeedbackId).HasColumnName("feedbackId");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.Feedbacks)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_Feedback_Order");
+            entity.HasOne(d => d.OrderItem).WithMany(p => p.Feedbacks)
+                .HasForeignKey(d => d.OrderItemId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Feedback_OrderItem");
 
             entity.HasOne(d => d.User).WithMany(p => p.Feedbacks)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedback_User");
         });
 
         modelBuilder.Entity<FeedbackImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__Feedback__7516F4EC4F87C9AE");
+            entity.HasKey(e => e.FeedbackImageId).HasName("PK__Feedback__5C1F8F3456C39EF3");
 
             entity.ToTable("FeedbackImage");
 
-            entity.Property(e => e.ImageId).HasColumnName("ImageID");
-            entity.Property(e => e.FeedbackId).HasColumnName("FeedbackID");
-            entity.Property(e => e.ImageUrl)
-                .IsRequired()
+            entity.Property(e => e.FeedbackImageId).HasColumnName("feedbackImageId");
+            entity.Property(e => e.AltText)
                 .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("ImageURL");
-            entity.Property(e => e.UploadedAt).HasDefaultValueSql("(sysdatetime())");
+                .HasColumnName("altText");
+            entity.Property(e => e.FeedbackId).HasColumnName("feedbackId");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(255)
+                .HasColumnName("imageUrl");
 
             entity.HasOne(d => d.Feedback).WithMany(p => p.FeedbackImages)
                 .HasForeignKey(d => d.FeedbackId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_FeedbackImage_Feedback");
         });
 
         modelBuilder.Entity<LayoutTerrarium>(entity =>
         {
-            entity.HasKey(e => e.LayoutId).HasName("PK__LayoutTe__203586F5FEA498F6");
+            entity.HasKey(e => e.LayoutTerrariumId).HasName("PK__LayoutTe__ED2AF5EA0034035F");
 
             entity.ToTable("LayoutTerrarium");
 
-            entity.Property(e => e.LayoutId).HasColumnName("LayoutID");
-            entity.Property(e => e.Description).HasColumnType("text");
-            entity.Property(e => e.ImageUrl)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("ImageURL");
-            entity.Property(e => e.LayoutName)
-                .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.TerrariumId).HasColumnName("TerrariumID");
+            entity.Property(e => e.LayoutTerrariumId).HasColumnName("layoutTerrariumId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.LayoutData).HasColumnName("layoutData");
+            entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("updatedAt");
 
-            entity.HasOne(d => d.Terrarium).WithMany(p => p.LayoutTerraria)
-                .HasForeignKey(d => d.TerrariumId)
-                .HasConstraintName("FK_LayoutTerrarium_Terrarium");
+            entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.LayoutTerraria)
+                .HasForeignKey(d => d.TerrariumVariantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
         });
 
         modelBuilder.Entity<Membership>(entity =>
         {
-            entity.HasKey(e => e.MembershipId).HasName("PK__Membersh__92A7859923B7EAC0");
+            entity.HasKey(e => e.MembershipId).HasName("PK__Membersh__86AA3B174168331C");
 
             entity.ToTable("Membership");
 
-            entity.Property(e => e.MembershipId).HasColumnName("MembershipID");
-            entity.Property(e => e.EndDate).HasColumnType("date");
+            entity.Property(e => e.MembershipId).HasColumnName("membershipId");
+            entity.Property(e => e.EndDate)
+                .HasColumnType("date")
+                .HasColumnName("endDate");
             entity.Property(e => e.MembershipType)
-                .IsRequired()
                 .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.StartDate).HasColumnType("date");
+                .HasColumnName("membershipType");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("date")
+                .HasColumnName("startDate");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Active");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+                .HasDefaultValue("active")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
             entity.HasOne(d => d.User).WithMany(p => p.Memberships)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Membership_User");
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E32CF369F59");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__4BA5CEA92CE3E468");
 
             entity.ToTable("Notification");
 
-            entity.Property(e => e.NotificationId).HasColumnName("NotificationID");
-            entity.Property(e => e.Content)
-                .IsRequired()
-                .HasColumnType("text");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.IsRead).HasDefaultValue(false);
+            entity.Property(e => e.NotificationId).HasColumnName("notificationId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false)
+                .HasColumnName("isRead");
+            entity.Property(e => e.Message).HasColumnName("message");
             entity.Property(e => e.Title)
-                .IsRequired()
                 .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.Type)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+                .HasColumnName("title");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
             entity.HasOne(d => d.User).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Notification_User");
         });
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Order__C3905BAFE59A89FE");
+            entity.HasKey(e => e.OrderId).HasName("PK__Order__0809335D04D87A58");
 
             entity.ToTable("Order");
 
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.AddressDeliveryId).HasColumnName("AddressDeliveryID");
-            entity.Property(e => e.OrderDate).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.PaymentMethod)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.ShippingFee).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OrderId).HasColumnName("orderId");
+            entity.Property(e => e.Deposit)
+                .HasDefaultValue(0.00m)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("deposit");
+            entity.Property(e => e.OrderDate)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("orderDate");
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(20)
+                .HasDefaultValue("pending")
+                .HasColumnName("paymentStatus");
+            entity.Property(e => e.ShippingStatus)
+                .HasMaxLength(20)
+                .HasDefaultValue("pending")
+                .HasColumnName("shippingStatus");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Pending");
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-            entity.Property(e => e.VoucherId).HasColumnName("VoucherID");
-
-            entity.HasOne(d => d.AddressDelivery).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.AddressDeliveryId)
-                .HasConstraintName("FK_Order_AddressDelivery");
+                .HasDefaultValue("pending")
+                .HasColumnName("status");
+            entity.Property(e => e.TotalAmount)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("totalAmount");
+            entity.Property(e => e.UserId).HasColumnName("userId");
+            entity.Property(e => e.VoucherId).HasColumnName("voucherId");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Order_User");
 
             entity.HasOne(d => d.Voucher).WithMany(p => p.Orders)
@@ -464,16 +440,21 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED06A11609729B");
+            entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__3724BD5293DBCE99");
 
             entity.ToTable("OrderItem");
 
-            entity.Property(e => e.OrderItemId).HasColumnName("OrderItemID");
-            entity.Property(e => e.AccessoryId).HasColumnName("AccessoryID");
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.SubTotal).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.TerrariumId).HasColumnName("TerrariumID");
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
+            entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
+            entity.Property(e => e.OrderId).HasColumnName("orderId");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
+            entity.Property(e => e.TotalPrice)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("totalPrice");
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("unitPrice");
 
             entity.HasOne(d => d.Accessory).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.AccessoryId)
@@ -481,316 +462,309 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderItem_Order");
 
-            entity.HasOne(d => d.Terrarium).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.TerrariumId)
-                .HasConstraintName("FK_OrderItem_Terrarium");
+            entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.TerrariumVariantId)
+                .HasConstraintName("FK_OrderItem_TerrariumVariant");
         });
 
         modelBuilder.Entity<OrderItemDetail>(entity =>
         {
-            entity.HasKey(e => e.DetailId).HasName("PK__OrderIte__135C314DFC9C3803");
+            entity.HasKey(e => e.OrderItemDetailId).HasName("PK__OrderIte__098BB1314F361970");
 
             entity.ToTable("OrderItemDetail");
 
-            entity.Property(e => e.DetailId).HasColumnName("DetailID");
-            entity.Property(e => e.CustomDetails).HasColumnType("text");
-            entity.Property(e => e.OrderItemId).HasColumnName("OrderItemID");
-            entity.Property(e => e.TerrariumVariantId).HasColumnName("TerrariumVariantID");
+            entity.Property(e => e.OrderItemDetailId).HasColumnName("orderItemDetailId");
+            entity.Property(e => e.DetailKey)
+                .HasMaxLength(100)
+                .HasColumnName("detailKey");
+            entity.Property(e => e.DetailValue).HasColumnName("detailValue");
+            entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
 
             entity.HasOne(d => d.OrderItem).WithMany(p => p.OrderItemDetails)
                 .HasForeignKey(d => d.OrderItemId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderItemDetail_OrderItem");
-
-            entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.OrderItemDetails)
-                .HasForeignKey(d => d.TerrariumVariantId)
-                .HasConstraintName("FK_OrderItemDetail_TerrariumVariant");
-        });
-
-        modelBuilder.Entity<PaymentTransaction>(entity =>
-        {
-            entity.HasKey(e => e.TransactionId).HasName("PK__PaymentT__55433A4BD4268260");
-
-            entity.ToTable("PaymentTransaction");
-
-            entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
-            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.GatewayResponse).HasColumnType("text");
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.PaymentMethod)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Pending");
-            entity.Property(e => e.TransactionDate).HasDefaultValueSql("(sysdatetime())");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.PaymentTransactions)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_PaymentTransaction_Order");
         });
 
         modelBuilder.Entity<Personalize>(entity =>
         {
-            entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__DBBD56736673B6D8");
+            entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__8032E374C56CF71E");
 
             entity.ToTable("Personalize");
 
-            entity.Property(e => e.PersonalizeId).HasColumnName("PersonalizeID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.PreferenceType)
-                .IsRequired()
+            entity.Property(e => e.PersonalizeId).HasColumnName("personalizeId");
+            entity.Property(e => e.Language)
+                .HasMaxLength(20)
+                .HasColumnName("language");
+            entity.Property(e => e.Preferences).HasColumnName("preferences");
+            entity.Property(e => e.Theme)
                 .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.PreferenceValue).HasColumnType("text");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+                .HasColumnName("theme");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
             entity.HasOne(d => d.User).WithMany(p => p.Personalizes)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Personalize_User");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
         {
-            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42F2F61E54C10");
+            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__99EB696ECA1EAF5F");
 
             entity.ToTable("Promotion");
 
-            entity.Property(e => e.PromotionId).HasColumnName("PromotionID");
-            entity.Property(e => e.Description).HasColumnType("text");
-            entity.Property(e => e.DiscountType)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.DiscountValue).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.EndDate).HasColumnType("date");
+            entity.Property(e => e.PromotionId).HasColumnName("promotionId");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.EndDate)
+                .HasColumnType("date")
+                .HasColumnName("endDate");
             entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.StartDate).HasColumnType("date");
+                .HasMaxLength(150)
+                .HasColumnName("name");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("date")
+                .HasColumnName("startDate");
             entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Active");
+                .HasMaxLength(10)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
         });
 
         modelBuilder.Entity<PromotionTerrariumVariant>(entity =>
         {
-            entity.HasKey(e => e.PromotionVariantId).HasName("PK__Promotio__DE9C419615B39DEE");
+            entity.HasKey(e => e.PromotionTerrariumVariantId).HasName("PK__Promotio__8F0EFF32523D8B83");
 
             entity.ToTable("PromotionTerrariumVariant");
 
-            entity.Property(e => e.PromotionVariantId).HasColumnName("PromotionVariantID");
-            entity.Property(e => e.PromotionId).HasColumnName("PromotionID");
-            entity.Property(e => e.TerrariumVariantId).HasColumnName("TerrariumVariantID");
+            entity.Property(e => e.PromotionTerrariumVariantId).HasColumnName("promotionTerrariumVariantId");
+            entity.Property(e => e.DiscountPercent)
+                .HasColumnType("decimal(5, 2)")
+                .HasColumnName("discountPercent");
+            entity.Property(e => e.EndDate)
+                .HasColumnType("date")
+                .HasColumnName("endDate");
+            entity.Property(e => e.PromotionId).HasColumnName("promotionId");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("date")
+                .HasColumnName("startDate");
+            entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
 
             entity.HasOne(d => d.Promotion).WithMany(p => p.PromotionTerrariumVariants)
                 .HasForeignKey(d => d.PromotionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PromotionTerrariumVariant_Promotion");
 
             entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.PromotionTerrariumVariants)
                 .HasForeignKey(d => d.TerrariumVariantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PromotionTerrariumVariant_TerrariumVariant");
         });
 
         modelBuilder.Entity<ReturnExchangeRequest>(entity =>
         {
-            entity.HasKey(e => e.RequestId).HasName("PK__ReturnEx__33A8519A55DF3E21");
+            entity.HasKey(e => e.RequestId).HasName("PK__ReturnEx__E3C5DE3141AB3D28");
 
             entity.ToTable("ReturnExchangeRequest");
 
-            entity.Property(e => e.RequestId).HasColumnName("RequestID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.Reason)
-                .IsRequired()
-                .HasColumnType("text");
-            entity.Property(e => e.RequestType)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false);
+            entity.Property(e => e.RequestId).HasColumnName("requestId");
+            entity.Property(e => e.OrderId).HasColumnName("orderId");
+            entity.Property(e => e.Reason).HasColumnName("reason");
+            entity.Property(e => e.RequestDate)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("requestDate");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Pending");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
+                .HasDefaultValue("pending")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
             entity.HasOne(d => d.Order).WithMany(p => p.ReturnExchangeRequests)
                 .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ReturnExchangeRequest_Order");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ReturnExchangeRequests)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReturnExchangeRequest_User");
         });
 
         modelBuilder.Entity<ReturnExchangeRequestItem>(entity =>
         {
-            entity.HasKey(e => e.RequestItemId).HasName("PK__ReturnEx__3F51AD77660A2559");
+            entity.HasKey(e => e.RequestItemId).HasName("PK__ReturnEx__FDD6A58FF74806E9");
 
             entity.ToTable("ReturnExchangeRequestItem");
 
-            entity.Property(e => e.RequestItemId).HasColumnName("RequestItemID");
-            entity.Property(e => e.OrderItemId).HasColumnName("OrderItemID");
-            entity.Property(e => e.Reason)
-                .IsRequired()
-                .HasColumnType("text");
-            entity.Property(e => e.RequestId).HasColumnName("RequestID");
+            entity.Property(e => e.RequestItemId).HasColumnName("requestItemId");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.RequestId).HasColumnName("requestId");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("pending")
+                .HasColumnName("status");
 
             entity.HasOne(d => d.OrderItem).WithMany(p => p.ReturnExchangeRequestItems)
                 .HasForeignKey(d => d.OrderItemId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ReturnExchangeRequestItem_OrderItem");
 
             entity.HasOne(d => d.Request).WithMany(p => p.ReturnExchangeRequestItems)
                 .HasForeignKey(d => d.RequestId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ReturnExchangeRequestItem_Request");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__8AFACE3A3E87691A");
+            entity.HasKey(e => e.RoleId).HasName("PK__Role__CD98462A2156B115");
 
             entity.ToTable("Role");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Role__8A2B61603B14FDD4").IsUnique();
-
-            entity.Property(e => e.RoleId).HasColumnName("RoleID");
-            entity.Property(e => e.Description).HasColumnType("text");
-            entity.Property(e => e.Permissions).HasColumnType("text");
+            entity.Property(e => e.RoleId)
+                .ValueGeneratedNever()
+                .HasColumnName("roleId");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.RoleName)
                 .IsRequired()
                 .HasMaxLength(50)
-                .IsUnicode(false);
+                .HasColumnName("roleName");
         });
 
         modelBuilder.Entity<Terrarium>(entity =>
         {
-            entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__B9CAABD613B9A0B8");
+            entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__1AE69F91279E10EB");
 
             entity.ToTable("Terrarium");
 
-            entity.Property(e => e.TerrariumId).HasColumnName("TerrariumID");
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Name)
-                .IsRequired()
+                .HasMaxLength(150)
+                .HasColumnName("name");
+            entity.Property(e => e.Price)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("price");
+            entity.Property(e => e.Shape)
                 .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+                .HasColumnName("shape");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Available");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
-
-            entity.HasOne(d => d.Category).WithMany(p => p.Terraria)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_Terrarium_Category");
-        });
-
-        modelBuilder.Entity<TerrariumCategory>(entity =>
-        {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Terrariu__19093A2BF60CFF19");
-
-            entity.ToTable("TerrariumCategory");
-
-            entity.HasIndex(e => e.CategoryName, "UQ__Terrariu__8517B2E093BE5FFE").IsUnique();
-
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CategoryName)
-                .IsRequired()
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Description).HasColumnType("text");
+                .HasDefaultValue("Available")
+                .HasColumnName("status");
+            entity.Property(e => e.Stock).HasColumnName("stock");
+            entity.Property(e => e.TankMethod)
+                .HasMaxLength(100)
+                .HasColumnName("tankMethod");
+            entity.Property(e => e.Theme)
+                .HasMaxLength(100)
+                .HasColumnName("theme");
+            entity.Property(e => e.Type)
+                .HasMaxLength(100)
+                .HasColumnName("type");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("updatedAt");
         });
 
         modelBuilder.Entity<TerrariumImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__Terrariu__7516F4ECE3D560BA");
+            entity.HasKey(e => e.TerrariumImageId).HasName("PK__Terrariu__38A555784432CBBE");
 
             entity.ToTable("TerrariumImage");
 
-            entity.Property(e => e.ImageId).HasColumnName("ImageID");
-            entity.Property(e => e.ImageUrl)
-                .IsRequired()
+            entity.Property(e => e.TerrariumImageId).HasColumnName("terrariumImageId");
+            entity.Property(e => e.AltText)
                 .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("ImageURL");
-            entity.Property(e => e.IsPrimary).HasDefaultValue(false);
-            entity.Property(e => e.TerrariumId).HasColumnName("TerrariumID");
+                .HasColumnName("altText");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(255)
+                .HasColumnName("imageUrl");
+            entity.Property(e => e.IsPrimary)
+                .HasDefaultValue(false)
+                .HasColumnName("isPrimary");
+            entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
 
             entity.HasOne(d => d.Terrarium).WithMany(p => p.TerrariumImages)
                 .HasForeignKey(d => d.TerrariumId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TerrariumImage_Terrarium");
         });
 
         modelBuilder.Entity<TerrariumVariant>(entity =>
         {
-            entity.HasKey(e => e.VariantId).HasName("PK__Terrariu__0EA233E4C9D9142A");
+            entity.HasKey(e => e.TerrariumVariantId).HasName("PK__Terrariu__B9E43448C71265AD");
 
             entity.ToTable("TerrariumVariant");
 
-            entity.Property(e => e.VariantId).HasColumnName("VariantID");
-            entity.Property(e => e.Color)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.PriceAdjustment).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Size)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.TerrariumId).HasColumnName("TerrariumID");
+            entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
+            entity.Property(e => e.AdditionalPrice)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("additionalPrice");
+            entity.Property(e => e.StockQuantity).HasColumnName("stockQuantity");
+            entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
+            entity.Property(e => e.VariantName)
+                .HasMaxLength(100)
+                .HasColumnName("variantName");
 
             entity.HasOne(d => d.Terrarium).WithMany(p => p.TerrariumVariants)
                 .HasForeignKey(d => d.TerrariumId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TerrariumVariant_Terrarium");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__User__1788CCAC17783A9F");
+            entity.HasKey(e => e.UserId).HasName("PK__User__CB9A1CFFA89ED9C8");
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.Username, "UQ__User__536C85E4A46A2C3C").IsUnique();
-
-            entity.HasIndex(e => e.Email, "UQ__User__A9D105343C80CA42").IsUnique();
-
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.DateOfBirth).HasColumnType("date");
+            entity.Property(e => e.UserId).HasColumnName("userId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.DateOfBirth)
+                .HasColumnType("date")
+                .HasColumnName("dateOfBirth");
             entity.Property(e => e.Email)
                 .IsRequired()
                 .HasMaxLength(100)
-                .IsUnicode(false);
-            entity.Property(e => e.FullName)
-                .HasMaxLength(100)
-                .IsUnicode(false);
+                .HasColumnName("email");
+            entity.Property(e => e.EndToken).HasColumnName("endToken");
             entity.Property(e => e.Gender)
                 .HasMaxLength(10)
-                .IsUnicode(false);
-            entity.Property(e => e.Password)
+                .HasColumnName("gender");
+            entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255)
-                .IsUnicode(false);
+                .HasColumnName("passwordHash");
             entity.Property(e => e.PhoneNumber)
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.RoleId).HasColumnName("RoleID");
+                .HasMaxLength(15)
+                .HasColumnName("phoneNumber");
+            entity.Property(e => e.RoleId).HasColumnName("roleId");
+            entity.Property(e => e.StartToken).HasColumnName("startToken");
             entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Active");
+                .HasMaxLength(10)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
             entity.Property(e => e.Token)
                 .HasMaxLength(255)
-                .IsUnicode(false);
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
+                .HasColumnName("token");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("updatedAt");
             entity.Property(e => e.Username)
                 .IsRequired()
                 .HasMaxLength(50)
-                .IsUnicode(false);
+                .HasColumnName("username");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
@@ -799,35 +773,32 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
         modelBuilder.Entity<Voucher>(entity =>
         {
-            entity.HasKey(e => e.VoucherId).HasName("PK__Voucher__3AEE79C1EDB38171");
+            entity.HasKey(e => e.VoucherId).HasName("PK__Voucher__F53389E9F60B1DB0");
 
             entity.ToTable("Voucher");
 
-            entity.HasIndex(e => e.Code, "UQ__Voucher__A25C5AA7A1CF3634").IsUnique();
-
-            entity.Property(e => e.VoucherId).HasColumnName("VoucherID");
+            entity.Property(e => e.VoucherId).HasColumnName("voucherId");
             entity.Property(e => e.Code)
                 .IsRequired()
                 .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.DiscountType)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.DiscountValue).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.EndDate).HasColumnType("date");
-            entity.Property(e => e.MaxDiscountValue).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.MinOrderValue).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.StartDate).HasColumnType("date");
+                .HasColumnName("code");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DiscountAmount)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("discountAmount");
+            entity.Property(e => e.DiscountPercent)
+                .HasColumnType("decimal(5, 2)")
+                .HasColumnName("discountPercent");
             entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("Active");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Vouchers)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK_Voucher_User");
+                .HasMaxLength(10)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
+            entity.Property(e => e.ValidFrom)
+                .HasColumnType("date")
+                .HasColumnName("validFrom");
+            entity.Property(e => e.ValidTo)
+                .HasColumnType("date")
+                .HasColumnName("validTo");
         });
 
         OnModelCreatingPartial(modelBuilder);

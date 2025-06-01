@@ -11,23 +11,15 @@ public partial class User
 
     public string Username { get; set; }
 
-    public string Password { get; set; }
+    public string PasswordHash { get; set; }
 
     public string Email { get; set; }
-
-    public string FullName { get; set; }
 
     public string PhoneNumber { get; set; }
 
     public DateTime? DateOfBirth { get; set; }
 
     public string Gender { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public string Status { get; set; }
 
     public int? RoleId { get; set; }
 
@@ -37,9 +29,13 @@ public partial class User
 
     public DateTime? EndToken { get; set; }
 
-    public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
+    public DateTime? CreatedAt { get; set; }
 
-    public virtual ICollection<AiSuggestLayout> AiSuggestLayouts { get; set; } = new List<AiSuggestLayout>();
+    public DateTime? UpdatedAt { get; set; }
+
+    public string Status { get; set; }
+
+    public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
 
@@ -53,7 +49,7 @@ public partial class User
 
     public virtual ICollection<Personalize> Personalizes { get; set; } = new List<Personalize>();
 
-    public virtual Role Role { get; set; }
+    public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
 
-    public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();
+    public virtual Role Role { get; set; }
 }

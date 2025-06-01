@@ -7,7 +7,7 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class BlogCategory
 {
-    public int CategoryId { get; set; }
+    public int BlogCategoryId { get; set; }
 
     public string CategoryName { get; set; }
 

@@ -9,13 +9,13 @@ public partial class Blog
 {
     public int BlogId { get; set; }
 
+    public int UserId { get; set; }
+
+    public int BlogCategoryId { get; set; }
+
     public string Title { get; set; }
 
     public string Content { get; set; }
-
-    public int? AuthorId { get; set; }
-
-    public int? CategoryId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -23,9 +23,7 @@ public partial class Blog
 
     public string Status { get; set; }
 
-    public int? Views { get; set; }
+    public virtual BlogCategory BlogCategory { get; set; }
 
-    public virtual User Author { get; set; }
-
-    public virtual BlogCategory Category { get; set; }
+    public virtual User User { get; set; }
 }

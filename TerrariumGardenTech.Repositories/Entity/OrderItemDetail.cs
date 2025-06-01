@@ -7,15 +7,13 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class OrderItemDetail
 {
-    public int DetailId { get; set; }
+    public int OrderItemDetailId { get; set; }
 
-    public int? OrderItemId { get; set; }
+    public int OrderItemId { get; set; }
 
-    public int? TerrariumVariantId { get; set; }
+    public string DetailKey { get; set; }
 
-    public string CustomDetails { get; set; }
+    public string DetailValue { get; set; }
 
     public virtual OrderItem OrderItem { get; set; }
-
-    public virtual TerrariumVariant TerrariumVariant { get; set; }
 }

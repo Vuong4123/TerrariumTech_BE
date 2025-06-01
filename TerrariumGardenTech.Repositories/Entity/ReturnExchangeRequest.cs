@@ -9,19 +9,19 @@ public partial class ReturnExchangeRequest
 {
     public int RequestId { get; set; }
 
-    public int? OrderId { get; set; }
+    public int OrderId { get; set; }
 
-    public string RequestType { get; set; }
+    public int UserId { get; set; }
 
-    public string Reason { get; set; }
+    public DateTime? RequestDate { get; set; }
 
     public string Status { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
+    public string Reason { get; set; }
 
     public virtual Order Order { get; set; }
 
     public virtual ICollection<ReturnExchangeRequestItem> ReturnExchangeRequestItems { get; set; } = new List<ReturnExchangeRequestItem>();
+
+    public virtual User User { get; set; }
 }

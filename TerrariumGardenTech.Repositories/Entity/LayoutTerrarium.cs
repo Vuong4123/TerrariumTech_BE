@@ -7,17 +7,15 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class LayoutTerrarium
 {
-    public int LayoutId { get; set; }
+    public int LayoutTerrariumId { get; set; }
 
-    public int? TerrariumId { get; set; }
+    public int TerrariumVariantId { get; set; }
 
-    public string LayoutName { get; set; }
+    public string LayoutData { get; set; }
 
-    public string Description { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
-    public string ImageUrl { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<AiSuggestLayout> AiSuggestLayouts { get; set; } = new List<AiSuggestLayout>();
-
-    public virtual Terrarium Terrarium { get; set; }
+    public virtual TerrariumVariant TerrariumVariant { get; set; }
 }

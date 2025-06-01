@@ -31,10 +31,6 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[AI_Suggest_layout]",
-         "ObjectType": 0
-      },
-      {
          "Name": "[dbo].[Blog]",
          "ObjectType": 0
       },
@@ -79,10 +75,6 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[PaymentTransaction]",
-         "ObjectType": 0
-      },
-      {
          "Name": "[dbo].[Personalize]",
          "ObjectType": 0
       },
@@ -108,10 +100,6 @@
       },
       {
          "Name": "[dbo].[Terrarium]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[TerrariumCategory]",
          "ObjectType": 0
       },
       {
