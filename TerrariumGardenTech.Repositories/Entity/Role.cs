@@ -13,7 +13,5 @@ public partial class Role
 
     public string Description { get; set; }
 
-    public string Permissions { get; set; }
-
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

@@ -7,11 +7,17 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class PromotionTerrariumVariant
 {
-    public int PromotionVariantId { get; set; }
+    public int PromotionTerrariumVariantId { get; set; }
 
-    public int? PromotionId { get; set; }
+    public int PromotionId { get; set; }
 
-    public int? TerrariumVariantId { get; set; }
+    public int TerrariumVariantId { get; set; }
+
+    public decimal? DiscountPercent { get; set; }
+
+    public DateTime? StartDate { get; set; }
+
+    public DateTime? EndDate { get; set; }
 
     public virtual Promotion Promotion { get; set; }
 

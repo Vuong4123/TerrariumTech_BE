@@ -7,11 +7,13 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class TerrariumImage
 {
-    public int ImageId { get; set; }
+    public int TerrariumImageId { get; set; }
 
-    public int? TerrariumId { get; set; }
+    public int TerrariumId { get; set; }
 
     public string ImageUrl { get; set; }
+
+    public string AltText { get; set; }
 
     public bool? IsPrimary { get; set; }
 

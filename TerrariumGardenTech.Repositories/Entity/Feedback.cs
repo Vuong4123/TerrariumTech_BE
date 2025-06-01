@@ -9,11 +9,11 @@ public partial class Feedback
 {
     public int FeedbackId { get; set; }
 
-    public int? OrderId { get; set; }
+    public int OrderItemId { get; set; }
 
-    public int? UserId { get; set; }
+    public int UserId { get; set; }
 
-    public int Rating { get; set; }
+    public int? Rating { get; set; }
 
     public string Comment { get; set; }
 
@@ -21,7 +21,7 @@ public partial class Feedback
 
     public virtual ICollection<FeedbackImage> FeedbackImages { get; set; } = new List<FeedbackImage>();
 
-    public virtual Order Order { get; set; }
+    public virtual OrderItem OrderItem { get; set; }
 
     public virtual User User { get; set; }
 }

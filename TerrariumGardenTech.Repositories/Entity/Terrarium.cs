@@ -13,25 +13,23 @@ public partial class Terrarium
 
     public string Description { get; set; }
 
-    public decimal Price { get; set; }
+    public decimal? Price { get; set; }
 
     public int Stock { get; set; }
 
-    public int? CategoryId { get; set; }
+    public string Status { get; set; }
+
+    public string Type { get; set; }
+
+    public string Shape { get; set; }
+
+    public string TankMethod { get; set; }
+
+    public string Theme { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
-
-    public string Status { get; set; }
-
-    public virtual ICollection<AiSuggestLayout> AiSuggestLayouts { get; set; } = new List<AiSuggestLayout>();
-
-    public virtual TerrariumCategory Category { get; set; }
-
-    public virtual ICollection<LayoutTerrarium> LayoutTerraria { get; set; } = new List<LayoutTerrarium>();
-
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = new List<TerrariumImage>();
 

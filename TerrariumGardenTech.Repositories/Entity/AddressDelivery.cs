@@ -9,9 +9,11 @@ public partial class AddressDelivery
 {
     public int AddressDeliveryId { get; set; }
 
-    public int? OrderId { get; set; }
+    public int OrderId { get; set; }
 
-    public string AddressLine { get; set; }
+    public string AddressLine1 { get; set; }
+
+    public string AddressLine2 { get; set; }
 
     public string City { get; set; }
 
@@ -21,11 +23,9 @@ public partial class AddressDelivery
 
     public string PostalCode { get; set; }
 
-    public string ReceiverName { get; set; }
+    public string PhoneNumber { get; set; }
 
-    public string ReceiverPhone { get; set; }
+    public string RecipientName { get; set; }
 
     public virtual Order Order { get; set; }
-
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }
