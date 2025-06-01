@@ -114,6 +114,10 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Accessory_Category");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("Available")
+                .HasColumnName("status");
         });
 
         modelBuilder.Entity<AccessoryImage>(entity =>

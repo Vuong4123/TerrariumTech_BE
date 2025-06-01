@@ -121,7 +121,7 @@ namespace TerrariumGardenTech.Service.Service
                 Name = accessoryCreateRequest.Name,
                 Description = accessoryCreateRequest.Description,
                 Price = accessoryCreateRequest.Price,
-                Stock = accessoryCreateRequest.Stock,
+                StockQuantity = accessoryCreateRequest.Stock,
                 CategoryId = accessoryCreateRequest.CategoryId,
                 CreatedAt = accessoryCreateRequest.CreatedAt ?? DateTime.Now,
                 UpdatedAt = accessoryCreateRequest.UpdatedAt ?? DateTime.Now,

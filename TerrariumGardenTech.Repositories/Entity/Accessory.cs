@@ -22,6 +22,7 @@ public partial class Accessory
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+    public string Status { get; set; } = "Available";
 
     public virtual ICollection<AccessoryImage> AccessoryImages { get; set; } = new List<AccessoryImage>();
 
