@@ -9,19 +9,13 @@ public partial class Personalize
 {
     public int PersonalizeId { get; set; }
 
-    public int? UserId { get; set; }
+    public int UserId { get; set; }
 
-    public string PreferenceType { get; set; }
+    public string Preferences { get; set; }
 
-    public string PreferenceValue { get; set; }
+    public string Theme { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public bool? IsActive { get; set; }
-
-    public virtual ICollection<AiSuggestLayout> AiSuggestLayouts { get; set; } = new List<AiSuggestLayout>();
+    public string Language { get; set; }
 
     public virtual User User { get; set; }
 }

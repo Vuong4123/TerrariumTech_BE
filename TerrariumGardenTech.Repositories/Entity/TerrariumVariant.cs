@@ -7,19 +7,19 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class TerrariumVariant
 {
-    public int VariantId { get; set; }
+    public int TerrariumVariantId { get; set; }
 
-    public int? TerrariumId { get; set; }
+    public int TerrariumId { get; set; }
 
-    public string Size { get; set; }
+    public string VariantName { get; set; }
 
-    public string Color { get; set; }
+    public decimal? AdditionalPrice { get; set; }
 
-    public decimal? PriceAdjustment { get; set; }
+    public int? StockQuantity { get; set; }
 
-    public int Stock { get; set; }
+    public virtual ICollection<LayoutTerrarium> LayoutTerraria { get; set; } = new List<LayoutTerrarium>();
 
-    public virtual ICollection<OrderItemDetail> OrderItemDetails { get; set; } = new List<OrderItemDetail>();
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public virtual ICollection<PromotionTerrariumVariant> PromotionTerrariumVariants { get; set; } = new List<PromotionTerrariumVariant>();
 
