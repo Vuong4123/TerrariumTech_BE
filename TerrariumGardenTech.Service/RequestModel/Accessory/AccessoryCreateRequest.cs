@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TerrariumGardenTech.Service.RequestModel.Terrarium
+namespace TerrariumGardenTech.Service.RequestModel.Accessory
 {
-    public class TerrariumUpdateRequest
+    public class AccessoryCreateRequest
     {
-        public int TerrariumId { get; set; }
+        public int AccessoryId { get; set; }
 
         public string Name { get; set; }
 
