@@ -18,7 +18,7 @@ namespace TerrariumGardenTech.Service.RequestModel.Accessory
 
         public int Stock { get; set; }
 
-        public int? CategoryId { get; set; }
+        public int CategoryId { get; set; }
 
         public DateTime? CreatedAt { get; set; }
 
