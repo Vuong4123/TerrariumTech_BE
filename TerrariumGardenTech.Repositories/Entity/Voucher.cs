@@ -9,25 +9,19 @@ public partial class Voucher
 {
     public int VoucherId { get; set; }
 
-    public int? UserId { get; set; }
-
     public string Code { get; set; }
 
-    public decimal DiscountValue { get; set; }
+    public string Description { get; set; }
 
-    public string DiscountType { get; set; }
+    public decimal? DiscountAmount { get; set; }
 
-    public decimal? MinOrderValue { get; set; }
+    public decimal? DiscountPercent { get; set; }
 
-    public decimal? MaxDiscountValue { get; set; }
+    public DateTime? ValidFrom { get; set; }
 
-    public DateTime StartDate { get; set; }
-
-    public DateTime EndDate { get; set; }
+    public DateTime? ValidTo { get; set; }
 
     public string Status { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
-    public virtual User User { get; set; }
 }

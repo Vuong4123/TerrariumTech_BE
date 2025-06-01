@@ -7,13 +7,13 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class FeedbackImage
 {
-    public int ImageId { get; set; }
+    public int FeedbackImageId { get; set; }
 
-    public int? FeedbackId { get; set; }
+    public int FeedbackId { get; set; }
 
     public string ImageUrl { get; set; }
 
-    public DateTime? UploadedAt { get; set; }
+    public string AltText { get; set; }
 
     public virtual Feedback Feedback { get; set; }
 }

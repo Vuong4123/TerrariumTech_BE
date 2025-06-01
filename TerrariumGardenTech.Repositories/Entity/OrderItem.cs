@@ -9,19 +9,21 @@ public partial class OrderItem
 {
     public int OrderItemId { get; set; }
 
-    public int? OrderId { get; set; }
-
-    public int? TerrariumId { get; set; }
+    public int OrderId { get; set; }
 
     public int? AccessoryId { get; set; }
 
-    public int Quantity { get; set; }
+    public int? TerrariumVariantId { get; set; }
 
-    public decimal UnitPrice { get; set; }
+    public int? Quantity { get; set; }
 
-    public decimal SubTotal { get; set; }
+    public decimal? UnitPrice { get; set; }
+
+    public decimal? TotalPrice { get; set; }
 
     public virtual Accessory Accessory { get; set; }
+
+    public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
     public virtual Order Order { get; set; }
 
@@ -29,5 +31,5 @@ public partial class OrderItem
 
     public virtual ICollection<ReturnExchangeRequestItem> ReturnExchangeRequestItems { get; set; } = new List<ReturnExchangeRequestItem>();
 
-    public virtual Terrarium Terrarium { get; set; }
+    public virtual TerrariumVariant TerrariumVariant { get; set; }
 }
