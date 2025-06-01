@@ -25,7 +25,6 @@ namespace TerrariumGardenTech.Common
         public static int SUCCESS_DELETE_CODE = 200;
         public static string SUCCESS_DELETE_MSG = "Delete data success";
 
-
         #endregion
 
         #region Fail code
@@ -45,6 +44,22 @@ namespace TerrariumGardenTech.Common
 
         public static int WARNING_NO_DATA_CODE = 4;
         public static string WARNING_NO_DATA_MSG = "No data";
+
+        #endregion
+
+        #region Authentication & Authorization Codes
+
+        public static int FAIL_LOGIN_CODE = -10;
+        public static string FAIL_LOGIN_MSG = "Tên đăng nhập hoặc mật khẩu không đúng";
+
+        public static int UNAUTHORIZED_CODE = 401;
+        public static string UNAUTHORIZED_MSG = "Chưa xác thực, vui lòng đăng nhập";
+
+        public static int FORBIDDEN_CODE = 403;
+        public static string FORBIDDEN_MSG = "Bạn không có quyền truy cập tài nguyên này";
+
+        public static int TOKEN_EXPIRED_CODE = -11;
+        public static string TOKEN_EXPIRED_MSG = "Token đã hết hạn";
 
         #endregion
     }
