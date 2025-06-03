@@ -32,7 +32,7 @@ namespace TerrariumGardenTech.Service.Service
             var newUser = new User
             {
                 Username = request.Username,
-                Password = hashedPassword,
+                PasswordHash = hashedPassword,
                 Email = request.Email,
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
