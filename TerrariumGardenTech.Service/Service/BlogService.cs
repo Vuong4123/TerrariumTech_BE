@@ -8,29 +8,25 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Accessory;
+using TerrariumGardenTech.Service.RequestModel.Blog;
 using TerrariumGardenTech.Service.RequestModel.Category;
 
 namespace TerrariumGardenTech.Service.Service
 {
-    public class CategoryService : ICategoryService
+    public class BlogService : IBlogService
     {
         private readonly UnitOfWork _unitOfWork;
-        public CategoryService(UnitOfWork unitOfWork)
+        public BlogService(UnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
-        // Implement methods for ICategoryService here
-        // For example, you can add methods like GetAllCategories, GetCategoryById, etc.
-   
-       
 
         public async Task<IBusinessResult> GetAll()
         {
-            var categories = await _unitOfWork.Category.GetAllAsync();
-            if (categories != null && categories.Any())
+            var blogs = await _unitOfWork.Blog.GetAllAsync();
+            if (blogs != null && blogs.Any())
             {
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, categories);
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, blogs);
             }
             else
             {
@@ -40,10 +36,10 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> GetById(int id)
         {
-            var category = await _unitOfWork.Category.GetByIdAsync(id);
-            if (category != null)
+            var blog = await _unitOfWork.Blog.GetByIdAsync(id);
+            if (blog != null)
             {
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, category);
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, blog);
             }
             else
             {
@@ -51,18 +47,18 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> Save(Category category)
+        public async Task<IBusinessResult> Save(Blog blog)
         {
             try
             {
                 int result = -1;
-                var categoryyEntity = _unitOfWork.Category.GetByIdAsync(category.CategoryId);
-                if (categoryyEntity != null)
+                var blogEntity = _unitOfWork.Blog.GetByIdAsync(blog.BlogId);
+                if (blogEntity != null)
                 {
-                    result = await _unitOfWork.Category.UpdateAsync(category);
+                    result = await _unitOfWork.Blog.UpdateAsync(blog);
                     if (result > 0)
                     {
-                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, category);
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, blog);
                     }
                     else
                     {
@@ -72,10 +68,10 @@ namespace TerrariumGardenTech.Service.Service
                 else
                 {
                     // Create new terrarium if it does not exist
-                    result = await _unitOfWork.Category.CreateAsync(category);
+                    result = await _unitOfWork.Blog.CreateAsync(blog);
                     if (result > 0)
                     {
-                        return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, category);
+                        return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blog);
                     }
                     else
                     {
@@ -83,33 +79,31 @@ namespace TerrariumGardenTech.Service.Service
                     }
                 }
 
-
             }
             catch (Exception ex)
             {
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
             }
         }
-
-        public async Task<IBusinessResult> UpdateCategory(CategoryRequest categoryRequest)
+        public async Task<IBusinessResult> UpdateBlog(BlogUpdateRequest blogUpdateRequest)
         {
             try
             {
-                //var categoryExists = await _unitOfWork.Category.AnyAsync(c => c.CategoryId == accessoryUpdateRequest.CategoryId);
+                var blogCategoryExists = await _unitOfWork.BlogCategory.AnyAsync(c => c.BlogCategoryId == blogUpdateRequest.BlogCategoryId);
 
-                //if (!categoryExists)
-                //{
-                //    return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
-                //}
-                int result = -1;
-                var cate = await _unitOfWork.Category.GetByIdAsync(categoryRequest.CategoryId);
-                if (cate != null)
+                if (!blogCategoryExists)
                 {
-                    _unitOfWork.Category.Context().Entry(cate ).CurrentValues.SetValues(categoryRequest);
-                    result = await _unitOfWork.Category.UpdateAsync(cate);
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, "BlogCategoryId không tồn tại.");
+                }
+                int result = -1;
+                var blog = await _unitOfWork.Blog.GetByIdAsync(blogUpdateRequest.BlogId);
+                if (blog != null)
+                {
+                    _unitOfWork.Blog.Context().Entry(blog).CurrentValues.SetValues(blogUpdateRequest);
+                    result = await _unitOfWork.Blog.UpdateAsync(blog);
                     if (result > 0)
                     {
-                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, cate);
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, blog);
                     }
                     else
                     {
@@ -126,33 +120,41 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
             }
         }
-
-        public async Task<IBusinessResult> CreateCategory(CategoryRequest categoryRequest)
+        public async Task<IBusinessResult> CreateBlog(BlogCreateRequest blogCreateRequest)
         {
-            
-            var category = new Category
+            try
             {
-                CategoryId = categoryRequest.CategoryId,
-                Name = categoryRequest.CategoryName,
-                Description = categoryRequest.Description
-            };
-            var result = await _unitOfWork.Category.CreateAsync(category);
-            if (result > 0)
-            {
-                return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, category);
+                var blog = new Blog
+                {
+                    Title = blogCreateRequest.Title,
+                    Content = blogCreateRequest.Content,
+                    BlogCategoryId = blogCreateRequest.BlogCategoryId,
+                    UserId = 2, // Id userr bằng 2 vì 2 là id của staff, chỉ có staff mới có quyền tạo blog
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    Status = "Active" // Mặc định trạng thái là Active
+                };
+                int result = await _unitOfWork.Blog.CreateAsync(blog);
+                if (result > 0)
+                {
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blog);
+                }
+                else
+                {
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
             }
         }
-
         public Task<IBusinessResult> DeleteById(int id)
         {
-            var category = _unitOfWork.Category.GetByIdAsync(id);
-            if (category != null)
+            var blog = _unitOfWork.Blog.GetByIdAsync(id);
+            if (blog != null)
             {
-                var result = _unitOfWork.Category.RemoveAsync(category.Result);
+                var result = _unitOfWork.Blog.RemoveAsync(blog.Result);
                 if (result.Result)
                 {
                     return Task.FromResult<IBusinessResult>(new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG));
