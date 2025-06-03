@@ -32,7 +32,7 @@ namespace TerrariumGardenTech.Service.Service
             var newUser = new User
             {
                 Username = request.Username,
-                Password = hashedPassword,
+                PasswordHash = hashedPassword,
                 Email = request.Email,
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
@@ -85,7 +85,7 @@ namespace TerrariumGardenTech.Service.Service
             user.RoleId = request.RoleId;
 
             if (!string.IsNullOrEmpty(request.Password))
-                user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             await _userRepository.UpdateAsync(user);
             return (Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG);

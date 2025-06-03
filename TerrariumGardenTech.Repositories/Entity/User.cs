@@ -34,6 +34,7 @@ public partial class User
     public DateTime? UpdatedAt { get; set; }
 
     public string Status { get; set; }
+    public string FullName { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
