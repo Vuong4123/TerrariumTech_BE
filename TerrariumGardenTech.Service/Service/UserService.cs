@@ -43,12 +43,12 @@ namespace TerrariumGardenTech.Service.Service
                 if (existingUser != null)
                     return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
 
-                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userRequest.Password);
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userRequest.PasswordHash);
 
                 var newUser = new User
                 {
                     Username = userRequest.Username,
-                    Password = hashedPassword,
+                    PasswordHash = hashedPassword,
                     Email = userRequest.Email,
                     FullName = userRequest.FullName,
                     PhoneNumber = userRequest.PhoneNumber,
@@ -87,7 +87,7 @@ namespace TerrariumGardenTech.Service.Service
                 if (user == null)
                     return (Const.FAIL_READ_CODE, "Tên đăng nhập không tồn tại", null);
 
-                if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+                if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                     return (Const.FAIL_READ_CODE, "Mật khẩu không đúng", null);
 
                 var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -170,7 +170,7 @@ namespace TerrariumGardenTech.Service.Service
                 if (!user.EndToken.HasValue || user.EndToken.Value < DateTime.UtcNow)
                     return (Const.FAIL_READ_CODE, "Token đã hết hạn");
 
-                user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
                 user.Token = null;
                 user.StartToken = null;
                 user.EndToken = null;

@@ -769,6 +769,10 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .HasColumnName("username");
+            entity.Property(e => e.FullName)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasColumnName("fullname");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
