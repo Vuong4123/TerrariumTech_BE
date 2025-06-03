@@ -11,10 +11,12 @@ namespace TerrariumGardenTech.Repositories
     public class UnitOfWork
     {
         private TerrariumGardenTechDBContext _unitOfWorkContext;
+        private UserRepository _userRepository;
         private TerrariumRepository _terrariumRepository;
         private CategoryRepository _categoryRepository;
-        private TerrariumCategoryRepository _terrariumCategoryRepository;
         private AccessoryRepository _accessoryRepository;
+        private BlogRepository _blogRepository;
+        private BlogCategoryRepository _blogCategoryRepository;
 
 
         public UnitOfWork()
@@ -25,8 +27,10 @@ namespace TerrariumGardenTech.Repositories
 
         public TerrariumRepository Terrarium {  get { return _terrariumRepository ??= new TerrariumRepository(_unitOfWorkContext); } }
         public CategoryRepository Category { get { return _categoryRepository ??= new CategoryRepository(_unitOfWorkContext); } }
-        public TerrariumCategoryRepository TerrariumCategory { get { return _terrariumCategoryRepository ??= new TerrariumCategoryRepository(_unitOfWorkContext); } }
         public AccessoryRepository Accessory { get { return _accessoryRepository ??= new AccessoryRepository(_unitOfWorkContext); } }
+        public BlogRepository Blog { get { return _blogRepository ??= new BlogRepository(_unitOfWorkContext); } }
+        public UserRepository User { get { return _userRepository ??= new UserRepository(_unitOfWorkContext); } }
+        public BlogCategoryRepository BlogCategory { get { return _blogCategoryRepository ??= new BlogCategoryRepository(_unitOfWorkContext); } }
 
     }
 }
