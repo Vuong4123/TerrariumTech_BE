@@ -94,18 +94,12 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var categoryExists = await _unitOfWork.TerrariumCategory.AnyAsync(c => c.CategoryId == terrariumUpdateRequest.CategoryId);
-
-                if (!categoryExists)
-                {
-                    return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
-                }
-                int result = -1;
+               
                 var terra = await _unitOfWork.Terrarium.GetByIdAsync(terrariumUpdateRequest.TerrariumId);
                 if (terra != null)
                 {
                     _unitOfWork.Terrarium.Context().Entry(terra).CurrentValues.SetValues(terrariumUpdateRequest);
-                    result = await _unitOfWork.Terrarium.UpdateAsync(terra);
+                    var result = await _unitOfWork.Terrarium.UpdateAsync(terra);
                     if (result > 0)
                     {
                         return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, terra);
@@ -131,22 +125,21 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var categoryExists = await _unitOfWork.TerrariumCategory.AnyAsync(c => c.CategoryId == terrariumCreateRequest.CategoryId);
-
-                if (!categoryExists)
-                {
-                    return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
-                }
+                
                 var newTerrarium = new Terrarium
                 {
                     Name = terrariumCreateRequest.Name,
                     Description = terrariumCreateRequest.Description,
                     Price = terrariumCreateRequest.Price,
                     Stock = terrariumCreateRequest.Stock,
-                    CategoryId = terrariumCreateRequest.CategoryId,
+                    Status = terrariumCreateRequest.Status,
+                    Type = terrariumCreateRequest.Type,
+                    Shape = terrariumCreateRequest.Shape,
+                    TankMethod = terrariumCreateRequest.TankMethod,
+                    Theme = terrariumCreateRequest.Theme,
                     CreatedAt = terrariumCreateRequest.CreatedAt ?? DateTime.UtcNow,
                     UpdatedAt = terrariumCreateRequest.UpdatedAt,
-                    Status = terrariumCreateRequest.Status
+                   
                 };
 
                 var result = await _unitOfWork.Terrarium.CreateAsync(newTerrarium);
