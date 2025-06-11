@@ -19,7 +19,27 @@ namespace TerrariumGardenTech.API.Controller
             _userService = userService;
         }
 
-        
+        // tạm cmt lại phần đăng ký user để tránh lỗi không cần thiết
+        //[HttpPost("register")]
+        //public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
+
+        //    var (code, message) = await _userService.RegisterUserAsync(userRequest);
+        //    if (code != Const.SUCCESS_CREATE_CODE)
+        //    {
+        //        if (code == Const.FAIL_CREATE_CODE)
+        //            return Conflict(new { message });
+        //        return BadRequest(new { message });
+        //    }
+
+        //    return Ok(new { message });
+        //}
+
+        // API đăng ký gửi OTP
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
         {
@@ -33,6 +53,19 @@ namespace TerrariumGardenTech.API.Controller
             {
                 if (code == Const.FAIL_CREATE_CODE)
                     return Conflict(new { message });
+                return BadRequest(new { message });
+            }
+
+            return Ok(new { message });
+        }
+
+        // API xác thực OTP
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest verifyOtpRequest)
+        {
+            var (code, message) = await _userService.VerifyOtpAsync(verifyOtpRequest.Email, verifyOtpRequest.Otp);
+            if (code != Const.SUCCESS_CREATE_CODE)
+            {
                 return BadRequest(new { message });
             }
 

@@ -4,17 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Repositories.Repositories
 {
-    public interface IUserRepository
-    {
-        Task<User?> FindByUsernameAsync(string username);
-        Task CreateUserAsync(User user);
-    }
 
-    public class UserRepository : IUserRepository
+    public class UserRepository : GenericRepository<User>
     {
         private readonly TerrariumGardenTechDBContext _context;
 
@@ -23,15 +19,6 @@ namespace TerrariumGardenTech.Repositories.Repositories
             _context = context;
         }
 
-        public async Task<User?> FindByUsernameAsync(string username)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-        }
-
-        public async Task CreateUserAsync(User user)
-        {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-        }
+       
     }
 }

@@ -35,6 +35,8 @@ public partial class User
 
     public string Status { get; set; }
     public string FullName { get; set; }
+    public string Otp { get; set; }
+    public DateTime? OtpExpiration { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
