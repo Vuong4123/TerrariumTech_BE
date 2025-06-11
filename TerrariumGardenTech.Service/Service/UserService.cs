@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
@@ -21,25 +22,67 @@ namespace TerrariumGardenTech.Service.Service
 {
     public class UserService : IUserService
     {
-        private readonly GenericRepository<User> _userRepository;
+        private readonly UnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly SmtpSettings _smtpSettings;
         private readonly ILogger<UserService> _logger;
 
 
-        public UserService(GenericRepository<User> userRepository, IConfiguration configuration, IOptions<SmtpSettings> smtpOptions, ILogger<UserService> logger)
+        public UserService(UnitOfWork unitOfWork, IConfiguration configuration, IOptions<SmtpSettings> smtpOptions, ILogger<UserService> logger)
         {
-            _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
             _configuration = configuration;
             _smtpSettings = smtpOptions.Value;
             _logger = logger;
         }
 
+        // tạm thời bỏ đăng ký người dùng để tránh lỗi do không có RoleId trong UserRegisterRequest
+        //public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
+        //{
+        //    try
+        //    {
+        //        var existingUser = await _unitOfWork.User.FindOneAsync(u => u.Username == userRequest.Username || u.Email == userRequest.Email, false);
+        //        if (existingUser != null)
+        //            return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
+
+        //        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userRequest.PasswordHash);
+
+        //        var newUser = new User
+        //        {
+        //            Username = userRequest.Username,
+        //            PasswordHash = hashedPassword,
+        //            Email = userRequest.Email,
+        //            FullName = userRequest.FullName,
+        //            PhoneNumber = userRequest.PhoneNumber,
+        //            DateOfBirth = userRequest.DateOfBirth,
+        //            Gender = userRequest.Gender,
+        //            CreatedAt = DateTime.UtcNow,
+        //            Status = "Active",
+        //            RoleId = 1  // Mặc định role User, có thể thay đổi theo logic của bạn
+        //        };
+
+        //        await _unitOfWork.User.CreateAsync(newUser);
+        //        return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
+        //    }
+        //    catch (DbUpdateException dbEx)
+        //    {
+        //        var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+        //        _logger.LogError(dbEx, "Lỗi khi tạo tài khoản: {Message}", innerMessage);
+        //        return (Const.ERROR_EXCEPTION, $"Lỗi dữ liệu: {innerMessage}");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Lỗi hệ thống khi tạo tài khoản");
+        //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
+        //    }
+        //}
+
+        // API đăng ký người dùng
         public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
         {
             try
             {
-                var existingUser = await _userRepository.FindOneAsync(u => u.Username == userRequest.Username || u.Email == userRequest.Email, false);
+                var existingUser = await _unitOfWork.User.FindOneAsync(u => u.Username == userRequest.Username || u.Email == userRequest.Email, false);
                 if (existingUser != null)
                     return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
 
@@ -56,21 +99,89 @@ namespace TerrariumGardenTech.Service.Service
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
                     Status = "Active",
-                    RoleId = 1  // Mặc định role User, có thể thay đổi theo logic của bạn
+                    RoleId = 1  // Mặc định role User
                 };
 
-                await _userRepository.CreateAsync(newUser);
+                // Tạo OTP và gửi email
+                var otp = GenerateOtp();
+                await SendOtpEmailAsync(userRequest.Email, otp);
+
+                // Lưu OTP vào cơ sở dữ liệu
+                newUser.Otp = otp;
+                newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(1);  // OTP hết hạn trong 1 phút
+                await _unitOfWork.User.CreateAsync(newUser);
+
                 return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
-                _logger.LogError(dbEx, "Lỗi khi tạo tài khoản: {Message}", innerMessage);
-                return (Const.ERROR_EXCEPTION, $"Lỗi dữ liệu: {innerMessage}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi hệ thống khi tạo tài khoản");
+                _logger.LogError(ex, "Lỗi khi tạo tài khoản");
+                return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
+            }
+        }
+
+        // Tạo OTP ngẫu nhiên
+        private string GenerateOtp()
+        {
+            Random random = new Random();
+            int otp = random.Next(100000, 999999);  // Tạo OTP gồm 6 chữ số
+            return otp.ToString();
+        }
+
+        // Gửi OTP qua email
+        private async Task SendOtpEmailAsync(string toEmail, string otp)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("TerrariumGardenTech", _smtpSettings.Username));
+            message.To.Add(MailboxAddress.Parse(toEmail));
+            message.Subject = "Mã OTP để xác thực tài khoản";
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = $@"
+                    <p>Xin chào,</p>
+                    <p>Bạn vừa đăng ký tài khoản tại TerrariumGardenTech. Mã OTP của bạn là:</p>
+                    <h3>{otp}</h3>
+                    <p>Mã OTP sẽ hết hạn sau 10 phút.</p>
+                    <p>Trân trọng,<br/>TerrariumGardenTech Team</p>"
+            };
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_smtpSettings.Host, _smtpSettings.Port, MailKit.Security.SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_smtpSettings.Username, _smtpSettings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
+
+        // Xác thực OTP
+        public async Task<(int, string)> VerifyOtpAsync(string email, string otp)
+        {
+            try
+            {
+                var user = await _unitOfWork.User.FindOneAsync(u => u.Email == email, false);
+                if (user == null)
+                {
+                    return (Const.FAIL_READ_CODE, "Email không tồn tại");
+                }
+
+                // Kiểm tra OTP và thời gian hết hạn
+                if (user.Otp != otp)
+                {
+                    return (Const.FAIL_READ_CODE, "Mã OTP không đúng");
+                }
+
+                if (user.OtpExpiration < DateTime.UtcNow)
+                {
+                    return (Const.FAIL_READ_CODE, "Mã OTP đã hết hạn");
+                }
+
+                // OTP hợp lệ, có thể tiếp tục đăng ký hoặc thực hiện các hành động khác
+                return (Const.SUCCESS_CREATE_CODE, "OTP xác thực thành công");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi xác thực OTP");
                 return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
             }
         }
@@ -80,7 +191,7 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 // Load user kèm Role để phân quyền chính xác
-                var user = await _userRepository.Context().Users
+                var user = await _unitOfWork.User.Context().Users
                                   .Include(u => u.Role)
                                   .FirstOrDefaultAsync(u => u.Username == username);
 
@@ -127,7 +238,7 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var user = await _userRepository.FindOneAsync(u => u.Email == email, false);
+                var user = await _unitOfWork.User.FindOneAsync(u => u.Email == email, false);
                 if (user == null)
                     return (Const.FAIL_READ_CODE, "Email không tồn tại");
 
@@ -137,7 +248,7 @@ namespace TerrariumGardenTech.Service.Service
                 user.StartToken = DateTime.UtcNow;
                 user.EndToken = DateTime.UtcNow.AddHours(1);
 
-                await _userRepository.UpdateAsync(user);
+                await _unitOfWork.User.UpdateAsync(user);
 
                 var resetLink = $"https://your-frontend-domain/reset-password?token={resetToken}";
 
@@ -163,7 +274,7 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var user = await _userRepository.FindOneAsync(u => u.Token == token, false);
+                var user = await _unitOfWork.User.FindOneAsync(u => u.Token == token, false);
                 if (user == null)
                     return (Const.FAIL_READ_CODE, "Token không hợp lệ");
 
@@ -175,7 +286,7 @@ namespace TerrariumGardenTech.Service.Service
                 user.StartToken = null;
                 user.EndToken = null;
 
-                await _userRepository.UpdateAsync(user);
+                await _unitOfWork.User.UpdateAsync(user);
                 return (Const.SUCCESS_CREATE_CODE, "Đổi mật khẩu thành công");
             }
             catch (Exception)

@@ -14,6 +14,8 @@ namespace TerrariumGardenTech.Service.IService
         Task<(int, string, string)> LoginAsync(string username, string password);
         Task<(int, string)> SendPasswordResetTokenAsync(string email);
         Task<(int, string)> ResetPasswordAsync(string token, string newPassword);
+        Task<(int, string)> VerifyOtpAsync(string email, string otp);
+
     }
 
 }
