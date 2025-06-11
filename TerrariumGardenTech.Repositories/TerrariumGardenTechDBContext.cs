@@ -742,7 +742,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(100)
                 .HasColumnName("email");
-            entity.Property(e => e.EndToken).HasColumnName("endToken");
+            entity.Property(e => e.EndToken).HasDefaultValueSql("(sysutcdatetime())").HasColumnName("endToken");
             entity.Property(e => e.Gender)
                 .HasMaxLength(10)
                 .HasColumnName("gender");
@@ -773,6 +773,14 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .HasColumnName("fullname");
+            entity.Property(e => e.Otp)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasColumnName("otp");
+            entity.Property(e => e.OtpExpiration)
+                .IsRequired()
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("otpExpiration");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
