@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -29,8 +30,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     {
         IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", true, true).Build();
-        return configuration["ConnectionStrings:DefaultConnectionString"];
+                .AddJsonFile("appsettings.json", true, true).AddEnvironmentVariables().Build();
+        return configuration.GetConnectionString("DefaultConnectionString"); 
     }
 
     public virtual DbSet<Accessory> Accessories { get; set; }
