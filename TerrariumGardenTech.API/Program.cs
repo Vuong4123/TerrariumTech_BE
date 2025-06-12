@@ -12,16 +12,21 @@ using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using DotNetEnv;
+
+Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
+var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
 
 // Lấy cấu hình JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings.GetValue<string>("SecretKey");
-
-// Đăng ký DbContext với chuỗi kết nối
 builder.Services.AddDbContext<TerrariumGardenTechDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnectionString");
+    options.UseSqlServer(connectionString);
+});
 
 // Đăng ký Repository và UnitOfWork
 builder.Services.AddScoped(typeof(GenericRepository<>));
