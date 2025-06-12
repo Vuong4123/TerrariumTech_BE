@@ -34,11 +34,16 @@ public partial class User
     public DateTime? UpdatedAt { get; set; }
 
     public string Status { get; set; }
+
     public string FullName { get; set; }
+
     public string Otp { get; set; }
+
     public DateTime? OtpExpiration { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
+
+    public virtual ICollection<AisuggestLayout> AisuggestLayouts { get; set; } = new List<AisuggestLayout>();
 
     public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
 
