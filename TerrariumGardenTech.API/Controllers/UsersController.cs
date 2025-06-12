@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
+using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.API.Controller
 {
@@ -144,6 +145,24 @@ namespace TerrariumGardenTech.API.Controller
         public IActionResult GetStaffData()
         {
             return Ok(new { message = "Dữ liệu dành cho Staff, Manager hoặc Admin." });
+        }
+
+        // API đăng nhập với Google
+        [HttpPost("login-google")]
+        public async Task<IBusinessResult> LoginWithGoogle([FromBody] GoogleLoginRequest googleLoginRequest)
+        {
+            if (string.IsNullOrEmpty(googleLoginRequest.AccessToken))
+            {
+                return new BusinessResult(Const.FAIL_READ_CODE, "Access token không hợp lệ", null);
+            }
+
+            var result = await _userService.GoogleLoginAsync(googleLoginRequest.AccessToken);
+            if (result.Status == Const.SUCCESS_READ_CODE)
+            {
+                return new BusinessResult(result.Status, result.Message, result.Data);
+            }
+
+            return new BusinessResult(result.Status, result.Message, null);
         }
     }
 }

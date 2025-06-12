@@ -22,11 +22,14 @@ public partial class Accessory
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
-    public string Status { get; set; } = "Available";
+
+    public string Status { get; set; }
 
     public virtual ICollection<AccessoryImage> AccessoryImages { get; set; } = new List<AccessoryImage>();
 
     public virtual Category Category { get; set; }
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    public virtual ICollection<Terrarium> Terraria { get; set; } = new List<Terrarium>();
 }

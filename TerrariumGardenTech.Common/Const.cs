@@ -11,6 +11,8 @@ namespace TerrariumGardenTech.Common
         #region Error Codes
 
         public static int ERROR_EXCEPTION = -4;
+        public static int ERROR_EXCEPTION_CODE_LOGINGOOGLE = -5;
+        public static string ERROR_EXCEPTION_MSG_LOGINGOOGLE = "Unable to get information from Google";
 
         #endregion
 
