@@ -8,8 +8,6 @@ namespace TerrariumGardenTech.Service.RequestModel.Auth
 {
     public class UserRegisterRequest
     {
-        public int UserId { get; set; }
-
         public string Username { get; set; }
 
         public string PasswordHash { get; set; }

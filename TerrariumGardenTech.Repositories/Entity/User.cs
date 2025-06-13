@@ -23,7 +23,7 @@ public partial class User
 
     public int? RoleId { get; set; }
 
-    public string Token { get; set; }
+    public string? Token { get; set; }
 
     public DateTime? StartToken { get; set; }
 
@@ -37,6 +37,8 @@ public partial class User
     public string FullName { get; set; }
     public string Otp { get; set; }
     public DateTime? OtpExpiration { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiryDate { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 

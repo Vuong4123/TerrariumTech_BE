@@ -8,6 +8,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
 
@@ -94,11 +95,49 @@ builder.Services.AddAuthentication(options =>
 // Đăng ký Controller
 builder.Services.AddControllers();
 
+//// Cấu hình Swagger/OpenAPI
+//builder.Services.AddSwaggerGen(c =>
+//{
+//    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TerrariumGardenTech API", Version = "v1" });
+
+//    // Cấu hình JWT trong Swagger để có nút Authorize
+//    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+//    {
+//        Description = @"JWT Authorization header using the Bearer scheme. 
+//                        Enter 'Bearer' [space] and then your token in the text input below.
+//                        Example: 'Bearer abcdef12345'",
+//        Name = "Authorization",
+//        In = ParameterLocation.Header,
+//        Type = SecuritySchemeType.ApiKey,
+//        Scheme = "Bearer"
+//    });
+
+//    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+//    {
+//        {
+//            new OpenApiSecurityScheme
+//            {
+//                Reference = new OpenApiReference
+//                {
+//                    Type = ReferenceType.SecurityScheme,
+//                    Id = "Bearer"
+//                },
+//                Scheme = "oauth2",
+//                Name = "Bearer",
+//                In = ParameterLocation.Header,
+//            },
+//            new List<string>()
+//        }
+//    });
+//});
+
 // Cấu hình Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TerrariumGardenTech API", Version = "v1" });
 
+    // Thêm OperationFilter để hiển thị Authorization cho refresh-token
+    c.OperationFilter<AddAuthorizationHeaderOperationFilter>();
     // Cấu hình JWT trong Swagger để có nút Authorize
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -128,26 +167,51 @@ builder.Services.AddSwaggerGen(c =>
             new List<string>()
         }
     });
+
+    
 });
 
 var app = builder.Build();
+
+//// Middleware trả về JSON khi lỗi 401 hoặc 403
+//app.Use(async (context, next) =>
+//{
+//    await next();
+
+//    if (context.Response.StatusCode == 401)
+//    {
+//        context.Response.ContentType = "application/json";
+//        await context.Response.WriteAsync("{\"message\":\"Chưa xác thực, vui lòng đăng nhập.\"}");
+//    }
+//    else if (context.Response.StatusCode == 403)
+//    {
+//        context.Response.ContentType = "application/json";
+//        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
+//    }
+//});
 
 // Middleware trả về JSON khi lỗi 401 hoặc 403
 app.Use(async (context, next) =>
 {
     await next();
 
-    if (context.Response.StatusCode == 401)
+    // Kiểm tra nếu response đã bắt đầu thì không thực hiện ghi dữ liệu thêm
+    if (!context.Response.HasStarted)
     {
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync("{\"message\":\"Chưa xác thực, vui lòng đăng nhập.\"}");
-    }
-    else if (context.Response.StatusCode == 403)
-    {
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
+        if (context.Response.StatusCode == 401)
+        {
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"message\":\"Chưa xác thực, vui lòng đăng nhập.\"}");
+        }
+        else if (context.Response.StatusCode == 403)
+        {
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
+        }
     }
 });
+
+
 
 app.UseHttpsRedirection();
 
@@ -167,3 +231,4 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 app.MapControllers();
 
 app.Run();
+
