@@ -17,6 +17,28 @@ using DotNetEnv;
 Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Thêm dịch vụ CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        // Chỉ cho phép yêu cầu từ địa chỉ cụ thể (ví dụ: frontend đang chạy trên localhost:5173)
+        policy.WithOrigins("http://localhost:5173")  // Địa chỉ của frontend
+              .AllowAnyMethod()     // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
+              .AllowAnyHeader();    // Cho phép bất kỳ header nào trong yêu cầu
+    });
+
+    // Hoặc bạn có thể cho phép tất cả các nguồn:
+    // options.AddPolicy("AllowAll", policy =>
+    // {
+    //     policy.AllowAnyOrigin()
+    //           .AllowAnyMethod()
+    //           .AllowAnyHeader();
+    // });
+});
+
+
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
 
 // Lấy cấu hình JWT
@@ -27,6 +49,7 @@ builder.Services.AddDbContext<TerrariumGardenTechDBContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnectionString");
     options.UseSqlServer(connectionString);
 });
+
 
 // Đăng ký Repository và UnitOfWork
 builder.Services.AddScoped(typeof(GenericRepository<>));
@@ -168,6 +191,11 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
     }
 });
+
+
+// Áp dụng middleware CORS
+app.UseCors("AllowSpecificOrigin");  // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
+
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
