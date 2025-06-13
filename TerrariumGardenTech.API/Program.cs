@@ -13,16 +13,44 @@ using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using DotNetEnv;
+
+Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Thêm dịch vụ CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        // Chỉ cho phép yêu cầu từ địa chỉ cụ thể (ví dụ: frontend đang chạy trên localhost:5173)
+        policy.WithOrigins("http://localhost:5173")  // Địa chỉ của frontend
+              .AllowAnyMethod()     // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
+              .AllowAnyHeader();    // Cho phép bất kỳ header nào trong yêu cầu
+    });
+
+    // Hoặc bạn có thể cho phép tất cả các nguồn:
+    // options.AddPolicy("AllowAll", policy =>
+    // {
+    //     policy.AllowAnyOrigin()
+    //           .AllowAnyMethod()
+    //           .AllowAnyHeader();
+    // });
+});
+
+
+var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
 
 // Lấy cấu hình JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings.GetValue<string>("SecretKey");
-
-// Đăng ký DbContext với chuỗi kết nối
 builder.Services.AddDbContext<TerrariumGardenTechDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnectionString");
+    options.UseSqlServer(connectionString);
+});
+
 
 // Đăng ký Repository và UnitOfWork
 builder.Services.AddScoped(typeof(GenericRepository<>));
@@ -226,6 +254,10 @@ app.Use(async (context, next) =>
     }
 });
 
+
+
+// Áp dụng middleware CORS
+app.UseCors("AllowSpecificOrigin");  // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
 
 
 app.UseHttpsRedirection();
