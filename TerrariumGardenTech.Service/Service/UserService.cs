@@ -9,12 +9,14 @@ using MimeKit;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
 
@@ -77,7 +79,6 @@ namespace TerrariumGardenTech.Service.Service
         //    }
         //}
 
-        // API đăng ký người dùng
         public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
         {
             try
@@ -98,7 +99,7 @@ namespace TerrariumGardenTech.Service.Service
                     DateOfBirth = userRequest.DateOfBirth,
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
-                    Status = "Active",
+                    Status = "Unactive",
                     RoleId = 1  // Mặc định role User
                 };
 
@@ -108,8 +109,12 @@ namespace TerrariumGardenTech.Service.Service
 
                 // Lưu OTP vào cơ sở dữ liệu
                 newUser.Otp = otp;
-                newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(1);  // OTP hết hạn trong 1 phút
+                newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(10);  // OTP hết hạn trong 10 phút
                 await _unitOfWork.User.CreateAsync(newUser);
+                if (string.IsNullOrEmpty(userRequest.Username) || string.IsNullOrEmpty(userRequest.PasswordHash) || string.IsNullOrEmpty(userRequest.Email))
+                {
+                    return (Const.FAIL_CREATE_CODE, "Dữ liệu không hợp lệ");
+                }
 
                 return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
             }
@@ -120,7 +125,6 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        // Tạo OTP ngẫu nhiên
         private string GenerateOtp()
         {
             Random random = new Random();
@@ -128,7 +132,6 @@ namespace TerrariumGardenTech.Service.Service
             return otp.ToString();
         }
 
-        // Gửi OTP qua email
         private async Task SendOtpEmailAsync(string toEmail, string otp)
         {
             var message = new MimeMessage();
@@ -142,7 +145,7 @@ namespace TerrariumGardenTech.Service.Service
                     <p>Xin chào,</p>
                     <p>Bạn vừa đăng ký tài khoản tại TerrariumGardenTech. Mã OTP của bạn là:</p>
                     <h3>{otp}</h3>
-                    <p>Mã OTP sẽ hết hạn sau 10 phút.</p>
+                    <p>Mã OTP sẽ hết hạn sau 1 phút.</p>
                     <p>Trân trọng,<br/>TerrariumGardenTech Team</p>"
             };
             message.Body = bodyBuilder.ToMessageBody();
@@ -154,7 +157,6 @@ namespace TerrariumGardenTech.Service.Service
             await client.DisconnectAsync(true);
         }
 
-        // Xác thực OTP
         public async Task<(int, string)> VerifyOtpAsync(string email, string otp)
         {
             try
@@ -166,17 +168,16 @@ namespace TerrariumGardenTech.Service.Service
                 }
 
                 // Kiểm tra OTP và thời gian hết hạn
-                if (user.Otp != otp)
+                if (user.Otp == null || user.Otp != otp)
                 {
                     return (Const.FAIL_READ_CODE, "Mã OTP không đúng");
                 }
 
-                if (user.OtpExpiration < DateTime.UtcNow)
+                if (user.OtpExpiration == null || user.OtpExpiration < DateTime.UtcNow)
                 {
                     return (Const.FAIL_READ_CODE, "Mã OTP đã hết hạn");
                 }
-
-                // OTP hợp lệ, có thể tiếp tục đăng ký hoặc thực hiện các hành động khác
+                user.Status = "Active";  // Kích hoạt tài khoản sau khi xác thực OTP
                 return (Const.SUCCESS_CREATE_CODE, "OTP xác thực thành công");
             }
             catch (Exception ex)
@@ -186,33 +187,35 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public async Task<(int, string, string)> LoginAsync(string username, string password)
+
+        public async Task<(int, string, string, string)> LoginAsync(string username, string password)
         {
             try
             {
-                // Load user kèm Role để phân quyền chính xác
                 var user = await _unitOfWork.User.Context().Users
-                                  .Include(u => u.Role)
-                                  .FirstOrDefaultAsync(u => u.Username == username);
+                                          .FirstOrDefaultAsync(u => u.Username == username);
 
                 if (user == null)
-                    return (Const.FAIL_READ_CODE, "Tên đăng nhập không tồn tại", null);
+                    return (Const.FAIL_READ_CODE, "Tên đăng nhập không tồn tại", null, null);
+
+                if (user.PasswordHash == null)
+                    return (Const.FAIL_READ_CODE, "Mật khẩu không đúng", null, null);
 
                 if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                    return (Const.FAIL_READ_CODE, "Mật khẩu không đúng", null);
+                    return (Const.FAIL_READ_CODE, "Mật khẩu không đúng", null, null);
 
+                // Tạo JWT Token
                 var jwtSettings = _configuration.GetSection("JwtSettings");
                 var secretKey = jwtSettings.GetValue<string>("SecretKey");
                 var issuer = jwtSettings.GetValue<string>("Issuer");
                 var audience = jwtSettings.GetValue<string>("Audience");
                 var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
 
-                var claims = new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-                    new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")  // Phân quyền theo RoleName
-                };
+                var claims = new[] {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")
+        };
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -226,13 +229,81 @@ namespace TerrariumGardenTech.Service.Service
                 );
 
                 var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+                // Tạo refresh token
+                var refreshToken = GenerateRefreshToken();
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryDate = DateTime.UtcNow.AddDays(7); // Refresh token hết hạn sau 7 ngày
+
+                await _unitOfWork.User.UpdateAsync(user);
+
+                return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, jwtToken, refreshToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi đăng nhập");
+                return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại", null, null);
+            }
+        }
+
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+            }
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        public async Task<(int, string, string)> RefreshTokenAsync(string refreshToken)
+        {
+            try
+            {
+                var user = await _unitOfWork.User.Context().Users
+                        .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+
+                if (user == null || !user.RefreshTokenExpiryDate.HasValue || user.RefreshTokenExpiryDate.Value <= DateTime.UtcNow)
+                {
+                    return (Const.FAIL_READ_CODE, "Refresh token không hợp lệ hoặc đã hết hạn", null);
+                }
+
+                // Tạo lại JWT token
+                var jwtSettings = _configuration.GetSection("JwtSettings");
+                var secretKey = jwtSettings.GetValue<string>("SecretKey");
+                var issuer = jwtSettings.GetValue<string>("Issuer");
+                var audience = jwtSettings.GetValue<string>("Audience");
+                var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
+
+                var claims = new[] {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")
+        };
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    issuer,
+                    audience,
+                    claims,
+                    expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
+                    signingCredentials: creds
+                );
+
+                var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+
                 return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, jwtToken);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Lỗi khi làm mới token");
                 return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại", null);
             }
         }
+
 
         public async Task<(int, string)> SendPasswordResetTokenAsync(string email)
         {
