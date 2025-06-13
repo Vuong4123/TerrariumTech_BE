@@ -866,6 +866,12 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("FK_User_Role");
+            entity.Property(e => e.RefreshToken)
+                .HasMaxLength(255)
+                .HasColumnName("refreshToken");
+            entity.Property(e => e.RefreshTokenExpiryDate)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("refreshTokenExpiryDate");
         });
 
         modelBuilder.Entity<Voucher>(entity =>

@@ -73,10 +73,38 @@ namespace TerrariumGardenTech.API.Controller
             return Ok(new { message });
         }
 
+        //[HttpPost("login")]
+        //public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+        //{
+        //    var (code, message, token) = await _userService.LoginAsync(loginRequest.Username, loginRequest.Password);
+        //    if (code != Const.SUCCESS_READ_CODE || string.IsNullOrEmpty(token))
+        //    {
+        //        return Unauthorized(new { message });
+        //    }
+
+        //    return Ok(new { token });
+        //}
+        // Đăng nhập và trả về Access Token + Refresh Token
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
-            var (code, message, token) = await _userService.LoginAsync(loginRequest.Username, loginRequest.Password);
+            var (code, message, token, refreshToken) = await _userService.LoginAsync(loginRequest.Username, loginRequest.Password);
+
+            if (code != Const.SUCCESS_READ_CODE || string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message });
+            }
+
+            return Ok(new { token, refreshToken });
+        }
+
+        // API làm mới token
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest)
+        {
+            var (code, message, token) = await _userService.RefreshTokenAsync(refreshTokenRequest.RefreshToken);
+
             if (code != Const.SUCCESS_READ_CODE || string.IsNullOrEmpty(token))
             {
                 return Unauthorized(new { message });
@@ -84,6 +112,9 @@ namespace TerrariumGardenTech.API.Controller
 
             return Ok(new { token });
         }
+
+
+
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
