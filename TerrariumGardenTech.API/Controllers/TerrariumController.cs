@@ -18,7 +18,7 @@ namespace TerrariumGardenTech.API.Controllers
         public TerrariumController(ITerrariumService terrariumService)
         {
             _terrariumService = terrariumService;
-        }   
+        }
         // GET: api/<TerrariumController>
         [HttpGet]
         public async Task<IBusinessResult> Get()
@@ -49,6 +49,47 @@ namespace TerrariumGardenTech.API.Controllers
                 AccessoryId = t.AccessoryId ?? 0,// If nullable, default to 0 if null
                 Size = t.Size,
                 BodyHTML = t.bodyHTML
+            }).ToList();
+
+            if (terrariums == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+            }
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
+
+        }
+
+        // GET: api/<TerrariumController>
+        [HttpGet("details")]
+        public async Task<IBusinessResult> GetDetail()
+        {
+            var result = await _terrariumService.GetAll();
+
+            // Check if result or result.Data is null
+            if (result == null || result.Data == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+            }
+
+            // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
+            var terrariums = (result.Data as IEnumerable<Terrarium>)?.Select(t => new TerrariumDetailResponse
+            {
+                TerrariumId = t.TerrariumId,
+                Name = t.Name,
+                Description = t.Description,
+                Price = (decimal)t.Price,
+                //Stock = t.Stock,
+                //Status = t.Status,
+                //Type = t.Type,
+                //Shape = t.Shape,
+                //TankMethod = t.TankMethod,
+                //Theme = t.Theme,
+                //CreatedAt = t.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+                //UpdatedAt = t.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
+                //AccessoryId = t.AccessoryId ?? 0,// If nullable, default to 0 if null
+                //Size = t.Size,
+                //BodyHTML = t.bodyHTML
             }).ToList();
 
             if (terrariums == null)
