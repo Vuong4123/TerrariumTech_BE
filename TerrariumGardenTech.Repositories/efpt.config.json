@@ -31,6 +31,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[AISuggestLayout]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Blog]",
          "ObjectType": 0
       },
@@ -75,6 +79,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[PaymentTransition]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Personalize]",
          "ObjectType": 0
       },
@@ -96,6 +104,10 @@
       },
       {
          "Name": "[dbo].[Role]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ShippingDetail]",
          "ObjectType": 0
       },
       {

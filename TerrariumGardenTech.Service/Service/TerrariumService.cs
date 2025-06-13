@@ -139,7 +139,10 @@ namespace TerrariumGardenTech.Service.Service
                     Theme = terrariumCreateRequest.Theme,
                     CreatedAt = terrariumCreateRequest.CreatedAt ?? DateTime.UtcNow,
                     UpdatedAt = terrariumCreateRequest.UpdatedAt,
-                   
+                    AccessoryId = terrariumCreateRequest.AccessoryId,
+                    Size = terrariumCreateRequest.Size,
+                    bodyHTML = terrariumCreateRequest.bodyHTML
+
                 };
 
                 var result = await _unitOfWork.Terrarium.CreateAsync(newTerrarium);

@@ -16,6 +16,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
@@ -381,6 +382,83 @@ namespace TerrariumGardenTech.Service.Service
             await client.AuthenticateAsync(_smtpSettings.Username, _smtpSettings.Password);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
+        }
+
+        public async Task<IBusinessResult> GoogleLoginAsync(string accessToken)
+        {
+            try
+            {
+                var httpClient = new HttpClient();
+                var googleApiUrl = $"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={accessToken}";
+
+                // Lấy thông tin người dùng từ Google API
+                var response = await httpClient.GetStringAsync(googleApiUrl);
+
+                if (string.IsNullOrEmpty(response))
+                    return new BusinessResult (Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE, null);
+
+                // Giả sử `response` chứa JSON của người dùng, bạn có thể parse nó và lấy các thông tin cần thiết
+                var userInfo = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfo>(response);
+
+                // Kiểm tra người dùng có trong hệ thống chưa
+                var existingUser = await _unitOfWork.User.FindOneAsync(u => u.Email == userInfo.Email, false);
+                if (existingUser == null)
+                {
+                    // Nếu người dùng chưa tồn tại, tạo mới người dùng
+                    var newUser = new User
+                    {
+                        Username = userInfo.Email.Split('@')[0],  // Sử dụng email làm username
+                        Email = userInfo.Email,
+                        FullName = userInfo.Name,
+                        PasswordHash = "123456789", // Mật khẩu tạm thời khi login bằng gg, có thể thay đổi sau
+                        CreatedAt = DateTime.UtcNow,
+                        Status = "Active",
+                        RoleId = 1 // Mặc định role User
+                    };
+
+                    await _unitOfWork.User.CreateAsync(newUser);
+                    existingUser = newUser;
+                }
+
+                // Tạo JWT cho người dùng
+                var token = GenerateJwtToken(existingUser);
+
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "Đăng nhập Google thành công", token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi đăng nhập Google");
+                return new BusinessResult(Const.FAIL_LOGIN_CODE, Const.FAIL_LOGIN_MSG, null);
+            }
+        }
+
+        private string GenerateJwtToken(User user)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings.GetValue<string>("SecretKey");
+            var issuer = jwtSettings.GetValue<string>("Issuer");
+            var audience = jwtSettings.GetValue<string>("Audience");
+            var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+                new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer,
+                audience,
+                claims,
+                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

@@ -31,6 +31,14 @@ public partial class Terrarium
 
     public DateTime? UpdatedAt { get; set; }
 
+    public int? AccessoryId { get; set; }
+
+    public string Size { get; set; }
+
+    public string bodyHTML { get; set; }
+
+    public virtual Accessory Accessory { get; set; }
+
     public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = new List<TerrariumImage>();
 
     public virtual ICollection<TerrariumVariant> TerrariumVariants { get; set; } = new List<TerrariumVariant>();
