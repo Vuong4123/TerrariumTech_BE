@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Terrarium;
+using TerrariumGardenTech.Service.ResponseModel.Terrarium;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -21,7 +23,41 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpGet]
         public async Task<IBusinessResult> Get()
         {
-            return await _terrariumService.GetAll();
+            var result =  await _terrariumService.GetAll();
+
+            // Check if result or result.Data is null
+            if (result == null || result.Data == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+            }
+
+            // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
+            var terrariums = (result.Data as IEnumerable<Terrarium>)?.Select(t => new TerrariumResponse
+            {
+                TerrariumId = t.TerrariumId,
+                Name = t.Name,
+                Description = t.Description,
+                Price = (decimal)t.Price,
+                Stock = t.Stock,
+                Status = t.Status,
+                Type = t.Type,
+                Shape = t.Shape,
+                TankMethod = t.TankMethod,
+                Theme = t.Theme,
+                CreatedAt = t.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+                UpdatedAt = t.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
+                AccessoryId = t.AccessoryId ?? 0,// If nullable, default to 0 if null
+                Size = t.Size,
+                BodyHTML = t.bodyHTML
+            }).ToList();
+
+            if (terrariums == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+            }
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
+
         }
 
         // GET api/<TerrariumController>/5

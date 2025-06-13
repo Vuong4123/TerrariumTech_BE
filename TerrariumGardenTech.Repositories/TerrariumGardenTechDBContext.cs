@@ -41,6 +41,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<AddressDelivery> AddressDeliveries { get; set; }
 
+    public virtual DbSet<AisuggestLayout> AisuggestLayouts { get; set; }
+
     public virtual DbSet<Blog> Blogs { get; set; }
 
     public virtual DbSet<BlogCategory> BlogCategories { get; set; }
@@ -63,6 +65,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<OrderItemDetail> OrderItemDetails { get; set; }
 
+    public virtual DbSet<PaymentTransition> PaymentTransitions { get; set; }
+
     public virtual DbSet<Personalize> Personalizes { get; set; }
 
     public virtual DbSet<Promotion> Promotions { get; set; }
@@ -74,6 +78,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<ReturnExchangeRequestItem> ReturnExchangeRequestItems { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<ShippingDetail> ShippingDetails { get; set; }
 
     public virtual DbSet<Terrarium> Terraria { get; set; }
 
@@ -105,6 +111,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.Property(e => e.Price)
                 .HasColumnType("decimal(12, 2)")
                 .HasColumnName("price");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("Available")
+                .HasColumnName("status");
             entity.Property(e => e.StockQuantity).HasColumnName("stockQuantity");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(sysutcdatetime())")
@@ -114,10 +125,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Accessory_Category");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("Available")
-                .HasColumnName("status");
         });
 
         modelBuilder.Entity<AccessoryImage>(entity =>
@@ -214,6 +221,25 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AddressDelivery_Order");
+        });
+
+        modelBuilder.Entity<AisuggestLayout>(entity =>
+        {
+            entity.HasKey(e => e.LayoutId).HasName("PK__AISugges__023A37EFFA219D01");
+
+            entity.ToTable("AISuggestLayout");
+
+            entity.Property(e => e.LayoutId).HasColumnName("layoutId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.LayoutData).HasColumnName("layoutData");
+            entity.Property(e => e.UserId).HasColumnName("userId");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AisuggestLayouts)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AISuggestLayout_User");
         });
 
         modelBuilder.Entity<Blog>(entity =>
@@ -493,6 +519,34 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_OrderItemDetail_OrderItem");
         });
 
+        modelBuilder.Entity<PaymentTransition>(entity =>
+        {
+            entity.HasKey(e => e.PaymentId).HasName("PK__PaymentT__A0D9EFC6B78D0C95");
+
+            entity.ToTable("PaymentTransition");
+
+            entity.Property(e => e.PaymentId).HasColumnName("paymentId");
+            entity.Property(e => e.OrderId).HasColumnName("orderId");
+            entity.Property(e => e.PaymentAmount)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("paymentAmount");
+            entity.Property(e => e.PaymentDate)
+                .HasDefaultValueSql("(sysutcdatetime())")
+                .HasColumnName("paymentDate");
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(50)
+                .HasColumnName("paymentMethod");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("pending")
+                .HasColumnName("status");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.PaymentTransitions)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PaymentTransition_Order");
+        });
+
         modelBuilder.Entity<Personalize>(entity =>
         {
             entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__8032E374C56CF71E");
@@ -640,6 +694,33 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasColumnName("roleName");
         });
 
+        modelBuilder.Entity<ShippingDetail>(entity =>
+        {
+            entity.HasKey(e => e.ShippingDetailId).HasName("PK__Shipping__DDF63975E50C620D");
+
+            entity.ToTable("ShippingDetail");
+
+            entity.Property(e => e.ShippingDetailId).HasColumnName("shippingDetailId");
+            entity.Property(e => e.EstimatedDeliveryDate)
+                .HasColumnType("date")
+                .HasColumnName("estimatedDeliveryDate");
+            entity.Property(e => e.OrderId).HasColumnName("orderId");
+            entity.Property(e => e.ShippingCost)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("shippingCost");
+            entity.Property(e => e.ShippingMethod)
+                .HasMaxLength(50)
+                .HasColumnName("shippingMethod");
+            entity.Property(e => e.TrackingNumber)
+                .HasMaxLength(100)
+                .HasColumnName("trackingNumber");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.ShippingDetails)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ShippingDetail_Order");
+        });
+
         modelBuilder.Entity<Terrarium>(entity =>
         {
             entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__1AE69F91279E10EB");
@@ -647,6 +728,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.ToTable("Terrarium");
 
             entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
+            entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("createdAt");
@@ -660,6 +742,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.Property(e => e.Shape)
                 .HasMaxLength(100)
                 .HasColumnName("shape");
+            entity.Property(e => e.Size).HasMaxLength(20);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .HasDefaultValue("Available")
@@ -674,9 +757,16 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.Property(e => e.Type)
                 .HasMaxLength(100)
                 .HasColumnName("type");
+            entity.Property(e => e.bodyHTML)
+                .HasMaxLength(200)
+                .HasColumnName("bodyHTML");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("updatedAt");
+
+            entity.HasOne(d => d.Accessory).WithMany(p => p.Terraria)
+                .HasForeignKey(d => d.AccessoryId)
+                .HasConstraintName("FK_Terrarium_Accessory");
         });
 
         modelBuilder.Entity<TerrariumImage>(entity =>
@@ -742,10 +832,12 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(100)
                 .HasColumnName("email");
-            entity.Property(e => e.EndToken).HasDefaultValueSql("(sysutcdatetime())").HasColumnName("endToken");
+            entity.Property(e => e.EndToken).HasColumnName("endToken");
+            entity.Property(e => e.FullName).HasMaxLength(60);
             entity.Property(e => e.Gender)
                 .HasMaxLength(10)
                 .HasColumnName("gender");
+            entity.Property(e => e.Otp).HasMaxLength(50);
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255)
@@ -769,18 +861,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50)
                 .HasColumnName("username");
-            entity.Property(e => e.FullName)
-                .IsRequired()
-                .HasMaxLength(50)
-                .HasColumnName("fullname");
-            entity.Property(e => e.Otp)
-                .IsRequired()
-                .HasMaxLength(50)
-                .HasColumnName("otp");
-            entity.Property(e => e.OtpExpiration)
-                .IsRequired()
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("otpExpiration");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
