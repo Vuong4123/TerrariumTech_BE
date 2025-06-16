@@ -125,6 +125,11 @@ namespace TerrariumGardenTech.Repositories.Base
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().Where(predicate).ToListAsync();
+        }
+
 
 
     }

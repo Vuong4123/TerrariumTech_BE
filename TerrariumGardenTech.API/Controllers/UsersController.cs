@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
+using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
-using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controller
 {
@@ -14,10 +16,12 @@ namespace TerrariumGardenTech.API.Controller
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ILogger<UserService> _logger;
 
         public UsersController(IUserService userService)
         {
             _userService = userService;
+            _logger = _logger; // Ensure this is initialized properly
         }
 
         // tạm cmt lại phần đăng ký user để tránh lỗi không cần thiết
@@ -145,14 +149,41 @@ namespace TerrariumGardenTech.API.Controller
             return Ok(new { message });
         }
 
+
         // API yêu cầu user đã đăng nhập (tất cả role)
+        //[Authorize(Roles = "User,Staff,Manager,Admin")]
+        //[HttpGet("profile")]
+        //public IActionResult GetProfile()
+        //{
+        //    var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown";
+        //    return Ok(new { message = $"Hello {username}, đây là profile của bạn." });
+        //}
+
         [Authorize(Roles = "User,Staff,Manager,Admin")]
         [HttpGet("profile")]
         public IActionResult GetProfile()
         {
-            var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown";
-            return Ok(new { message = $"Hello {username}, đây là profile của bạn." });
+            try
+            {
+                // Lấy giá trị username từ claim UniqueName
+                var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Name)?.Value;
+
+                // Nếu không tìm thấy claim UniqueName, trả về lỗi
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(new { message = "Không tìm thấy tên người dùng trong token." });
+                }
+
+                return Ok(new { message = $"Hello {username}, đây là profile của bạn." });
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nếu có bất kỳ lỗi nào xảy ra
+                _logger.LogError(ex, "Lỗi khi lấy thông tin profile người dùng.");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống." });
+            }
         }
+
 
         // API chỉ cho phép Admin truy cập
         [Authorize(Roles = "Admin")]
