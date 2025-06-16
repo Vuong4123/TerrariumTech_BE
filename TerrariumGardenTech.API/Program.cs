@@ -63,6 +63,7 @@ builder.Services.AddScoped<IAccessoryService, AccessoryService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
+builder.Services.AddScoped<IMembershipService, MembershipService>();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
