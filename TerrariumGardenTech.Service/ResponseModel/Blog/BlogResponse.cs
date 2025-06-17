@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TerrariumGardenTech.Service.RequestModel.Blog
+namespace TerrariumGardenTech.Service.ResponseModel.Blog
 {
-    public class BlogCreateRequest
+    public class BlogResponse
     {
+        public int BlogId { get; set; }
 
         public int UserId { get; set; }
 

@@ -22,7 +22,7 @@ namespace TerrariumGardenTech.Service.Service
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
-        public async Task<IBusinessResult> GetAll()
+        public async Task<IBusinessResult> GetAllBlogCategory()
         {
             var blogCategories = await _unitOfWork.BlogCategory.GetAllAsync();
             if (blogCategories != null && blogCategories.Any())
@@ -87,7 +87,7 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> UpdateBlogCategory(BlogCategoryRequest blogCategoryRequest)
+        public async Task<IBusinessResult> UpdateBlogCategory(BlogCategoryUpdateRequest blogCategoryRequest)
         {
             try {
                 int result = -1;
@@ -116,7 +116,7 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> CreateBlogCaTegory(BlogCategoryRequest blogCategoryRequest)
+        public async Task<IBusinessResult> CreateBlogCategory(BlogCategoryCreateRequest blogCategoryRequest)
         {
             try
             {
@@ -128,7 +128,7 @@ namespace TerrariumGardenTech.Service.Service
                 var result = await _unitOfWork.BlogCategory.CreateAsync(blogCategory);
                 if (result > 0)
                 {
-                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blogCategory);
                 }
                 else
                 {
