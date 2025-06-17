@@ -91,7 +91,7 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> UpdateCategory(CategoryRequest categoryRequest)
+        public async Task<IBusinessResult> UpdateCategory(CategoryUpdateRequest categoryRequest)
         {
             try
             {
@@ -127,12 +127,11 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> CreateCategory(CategoryRequest categoryRequest)
+        public async Task<IBusinessResult> CreateCategory(CategoryCreateRequest categoryRequest)
         {
             
             var category = new Category
             {
-                CategoryId = categoryRequest.CategoryId,
                 Name = categoryRequest.CategoryName,
                 Description = categoryRequest.Description
             };

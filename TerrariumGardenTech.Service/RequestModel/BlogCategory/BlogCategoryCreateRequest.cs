@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace TerrariumGardenTech.Service.RequestModel.BlogCategory
 {
-    public class BlogCategoryRequest
+    public class BlogCategoryCreateRequest
     {
-        public int BlogCategoryId { get; set; }
-
         public string CategoryName { get; set; }
 
-        public string Description { get; set; } 
+        public string Description { get; set; }
     }
 }

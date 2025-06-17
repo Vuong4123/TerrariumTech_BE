@@ -17,6 +17,7 @@ namespace TerrariumGardenTech.Repositories
         private AccessoryRepository _accessoryRepository;
         private BlogRepository _blogRepository;
         private BlogCategoryRepository _blogCategoryRepository;
+        private RoleReppsitory _roleReppsitory;
 
 
         public UnitOfWork()
@@ -31,6 +32,7 @@ namespace TerrariumGardenTech.Repositories
         public BlogRepository Blog { get { return _blogRepository ??= new BlogRepository(_unitOfWorkContext); } }
         public UserRepository User { get { return _userRepository ??= new UserRepository(_unitOfWorkContext); } }
         public BlogCategoryRepository BlogCategory { get { return _blogCategoryRepository ??= new BlogCategoryRepository(_unitOfWorkContext); } }
+        public RoleReppsitory Role { get { return _roleReppsitory ??= new RoleReppsitory(_unitOfWorkContext); } }
 
     }
 }

@@ -12,10 +12,10 @@ namespace TerrariumGardenTech.Service.IService
 {
     public interface IBlogCategoryService
     {
-        Task<IBusinessResult> GetAll();
+        Task<IBusinessResult> GetAllBlogCategory();
         Task<IBusinessResult> GetById(int id);
-        Task<IBusinessResult> CreateBlogCaTegory(BlogCategoryRequest blogCategoryRequest);
-        Task<IBusinessResult> UpdateBlogCategory(BlogCategoryRequest blogCategoryRequest);
+        Task<IBusinessResult> CreateBlogCategory(BlogCategoryCreateRequest blogCategoryRequest);
+        Task<IBusinessResult> UpdateBlogCategory(BlogCategoryUpdateRequest blogCategoryRequest);
         Task<IBusinessResult> Save(BlogCategory blogCategory);
         Task<IBusinessResult> DeleteById(int id);
     }
