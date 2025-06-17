@@ -5,18 +5,18 @@ using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Accessory;
 using TerrariumGardenTech.Service.RequestModel.Category;
+using TerrariumGardenTech.Service.RequestModel.Role;
 
 namespace TerrariumGardenTech.Service.IService
 {
-    public interface ICategoryService
+    public interface IRoleService
     {
         Task<IBusinessResult> GetAll();
         Task<IBusinessResult> GetById(int id);
-        Task<IBusinessResult> CreateCategory(CategoryCreateRequest categoryRequest);
-        Task<IBusinessResult> UpdateCategory(CategoryUpdateRequest categoryRequest);
-        Task<IBusinessResult> Save(Category category);
+        Task<IBusinessResult> CreateRole(RoleCreateRequest roleCreateRequest);
+        Task<IBusinessResult> UpdateRole(RoleUpdateRequest roleUpdateRequest);
+        Task<IBusinessResult> Save(Role role);
         Task<IBusinessResult> DeleteById(int id);
     }
 }

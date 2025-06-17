@@ -100,7 +100,7 @@ namespace TerrariumGardenTech.Service.Service
                     DateOfBirth = userRequest.DateOfBirth,
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
-                    Status = "Unactive",
+                    Status = "Inactive",
                     RoleId = 1  // Mặc định role User
                 };
 
