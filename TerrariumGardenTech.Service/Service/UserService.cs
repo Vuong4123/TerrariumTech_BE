@@ -38,47 +38,7 @@ namespace TerrariumGardenTech.Service.Service
             _smtpSettings = smtpOptions.Value;
             _logger = logger;
         }
-
-        // tạm thời bỏ đăng ký người dùng để tránh lỗi do không có RoleId trong UserRegisterRequest
-        //public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
-        //{
-        //    try
-        //    {
-        //        var existingUser = await _unitOfWork.User.FindOneAsync(u => u.Username == userRequest.Username || u.Email == userRequest.Email, false);
-        //        if (existingUser != null)
-        //            return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
-
-        //        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userRequest.PasswordHash);
-
-        //        var newUser = new User
-        //        {
-        //            Username = userRequest.Username,
-        //            PasswordHash = hashedPassword,
-        //            Email = userRequest.Email,
-        //            FullName = userRequest.FullName,
-        //            PhoneNumber = userRequest.PhoneNumber,
-        //            DateOfBirth = userRequest.DateOfBirth,
-        //            Gender = userRequest.Gender,
-        //            CreatedAt = DateTime.UtcNow,
-        //            Status = "Active",
-        //            RoleId = 1  // Mặc định role User, có thể thay đổi theo logic của bạn
-        //        };
-
-        //        await _unitOfWork.User.CreateAsync(newUser);
-        //        return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
-        //    }
-        //    catch (DbUpdateException dbEx)
-        //    {
-        //        var innerMessage = dbEx.InnerException?.Message ?? dbEx.Message;
-        //        _logger.LogError(dbEx, "Lỗi khi tạo tài khoản: {Message}", innerMessage);
-        //        return (Const.ERROR_EXCEPTION, $"Lỗi dữ liệu: {innerMessage}");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Lỗi hệ thống khi tạo tài khoản");
-        //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
-        //    }
-        //}
+        
 
         public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
         {
@@ -100,8 +60,8 @@ namespace TerrariumGardenTech.Service.Service
                     DateOfBirth = userRequest.DateOfBirth,
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
-                    Status = "Inactive",
-                    RoleId = 1  // Mặc định role User
+                    Status = "Active",
+                    RoleId = 4  // Mặc định role User
                 };
 
                 // Tạo OTP và gửi email
@@ -213,10 +173,16 @@ namespace TerrariumGardenTech.Service.Service
                 var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
 
                 var claims = new[] {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")
-        };
+                    new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                    new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User"),
+                    new Claim("email", user.Email ?? ""),
+                    new Claim("fullName", user.FullName ?? ""),
+                    new Claim("phoneNumber", user.PhoneNumber ?? ""),
+                    new Claim("gender", user.Gender ?? ""),
+                    new Claim("status", user.Status ?? ""),
+                };
+                
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -278,10 +244,15 @@ namespace TerrariumGardenTech.Service.Service
                 var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
 
                 var claims = new[] {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User")
-        };
+                    new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                    new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+                    new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User"),
+                    new Claim("email", user.Email ?? ""),
+                    new Claim("fullName", user.FullName ?? ""),
+                    new Claim("phoneNumber", user.PhoneNumber ?? ""),
+                    new Claim("gender", user.Gender ?? ""),
+                    new Claim("status", user.Status ?? ""),
+                };
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
