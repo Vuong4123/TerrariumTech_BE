@@ -125,7 +125,7 @@ namespace TerrariumGardenTech.Service.Service
                 CategoryId = accessoryCreateRequest.CategoryId,
                 CreatedAt = accessoryCreateRequest.CreatedAt ?? DateTime.Now,
                 UpdatedAt = accessoryCreateRequest.UpdatedAt ?? DateTime.Now,
-                Status = accessoryCreateRequest.Status
+                Status = accessoryCreateRequest.Status 
             };
             var result = await _unitOfWork.Accessory.CreateAsync(accessory);
             if (result > 0)

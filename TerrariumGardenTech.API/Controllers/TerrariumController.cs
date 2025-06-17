@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.Category;
 using TerrariumGardenTech.Service.RequestModel.Terrarium;
 using TerrariumGardenTech.Service.ResponseModel.Terrarium;
+using TerrariumGardenTech.Service.Service;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,6 +15,7 @@ namespace TerrariumGardenTech.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize(Roles = "Admin,Staff")]
     public class TerrariumController : ControllerBase
     {
         private readonly ITerrariumService _terrariumService;
@@ -20,7 +24,7 @@ namespace TerrariumGardenTech.API.Controllers
             _terrariumService = terrariumService;
         }
         // GET: api/<TerrariumController>
-        [HttpGet]
+        [HttpGet("get-all")]
         public async Task<IBusinessResult> Get()
         {
             var result =  await _terrariumService.GetAll();
@@ -61,7 +65,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // GET: api/<TerrariumController>
-        [HttpGet("details")]
+        [HttpGet("get-details")]
         public async Task<IBusinessResult> GetDetail()
         {
             var result = await _terrariumService.GetAll();
@@ -79,17 +83,6 @@ namespace TerrariumGardenTech.API.Controllers
                 Name = t.Name,
                 Description = t.Description,
                 Price = (decimal)t.Price,
-                //Stock = t.Stock,
-                //Status = t.Status,
-                //Type = t.Type,
-                //Shape = t.Shape,
-                //TankMethod = t.TankMethod,
-                //Theme = t.Theme,
-                //CreatedAt = t.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-                //UpdatedAt = t.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
-                //AccessoryId = t.AccessoryId ?? 0,// If nullable, default to 0 if null
-                //Size = t.Size,
-                //BodyHTML = t.bodyHTML
             }).ToList();
 
             if (terrariums == null)
@@ -102,14 +95,51 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // GET api/<TerrariumController>/5
-        [HttpGet("{id}")]
+        [HttpGet("get-{id}")]
         public async Task<IBusinessResult> GetById(int id)
         {
-            return await _terrariumService.GetById(id);
+
+            var result = await _terrariumService.GetById(id);
+
+            // Kiểm tra nếu result hoặc result.Data là null
+            if (result == null || result.Data == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+            }
+
+            // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Category, không phải IEnumerable)
+            if (result.Data is Terrarium terrarium)
+            {
+                // Ánh xạ dữ liệu từ Category sang CategoryRequest
+                var terrariumResponse = new TerrariumResponse
+                {
+                    TerrariumId = terrarium.TerrariumId,
+                    Name = terrarium.Name,
+                    Description = terrarium.Description,
+                    Price = (decimal)terrarium.Price,
+                    Stock = terrarium.Stock,
+                    Status = terrarium.Status,
+                    Type = terrarium.Type,
+                    Shape = terrarium.Shape,
+                    TankMethod = terrarium.TankMethod,
+                    Theme = terrarium.Theme,
+                    CreatedAt = terrarium.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+                    UpdatedAt = terrarium.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
+                    AccessoryId = terrarium.AccessoryId ?? 0,// If nullable, default to 0 if null
+                    Size = terrarium.Size,
+                    BodyHTML = terrarium.bodyHTML
+                };
+
+                // Trả về BusinessResult với dữ liệu đã ánh xạ
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariumResponse);
+            }
+
+            // Trả về lỗi nếu không thể ánh xạ
+            return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
         }
 
         // POST api/<TerrariumController>
-        [HttpPost]
+        [HttpPost("add-terrarium")]
         public async Task<IBusinessResult> Post([FromBody] TerrariumCreateRequest terrariumCreate)
         {
             if (terrariumCreate == null || !ModelState.IsValid)
@@ -120,7 +150,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // PUT api/<TerrariumController>/5
-        [HttpPut("{id}")]
+        [HttpPut("update-terrarium{id}")]
         public async Task<IBusinessResult> Put(TerrariumUpdateRequest terrariumUpdate)
         {
             if (terrariumUpdate == null || !ModelState.IsValid)
@@ -131,10 +161,19 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // DELETE api/<TerrariumController>/5
-        [HttpDelete("{id}")]
+        [HttpDelete("delete-terraium{id}")]
         public async Task<IBusinessResult> Delete(int id)
         {
-            return await _terrariumService.DeleteById(id);
+            var result = await _terrariumService.DeleteById(id);
+            if (result == null || result.Data == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+            }
+            if (result.Data is bool isDeleted)
+            {
+                return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Terrarium deleted successfully.");
+            }
+            return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete role.");
         }
     }
 }

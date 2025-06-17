@@ -8,7 +8,6 @@ namespace TerrariumGardenTech.Service.RequestModel.Terrarium
 {
     public class TerrariumCreateRequest
     {
-        public int TerrariumId { get; set; }
 
         public string Name { get; set; }
 

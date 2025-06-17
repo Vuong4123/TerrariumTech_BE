@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace TerrariumGardenTech.Service.RequestModel.Category
 {
-    public class CategoryRequest
+    public class CategoryCreateRequest
     {
-        public int CategoryId { get; set; }
 
         public string CategoryName { get; set; }
 

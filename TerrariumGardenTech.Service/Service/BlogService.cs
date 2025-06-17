@@ -126,15 +126,16 @@ namespace TerrariumGardenTech.Service.Service
             {
                 var blog = new Blog
                 {
+
+                    UserId = blogCreateRequest.UserId,
                     Title = blogCreateRequest.Title,
                     Content = blogCreateRequest.Content,
                     BlogCategoryId = blogCreateRequest.BlogCategoryId,
-                    UserId = 2, // Id userr bằng 2 vì 2 là id của staff, chỉ có staff mới có quyền tạo blog
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     Status = "Active" // Mặc định trạng thái là Active
                 };
-                int result = await _unitOfWork.Blog.CreateAsync(blog);
+                var result = await _unitOfWork.Blog.CreateAsync(blog);
                 if (result > 0)
                 {
                     return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blog);
