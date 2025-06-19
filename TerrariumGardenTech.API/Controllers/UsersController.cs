@@ -182,10 +182,19 @@ namespace TerrariumGardenTech.API.Controller
         {
             try
             {
-                // Lấy giá trị username từ claim UniqueName
-                var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Name)?.Value;
+                // Lấy giá trị username từ claim UniqueName (JwtRegisteredClaimNames.UniqueName)
+                var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName)?.Value;
 
-                // Nếu không tìm thấy claim UniqueName, trả về lỗi
+                // Nếu không tìm thấy claim UniqueName, thử lấy từ Name hoặc NameIdentifier
+                if (string.IsNullOrEmpty(username))
+                {
+                    username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Name)?.Value
+                        ?? User.Claims.FirstOrDefault(c => c.Type == "name")?.Value
+                        ?? User.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value
+                        ?? User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value
+                        ?? User.Identity?.Name;
+                }
+
                 if (string.IsNullOrEmpty(username))
                 {
                     return Unauthorized(new { message = "Không tìm thấy tên người dùng trong token." });
@@ -195,7 +204,6 @@ namespace TerrariumGardenTech.API.Controller
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu có bất kỳ lỗi nào xảy ra
                 _logger.LogError(ex, "Lỗi khi lấy thông tin profile người dùng.");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống." });
             }
