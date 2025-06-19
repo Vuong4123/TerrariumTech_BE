@@ -154,7 +154,8 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 var user = await _unitOfWork.User.Context().Users
-                                          .FirstOrDefaultAsync(u => u.Username == username);
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.Username == username);
 
                 if (user == null)
                     return (Const.FAIL_READ_CODE, "Tên đăng nhập không tồn tại", null, null);
