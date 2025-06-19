@@ -1,0 +1,39 @@
+name: Deploy TerrariumGardenTech to VPS
+
+on:
+  push:
+    branches:
+      - master  # Chọn nhánh bạn muốn deploy từ GitHub
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Bước 1: Checkout mã nguồn từ GitHub
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Bước 2: Thiết lập SSH để kết nối với VPS
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Bước 3: Cài đặt .NET SDK nếu chưa có sẵn trên máy build của GitHub Actions
+      - name: Install .NET SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dotnet-sdk-9.0
+
+      # Bước 4: Triển khai ứng dụng lên VPS
+      - name: Deploy TerrariumGardenTech to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /path/to/your/app  # Di chuyển đến thư mục chứa ứng dụng
+            git pull origin main   # Lấy mã nguồn mới nhất từ GitHub
+            dotnet restore         # Cài đặt lại các dependencies
+            dotnet build           # Build ứng dụng
+            dotnet publish -c Release -o /path/to/deploy  # Publish ứng dụng
+            sudo systemctl restart your-app-service  # Restart ứng dụng nếu dùng systemd
+          EOF
