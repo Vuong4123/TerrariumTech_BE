@@ -61,7 +61,7 @@ namespace TerrariumGardenTech.Service.Service
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
                     Status = "Active",
-                    RoleId = 4  // Mặc định role User
+                    RoleId = 1 // Mặc định role User
                 };
 
                 // Tạo OTP và gửi email
