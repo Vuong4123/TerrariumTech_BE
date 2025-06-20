@@ -29,8 +29,8 @@ jobs:
       # Bước 4: Triển khai ứng dụng lên VPS
       - name: Deploy TerrariumGardenTech to VPS
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /path/to/your/app  # Di chuyển đến thư mục chứa ứng dụng
+          ssh -o StrictHostKeyChecking=no root@45.119.87.135 << 'EOF'
+            cd /root/TerrariumTech_BE  # Di chuyển đến thư mục chứa ứng dụng
             git pull origin main   # Lấy mã nguồn mới nhất từ GitHub
             dotnet restore         # Cài đặt lại các dependencies
             dotnet build           # Build ứng dụng
