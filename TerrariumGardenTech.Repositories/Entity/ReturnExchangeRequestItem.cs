@@ -2,11 +2,14 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class ReturnExchangeRequestItem
+public partial class ReturnExchangeRequestItem  : BaseEntity
 {
+    [Key]
+
     public int RequestItemId { get; set; }
 
     public int RequestId { get; set; }
