@@ -16,12 +16,12 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // API Create Membership
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateMembership([FromBody] CreateMembershipRequest request)
-        {
-            var membershipId = await _membershipService.CreateMembershipAsync(request.UserId, request.MembershipType, request.StartDate, request.EndDate, request.Status);
-            return CreatedAtAction(nameof(GetMembership), new { id = membershipId }, request);
-        }
+        //[HttpPost("create")]
+        //public async Task<IActionResult> CreateMembership([FromBody] CreateMembershipRequest request)
+        //{
+        //    var membershipId = await _membershipService.CreateMembershipAsync(request.UserId, request.MembershipType , request.StartDate, request.EndDate, request.Status);
+        //    return CreatedAtAction(nameof(GetMembership), new { id = membershipId }, request);
+        //}
 
         // API Get Membership by ID
         [HttpGet("{id}")]
@@ -34,24 +34,24 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // API Get all memberships of a user
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetMembershipsByUserId(int userId)
-        {
-            var memberships = await _membershipService.GetMembershipsByUserIdAsync(userId);
-            if (memberships == null || memberships.Count == 0)
-                return NotFound(new { message = "Không tìm thấy memberships cho người dùng này" });
-            return Ok(memberships);
-        }
+        //[HttpGet("user/{userId}")]
+        //public async Task<IActionResult> GetMembershipsByUserId(int userId)
+        //{
+        //    var memberships = await _membershipService.GetMembershipsByUserIdAsync(userId);
+        //    if (memberships == null || memberships.Count == 0)
+        //        return NotFound(new { message = "Không tìm thấy memberships cho người dùng này" });
+        //    return Ok(memberships);
+        //}
 
         // API Update Membership
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMembership(int id, [FromBody] CreateMembershipRequest request)
-        {
-            var success = await _membershipService.UpdateMembershipAsync(id, request.MembershipType, request.StartDate, request.EndDate, request.Status);
-            if (!success)
-                return NotFound(new { message = "Membership không tồn tại hoặc không thể cập nhật" });
-            return NoContent();  // Thành công, nhưng không trả về dữ liệu
-        }
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> UpdateMembership(int id, [FromBody] CreateMembershipRequest request)
+        //{
+        //    var success = await _membershipService.UpdateMembershipAsync(id, request.MembershipType, request.StartDate, request.EndDate, request.Status);
+        //    if (!success)
+        //        return NotFound(new { message = "Membership không tồn tại hoặc không thể cập nhật" });
+        //    return NoContent();  // Thành công, nhưng không trả về dữ liệu
+        //}
 
         // API Delete Membership
         [HttpDelete("{id}")]
