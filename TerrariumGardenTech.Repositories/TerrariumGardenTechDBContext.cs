@@ -92,6 +92,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
+    public virtual DbSet<UserMemberShip> UserMemberShips { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
@@ -374,33 +376,25 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
         });
 
-        modelBuilder.Entity<Membership>(entity =>
-        {
-            entity.HasKey(e => e.MembershipId).HasName("PK__Membersh__86AA3B174168331C");
+        //modelBuilder.Entity<UserMemberShip>(entity =>
+        //{
+        //    entity.HasKey(e => new { e.UserId, e.MembershipId });
 
-            entity.ToTable("Membership");
+        //    entity.ToTable("UserMembership");
 
-            entity.Property(e => e.MembershipId).HasColumnName("membershipId");
-            entity.Property(e => e.EndDate)
-                .HasColumnType("date")
-                .HasColumnName("endDate");
-            entity.Property(e => e.MembershipType)
-                .HasMaxLength(50)
-                .HasColumnName("membershipType");
-            entity.Property(e => e.StartDate)
-                .HasColumnType("date")
-                .HasColumnName("startDate");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("active")
-                .HasColumnName("status");
-            entity.Property(e => e.UserId).HasColumnName("userId");
+        //    entity.HasOne(e => e.User)
+        //          .WithMany(u => u.UserMemberShips)  // User có nhiều UserMembership
+        //          .HasForeignKey(e => e.UserId)
+        //          .OnDelete(DeleteBehavior.ClientSetNull)
+        //          .HasConstraintName("FK_UserMembership_User");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Memberships)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Membership_User");
-        });
+        //    entity.HasOne(e => e.Membership)
+        //          .WithMany(m => m.UserMemberShips)  // Membership có nhiều UserMembership
+        //          .HasForeignKey(e => e.MembershipId)
+        //          .OnDelete(DeleteBehavior.ClientSetNull)
+        //          .HasConstraintName("FK_UserMembership_Membership");
+        //});
+
 
         modelBuilder.Entity<Notification>(entity =>
         {
