@@ -2,18 +2,18 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class AisuggestLayout
+public partial class AisuggestLayout : BaseEntity
 {
+    [Key]
+
     public int LayoutId { get; set; }
 
     public int UserId { get; set; }
 
     public string LayoutData { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-
     public virtual User User { get; set; }
 }

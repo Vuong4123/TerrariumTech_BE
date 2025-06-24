@@ -2,11 +2,14 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class OrderItemDetail
+public partial class OrderItemDetail : BaseEntity
 {
+    [Key]
+
     public int OrderItemDetailId { get; set; }
 
     public int OrderItemId { get; set; }

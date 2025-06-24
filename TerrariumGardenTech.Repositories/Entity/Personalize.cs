@@ -2,11 +2,14 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Personalize
+public partial class Personalize : BaseEntity
 {
+    [Key]
+
     public int PersonalizeId { get; set; }
 
     public int UserId { get; set; }
