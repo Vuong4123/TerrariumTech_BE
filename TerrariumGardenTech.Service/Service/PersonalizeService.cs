@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -16,36 +18,119 @@ namespace TerrariumGardenTech.Service.Service
         private readonly UnitOfWork _unitOfWork;
         public PersonalizeService(UnitOfWork unitOfWork)
         {
-            _unitOfWork = unitOfWork;
+            _unitOfWork = unitOfWork ?? throw new AggregateException(nameof(unitOfWork));
         }
 
-        public Task<IBusinessResult> GetAllPersonalize()
+        public async Task<IBusinessResult> GetAllPersonalize()
         {
-            throw new NotImplementedException();
+            var result = await _unitOfWork.Personalize.GetAllAsync();
+            if (result == null)
+            {
+                return  new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            }
+            else
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG,result);
+            }
         }
 
-        public Task<IBusinessResult> GetPersonalizeById(int id)
+        public async Task<IBusinessResult> GetPersonalizeById(int id)
         {
-            throw new NotImplementedException();
+            var result = await _unitOfWork.Personalize.GetByIdAsync(id);
+            if (result == null)
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            }
+            else
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
+            }
         }
 
         public Task<IBusinessResult> SavePersonalize(Personalize personalize)
         {
             throw new NotImplementedException();
         }
-        public Task<IBusinessResult> CreatePersonalize(PersonalizeCreateRequest personalizeCreateRequest)
+        public async Task<IBusinessResult> CreatePersonalize(PersonalizeCreateRequest personalizeCreateRequest)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var personalize = new Personalize
+                {
+                    UserId = personalizeCreateRequest.UserId,
+                    Type = personalizeCreateRequest.Type,
+                    Shape = personalizeCreateRequest.Shape,
+                    TankMethod = personalizeCreateRequest.TankMethod,
+                    Theme = personalizeCreateRequest.Theme,
+                    size = personalizeCreateRequest.size
+
+                };
+                var result = await _unitOfWork.Personalize.CreateAsync(personalize);
+                if(result > 0)
+                {
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, result);
+                }
+                else
+                {
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+
         }
 
-        public Task<IBusinessResult> UpdatePersonalize(PersonalizeUpdateRequest personalizeUpdateRequest)
+        public async Task<IBusinessResult> UpdatePersonalize(PersonalizeUpdateRequest personalizeUpdateRequest)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var result = -1;
+                var personalize = await _unitOfWork.Personalize.GetByIdAsync(personalizeUpdateRequest.PersonalizeId);
+                if (personalize != null)
+                {
+                    _unitOfWork.Personalize.Context().Entry(personalize).CurrentValues.SetValues(personalizeUpdateRequest);
+                    result = await _unitOfWork.Personalize.UpdateAsync(personalize);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, personalize);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                    }
+                }
+                else
+                {
+                    return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+                }
+            }
+            catch (Exception ex) 
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
         }
 
-        public Task<IBusinessResult> DeletePersonalizeById(int id)
+        public async Task<IBusinessResult> DeletePersonalizeById(int id)
         {
-            throw new NotImplementedException();
+            var personalize = await _unitOfWork.Personalize.GetByIdAsync(id);
+            if (personalize != null)
+            {
+                var result = await _unitOfWork.Personalize.RemoveAsync(personalize);
+                if (result)
+                {
+                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                }
+                else
+                {
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+                }
+            }
+            else
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            }
         }
     }
 }
