@@ -31,7 +31,7 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> GetById(int id)
         {
-            var result = _unitOfWork.Address.GetByIdAsync(id);
+            var result = await _unitOfWork.Address.GetByIdAsync(id);
             if (result == null)
             {
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
@@ -123,7 +123,9 @@ namespace TerrariumGardenTech.Service.Service
                     City = addressCreateRequest.City,
                     State = addressCreateRequest.State,
                     Country = addressCreateRequest.Country,
-                    PostalCode = addressCreateRequest.PostalCode
+                    PostalCode = addressCreateRequest.PostalCode,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
                 var result = await _unitOfWork.Address.CreateAsync(address);
                 if (address != null)
