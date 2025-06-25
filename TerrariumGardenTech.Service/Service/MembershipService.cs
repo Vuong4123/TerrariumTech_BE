@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TerrariumGardenTech.Repositories.Base;
+﻿using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Enums;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.Service.Service

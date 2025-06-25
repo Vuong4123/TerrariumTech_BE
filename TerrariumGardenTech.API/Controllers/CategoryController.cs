@@ -5,8 +5,6 @@ using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Category;
 using TerrariumGardenTech.Service.ResponseModel.Category;
-using TerrariumGardenTech.Service.ResponseModel.Terrarium;
-using TerrariumGardenTech.Service.Service;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

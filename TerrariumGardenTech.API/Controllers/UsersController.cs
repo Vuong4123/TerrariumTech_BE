@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
