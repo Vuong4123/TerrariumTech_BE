@@ -70,6 +70,7 @@ internal class Program
         builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
         builder.Services.AddScoped<IRoleService, RoleService>();
         builder.Services.AddScoped<IMembershipService, MembershipService>();
+        builder.Services.AddScoped<IPersonalizeService, PersonalizeService>();
 
         // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
         builder.Services.AddScoped<IAccountService, AccountService>();

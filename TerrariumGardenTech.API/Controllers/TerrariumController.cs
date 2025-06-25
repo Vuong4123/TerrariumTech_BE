@@ -246,7 +246,7 @@ namespace TerrariumGardenTech.API.Controllers
 
         // PUT api/<TerrariumController>/5
         [HttpPut("update-terrarium{id}")]
-        public async Task<IBusinessResult> Put(TerrariumUpdateRequest terrariumUpdate)
+        public async Task<IBusinessResult> Put([FromBody] TerrariumUpdateRequest terrariumUpdate)
         {
             if (terrariumUpdate == null || !ModelState.IsValid)
             {
@@ -268,7 +268,7 @@ namespace TerrariumGardenTech.API.Controllers
             {
                 return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Terrarium deleted successfully.");
             }
-            return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete role.");
+            return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete terrarium.");
         }
     }
 }
