@@ -95,7 +95,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     return new BusinessResult(Const.FAIL_CREATE_CODE, "BlogCategoryId không tồn tại.");
                 }
-                int result = -1;
+                var result = -1;
                 var blog = await _unitOfWork.Blog.GetByIdAsync(blogUpdateRequest.BlogId);
                 if (blog != null)
                 {

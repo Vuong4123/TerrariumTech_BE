@@ -181,5 +181,51 @@ namespace TerrariumGardenTech.Service.Service
                 return await Task.FromResult<IBusinessResult>(new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString()));
             }
         }
+
+        public async Task<IBusinessResult> GetAllOfParam(string type = null, string shape = null, string tankMethod = null, string theme = null, int? accessoryId = null, string size = null)
+        {
+            // Sử dụng LINQ để lọc theo các tham số truyền vào
+            var terrariumList = await _unitOfWork.Terrarium.GetAllAsync();
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                terrariumList = terrariumList.Where(t => t.Type.Contains(type)).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(shape))
+            {
+                terrariumList = terrariumList.Where(t => t.Shape.Contains(shape)).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(tankMethod))
+            {
+                terrariumList = terrariumList.Where(t => t.TankMethod.Contains(tankMethod)).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(theme))
+            {
+                terrariumList = terrariumList.Where(t => t.Theme.Contains(theme)).ToList();
+            }
+
+            if (accessoryId.HasValue)
+            {
+                terrariumList = terrariumList.Where(t => t.AccessoryId == accessoryId.Value).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(size))
+            {
+                terrariumList = terrariumList.Where(t => t.Size.Contains(size)).ToList();
+            }
+
+            // Kiểm tra xem danh sách có dữ liệu không
+            if (terrariumList != null && terrariumList.Count > 0)
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terrariumList);
+            }
+            else
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            }
+        }
     }
 }
