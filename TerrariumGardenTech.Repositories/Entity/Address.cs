@@ -26,5 +26,6 @@ public partial class Address : BaseEntity
 
     public string PostalCode { get; set; }
 
+
     public virtual User User { get; set; }
 }
