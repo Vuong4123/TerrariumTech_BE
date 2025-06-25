@@ -47,9 +47,43 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
-        public Task<IBusinessResult> SavePersonalize(Personalize personalize)
+        public async Task<IBusinessResult> SavePersonalize(Personalize personalize)
         {
-            throw new NotImplementedException();
+            try
+            {
+                int result = -1;
+                var personalizeEntity = _unitOfWork.Personalize.GetByIdAsync(personalize.PersonalizeId);
+                if (personalizeEntity != null)
+                {
+                    result = await _unitOfWork.Personalize.UpdateAsync(personalize);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, personalize);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                    }
+                }
+                else
+                {
+                    // Create new terrarium if it does not exist
+                    result = await _unitOfWork.Personalize.CreateAsync(personalize);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, personalize);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
         }
         public async Task<IBusinessResult> CreatePersonalize(PersonalizeCreateRequest personalizeCreateRequest)
         {
@@ -63,6 +97,7 @@ namespace TerrariumGardenTech.Service.Service
                     TankMethod = personalizeCreateRequest.TankMethod,
                     Theme = personalizeCreateRequest.Theme,
                     size = personalizeCreateRequest.size
+                        
 
                 };
                 var result = await _unitOfWork.Personalize.CreateAsync(personalize);
