@@ -150,24 +150,24 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
             }
         }
-        public Task<IBusinessResult> DeleteById(int id)
+        public async Task<IBusinessResult> DeleteById(int id)
         {
-            var blog = _unitOfWork.Blog.GetByIdAsync(id);
+            var blog = await _unitOfWork.Blog.GetByIdAsync(id);
             if (blog != null)
             {
-                var result = _unitOfWork.Blog.RemoveAsync(blog.Result);
-                if (result.Result)
+                var result = await _unitOfWork.Blog.RemoveAsync(blog);
+                if (result)
                 {
-                    return Task.FromResult<IBusinessResult>(new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG));
+                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
                 }
                 else
                 {
-                    return Task.FromResult<IBusinessResult>(new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG));
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
                 }
             }
             else
             {
-                return Task.FromResult<IBusinessResult>(new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG));
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
             }
         }
     }

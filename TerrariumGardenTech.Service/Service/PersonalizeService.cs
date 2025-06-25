@@ -96,8 +96,10 @@ namespace TerrariumGardenTech.Service.Service
                     Shape = personalizeCreateRequest.Shape,
                     TankMethod = personalizeCreateRequest.TankMethod,
                     Theme = personalizeCreateRequest.Theme,
-                    size = personalizeCreateRequest.size
-                        
+                    size = personalizeCreateRequest.size,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+
 
                 };
                 var result = await _unitOfWork.Personalize.CreateAsync(personalize);
