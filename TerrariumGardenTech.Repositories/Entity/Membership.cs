@@ -2,22 +2,21 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Membership
 {
+    [Key]
+
     public int MembershipId { get; set; }
+    public MembetShipType MembershipType { get; set; }
 
-    public int UserId { get; set; }
-
-    public string MembershipType { get; set; }
-
-    public DateTime? StartDate { get; set; }
-
-    public DateTime? EndDate { get; set; }
+    public int Duration { get; set; } // Duration in days 
 
     public string Status { get; set; }
 
-    public virtual User User { get; set; }
+    public virtual ICollection<UserMemberShip> UserMemberShips { get; set; } = [];
 }

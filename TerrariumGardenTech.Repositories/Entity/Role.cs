@@ -2,11 +2,14 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Role
+public partial class Role   : BaseEntity
 {
+    [Key]
+
     public int RoleId { get; set; }
 
     public string RoleName { get; set; }

@@ -2,11 +2,14 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class AccessoryImage
+public partial class AccessoryImage : BaseEntity
 {
+    [Key]
+
     public int AccessoryImageId { get; set; }
 
     public int AccessoryId { get; set; }
