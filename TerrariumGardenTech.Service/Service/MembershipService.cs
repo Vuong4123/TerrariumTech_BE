@@ -43,9 +43,9 @@ namespace TerrariumGardenTech.Service.Service
         // Read all memberships for a specific user
         public async Task<List<Membership>> GetMembershipsByUserIdAsync(int userId)
         {
+            await UpdateExpiredMembershipsByUserIdAsync(userId);
             return await _membershipRepository.FindAsync(m => m.UserId == userId);
         }
-
 
         // Update Membership
         public async Task<bool> UpdateMembershipAsync(int membershipId, string membershipType, DateTime startDate, DateTime endDate, string status)
@@ -70,6 +70,54 @@ namespace TerrariumGardenTech.Service.Service
 
             await _membershipRepository.RemoveAsync(membership);
             return true;
+        }
+
+        // Check and update expired memberships for all users
+        public async Task<int> UpdateAllExpiredMembershipsAsync()
+        {
+            var allMemberships = await _membershipRepository.GetAllAsync();
+            int updatedCount = 0;
+            var now = DateTime.UtcNow;
+
+            foreach (var membership in allMemberships)
+            {
+                if (membership.EndDate.HasValue && membership.EndDate.Value < now && membership.Status != "Expired")
+                {
+                    membership.Status = "Expired";
+                    await _membershipRepository.UpdateAsync(membership);
+                    updatedCount++;
+                }
+            }
+            return updatedCount;
+        }
+
+        // Check and update expired memberships for a specific user
+        public async Task<int> UpdateExpiredMembershipsByUserIdAsync(int userId)
+        {
+            var memberships = await _membershipRepository.FindAsync(m => m.UserId == userId);
+            int updatedCount = 0;
+            var now = DateTime.UtcNow;
+
+            foreach (var membership in memberships)
+            {
+                if (membership.EndDate.HasValue && membership.EndDate.Value < now && membership.Status != "Expired")
+                {
+                    membership.Status = "Expired";
+                    await _membershipRepository.UpdateAsync(membership);
+                    updatedCount++;
+                }
+            }
+            return updatedCount;
+        }
+
+        // Check if a membership is expired
+        public bool IsMembershipExpired(Membership membership)
+        {
+            if (membership.EndDate.HasValue)
+            {
+                return membership.EndDate.Value < DateTime.UtcNow;
+            }
+            return false;
         }
     }
 }
