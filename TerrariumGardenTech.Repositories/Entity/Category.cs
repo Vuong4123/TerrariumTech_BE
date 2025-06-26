@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Category : BaseEntity
+public partial class Category
 {
-    [Key]
-
     public int CategoryId { get; set; }
 
     public string Name { get; set; }

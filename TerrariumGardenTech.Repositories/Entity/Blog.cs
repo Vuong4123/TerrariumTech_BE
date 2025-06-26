@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Blog : BaseEntity
+public partial class Blog
 {
-    [Key]
-
     public int BlogId { get; set; }
 
     public int UserId { get; set; }
@@ -19,6 +16,11 @@ public partial class Blog : BaseEntity
     public string Title { get; set; }
 
     public string Content { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
     public string Status { get; set; }
 
     public virtual BlogCategory BlogCategory { get; set; }
