@@ -548,27 +548,27 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_PaymentTransition_Order");
         });
 
-        modelBuilder.Entity<Personalize>(entity =>
-        {
-            entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__8032E374C56CF71E");
+        //modelBuilder.Entity<Personalize>(entity =>
+        //{
+        //    entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__8032E374C56CF71E");
 
-            entity.ToTable("Personalize");
+        //    entity.ToTable("Personalize");
 
-            entity.Property(e => e.PersonalizeId).HasColumnName("personalizeId");
-            entity.Property(e => e.Language)
-                .HasMaxLength(20)
-                .HasColumnName("language");
-            entity.Property(e => e.Preferences).HasColumnName("preferences");
-            entity.Property(e => e.Theme)
-                .HasMaxLength(50)
-                .HasColumnName("theme");
-            entity.Property(e => e.UserId).HasColumnName("userId");
+        //    entity.Property(e => e.PersonalizeId).HasColumnName("personalizeId");
+        //    entity.Property(e => e.Language)
+        //        .HasMaxLength(20)
+        //        .HasColumnName("language");
+        //    entity.Property(e => e.Preferences).HasColumnName("preferences");
+        //    entity.Property(e => e.Theme)
+        //        .HasMaxLength(50)
+        //        .HasColumnName("theme");
+        //    entity.Property(e => e.UserId).HasColumnName("userId");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Personalizes)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Personalize_User");
-        });
+        //    entity.HasOne(d => d.User).WithMany(p => p.Personalizes)
+        //        .HasForeignKey(d => d.UserId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_Personalize_User");
+        //});
 
         modelBuilder.Entity<Promotion>(entity =>
         {
