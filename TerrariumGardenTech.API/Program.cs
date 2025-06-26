@@ -25,9 +25,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
         // Chỉ cho phép yêu cầu từ địa chỉ cụ thể (ví dụ: frontend đang chạy trên localhost:5173)
-        policy.WithOrigins(
-            "http://localhost:5173", 
-            "https://terra-tech-garden.vercel.app")  // Địa chỉ của frontend
+        policy.WithOrigins("http://localhost:5173")  // Địa chỉ của frontend
               .AllowAnyMethod()     // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
               .AllowAnyHeader();    // Cho phép bất kỳ header nào trong yêu cầu
     });
