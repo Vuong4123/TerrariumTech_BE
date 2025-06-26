@@ -13,7 +13,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
     public class CategoryRepository : GenericRepository<Category>
     {
         private readonly TerrariumGardenTechDBContext _dbContext;
-        //public CategoryRepository() { }
+        public CategoryRepository() { }
         public CategoryRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
         public async Task<bool> AnyAsync(Expression<Func<Category, bool>> predicate)
         {
