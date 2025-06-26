@@ -2,15 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class ShippingDetail : BaseEntity
+public partial class ShippingDetail
 {
-    [Key]
-
     public int ShippingDetailId { get; set; }
 
     public int OrderId { get; set; }
@@ -23,6 +19,5 @@ public partial class ShippingDetail : BaseEntity
 
     public string TrackingNumber { get; set; }
 
-    [ForeignKey(nameof(OrderId))]
     public virtual Order Order { get; set; }
 }

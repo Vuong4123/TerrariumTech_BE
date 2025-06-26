@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Terrarium : BaseEntity
+public partial class Terrarium
 {
-    [Key]
-
     public int TerrariumId { get; set; }
 
     public string Name { get; set; }
@@ -29,6 +26,10 @@ public partial class Terrarium : BaseEntity
     public string TankMethod { get; set; }
 
     public string Theme { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     public int? AccessoryId { get; set; }
 

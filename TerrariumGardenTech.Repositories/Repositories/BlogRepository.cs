@@ -10,7 +10,10 @@ namespace TerrariumGardenTech.Repositories.Repositories
 {
     public class BlogRepository : GenericRepository<Blog>
     {
-        private readonly TerrariumGardenTechDBContext _dbContext;
-        public BlogRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
+        private readonly TerrariumGardenTechDBContext _context;
+        public BlogRepository()
+        {
+        }
+        public BlogRepository(TerrariumGardenTechDBContext context) => _context = context;
     }
 }
