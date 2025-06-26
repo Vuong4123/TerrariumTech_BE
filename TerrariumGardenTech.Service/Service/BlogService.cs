@@ -95,7 +95,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     return new BusinessResult(Const.FAIL_CREATE_CODE, "BlogCategoryId không tồn tại.");
                 }
-                var result = -1;
+                int result = -1;
                 var blog = await _unitOfWork.Blog.GetByIdAsync(blogUpdateRequest.BlogId);
                 if (blog != null)
                 {
@@ -150,24 +150,24 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
             }
         }
-        public async Task<IBusinessResult> DeleteById(int id)
+        public Task<IBusinessResult> DeleteById(int id)
         {
-            var blog = await _unitOfWork.Blog.GetByIdAsync(id);
+            var blog = _unitOfWork.Blog.GetByIdAsync(id);
             if (blog != null)
             {
-                var result = await _unitOfWork.Blog.RemoveAsync(blog);
-                if (result)
+                var result = _unitOfWork.Blog.RemoveAsync(blog.Result);
+                if (result.Result)
                 {
-                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                    return Task.FromResult<IBusinessResult>(new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG));
                 }
                 else
                 {
-                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+                    return Task.FromResult<IBusinessResult>(new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG));
                 }
             }
             else
             {
-                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+                return Task.FromResult<IBusinessResult>(new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG));
             }
         }
     }

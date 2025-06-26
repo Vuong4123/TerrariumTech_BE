@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Voucher : BaseEntity
+public partial class Voucher
 {
-    [Key]
-
     public int VoucherId { get; set; }
 
     public string Code { get; set; }

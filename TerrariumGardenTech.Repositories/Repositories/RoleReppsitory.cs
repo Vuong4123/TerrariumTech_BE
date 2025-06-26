@@ -11,7 +11,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
     public class RoleReppsitory : GenericRepository<Role>
     {
         public TerrariumGardenTechDBContext _dbContext;
-        //public RoleReppsitory() { }
+        public RoleReppsitory() { }
         public RoleReppsitory(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
         
     }
