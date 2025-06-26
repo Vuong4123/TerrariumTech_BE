@@ -1,0 +1,1012 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace TerrariumGardenTech.Repositories.Migrations
+{
+    /// <inheritdoc />
+    public partial class DbInit : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "BlogCategory",
+                columns: table => new
+                {
+                    blogCategoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    categoryName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__BlogCate__60848B8FC9999236", x => x.blogCategoryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Category",
+                columns: table => new
+                {
+                    categoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Category__23CAF1D819300390", x => x.categoryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Memberships",
+                columns: table => new
+                {
+                    MembershipId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MembershipType = table.Column<int>(type: "int", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Memberships", x => x.MembershipId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Promotion",
+                columns: table => new
+                {
+                    promotionId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    startDate = table.Column<DateTime>(type: "date", nullable: true),
+                    endDate = table.Column<DateTime>(type: "date", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true, defaultValue: "active"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Promotio__99EB696ECA1EAF5F", x => x.promotionId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Role",
+                columns: table => new
+                {
+                    roleId = table.Column<int>(type: "int", nullable: false),
+                    roleName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Role__CD98462A2156B115", x => x.roleId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Voucher",
+                columns: table => new
+                {
+                    voucherId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    discountAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
+                    discountPercent = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    validFrom = table.Column<DateTime>(type: "date", nullable: true),
+                    validTo = table.Column<DateTime>(type: "date", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true, defaultValue: "active"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Voucher__F53389E9F60B1DB0", x => x.voucherId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Accessory",
+                columns: table => new
+                {
+                    accessoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    categoryId = table.Column<int>(type: "int", nullable: false),
+                    name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    price = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    stockQuantity = table.Column<int>(type: "int", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Available"),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    updatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Accessor__77E65FD722D6ED59", x => x.accessoryId);
+                    table.ForeignKey(
+                        name: "FK_Accessory_Category",
+                        column: x => x.categoryId,
+                        principalTable: "Category",
+                        principalColumn: "categoryId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "User",
+                columns: table => new
+                {
+                    userId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    passwordHash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    phoneNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    dateOfBirth = table.Column<DateTime>(type: "date", nullable: true),
+                    gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    roleId = table.Column<int>(type: "int", nullable: true),
+                    token = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    startToken = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    endToken = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true, defaultValue: "active"),
+                    FullName = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: true),
+                    Otp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    OtpExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    refreshToken = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    refreshTokenExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    updatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__User__CB9A1CFFA89ED9C8", x => x.userId);
+                    table.ForeignKey(
+                        name: "FK_User_Role",
+                        column: x => x.roleId,
+                        principalTable: "Role",
+                        principalColumn: "roleId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AccessoryImage",
+                columns: table => new
+                {
+                    accessoryImageId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    accessoryId = table.Column<int>(type: "int", nullable: false),
+                    imageUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    altText = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    isPrimary = table.Column<bool>(type: "bit", nullable: true, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Accessor__FC8A6368CD989764", x => x.accessoryImageId);
+                    table.ForeignKey(
+                        name: "FK_AccessoryImage_Accessory",
+                        column: x => x.accessoryId,
+                        principalTable: "Accessory",
+                        principalColumn: "accessoryId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Terrarium",
+                columns: table => new
+                {
+                    terrariumId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    price = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    stock = table.Column<int>(type: "int", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "Available"),
+                    type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    shape = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    tankMethod = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    theme = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    accessoryId = table.Column<int>(type: "int", nullable: true),
+                    Size = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    bodyHTML = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    updatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Terrariu__1AE69F91279E10EB", x => x.terrariumId);
+                    table.ForeignKey(
+                        name: "FK_Terrarium_Accessory",
+                        column: x => x.accessoryId,
+                        principalTable: "Accessory",
+                        principalColumn: "accessoryId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Address",
+                columns: table => new
+                {
+                    addressId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    addressLine1 = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    addressLine2 = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    city = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    state = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    postalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Address__26A111ADDFE0EDC0", x => x.addressId);
+                    table.ForeignKey(
+                        name: "FK_Address_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AISuggestLayout",
+                columns: table => new
+                {
+                    layoutId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    layoutData = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__AISugges__023A37EFFA219D01", x => x.layoutId);
+                    table.ForeignKey(
+                        name: "FK_AISuggestLayout_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Blog",
+                columns: table => new
+                {
+                    blogId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    blogCategoryId = table.Column<int>(type: "int", nullable: false),
+                    title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "draft"),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    updatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Blog__FA0AA72DCF7A4E3E", x => x.blogId);
+                    table.ForeignKey(
+                        name: "FK_Blog_BlogCategory",
+                        column: x => x.blogCategoryId,
+                        principalTable: "BlogCategory",
+                        principalColumn: "blogCategoryId");
+                    table.ForeignKey(
+                        name: "FK_Blog_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notification",
+                columns: table => new
+                {
+                    notificationId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    isRead = table.Column<bool>(type: "bit", nullable: true, defaultValue: false),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Notifica__4BA5CEA92CE3E468", x => x.notificationId);
+                    table.ForeignKey(
+                        name: "FK_Notification_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Order",
+                columns: table => new
+                {
+                    orderId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    voucherId = table.Column<int>(type: "int", nullable: true),
+                    totalAmount = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
+                    deposit = table.Column<decimal>(type: "decimal(12,2)", nullable: true, defaultValue: 0.00m),
+                    orderDate = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "pending"),
+                    paymentStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "pending"),
+                    shippingStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "pending"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Order__0809335D04D87A58", x => x.orderId);
+                    table.ForeignKey(
+                        name: "FK_Order_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                    table.ForeignKey(
+                        name: "FK_Order_Voucher",
+                        column: x => x.voucherId,
+                        principalTable: "Voucher",
+                        principalColumn: "voucherId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Personalize",
+                columns: table => new
+                {
+                    personalizeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    preferences = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    theme = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    language = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Personal__8032E374C56CF71E", x => x.personalizeId);
+                    table.ForeignKey(
+                        name: "FK_Personalize_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserMemberShips",
+                columns: table => new
+                {
+                    UserMemberShipId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    MembershipId = table.Column<int>(type: "int", nullable: false),
+                    ExpiredDays = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserMemberShips", x => x.UserMemberShipId);
+                    table.ForeignKey(
+                        name: "FK_UserMemberShips_Memberships_MembershipId",
+                        column: x => x.MembershipId,
+                        principalTable: "Memberships",
+                        principalColumn: "MembershipId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserMemberShips_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "userId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TerrariumImage",
+                columns: table => new
+                {
+                    terrariumImageId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    terrariumId = table.Column<int>(type: "int", nullable: false),
+                    imageUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    altText = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    isPrimary = table.Column<bool>(type: "bit", nullable: true, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Terrariu__38A555784432CBBE", x => x.terrariumImageId);
+                    table.ForeignKey(
+                        name: "FK_TerrariumImage_Terrarium",
+                        column: x => x.terrariumId,
+                        principalTable: "Terrarium",
+                        principalColumn: "terrariumId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TerrariumVariant",
+                columns: table => new
+                {
+                    terrariumVariantId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    terrariumId = table.Column<int>(type: "int", nullable: false),
+                    variantName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    additionalPrice = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    stockQuantity = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Terrariu__B9E43448C71265AD", x => x.terrariumVariantId);
+                    table.ForeignKey(
+                        name: "FK_TerrariumVariant_Terrarium",
+                        column: x => x.terrariumId,
+                        principalTable: "Terrarium",
+                        principalColumn: "terrariumId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AddressDelivery",
+                columns: table => new
+                {
+                    addressDeliveryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderId = table.Column<int>(type: "int", nullable: false),
+                    addressLine1 = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    addressLine2 = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    city = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    state = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    postalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    phoneNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    recipientName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__AddressD__F090623D8858B94B", x => x.addressDeliveryId);
+                    table.ForeignKey(
+                        name: "FK_AddressDelivery_Order",
+                        column: x => x.orderId,
+                        principalTable: "Order",
+                        principalColumn: "orderId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PaymentTransition",
+                columns: table => new
+                {
+                    paymentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderId = table.Column<int>(type: "int", nullable: false),
+                    paymentMethod = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    paymentAmount = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    paymentDate = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "pending"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__PaymentT__A0D9EFC6B78D0C95", x => x.paymentId);
+                    table.ForeignKey(
+                        name: "FK_PaymentTransition_Order",
+                        column: x => x.orderId,
+                        principalTable: "Order",
+                        principalColumn: "orderId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReturnExchangeRequest",
+                columns: table => new
+                {
+                    requestId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderId = table.Column<int>(type: "int", nullable: false),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    requestDate = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "pending"),
+                    reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__ReturnEx__E3C5DE3141AB3D28", x => x.requestId);
+                    table.ForeignKey(
+                        name: "FK_ReturnExchangeRequest_Order",
+                        column: x => x.orderId,
+                        principalTable: "Order",
+                        principalColumn: "orderId");
+                    table.ForeignKey(
+                        name: "FK_ReturnExchangeRequest_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShippingDetail",
+                columns: table => new
+                {
+                    shippingDetailId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderId = table.Column<int>(type: "int", nullable: false),
+                    shippingMethod = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    shippingCost = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
+                    estimatedDeliveryDate = table.Column<DateTime>(type: "date", nullable: true),
+                    trackingNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Shipping__DDF63975E50C620D", x => x.shippingDetailId);
+                    table.ForeignKey(
+                        name: "FK_ShippingDetail_Order",
+                        column: x => x.orderId,
+                        principalTable: "Order",
+                        principalColumn: "orderId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LayoutTerrarium",
+                columns: table => new
+                {
+                    layoutTerrariumId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    terrariumVariantId = table.Column<int>(type: "int", nullable: false),
+                    layoutData = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    updatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__LayoutTe__ED2AF5EA0034035F", x => x.layoutTerrariumId);
+                    table.ForeignKey(
+                        name: "FK_LayoutTerrarium_TerrariumVariant",
+                        column: x => x.terrariumVariantId,
+                        principalTable: "TerrariumVariant",
+                        principalColumn: "terrariumVariantId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderItem",
+                columns: table => new
+                {
+                    orderItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderId = table.Column<int>(type: "int", nullable: false),
+                    accessoryId = table.Column<int>(type: "int", nullable: true),
+                    terrariumVariantId = table.Column<int>(type: "int", nullable: true),
+                    quantity = table.Column<int>(type: "int", nullable: true),
+                    unitPrice = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    totalPrice = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__OrderIte__3724BD5293DBCE99", x => x.orderItemId);
+                    table.ForeignKey(
+                        name: "FK_OrderItem_Accessory",
+                        column: x => x.accessoryId,
+                        principalTable: "Accessory",
+                        principalColumn: "accessoryId");
+                    table.ForeignKey(
+                        name: "FK_OrderItem_Order",
+                        column: x => x.orderId,
+                        principalTable: "Order",
+                        principalColumn: "orderId");
+                    table.ForeignKey(
+                        name: "FK_OrderItem_TerrariumVariant",
+                        column: x => x.terrariumVariantId,
+                        principalTable: "TerrariumVariant",
+                        principalColumn: "terrariumVariantId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PromotionTerrariumVariant",
+                columns: table => new
+                {
+                    promotionTerrariumVariantId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    promotionId = table.Column<int>(type: "int", nullable: false),
+                    terrariumVariantId = table.Column<int>(type: "int", nullable: false),
+                    discountPercent = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    startDate = table.Column<DateTime>(type: "date", nullable: true),
+                    endDate = table.Column<DateTime>(type: "date", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Promotio__8F0EFF32523D8B83", x => x.promotionTerrariumVariantId);
+                    table.ForeignKey(
+                        name: "FK_PromotionTerrariumVariant_Promotion",
+                        column: x => x.promotionId,
+                        principalTable: "Promotion",
+                        principalColumn: "promotionId");
+                    table.ForeignKey(
+                        name: "FK_PromotionTerrariumVariant_TerrariumVariant",
+                        column: x => x.terrariumVariantId,
+                        principalTable: "TerrariumVariant",
+                        principalColumn: "terrariumVariantId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Feedback",
+                columns: table => new
+                {
+                    feedbackId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderItemId = table.Column<int>(type: "int", nullable: false),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    rating = table.Column<int>(type: "int", nullable: true),
+                    comment = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Feedback__2613FD244B84BCD6", x => x.feedbackId);
+                    table.ForeignKey(
+                        name: "FK_Feedback_OrderItem",
+                        column: x => x.orderItemId,
+                        principalTable: "OrderItem",
+                        principalColumn: "orderItemId");
+                    table.ForeignKey(
+                        name: "FK_Feedback_User",
+                        column: x => x.userId,
+                        principalTable: "User",
+                        principalColumn: "userId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderItemDetail",
+                columns: table => new
+                {
+                    orderItemDetailId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    orderItemId = table.Column<int>(type: "int", nullable: false),
+                    detailKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    detailValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__OrderIte__098BB1314F361970", x => x.orderItemDetailId);
+                    table.ForeignKey(
+                        name: "FK_OrderItemDetail_OrderItem",
+                        column: x => x.orderItemId,
+                        principalTable: "OrderItem",
+                        principalColumn: "orderItemId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReturnExchangeRequestItem",
+                columns: table => new
+                {
+                    requestItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    requestId = table.Column<int>(type: "int", nullable: false),
+                    orderItemId = table.Column<int>(type: "int", nullable: false),
+                    quantity = table.Column<int>(type: "int", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "pending"),
+                    notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__ReturnEx__FDD6A58FF74806E9", x => x.requestItemId);
+                    table.ForeignKey(
+                        name: "FK_ReturnExchangeRequestItem_OrderItem",
+                        column: x => x.orderItemId,
+                        principalTable: "OrderItem",
+                        principalColumn: "orderItemId");
+                    table.ForeignKey(
+                        name: "FK_ReturnExchangeRequestItem_Request",
+                        column: x => x.requestId,
+                        principalTable: "ReturnExchangeRequest",
+                        principalColumn: "requestId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FeedbackImage",
+                columns: table => new
+                {
+                    feedbackImageId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    feedbackId = table.Column<int>(type: "int", nullable: false),
+                    imageUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    altText = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Feedback__5C1F8F3456C39EF3", x => x.feedbackImageId);
+                    table.ForeignKey(
+                        name: "FK_FeedbackImage_Feedback",
+                        column: x => x.feedbackId,
+                        principalTable: "Feedback",
+                        principalColumn: "feedbackId");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accessory_categoryId",
+                table: "Accessory",
+                column: "categoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccessoryImage_accessoryId",
+                table: "AccessoryImage",
+                column: "accessoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Address_userId",
+                table: "Address",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AddressDelivery_orderId",
+                table: "AddressDelivery",
+                column: "orderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AISuggestLayout_userId",
+                table: "AISuggestLayout",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blog_blogCategoryId",
+                table: "Blog",
+                column: "blogCategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blog_userId",
+                table: "Blog",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Feedback_orderItemId",
+                table: "Feedback",
+                column: "orderItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Feedback_userId",
+                table: "Feedback",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FeedbackImage_feedbackId",
+                table: "FeedbackImage",
+                column: "feedbackId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LayoutTerrarium_terrariumVariantId",
+                table: "LayoutTerrarium",
+                column: "terrariumVariantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notification_userId",
+                table: "Notification",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Order_userId",
+                table: "Order",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Order_voucherId",
+                table: "Order",
+                column: "voucherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItem_accessoryId",
+                table: "OrderItem",
+                column: "accessoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItem_orderId",
+                table: "OrderItem",
+                column: "orderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItem_terrariumVariantId",
+                table: "OrderItem",
+                column: "terrariumVariantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItemDetail_orderItemId",
+                table: "OrderItemDetail",
+                column: "orderItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentTransition_orderId",
+                table: "PaymentTransition",
+                column: "orderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Personalize_userId",
+                table: "Personalize",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PromotionTerrariumVariant_promotionId",
+                table: "PromotionTerrariumVariant",
+                column: "promotionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PromotionTerrariumVariant_terrariumVariantId",
+                table: "PromotionTerrariumVariant",
+                column: "terrariumVariantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnExchangeRequest_orderId",
+                table: "ReturnExchangeRequest",
+                column: "orderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnExchangeRequest_userId",
+                table: "ReturnExchangeRequest",
+                column: "userId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnExchangeRequestItem_orderItemId",
+                table: "ReturnExchangeRequestItem",
+                column: "orderItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReturnExchangeRequestItem_requestId",
+                table: "ReturnExchangeRequestItem",
+                column: "requestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShippingDetail_orderId",
+                table: "ShippingDetail",
+                column: "orderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Terrarium_accessoryId",
+                table: "Terrarium",
+                column: "accessoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumImage_terrariumId",
+                table: "TerrariumImage",
+                column: "terrariumId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumVariant_terrariumId",
+                table: "TerrariumVariant",
+                column: "terrariumId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_User_roleId",
+                table: "User",
+                column: "roleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserMemberShips_MembershipId",
+                table: "UserMemberShips",
+                column: "MembershipId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserMemberShips_UserId",
+                table: "UserMemberShips",
+                column: "UserId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "AccessoryImage");
+
+            migrationBuilder.DropTable(
+                name: "Address");
+
+            migrationBuilder.DropTable(
+                name: "AddressDelivery");
+
+            migrationBuilder.DropTable(
+                name: "AISuggestLayout");
+
+            migrationBuilder.DropTable(
+                name: "Blog");
+
+            migrationBuilder.DropTable(
+                name: "FeedbackImage");
+
+            migrationBuilder.DropTable(
+                name: "LayoutTerrarium");
+
+            migrationBuilder.DropTable(
+                name: "Notification");
+
+            migrationBuilder.DropTable(
+                name: "OrderItemDetail");
+
+            migrationBuilder.DropTable(
+                name: "PaymentTransition");
+
+            migrationBuilder.DropTable(
+                name: "Personalize");
+
+            migrationBuilder.DropTable(
+                name: "PromotionTerrariumVariant");
+
+            migrationBuilder.DropTable(
+                name: "ReturnExchangeRequestItem");
+
+            migrationBuilder.DropTable(
+                name: "ShippingDetail");
+
+            migrationBuilder.DropTable(
+                name: "TerrariumImage");
+
+            migrationBuilder.DropTable(
+                name: "UserMemberShips");
+
+            migrationBuilder.DropTable(
+                name: "BlogCategory");
+
+            migrationBuilder.DropTable(
+                name: "Feedback");
+
+            migrationBuilder.DropTable(
+                name: "Promotion");
+
+            migrationBuilder.DropTable(
+                name: "ReturnExchangeRequest");
+
+            migrationBuilder.DropTable(
+                name: "Memberships");
+
+            migrationBuilder.DropTable(
+                name: "OrderItem");
+
+            migrationBuilder.DropTable(
+                name: "Order");
+
+            migrationBuilder.DropTable(
+                name: "TerrariumVariant");
+
+            migrationBuilder.DropTable(
+                name: "User");
+
+            migrationBuilder.DropTable(
+                name: "Voucher");
+
+            migrationBuilder.DropTable(
+                name: "Terrarium");
+
+            migrationBuilder.DropTable(
+                name: "Role");
+
+            migrationBuilder.DropTable(
+                name: "Accessory");
+
+            migrationBuilder.DropTable(
+                name: "Category");
+        }
+    }
+}

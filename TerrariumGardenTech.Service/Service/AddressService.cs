@@ -1,0 +1,152 @@
+﻿using System.Reflection.Metadata;
+using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Repositories;
+using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.Address;
+using TerrariumGardenTech.Service.RequestModel.Personalize;
+
+namespace TerrariumGardenTech.Service.Service
+{
+    public class AddressService : IAddressService
+    {
+        private readonly UnitOfWork _unitOfWork;
+        public AddressService(UnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        }
+        public async Task<IBusinessResult> GetAll()
+        {
+            var result = await _unitOfWork.Address.GetAllAsync();
+            if (result == null || !result.Any())
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            }
+            else
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
+            }
+        }
+
+        public async Task<IBusinessResult> GetById(int id)
+        {
+            var result = await _unitOfWork.Address.GetByIdAsync(id);
+            if (result == null)
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            }
+            else
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
+            }
+
+        }
+
+        public async Task<IBusinessResult> Save(Address address)
+        {
+            try
+            {
+                int result = -1;
+                var addressEntity = _unitOfWork.Address.GetByIdAsync(address.AddressId);
+                if (addressEntity != null)
+                {
+                    result = await _unitOfWork.Address.UpdateAsync(address);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, address);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                    }
+                }
+                else
+                {
+                    // Create new terrarium if it does not exist
+                    result = await _unitOfWork.Address.CreateAsync(address);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, address);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+
+        public async Task<IBusinessResult> UpdateAddress(AddressUpdateRequest addressUpdateRequest)
+        {
+            try
+            {
+                var result = -1;
+                var address = await _unitOfWork.Address.GetByIdAsync(addressUpdateRequest.AddressId);
+                if (address != null)
+                {
+                    _unitOfWork.Address.Context().Entry(address).CurrentValues.SetValues(addressUpdateRequest);
+                    result = await _unitOfWork.Address.UpdateAsync(address);
+                    if (result > 0)
+                    {
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, address);
+                    }
+                    else
+                    {
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                    }
+                }
+                else
+                {
+                    return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+            }
+        }
+        public async Task<IBusinessResult> CreateAddress(AddressCreateRequest addressCreateRequest)
+        {
+            try
+            {
+                var address = new Address
+                {
+                    UserId = addressCreateRequest.UserId,
+                    AddressLine1 = addressCreateRequest.AddressLine1,
+                    AddressLine2 = addressCreateRequest.AddressLine2,
+                    City = addressCreateRequest.City,
+                    State = addressCreateRequest.State,
+                    Country = addressCreateRequest.Country,
+                    PostalCode = addressCreateRequest.PostalCode,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                var result = await _unitOfWork.Address.CreateAsync(address);
+                if (address != null)
+                {
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, address);
+                }
+                else
+                {
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+                }
+                
+            }
+            catch(Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+            }
+        }
+
+        public Task<IBusinessResult> DeleteById(int id)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
