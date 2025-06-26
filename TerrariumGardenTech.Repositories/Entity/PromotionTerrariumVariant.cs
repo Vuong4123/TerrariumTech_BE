@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class PromotionTerrariumVariant  : BaseEntity
+public partial class PromotionTerrariumVariant
 {
-    [Key]
-
     public int PromotionTerrariumVariantId { get; set; }
 
     public int PromotionId { get; set; }
