@@ -58,9 +58,9 @@ namespace TerrariumGardenTech.Service.Service
             membership.EndDate = endDate;
             membership.Status = status;
 
-        //    await _membershipRepository.UpdateAsync(membership);
-        //    return true;
-        //}
+            await _membershipRepository.UpdateAsync(membership);
+            return true;
+        }
         //Test git
         // Delete Membership
         public async Task<bool> DeleteMembershipAsync(int membershipId)

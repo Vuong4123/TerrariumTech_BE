@@ -37,6 +37,47 @@ namespace TerrariumGardenTech.Service.Service
 
         }
 
+        public async Task<BusinessResult> GetAllOfParam(string type, string shape, string tankMethod, string theme, string size)
+        {
+            // Đảm bảo bạn đang sử dụng từ khóa `await` để lấy dữ liệu từ Task
+            var result = await _unitOfWork.Terrarium.GetAllAsync();
+
+            // Chuyển đổi kết quả thành IQueryable để có thể truy vấn tiếp
+            var query = result.AsQueryable();
+
+            // Áp dụng các bộ lọc nếu các tham số có giá trị
+            if (!string.IsNullOrEmpty(type))
+            {
+                query = query.Where(t => t.Type.Contains(type));
+            }
+
+            if (!string.IsNullOrEmpty(shape))
+            {
+                query = query.Where(t => t.Shape.Contains(shape));
+            }
+
+            if (!string.IsNullOrEmpty(tankMethod))
+            {
+                query = query.Where(t => t.TankMethod.Contains(tankMethod));
+            }
+
+            if (!string.IsNullOrEmpty(theme))
+            {
+                query = query.Where(t => t.Theme.Contains(theme));
+            }
+
+            if (!string.IsNullOrEmpty(size))
+            {
+                query = query.Where(t => t.Size.Contains(size));
+            }
+
+            // Lấy kết quả từ cơ sở dữ liệu và trả về kết quả dưới dạng danh sách
+            var result2 = await query.ToListAsync();
+
+            // Trả về kết quả
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", result2);
+        }
+
         public async Task<IBusinessResult> GetById(int id)
         {
             var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(id);
@@ -89,7 +130,7 @@ namespace TerrariumGardenTech.Service.Service
     
             
         }
-
+      
         public async Task<IBusinessResult> UpdateTerrarium(TerrariumUpdateRequest terrariumUpdateRequest)
         {
             try
