@@ -27,7 +27,7 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpGet("get-all")]
         public async Task<IBusinessResult> Get()
         {
-            var result =  await _terrariumService.GetAll();
+            var result = await _terrariumService.GetAll();
 
             // Check if result or result.Data is null
             if (result == null || result.Data == null)
@@ -93,6 +93,101 @@ namespace TerrariumGardenTech.API.Controllers
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
 
         }
+
+        [HttpGet("get-all-form-param")]
+        public async Task<IBusinessResult> GetAll([FromQuery] string type = null,
+                                                [FromQuery] string shape = null,
+                                                [FromQuery] string tankMethod = null,
+                                                [FromQuery] string theme = null,
+                                                [FromQuery] string size = null)
+        {
+            try
+            {
+                // Gọi phương thức GetAll từ service để lấy dữ liệu
+                var result = await _terrariumService.GetAllOfParam(type, shape, tankMethod, theme, size);
+
+                // Check if result or result.Data is null
+                if (result == null || result.Data == null)
+                {
+                    return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+                }
+
+                // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
+                var terrariums = (result.Data as IEnumerable<Terrarium>)?.Select(t => new TerrariumResponse
+                {
+                    TerrariumId = t.TerrariumId,
+                    Name = t.Name,
+                    Description = t.Description,
+                    Price = (decimal)t.Price,
+                    Stock = t.Stock,
+                    Status = t.Status,
+                    Type = t.Type,
+                    Shape = t.Shape,
+                    TankMethod = t.TankMethod,
+                    Theme = t.Theme,
+                    CreatedAt = t.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+                    UpdatedAt = t.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
+                    AccessoryId = t.AccessoryId ?? 0,// If nullable, default to 0 if null
+                    Size = t.Size,
+                    BodyHTML = t.bodyHTML
+                }).ToList();
+
+                if (terrariums == null)
+                {
+                    return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+                }
+
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
+            }
+            catch (Exception ex)
+            {
+                // Xử lý ngoại lệ nếu có lỗi trong quá trình lấy dữ liệu
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+
+        // GET api/terrarium
+        [HttpGet("get-all-form-param-detail")]
+        public async Task<IBusinessResult> GetAllOfParamDetail([FromQuery] string type = null,
+                                                [FromQuery] string shape = null,
+                                                [FromQuery] string tankMethod = null,
+                                                [FromQuery] string theme = null,
+                                                [FromQuery] string size = null)
+        {
+            try
+            {
+                // Gọi phương thức GetAll từ service để lấy dữ liệu
+                var result = await _terrariumService.GetAllOfParam(type, shape, tankMethod, theme, size);
+
+                // Check if result or result.Data is null
+                if (result == null || result.Data == null)
+                {
+                    return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+                }
+
+                // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
+                var terrariums = (result.Data as IEnumerable<Terrarium>)?.Select(t => new TerrariumDetailResponse
+                {
+                    TerrariumId = t.TerrariumId,
+                    Name = t.Name,
+                    Description = t.Description,
+                    Price = (decimal)t.Price,
+                }).ToList();
+
+                if (terrariums == null)
+                {
+                    return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+                }
+
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
+            }
+            catch (Exception ex)
+            {
+                // Xử lý ngoại lệ nếu có lỗi trong quá trình lấy dữ liệu
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+
 
         // GET api/<TerrariumController>/5
         [HttpGet("get-{id}")]
