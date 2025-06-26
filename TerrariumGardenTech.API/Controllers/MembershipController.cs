@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.MemberShip;
+using System.Threading.Tasks;
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -61,6 +62,34 @@ namespace TerrariumGardenTech.API.Controllers
             if (!success)
                 return NotFound(new { message = "Membership không tồn tại hoặc không thể xóa" });
             return NoContent();  // Xóa thành công
+        }
+
+        // API Update all expired memberships
+        [HttpPost("update-expired")]
+        public async Task<IActionResult> UpdateAllExpiredMemberships()
+        {
+            var updatedCount = await _membershipService.UpdateAllExpiredMembershipsAsync();
+            return Ok(new { updatedCount });
+        }
+
+        // API Update expired memberships for a specific user
+        [HttpPost("user/{userId}/update-expired")]
+        public async Task<IActionResult> UpdateExpiredMembershipsByUserId(int userId)
+        {
+            var updatedCount = await _membershipService.UpdateExpiredMembershipsByUserIdAsync(userId);
+            return Ok(new { updatedCount });
+        }
+
+        // API Check if a membership is expired
+        [HttpGet("{id}/is-expired")]
+        public IActionResult CheckIfMembershipIsExpired(int id)
+        {
+            var membership = _membershipService.GetMembershipByIdAsync(id).Result;
+            if (membership == null)
+                return NotFound(new { message = "Membership không tồn tại" });
+
+            bool isExpired = _membershipService.IsMembershipExpired(membership);
+            return Ok(new { isExpired });
         }
     }
 }
