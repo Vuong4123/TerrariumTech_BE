@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class User : BaseEntity
+public partial class User
 {
-    [Key]
-
     public int UserId { get; set; }
 
     public string Username { get; set; }
@@ -32,6 +29,10 @@ public partial class User : BaseEntity
 
     public DateTime? EndToken { get; set; }
 
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
     public string Status { get; set; }
 
     public string FullName { get; set; }
@@ -50,7 +51,7 @@ public partial class User : BaseEntity
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-    public virtual ICollection<UserMemberShip> UserMemberShips { get; set; } = [];
+    public virtual ICollection<Membership> Memberships { get; set; } = new List<Membership>();
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 

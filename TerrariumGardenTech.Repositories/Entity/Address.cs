@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class Address : BaseEntity
+public partial class Address
 {
-    [Key]
-
     public int AddressId { get; set; }
 
     public int UserId { get; set; }
@@ -25,7 +22,6 @@ public partial class Address : BaseEntity
     public string Country { get; set; }
 
     public string PostalCode { get; set; }
-
 
     public virtual User User { get; set; }
 }

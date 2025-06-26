@@ -1,4 +1,9 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 
 namespace TerrariumGardenTech.Repositories
@@ -13,8 +18,6 @@ namespace TerrariumGardenTech.Repositories
         private BlogRepository _blogRepository;
         private BlogCategoryRepository _blogCategoryRepository;
         private RoleReppsitory _roleReppsitory;
-        private PersonnalizeRepository _personnalizeRepository;
-        private AddressRepository _addressRepository;
 
 
         public UnitOfWork()
@@ -30,10 +33,6 @@ namespace TerrariumGardenTech.Repositories
         public UserRepository User { get { return _userRepository ??= new UserRepository(_unitOfWorkContext); } }
         public BlogCategoryRepository BlogCategory { get { return _blogCategoryRepository ??= new BlogCategoryRepository(_unitOfWorkContext); } }
         public RoleReppsitory Role { get { return _roleReppsitory ??= new RoleReppsitory(_unitOfWorkContext); } }
-        public PersonnalizeRepository Personalize { get { return _personnalizeRepository ??= new PersonnalizeRepository(_unitOfWorkContext);  } }
-        public AddressRepository Address { get { return _addressRepository ??= new AddressRepository(_unitOfWorkContext); } }
-
-
 
     }
 }
