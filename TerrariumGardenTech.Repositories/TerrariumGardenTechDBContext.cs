@@ -92,8 +92,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
-    public virtual DbSet<UserMemberShip> UserMemberShips { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
@@ -376,25 +374,33 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
         });
 
-        //modelBuilder.Entity<UserMemberShip>(entity =>
-        //{
-        //    entity.HasKey(e => new { e.UserId, e.MembershipId });
+        modelBuilder.Entity<Membership>(entity =>
+        {
+            entity.HasKey(e => e.MembershipId).HasName("PK__Membersh__86AA3B174168331C");
 
-        //    entity.ToTable("UserMembership");
+            entity.ToTable("Membership");
 
-        //    entity.HasOne(e => e.User)
-        //          .WithMany(u => u.UserMemberShips)  // User có nhiều UserMembership
-        //          .HasForeignKey(e => e.UserId)
-        //          .OnDelete(DeleteBehavior.ClientSetNull)
-        //          .HasConstraintName("FK_UserMembership_User");
+            entity.Property(e => e.MembershipId).HasColumnName("membershipId");
+            entity.Property(e => e.EndDate)
+                .HasColumnType("date")
+                .HasColumnName("endDate");
+            entity.Property(e => e.MembershipType)
+                .HasMaxLength(50)
+                .HasColumnName("membershipType");
+            entity.Property(e => e.StartDate)
+                .HasColumnType("date")
+                .HasColumnName("startDate");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
-        //    entity.HasOne(e => e.Membership)
-        //          .WithMany(m => m.UserMemberShips)  // Membership có nhiều UserMembership
-        //          .HasForeignKey(e => e.MembershipId)
-        //          .OnDelete(DeleteBehavior.ClientSetNull)
-        //          .HasConstraintName("FK_UserMembership_Membership");
-        //});
-
+            entity.HasOne(d => d.User).WithMany(p => p.Memberships)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Membership_User");
+        });
 
         modelBuilder.Entity<Notification>(entity =>
         {
@@ -542,26 +548,27 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_PaymentTransition_Order");
         });
 
-        //modelBuilder.Entity<Personalize>(entity =>
-        //{
-        //    entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__8032E374C56CF71E");
+        modelBuilder.Entity<Personalize>(entity =>
+        {
+            entity.HasKey(e => e.PersonalizeId).HasName("PK__Personal__8032E374C56CF71E");
 
-        //    entity.ToTable("Personalize");
+            entity.ToTable("Personalize");
 
-        //    entity.Property(e => e.PersonalizeId).HasColumnName("personalizeId");
-        //    entity.Property(e => e.Language)
-        //        .HasMaxLength(20)
-        //        .HasColumnName("language");
-        //    entity.Property(e => e.Theme)
-        //        .HasMaxLength(50)
-        //        .HasColumnName("theme");
-        //    entity.Property(e => e.UserId).HasColumnName("userId");
+            entity.Property(e => e.PersonalizeId).HasColumnName("personalizeId");
+            entity.Property(e => e.Language)
+                .HasMaxLength(20)
+                .HasColumnName("language");
+            entity.Property(e => e.Preferences).HasColumnName("preferences");
+            entity.Property(e => e.Theme)
+                .HasMaxLength(50)
+                .HasColumnName("theme");
+            entity.Property(e => e.UserId).HasColumnName("userId");
 
-        //    entity.HasOne(d => d.User).WithMany(p => p.Personalizes)
-        //        .HasForeignKey(d => d.UserId)
-        //        .OnDelete(DeleteBehavior.ClientSetNull)
-        //        .HasConstraintName("FK_Personalize_User");
-        //});
+            entity.HasOne(d => d.User).WithMany(p => p.Personalizes)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Personalize_User");
+        });
 
         modelBuilder.Entity<Promotion>(entity =>
         {
