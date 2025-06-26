@@ -2,14 +2,11 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class PaymentTransition  : BaseEntity
+public partial class PaymentTransition
 {
-    [Key]
-
     public int PaymentId { get; set; }
 
     public int OrderId { get; set; }
