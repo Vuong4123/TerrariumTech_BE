@@ -65,6 +65,7 @@ builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IMembershipService, MembershipService>();
+builder.Services.AddScoped<IShapeService, ShapeService>();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -272,7 +273,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "TerrariumGardenTech API V1");
-        c.RoutePrefix = string.Empty;
+        c.RoutePrefix = "swagger"; // Đặt đường dẫn gốc cho Swagger UI
     });
 }
 
