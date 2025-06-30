@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,6 +40,20 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Environments",
+                columns: table => new
+                {
+                    EnvironmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EnvironmentName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EnvironmentDescription = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Environments", x => x.EnvironmentId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Promotion",
                 columns: table => new
                 {
@@ -67,6 +81,40 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK__Role__CD98462A2156B115", x => x.roleId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Shapes",
+                columns: table => new
+                {
+                    ShapeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ShapeName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ShapeDescription = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ShapeSize = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ShapeHeight = table.Column<int>(type: "int", nullable: false),
+                    ShapeWidth = table.Column<int>(type: "int", nullable: false),
+                    ShapeLength = table.Column<int>(type: "int", nullable: false),
+                    ShapeVolume = table.Column<float>(type: "real", nullable: false),
+                    ShapeMaterial = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Shapes", x => x.ShapeId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TankMethods",
+                columns: table => new
+                {
+                    TankMethodId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TankMethodType = table.Column<int>(type: "int", nullable: false),
+                    TankMethodDescription = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TankMethods", x => x.TankMethodId);
                 });
 
             migrationBuilder.CreateTable(
@@ -170,32 +218,27 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Terrarium",
+                name: "Terrariums",
                 columns: table => new
                 {
-                    terrariumId = table.Column<int>(type: "int", nullable: false)
+                    TerrariumId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
-                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    price = table.Column<decimal>(type: "decimal(12,2)", nullable: true),
-                    stock = table.Column<int>(type: "int", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "Available"),
-                    type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    shape = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    tankMethod = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    theme = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
-                    updatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "(sysutcdatetime())"),
-                    accessoryId = table.Column<int>(type: "int", nullable: true),
-                    Size = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    bodyHTML = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                    TerrariumName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Stock = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    bodyHTML = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccessoryId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Terrariu__1AE69F91279E10EB", x => x.terrariumId);
+                    table.PrimaryKey("PK_Terrariums", x => x.TerrariumId);
                     table.ForeignKey(
-                        name: "FK_Terrarium_Accessory",
-                        column: x => x.accessoryId,
+                        name: "FK_Terrariums_Accessory_AccessoryId",
+                        column: x => x.AccessoryId,
                         principalTable: "Accessory",
                         principalColumn: "accessoryId");
                 });
@@ -348,24 +391,79 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Personalize",
+                name: "Personalizes",
                 columns: table => new
                 {
-                    personalizeId = table.Column<int>(type: "int", nullable: false)
+                    PersonalizeId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    userId = table.Column<int>(type: "int", nullable: false),
-                    preferences = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    theme = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    language = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Shape = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TankMethod = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Theme = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Size = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Personal__8032E374C56CF71E", x => x.personalizeId);
+                    table.PrimaryKey("PK_Personalizes", x => x.PersonalizeId);
                     table.ForeignKey(
-                        name: "FK_Personalize_User",
-                        column: x => x.userId,
+                        name: "FK_Personalizes_User_UserId",
+                        column: x => x.UserId,
                         principalTable: "User",
-                        principalColumn: "userId");
+                        principalColumn: "userId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TerrariumAccessory",
+                columns: table => new
+                {
+                    TerrariumAccessoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TerrariumId = table.Column<int>(type: "int", nullable: false),
+                    AccessoryId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TerrariumAccessory", x => x.TerrariumAccessoryId);
+                    table.ForeignKey(
+                        name: "FK_TerrariumAccessory_Accessory_AccessoryId",
+                        column: x => x.AccessoryId,
+                        principalTable: "Accessory",
+                        principalColumn: "accessoryId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TerrariumAccessory_Terrariums_TerrariumId",
+                        column: x => x.TerrariumId,
+                        principalTable: "Terrariums",
+                        principalColumn: "TerrariumId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TerrariumEnvironments",
+                columns: table => new
+                {
+                    TerrariumEnvironmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TerrariumId = table.Column<int>(type: "int", nullable: false),
+                    EnvironmentId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TerrariumEnvironments", x => x.TerrariumEnvironmentId);
+                    table.ForeignKey(
+                        name: "FK_TerrariumEnvironments_Environments_EnvironmentId",
+                        column: x => x.EnvironmentId,
+                        principalTable: "Environments",
+                        principalColumn: "EnvironmentId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TerrariumEnvironments_Terrariums_TerrariumId",
+                        column: x => x.TerrariumId,
+                        principalTable: "Terrariums",
+                        principalColumn: "TerrariumId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -385,8 +483,60 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     table.ForeignKey(
                         name: "FK_TerrariumImage_Terrarium",
                         column: x => x.terrariumId,
-                        principalTable: "Terrarium",
-                        principalColumn: "terrariumId");
+                        principalTable: "Terrariums",
+                        principalColumn: "TerrariumId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TerrariumShapes",
+                columns: table => new
+                {
+                    TerrariumShapeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TerrariumId = table.Column<int>(type: "int", nullable: false),
+                    ShapeId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TerrariumShapes", x => x.TerrariumShapeId);
+                    table.ForeignKey(
+                        name: "FK_TerrariumShapes_Shapes_ShapeId",
+                        column: x => x.ShapeId,
+                        principalTable: "Shapes",
+                        principalColumn: "ShapeId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TerrariumShapes_Terrariums_TerrariumId",
+                        column: x => x.TerrariumId,
+                        principalTable: "Terrariums",
+                        principalColumn: "TerrariumId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TerrariumTankMethods",
+                columns: table => new
+                {
+                    TerrariumTankMethodId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TerrariumId = table.Column<int>(type: "int", nullable: false),
+                    TankMethodId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TerrariumTankMethods", x => x.TerrariumTankMethodId);
+                    table.ForeignKey(
+                        name: "FK_TerrariumTankMethods_TankMethods_TankMethodId",
+                        column: x => x.TankMethodId,
+                        principalTable: "TankMethods",
+                        principalColumn: "TankMethodId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TerrariumTankMethods_Terrariums_TerrariumId",
+                        column: x => x.TerrariumId,
+                        principalTable: "Terrariums",
+                        principalColumn: "TerrariumId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -406,8 +556,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     table.ForeignKey(
                         name: "FK_TerrariumVariant_Terrarium",
                         column: x => x.terrariumId,
-                        principalTable: "Terrarium",
-                        principalColumn: "terrariumId");
+                        principalTable: "Terrariums",
+                        principalColumn: "TerrariumId");
                 });
 
             migrationBuilder.CreateTable(
@@ -783,9 +933,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 column: "orderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Personalize_userId",
-                table: "Personalize",
-                column: "userId");
+                name: "IX_Personalizes_UserId",
+                table: "Personalizes",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PromotionTerrariumVariant_promotionId",
@@ -823,14 +973,54 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 column: "orderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Terrarium_accessoryId",
-                table: "Terrarium",
-                column: "accessoryId");
+                name: "IX_TerrariumAccessory_AccessoryId",
+                table: "TerrariumAccessory",
+                column: "AccessoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumAccessory_TerrariumId",
+                table: "TerrariumAccessory",
+                column: "TerrariumId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumEnvironments_EnvironmentId",
+                table: "TerrariumEnvironments",
+                column: "EnvironmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumEnvironments_TerrariumId",
+                table: "TerrariumEnvironments",
+                column: "TerrariumId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TerrariumImage_terrariumId",
                 table: "TerrariumImage",
                 column: "terrariumId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Terrariums_AccessoryId",
+                table: "Terrariums",
+                column: "AccessoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumShapes_ShapeId",
+                table: "TerrariumShapes",
+                column: "ShapeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumShapes_TerrariumId",
+                table: "TerrariumShapes",
+                column: "TerrariumId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumTankMethods_TankMethodId",
+                table: "TerrariumTankMethods",
+                column: "TankMethodId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TerrariumTankMethods_TerrariumId",
+                table: "TerrariumTankMethods",
+                column: "TerrariumId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TerrariumVariant_terrariumId",
@@ -880,7 +1070,7 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 name: "PaymentTransition");
 
             migrationBuilder.DropTable(
-                name: "Personalize");
+                name: "Personalizes");
 
             migrationBuilder.DropTable(
                 name: "PromotionTerrariumVariant");
@@ -892,7 +1082,19 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 name: "ShippingDetail");
 
             migrationBuilder.DropTable(
+                name: "TerrariumAccessory");
+
+            migrationBuilder.DropTable(
+                name: "TerrariumEnvironments");
+
+            migrationBuilder.DropTable(
                 name: "TerrariumImage");
+
+            migrationBuilder.DropTable(
+                name: "TerrariumShapes");
+
+            migrationBuilder.DropTable(
+                name: "TerrariumTankMethods");
 
             migrationBuilder.DropTable(
                 name: "BlogCategory");
@@ -905,6 +1107,15 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             migrationBuilder.DropTable(
                 name: "ReturnExchangeRequest");
+
+            migrationBuilder.DropTable(
+                name: "Environments");
+
+            migrationBuilder.DropTable(
+                name: "Shapes");
+
+            migrationBuilder.DropTable(
+                name: "TankMethods");
 
             migrationBuilder.DropTable(
                 name: "OrderItem");
@@ -922,7 +1133,7 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 name: "Voucher");
 
             migrationBuilder.DropTable(
-                name: "Terrarium");
+                name: "Terrariums");
 
             migrationBuilder.DropTable(
                 name: "Role");

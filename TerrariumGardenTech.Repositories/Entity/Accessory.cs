@@ -32,4 +32,5 @@ public partial class Accessory
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public virtual ICollection<Terrarium> Terraria { get; set; } = new List<Terrarium>();
+    public virtual ICollection<TerrariumAccessory> TerrariumAccessory { get; set; } = [];
 }
