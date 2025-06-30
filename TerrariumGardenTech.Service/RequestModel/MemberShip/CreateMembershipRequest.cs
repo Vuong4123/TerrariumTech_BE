@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TerrariumGardenTech.Service.RequestModel.MemberShip
+﻿namespace TerrariumGardenTech.Service.RequestModel.MemberShip
 {
     public class CreateMembershipRequest
     {
