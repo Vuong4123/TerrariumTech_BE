@@ -2,11 +2,16 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class TerrariumImage
 {
+    [Key]
     public int TerrariumImageId { get; set; }
 
     public int TerrariumId { get; set; }
@@ -16,6 +21,7 @@ public partial class TerrariumImage
     public string AltText { get; set; }
 
     public bool? IsPrimary { get; set; }
+    [ForeignKey(nameof(TerrariumId))]
 
     public virtual Terrarium Terrarium { get; set; }
 }

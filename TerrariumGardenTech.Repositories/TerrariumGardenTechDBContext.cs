@@ -31,7 +31,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
         IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true, true).AddEnvironmentVariables().Build();
-        return configuration.GetConnectionString("DefaultConnectionString"); 
+        return configuration.GetConnectionString("DefaultConnectionString");
     }
 
     public virtual DbSet<Accessory> Accessories { get; set; }
@@ -82,7 +82,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<ShippingDetail> ShippingDetails { get; set; }
 
-    public virtual DbSet<Terrarium> Terraria { get; set; }
+    public virtual DbSet<Terrarium> Terrariums { get; set; }
 
     public virtual DbSet<TerrariumImage> TerrariumImages { get; set; }
 
@@ -91,6 +91,14 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
+    public virtual DbSet<TerrariumTankMethod> TerrariumTankMethods { get; set; }
+    public virtual DbSet<TankMethod> TankMethods { get; set; }
+
+    public virtual DbSet<Shape> Shapes { get; set; }
+    public virtual DbSet<TerrariumShape> TerrariumShapes { get; set; }
+    public virtual DbSet<TerrariumEnvironment> TerrariumEnvironments { get; set; }
+    public virtual DbSet<TerrariumAccessory> TerrariumAccessory { get; set; }
+    public virtual DbSet<Environment> Environments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -722,53 +730,53 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_ShippingDetail_Order");
         });
 
-        modelBuilder.Entity<Terrarium>(entity =>
-        {
-            entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__1AE69F91279E10EB");
+        // modelBuilder.Entity<Terrarium>(entity =>
+        // {
+        //     entity.HasKey(e => e.TerrariumId).HasName("PK__Terrariu__1AE69F91279E10EB");
 
-            entity.ToTable("Terrarium");
+        //     entity.ToTable("Terrarium");
 
-            entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
-            entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("createdAt");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.Name)
-                .HasMaxLength(150)
-                .HasColumnName("name");
-            entity.Property(e => e.Price)
-                .HasColumnType("decimal(12, 2)")
-                .HasColumnName("price");
-            entity.Property(e => e.Shape)
-                .HasMaxLength(100)
-                .HasColumnName("shape");
-            entity.Property(e => e.Size).HasMaxLength(20);
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("Available")
-                .HasColumnName("status");
-            entity.Property(e => e.Stock).HasColumnName("stock");
-            entity.Property(e => e.TankMethod)
-                .HasMaxLength(100)
-                .HasColumnName("tankMethod");
-            entity.Property(e => e.Theme)
-                .HasMaxLength(100)
-                .HasColumnName("theme");
-            entity.Property(e => e.Type)
-                .HasMaxLength(100)
-                .HasColumnName("type");
-            entity.Property(e => e.bodyHTML)
-                .HasMaxLength(200)
-                .HasColumnName("bodyHTML");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("updatedAt");
+        //     entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
+        //     entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
+        //     entity.Property(e => e.CreatedAt)
+        //         .HasDefaultValueSql("(sysutcdatetime())")
+        //         .HasColumnName("createdAt");
+        //     entity.Property(e => e.Description).HasColumnName("description");
+        //     entity.Property(e => e.Name)
+        //         .HasMaxLength(150)
+        //         .HasColumnName("name");
+        //     entity.Property(e => e.Price)
+        //         .HasColumnType("decimal(12, 2)")
+        //         .HasColumnName("price");
+        //     entity.Property(e => e.Shape)
+        //         .HasMaxLength(100)
+        //         .HasColumnName("shape");
+        //     entity.Property(e => e.Size).HasMaxLength(20);
+        //     entity.Property(e => e.Status)
+        //         .HasMaxLength(20)
+        //         .HasDefaultValue("Available")
+        //         .HasColumnName("status");
+        //     entity.Property(e => e.Stock).HasColumnName("stock");
+        //     entity.Property(e => e.TankMethod)
+        //         .HasMaxLength(100)
+        //         .HasColumnName("tankMethod");
+        //     entity.Property(e => e.Theme)
+        //         .HasMaxLength(100)
+        //         .HasColumnName("theme");
+        //     entity.Property(e => e.Type)
+        //         .HasMaxLength(100)
+        //         .HasColumnName("type");
+        //     entity.Property(e => e.bodyHTML)
+        //         .HasMaxLength(200)
+        //         .HasColumnName("bodyHTML");
+        //     entity.Property(e => e.UpdatedAt)
+        //         .HasDefaultValueSql("(sysutcdatetime())")
+        //         .HasColumnName("updatedAt");
 
-            entity.HasOne(d => d.Accessory).WithMany(p => p.Terraria)
-                .HasForeignKey(d => d.AccessoryId)
-                .HasConstraintName("FK_Terrarium_Accessory");
-        });
+        //     entity.HasOne(d => d.Accessory).WithMany(p => p.Terraria)
+        //         .HasForeignKey(d => d.AccessoryId)
+        //         .HasConstraintName("FK_Terrarium_Accessory");
+        // });
 
         modelBuilder.Entity<TerrariumImage>(entity =>
         {

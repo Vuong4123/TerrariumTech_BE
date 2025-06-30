@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
 {
@@ -12,5 +8,7 @@ namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
         public string Name { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }
+        public TerrariumStatusEnum Status { get; set; }
+
     }
 }

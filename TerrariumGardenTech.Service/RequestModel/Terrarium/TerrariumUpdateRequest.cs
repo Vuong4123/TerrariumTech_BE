@@ -10,30 +10,19 @@ namespace TerrariumGardenTech.Service.RequestModel.Terrarium
     {
         public int TerrariumId { get; set; }
 
-        public string Name { get; set; }
+        public string TankMethodType { get; set; } 
+        public string Shape { get; set; } = string.Empty;
+        public string Environment { get; set; } = string.Empty;
+        public string TerrariumName { get; set; } = default!;
 
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         public decimal? Price { get; set; }
 
         public int Stock { get; set; }
 
-        public string Status { get; set; }
+        public string Status { get; set; } = "Active";
 
-        public string Type { get; set; }
-
-        public string Shape { get; set; }
-
-        public string TankMethod { get; set; }
-
-        public string Theme { get; set; }
-
-        public DateTime? CreatedAt { get; set; }
-
-        public DateTime? UpdatedAt { get; set; }
-        public int? AccessoryId { get; set; }
-
-        public string Size { get; set; }
-        public string bodyHTML { get; set; }
+        public string? bodyHTML { get; set; } = string.Empty;
     }
 }

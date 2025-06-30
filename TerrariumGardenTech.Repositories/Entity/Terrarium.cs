@@ -9,7 +9,7 @@ public partial class Terrarium
 {
     public int TerrariumId { get; set; }
 
-    public string Name { get; set; }
+    public string TerrariumName { get; set; }
 
     public string Description { get; set; }
 
@@ -17,29 +17,20 @@ public partial class Terrarium
 
     public int Stock { get; set; }
 
-    public string Status { get; set; }
-
-    public string Type { get; set; }
-
-    public string Shape { get; set; }
-
-    public string TankMethod { get; set; }
-
-    public string Theme { get; set; }
+    public TerrariumStatusEnum Status { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
-
-    public int? AccessoryId { get; set; }
-
-    public string Size { get; set; }
-
     public string bodyHTML { get; set; }
 
-    public virtual Accessory Accessory { get; set; }
+    
 
-    public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = new List<TerrariumImage>();
 
-    public virtual ICollection<TerrariumVariant> TerrariumVariants { get; set; } = new List<TerrariumVariant>();
+    public virtual ICollection<TerrariumAccessory> TerrariumAccessory { get; set; } = [];
+    public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = [];
+    public virtual ICollection<TerrariumVariant> TerrariumVariants { get; set; } = [];
+    public virtual ICollection<TerrariumTankMethod> TerrariumTankMethods { get; set; } = [];
+    public virtual ICollection<TerrariumEnvironment> TerrariumEnvironments { get; set; } = [];
+    public virtual ICollection<TerrariumShape> TerrariumShapes { get; set; } = [];
 }
