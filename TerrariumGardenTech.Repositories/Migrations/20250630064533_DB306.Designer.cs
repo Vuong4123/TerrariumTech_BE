@@ -12,8 +12,8 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    [Migration("20250626163333_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250630064533_DB306")]
+    partial class DB306
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -365,6 +365,27 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasName("PK__Category__23CAF1D819300390");
 
                     b.ToTable("Category", (string)null);
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Environment", b =>
+                {
+                    b.Property<int>("EnvironmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EnvironmentId"));
+
+                    b.Property<string>("EnvironmentDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EnvironmentName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EnvironmentId");
+
+                    b.ToTable("Environments");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Feedback", b =>
@@ -745,35 +766,33 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 {
                     b.Property<int>("PersonalizeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("personalizeId");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PersonalizeId"));
 
-                    b.Property<string>("Language")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("language");
+                    b.Property<string>("Shape")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Preferences")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("preferences");
+                    b.Property<string>("Size")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TankMethod")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Theme")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("theme");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("userId");
+                        .HasColumnType("int");
 
-                    b.HasKey("PersonalizeId")
-                        .HasName("PK__Personal__8032E374C56CF71E");
+                    b.HasKey("PersonalizeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Personalize", (string)null);
+                    b.ToTable("Personalizes");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Promotion", b =>
@@ -962,6 +981,47 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("Role", (string)null);
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Shape", b =>
+                {
+                    b.Property<int>("ShapeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ShapeId"));
+
+                    b.Property<string>("ShapeDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ShapeHeight")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShapeLength")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShapeMaterial")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShapeName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShapeSize")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("ShapeVolume")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ShapeWidth")
+                        .HasColumnType("int");
+
+                    b.HasKey("ShapeId");
+
+                    b.ToTable("Shapes");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ShippingDetail", b =>
                 {
                     b.Property<int>("ShippingDetailId")
@@ -1001,90 +1061,113 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("ShippingDetail", (string)null);
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TankMethod", b =>
+                {
+                    b.Property<int>("TankMethodId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TankMethodId"));
+
+                    b.Property<string>("TankMethodDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TankMethodType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("TankMethodId");
+
+                    b.ToTable("TankMethods");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Terrarium", b =>
                 {
                     b.Property<int>("TerrariumId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("terrariumId");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TerrariumId"));
 
                     b.Property<int?>("AccessoryId")
-                        .HasColumnType("int")
-                        .HasColumnName("accessoryId");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("createdAt")
-                        .HasDefaultValueSql("(sysutcdatetime())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)")
-                        .HasColumnName("name");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("Price")
-                        .HasColumnType("decimal(12, 2)")
-                        .HasColumnName("price");
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Shape")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("shape");
-
-                    b.Property<string>("Size")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Available")
-                        .HasColumnName("status");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("Stock")
-                        .HasColumnType("int")
-                        .HasColumnName("stock");
+                        .HasColumnType("int");
 
-                    b.Property<string>("TankMethod")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("tankMethod");
-
-                    b.Property<string>("Theme")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("theme");
-
-                    b.Property<string>("Type")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("type");
+                    b.Property<string>("TerrariumName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updatedAt")
-                        .HasDefaultValueSql("(sysutcdatetime())");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("bodyHTML")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("bodyHTML");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("TerrariumId")
-                        .HasName("PK__Terrariu__1AE69F91279E10EB");
+                    b.HasKey("TerrariumId");
 
                     b.HasIndex("AccessoryId");
 
-                    b.ToTable("Terrarium", (string)null);
+                    b.ToTable("Terrariums");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumAccessory", b =>
+                {
+                    b.Property<int>("TerrariumAccessoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TerrariumAccessoryId"));
+
+                    b.Property<int>("AccessoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TerrariumId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TerrariumAccessoryId");
+
+                    b.HasIndex("AccessoryId");
+
+                    b.HasIndex("TerrariumId");
+
+                    b.ToTable("TerrariumAccessory");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumEnvironment", b =>
+                {
+                    b.Property<int>("TerrariumEnvironmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TerrariumEnvironmentId"));
+
+                    b.Property<int>("EnvironmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TerrariumId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TerrariumEnvironmentId");
+
+                    b.HasIndex("EnvironmentId");
+
+                    b.HasIndex("TerrariumId");
+
+                    b.ToTable("TerrariumEnvironments");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumImage", b =>
@@ -1122,6 +1205,52 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasIndex("TerrariumId");
 
                     b.ToTable("TerrariumImage", (string)null);
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumShape", b =>
+                {
+                    b.Property<int>("TerrariumShapeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TerrariumShapeId"));
+
+                    b.Property<int>("ShapeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TerrariumId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TerrariumShapeId");
+
+                    b.HasIndex("ShapeId");
+
+                    b.HasIndex("TerrariumId");
+
+                    b.ToTable("TerrariumShapes");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumTankMethod", b =>
+                {
+                    b.Property<int>("TerrariumTankMethodId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TerrariumTankMethodId"));
+
+                    b.Property<int>("TankMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TerrariumId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TerrariumTankMethodId");
+
+                    b.HasIndex("TankMethodId");
+
+                    b.HasIndex("TerrariumId");
+
+                    b.ToTable("TerrariumTankMethods");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumVariant", b =>
@@ -1520,8 +1649,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
                         .WithMany("Personalizes")
                         .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Personalize_User");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1596,12 +1725,47 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Terrarium", b =>
                 {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Accessory", "Accessory")
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Accessory", null)
                         .WithMany("Terraria")
+                        .HasForeignKey("AccessoryId");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumAccessory", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Accessory", "Accessory")
+                        .WithMany("TerrariumAccessory")
                         .HasForeignKey("AccessoryId")
-                        .HasConstraintName("FK_Terrarium_Accessory");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Terrarium", "Terrarium")
+                        .WithMany("TerrariumAccessory")
+                        .HasForeignKey("TerrariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Accessory");
+
+                    b.Navigation("Terrarium");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumEnvironment", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Environment", "Environment")
+                        .WithMany("TerrariumEnvironments")
+                        .HasForeignKey("EnvironmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Terrarium", "Terrarium")
+                        .WithMany("TerrariumEnvironments")
+                        .HasForeignKey("TerrariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Environment");
+
+                    b.Navigation("Terrarium");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumImage", b =>
@@ -1611,6 +1775,44 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasForeignKey("TerrariumId")
                         .IsRequired()
                         .HasConstraintName("FK_TerrariumImage_Terrarium");
+
+                    b.Navigation("Terrarium");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumShape", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Shape", "Shape")
+                        .WithMany("TerrariumShapes")
+                        .HasForeignKey("ShapeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Terrarium", "Terrarium")
+                        .WithMany("TerrariumShapes")
+                        .HasForeignKey("TerrariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shape");
+
+                    b.Navigation("Terrarium");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumTankMethod", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.TankMethod", "TankMethod")
+                        .WithMany("TerrariumTankMethods")
+                        .HasForeignKey("TankMethodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Terrarium", "Terrarium")
+                        .WithMany("TerrariumTankMethods")
+                        .HasForeignKey("TerrariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TankMethod");
 
                     b.Navigation("Terrarium");
                 });
@@ -1643,6 +1845,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("OrderItems");
 
                     b.Navigation("Terraria");
+
+                    b.Navigation("TerrariumAccessory");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.BlogCategory", b =>
@@ -1653,6 +1857,11 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Category", b =>
                 {
                     b.Navigation("Accessories");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Environment", b =>
+                {
+                    b.Navigation("TerrariumEnvironments");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Feedback", b =>
@@ -1697,9 +1906,27 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Users");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Shape", b =>
+                {
+                    b.Navigation("TerrariumShapes");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TankMethod", b =>
+                {
+                    b.Navigation("TerrariumTankMethods");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Terrarium", b =>
                 {
+                    b.Navigation("TerrariumAccessory");
+
+                    b.Navigation("TerrariumEnvironments");
+
                     b.Navigation("TerrariumImages");
+
+                    b.Navigation("TerrariumShapes");
+
+                    b.Navigation("TerrariumTankMethods");
 
                     b.Navigation("TerrariumVariants");
                 });
