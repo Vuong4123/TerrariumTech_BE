@@ -1,12 +1,12 @@
 ﻿using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
-namespace TerrariumGardenTech.Repositories.Repositories
-{
-    public class PersonnalizeRepository : GenericRepository<Personalize>
+namespace TerrariumGardenTech.Repositories.Repositories;
+
+    public class PersonalizeRepository : GenericRepository<Personalize>
     {
        
        private readonly TerrariumGardenTechDBContext _dbContexxt;
-       public PersonnalizeRepository(TerrariumGardenTechDBContext dbContext) => _dbContexxt = dbContext;
+       public PersonalizeRepository(TerrariumGardenTechDBContext dbContext) => _dbContexxt = dbContext;
     }
-}
+
