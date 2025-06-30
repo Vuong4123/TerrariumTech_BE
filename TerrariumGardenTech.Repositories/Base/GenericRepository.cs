@@ -130,7 +130,7 @@ namespace TerrariumGardenTech.Repositories.Base
             return await _context.Set<T>().Where(predicate).ToListAsync();
         }
 
-
+    
 
     }
 }
