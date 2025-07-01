@@ -1,4 +1,10 @@
+using DotNetEnv;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -11,14 +17,15 @@ using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using DotNetEnv;
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
 
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
+});
 // Thêm dịch vụ CORS
 builder.Services.AddCors(options =>
 {
@@ -68,6 +75,7 @@ builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IShapeService, ShapeService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
+builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
