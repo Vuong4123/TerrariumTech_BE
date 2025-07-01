@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Environment;
+﻿using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
 
 namespace TerrariumGardenTech.Service.IService
 {
     public interface ITerrariumImageService
     {
-        Task<IBusinessResult> CreateTerrariumImageAsync(EnvironmentCreateRequest environmentCreateRequest);
-        Task<IBusinessResult> UpdateTerrariumImageAsync(EnvironmentUpdateRequest environmentUpdateRequest);
-        Task<IBusinessResult> DeleteTerrariumImageAsync(int environmentId);
-        Task<IBusinessResult?> GetTerrariumImageByIdAsync(int environmentId);
+        Task<IBusinessResult> CreateTerrariumImageAsync(TerrariumImageCreateRequest terrariumImageCreateRequest);
+        Task<IBusinessResult> UpdateTerrariumImageAsync(TerrariumImageUpdateRequest terrariumImageUpdateRequest);
+        Task<IBusinessResult> DeleteTerrariumImageAsync(int Id);
+        Task<IBusinessResult?> GetTerrariumImageByIdAsync(int Id);
         Task<IBusinessResult> GetAllTerrariumImageAsync();
     }
 }

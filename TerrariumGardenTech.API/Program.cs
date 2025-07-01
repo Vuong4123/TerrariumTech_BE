@@ -77,6 +77,7 @@ builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
 builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<ITankMethodService, TankMethodService>();
+builder.Services.AddScoped<ITerrariumImageService, TerrariumImageService>();
 
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
