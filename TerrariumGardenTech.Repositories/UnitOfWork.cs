@@ -27,6 +27,7 @@ namespace TerrariumGardenTech.Repositories
         private TerrariumTankMethodRepository _terrariumTankMethodRepository;
         private TerrariumEnvironmentRepository _terrariumEnvironmentRepository;
         private VoucherRepository _voucherRepository;
+        private TerrariumImageRepository _terrariumImageRepository;
 
 
         public UnitOfWork()
@@ -50,6 +51,7 @@ namespace TerrariumGardenTech.Repositories
         public TerrariumShapeRepository TerrariumShape { get { return _terrariumShapeRepository ??= new TerrariumShapeRepository(_unitOfWorkContext); } }
         public TerrariumTankMethodRepository TerrariumTankMethod { get { return _terrariumTankMethodRepository ??= new TerrariumTankMethodRepository(_unitOfWorkContext); } }
         public TerrariumEnvironmentRepository TerrariumEnvironment { get { return _terrariumEnvironmentRepository ??= new TerrariumEnvironmentRepository(_unitOfWorkContext); } }
-        public VoucherRepository VoucherRepository { get { return _voucherRepository ??= new VoucherRepository(_unitOfWorkContext); } }
+        public VoucherRepository Voucher { get { return _voucherRepository ??= new VoucherRepository(_unitOfWorkContext); } }
+        public TerrariumImageRepository TerrariumImage { get { return _terrariumImageRepository ??= new TerrariumImageRepository(_unitOfWorkContext); } }
     }
 }
