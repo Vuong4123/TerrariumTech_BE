@@ -68,6 +68,8 @@ builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IShapeService, ShapeService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
+builder.Services.AddScoped<ITankMethodService, TankMethodService>();
+
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
