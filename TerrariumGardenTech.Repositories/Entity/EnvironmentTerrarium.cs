@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public class Environment
+public class EnvironmentTerrarium
 {
     [Key]
     public int EnvironmentId { get; set; }

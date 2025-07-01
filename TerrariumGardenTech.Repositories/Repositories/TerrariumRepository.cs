@@ -22,7 +22,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
             .Include(t => t.TerrariumShapes)
                 .ThenInclude(ts => ts.Shape)
             .Include(t => t.TerrariumEnvironments)
-                .ThenInclude(te => te.Environment)
+                .ThenInclude(te => te.EnvironmentTerrarium)
             .Include(t => t.TerrariumTankMethods)
                 .ThenInclude(ttm => ttm.TankMethod)
             .ToListAsync();
@@ -35,7 +35,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
                    .Include(ta => ta.TerrariumShapes)
                     .ThenInclude(s => s.Shape)
                     .Include(ta => ta.TerrariumEnvironments)
-                    .ThenInclude(e => e.Environment)
+                    .ThenInclude(e => e.EnvironmentTerrarium)
                     .Include(ta => ta.TerrariumTankMethods)
                     .ThenInclude(t => t.TankMethod)
                     .FirstOrDefaultAsync(ta => ta.TerrariumId == id);
