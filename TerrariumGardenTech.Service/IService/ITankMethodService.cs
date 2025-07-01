@@ -4,9 +4,9 @@ using TerrariumGardenTech.Service.RequestModel.TankMethod;
 
 public interface ITankMethodService
 {
-    Task<IBusinessResult> CreateShapeAsync(TankMethodCreateRequest tankMethodCreateRequest);
-    Task<IBusinessResult> UpdateShapeAsync(TankMethodUpdateRequest tankMethodUpdateRequest);
-    Task<IBusinessResult> DeleteShapeAsync(int Id);
-    Task<IBusinessResult> GetShapeByIdAsync(int Id);
-    Task<IBusinessResult> GetAllShapesAsync();
+    Task<IBusinessResult> CreateTankMethodAsync(TankMethodCreateRequest tankMethodCreateRequest);
+    Task<IBusinessResult> UpdateTankMethodAsync(TankMethodUpdateRequest tankMethodUpdateRequest);
+    Task<IBusinessResult> DeleteTankMethodAsync(int Id);
+    Task<IBusinessResult> GetTankMethodByIdAsync(int Id);
+    Task<IBusinessResult> GetAllTankMethodAsync();
 }
