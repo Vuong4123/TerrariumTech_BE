@@ -12,7 +12,7 @@ public class TerrariumEnvironment
     [ForeignKey(nameof(TerrariumId))]
     public Terrarium Terrarium { get; set; } = null!;
     [ForeignKey(nameof(EnvironmentId))]
-    public Environment Environment { get; set; } = null!;
+    public EnvironmentTerrarium EnvironmentTerrarium { get; set; } = null!;
     
     
 }
