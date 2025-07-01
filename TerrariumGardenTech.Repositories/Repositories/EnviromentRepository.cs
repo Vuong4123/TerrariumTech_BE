@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
-using Environment = TerrariumGardenTech.Repositories.Entity.Environment;
+using Environment = TerrariumGardenTech.Repositories.Entity.EnvironmentTerrarium;
 
 namespace TerrariumGardenTech.Repositories.Repositories
 {
-    public class EnvironmentRepository : GenericRepository<Environment>
+    public class EnvironmentRepository : GenericRepository<EnvironmentTerrarium>
     {
         private readonly TerrariumGardenTechDBContext _dbContext;
         public EnvironmentRepository() { }

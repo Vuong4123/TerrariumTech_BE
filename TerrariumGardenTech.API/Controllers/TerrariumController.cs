@@ -46,7 +46,7 @@ namespace TerrariumGardenTech.API.Controllers
                 Price = (decimal)t.Price,
                 Stock = t.Stock,
                 Status = t.Status,
-                Environments = t.TerrariumEnvironments.Select(te => te.Environment.EnvironmentName).ToList(), // Assuming EnvironmentId is an int
+                Environments = t.TerrariumEnvironments.Select(te => te.EnvironmentTerrarium.EnvironmentName).ToList(), // Assuming EnvironmentId is an int
                 Shapes = t.TerrariumShapes.Select(te => te.Shape.ShapeName).ToList(),
                 TankMethods = t.TerrariumTankMethods.Select(te => te.TankMethod.TankMethodType).ToList(),
                 CreatedAt = today, // Use a default value if CreatedAt is null
@@ -213,7 +213,7 @@ namespace TerrariumGardenTech.API.Controllers
                     Price = (decimal)terrarium.Price  ,
                     Stock = terrarium.Stock,
                     Status = terrarium.Status,
-                    Environments = terrarium.TerrariumEnvironments.Select(te => te.Environment.EnvironmentName).ToList(),
+                    Environments = terrarium.TerrariumEnvironments.Select(te => te.EnvironmentTerrarium.EnvironmentName).ToList(),
                     Shapes = terrarium.TerrariumShapes.Select(s => s.Shape.ShapeName).ToList(),
                     TankMethods = terrarium.TerrariumTankMethods.Select(ta => ta.TankMethod.TankMethodType).ToList(),
                     BodyHTML = terrarium.bodyHTML,
