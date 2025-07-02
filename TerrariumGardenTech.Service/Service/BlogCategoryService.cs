@@ -30,10 +30,10 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> GetById(int id)
         {
-            var blogCategory = _unitOfWork.BlogCategory.GetByIdAsync(id);
+            var blogCategory = await _unitOfWork.BlogCategory.GetByIdAsync(id);
             if (blogCategory != null)
             {
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, blogCategory.Result);
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, blogCategory);
             }
             else
             {

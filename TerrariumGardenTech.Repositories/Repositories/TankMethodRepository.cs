@@ -7,7 +7,7 @@ namespace TerrariumGardenTech.Repositories.Repositories;
     public class TankMethodRepository : GenericRepository<TankMethod>
     {
         private readonly TerrariumGardenTechDBContext _dbContext;
-        public TankMethodRepository() { }
+        //public TankMethodRepository() { }
         public TankMethodRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
 
         public async Task<TankMethod?> GetByName(string? name)

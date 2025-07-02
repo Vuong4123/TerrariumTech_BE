@@ -12,11 +12,11 @@ namespace TerrariumGardenTech.Repositories.Repositories
 
     public class UserRepository : GenericRepository<User>
     {
-        private readonly TerrariumGardenTechDBContext _context;
+        private readonly TerrariumGardenTechDBContext _dbContext;
 
-        public UserRepository(TerrariumGardenTechDBContext context)
+        public UserRepository(TerrariumGardenTechDBContext dbContext)
         {
-            _context = context;
+            _dbContext = dbContext;
         }
 
        
