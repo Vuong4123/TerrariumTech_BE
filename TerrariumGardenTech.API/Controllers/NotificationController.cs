@@ -35,5 +35,26 @@ namespace TerrariumGardenTech.API.Controllers
         {
             return await _notificationService.GetNotificationByIdAsync(id);
         }
+
+        // Get notifications by User ID
+        [HttpGet("get-by-user/{userId}")]
+        public async Task<IBusinessResult> GetByUserId(int userId)
+        {
+            return await _notificationService.GetNotificationByUserIdAsync(userId);
+        }
+
+        // Mark notification as read
+        [HttpPut("mark-as-read/{id}")]
+        public async Task<IBusinessResult> MarkAsRead(int id)
+        {
+            return await _notificationService.MarkNotificationAsReadAsync(id);
+        }
+
+        // Delete a notification by ID
+        [HttpDelete("delete/{id}")]
+        public async Task<IBusinessResult> Delete(int id)
+        {
+            return await _notificationService.DeleteNotificationAsync(id);
+        }
     }
 }
