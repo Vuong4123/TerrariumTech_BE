@@ -290,6 +290,10 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "TerrariumGardenTech API V1");
         c.RoutePrefix = "swagger"; // Đặt đường dẫn gốc cho Swagger UI
+        c.DocumentTitle = "TerrariumGardenTech API";  // Tiêu đề
+        c.DefaultModelsExpandDepth(-1); // Tắt hiển thị model
+        c.EnableDeepLinking(); // Bật liên kết sâu (hỗ trợ tìm kiếm các API)
+        c.EnableFilter();  // Bật thanh tìm kiếm trong Swagger UI
     });
 }
 
