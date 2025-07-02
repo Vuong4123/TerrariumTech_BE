@@ -11,7 +11,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
     public class TerrariumImageRepository : GenericRepository<TerrariumImage>
     {
         public TerrariumGardenTechDBContext _dbContext;
-        public TerrariumImageRepository() { }
+        //public TerrariumImageRepository() { }
 
         public TerrariumImageRepository(TerrariumGardenTechDBContext dbContext)
         {

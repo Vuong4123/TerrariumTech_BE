@@ -10,7 +10,7 @@ namespace TerrariumGardenTech.Service.RequestModel.Terrarium
     public class TerrariumCreateRequest 
     {
 
-        public string TankMethodType { get; set; } 
+        public string TankMethodType { get; set; } = string.Empty;  
         public string Shape { get; set; } = string.Empty;
         public string Environment { get; set; } = string.Empty;
         public string TerrariumName { get; set; } = default!;

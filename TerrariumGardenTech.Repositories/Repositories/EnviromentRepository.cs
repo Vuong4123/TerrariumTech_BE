@@ -8,7 +8,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
     public class EnvironmentRepository : GenericRepository<EnvironmentTerrarium>
     {
         private readonly TerrariumGardenTechDBContext _dbContext;
-        public EnvironmentRepository() { }
+        //public EnvironmentRepository() { }
         public EnvironmentRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
 
 

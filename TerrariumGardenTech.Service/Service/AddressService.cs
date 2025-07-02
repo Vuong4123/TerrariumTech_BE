@@ -30,7 +30,7 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> GetAddressById(int id)
         {
-            var result = _unitOfWork.Address.GetByIdAsync(id);
+            var result = await _unitOfWork.Address.GetByIdAsync(id);
             if (result == null)
             {
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
