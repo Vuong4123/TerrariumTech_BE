@@ -91,5 +91,55 @@ namespace TerrariumGardenTech.Service.Service
 
             return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, notificationResponse);
         }
+
+        public async Task<IBusinessResult> GetNotificationByUserIdAsync(int userId)
+        {
+            var notifications = await _unitOfWork.Notification.FindAsync(n => n.UserId == userId);
+            if (notifications == null || !notifications.Any())
+                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+
+            var notificationResponses = notifications.Select(n => new NotificationResponse
+            {
+                NotificationId = n.NotificationId,
+                UserId = n.UserId,
+                Title = n.Title,
+                Message = n.Message,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, notificationResponses);
+        }
+
+        public async Task<IBusinessResult> MarkNotificationAsReadAsync(int id)
+        {
+            var notification = await _unitOfWork.Notification.GetByIdAsync(id);
+            if (notification == null)
+            {
+                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "Notification not found.");
+            }
+
+            notification.IsRead = true;
+            var result = await _unitOfWork.Notification.UpdateAsync(notification);
+
+            if (result > 0)
+            {
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Notification marked as read successfully.");
+            }
+
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Failed to mark notification as read.");
+        }
+
+        public async Task<IBusinessResult> DeleteNotificationAsync(int id)
+        {
+            var notification = await _unitOfWork.Notification.GetByIdAsync(id);
+            if (notification == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "Notification not found.");
+
+            var deleteResult = await _unitOfWork.Notification.RemoveAsync(notification);
+            if (deleteResult)
+                return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+            return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+        }
     }
 }

@@ -13,5 +13,8 @@ namespace TerrariumGardenTech.Service.IService
         Task<IBusinessResult> CreateNotificationAsync(NotificationCreateRequest notificationCreateRequest);
         Task<IBusinessResult> GetAllNotificationAsync();
         Task<IBusinessResult?> GetNotificationByIdAsync(int id);
+        Task<IBusinessResult> GetNotificationByUserIdAsync(int userId);
+        Task<IBusinessResult> MarkNotificationAsReadAsync(int id);
+        Task<IBusinessResult> DeleteNotificationAsync(int id);
     }
 }
