@@ -15,7 +15,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
     {
         private readonly TerrariumGardenTechDBContext _dbContext;
 
-        public VoucherRepository() { }
+        //public VoucherRepository() { }
 
         public VoucherRepository(TerrariumGardenTechDBContext dbContext)
         {

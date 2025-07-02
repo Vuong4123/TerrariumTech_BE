@@ -6,7 +6,7 @@ public class TerrariumEnvironmentRepository : GenericRepository<TerrariumEnviron
 {
     public TerrariumGardenTechDBContext _dbContext;
 
-    public TerrariumEnvironmentRepository() { }
+    //public TerrariumEnvironmentRepository() { }
 
     public TerrariumEnvironmentRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
 

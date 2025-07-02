@@ -12,9 +12,9 @@ namespace TerrariumGardenTech.Service.RequestModel.TerrariumImage
 
         public int TerrariumId { get; set; }
 
-        public string ImageUrl { get; set; }
-
-        public string AltText { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
+            
+        public string AltText { get; set; } = string.Empty;
 
         public bool? IsPrimary { get; set; }
     }
