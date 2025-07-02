@@ -9,7 +9,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
     {
         public TerrariumGardenTechDBContext _dbContext;
 
-        public TerrariumShapeRepository() { }
+        //public TerrariumShapeRepository() { }
 
         public TerrariumShapeRepository (TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
         
