@@ -81,7 +81,7 @@ namespace TerrariumGardenTech.Service.Service
                     EnvironmentDescription = environmentCreateRequest.EnvironmentDescription,
                 };
                 var resdult = await _unitOfWork.Environment.CreateAsync(envir);
-                if (resdult != null)
+                if (resdult != 0)
                 {
                     return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
                 }
@@ -100,7 +100,7 @@ namespace TerrariumGardenTech.Service.Service
             if (envir != null)
             {
                 var result = await _unitOfWork.Environment.RemoveAsync(envir);
-                if (result != null)
+                if (result)
                 {
                     return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
                 }

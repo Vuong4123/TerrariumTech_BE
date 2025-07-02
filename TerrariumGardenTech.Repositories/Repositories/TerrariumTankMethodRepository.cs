@@ -7,7 +7,7 @@ public class TerrariumTankMethodRepository : GenericRepository<TerrariumTankMeth
 {
     public TerrariumGardenTechDBContext _dbContext;
 
-    public TerrariumTankMethodRepository() { }
+    //public TerrariumTankMethodRepository() { }
 
     public TerrariumTankMethodRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
 

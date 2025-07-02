@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TerrariumGardenTech.Repositories.Entity;
+﻿using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 
 namespace TerrariumGardenTech.Repositories
@@ -29,6 +24,7 @@ namespace TerrariumGardenTech.Repositories
         private VoucherRepository _voucherRepository;
         private TerrariumImageRepository _terrariumImageRepository;
         private NotificationRepository _notificationRepository;
+        private TerrariumVariantRepository _terrariumVariantRepository;
 
 
         public UnitOfWork()
@@ -55,5 +51,8 @@ namespace TerrariumGardenTech.Repositories
         public VoucherRepository Voucher { get { return _voucherRepository ??= new VoucherRepository(_unitOfWorkContext); } }
         public TerrariumImageRepository TerrariumImage { get { return _terrariumImageRepository ??= new TerrariumImageRepository(_unitOfWorkContext); } }
         public NotificationRepository Notification { get { return _notificationRepository ??= new NotificationRepository(_unitOfWorkContext); } }
+        public TerrariumVariantRepository TerrariumVariant { get { return _terrariumVariantRepository ??= new TerrariumVariantRepository(_unitOfWorkContext); } }
+
+
     }
 }

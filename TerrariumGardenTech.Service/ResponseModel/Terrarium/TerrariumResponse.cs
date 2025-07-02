@@ -15,7 +15,7 @@ namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
         public List<string> TankMethods { get; set; } = [];
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public string BodyHTML { get; set; }
+        public string BodyHTML { get; set; } = string.Empty;
     }
     // public record EnvironmentDTO(
     //     int EnvironmentId,
