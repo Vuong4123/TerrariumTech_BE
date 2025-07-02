@@ -7,10 +7,10 @@ namespace TerrariumGardenTech.Repositories.Repositories
 {
     public class BlogCategoryRepository : GenericRepository<BlogCategory>
     {
-        public TerrariumGardenTechDBContext _context;
-        public BlogCategoryRepository() { }
+        public TerrariumGardenTechDBContext _dbContext;
+        //public BlogCategoryRepository() { }
 
-        public BlogCategoryRepository(TerrariumGardenTechDBContext context) => _context = context;
+        public BlogCategoryRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
 
         public async Task<bool> AnyAsync(Expression<Func<BlogCategory, bool>> predicate)
         {
@@ -18,7 +18,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
         }
 
         // Nếu chưa có, thêm phương thức trả về IQueryable để linh hoạt hơn
-        public IQueryable<BlogCategory> GetAll()
+        public new IQueryable<BlogCategory> GetAll()
         {
             return _context.BlogCategories.AsQueryable();
         }

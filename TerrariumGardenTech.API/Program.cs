@@ -79,6 +79,8 @@ builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<ITankMethodService, TankMethodService>();
 builder.Services.AddScoped<ITerrariumImageService, TerrariumImageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ITerrariumVariantService, TerrariumVariantService>();
+
 
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
@@ -228,7 +230,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    
+
 });
 
 var app = builder.Build();

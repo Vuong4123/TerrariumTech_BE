@@ -92,6 +92,7 @@ namespace TerrariumGardenTech.Service.Service
             if(tankMethod != null)
             {
                 var result = await _unitOfWork.TankMethod.RemoveAsync(tankMethod);
+                if(result)
                 {
                     return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
                 }
