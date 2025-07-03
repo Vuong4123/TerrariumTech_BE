@@ -226,17 +226,31 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var trrarium = await _unitOfWork.Terrarium.GetByIdAsync(id);
-                if (trrarium != null)
+                var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(id);
+                if (terrarium != null)
                 {
-                    var result = await _unitOfWork.Terrarium.RemoveAsync(trrarium);
+                    // Xóa các bản ghi liên quan trong bảng TerrariumImage
+                    var relatedImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(id);
+                    //.GetAllAsync(x => x.TerrariumId == id);
+
+                    foreach (var image in relatedImages)
+                    {
+                        await _unitOfWork.TerrariumImage.RemoveAsync(image);  // Gọi RemoveAsync cho từng đối tượng.
+                    }
+                    // Xóa các bản ghi liên quan trong bảng TerrariumVariant
+                    var relatedVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(id); // Cần phương thức GetAllByTerrariumIdAsync trong Repository của TerrariumVariant
+                    foreach (var variant in relatedVariants)
+                    {
+                        await _unitOfWork.TerrariumVariant.RemoveAsync(variant);  // Xóa các bản ghi liên quan trong TerrariumVariant
+                    }
+                    var result = await _unitOfWork.Terrarium.RemoveAsync(terrarium);
                     if (result)
                     {
-                        return await Task.FromResult<IBusinessResult>(new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG));
+                        return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, result);
                     }
                     else
                     {
-                        return await Task.FromResult<IBusinessResult>(new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG));
+                        return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
                     }
                 }
                 else
