@@ -240,8 +240,8 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // PUT api/<TerrariumController>/5
-        [HttpPut("update-terrarium{id}")]
-        public async Task<IBusinessResult> Put(TerrariumUpdateRequest terrariumUpdate)
+        [HttpPut("update-terrarium-{id}")]
+        public async Task<IBusinessResult> Put( TerrariumUpdateRequest terrariumUpdate)
         {
             if (terrariumUpdate == null || !ModelState.IsValid)
             {
@@ -251,7 +251,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         // DELETE api/<TerrariumController>/5
-        [HttpDelete("delete-terraium{id}")]
+        [HttpDelete("delete-terraium-{id}")]
         public async Task<IBusinessResult> Delete(int id)
         {
             var result = await _terrariumService.DeleteById(id);
