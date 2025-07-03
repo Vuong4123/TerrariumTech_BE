@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.Voucher;
+using TerrariumGardenTech.Service.ResponseModel.Voucher;
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -32,23 +34,63 @@ namespace TerrariumGardenTech.API.Controllers
             var voucher = await _voucherService.GetVoucherByCodeAsync(code);
             if (voucher == null)
                 return NotFound();
-            return Ok(voucher);
+
+            var response = new VoucherResponse
+            {
+                VoucherId = voucher.VoucherId,
+                Code = voucher.Code,
+                Description = voucher.Description,
+                DiscountAmount = Convert.ToDecimal(voucher.DiscountAmount),  // Explicit conversion
+                ValidFrom = Convert.ToDateTime(voucher.ValidFrom),  // Explicit conversion
+                ValidTo = Convert.ToDateTime(voucher.ValidTo),      // Explicit conversion
+                Status = voucher.Status
+            };
+
+
+            return Ok(response);
         }
 
         // Thêm Voucher
         [HttpPost]
-        public async Task<IActionResult> AddVoucher([FromBody] Voucher voucher)
+        public async Task<IActionResult> AddVoucher([FromBody] CreateVoucherRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var voucher = new Voucher
+            {
+                Code = request.Code,
+                Description = request.Description,
+                DiscountAmount = request.DiscountAmount,
+                ValidFrom = request.ValidFrom,
+                ValidTo = request.ValidTo,
+                Status = request.Status
+            };
+
             await _voucherService.AddVoucherAsync(voucher);
             return CreatedAtAction(nameof(GetVoucherByCode), new { code = voucher.Code }, voucher);
         }
 
         // Cập nhật Voucher
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateVoucher(int id, [FromBody] Voucher voucher)
+        public async Task<IActionResult> UpdateVoucher(int id, [FromBody] UpdateVoucherRequest request)
         {
-            if (id != voucher.VoucherId)
-                return BadRequest();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (id != request.VoucherId)
+                return BadRequest("Voucher ID mismatch.");
+
+            var voucher = new Voucher
+            {
+                VoucherId = request.VoucherId,
+                Code = request.Code,
+                Description = request.Description,
+                DiscountAmount = request.DiscountAmount,
+                ValidFrom = request.ValidFrom,
+                ValidTo = request.ValidTo,
+                Status = request.Status
+            };
 
             await _voucherService.UpdateVoucherAsync(voucher);
             return NoContent();
