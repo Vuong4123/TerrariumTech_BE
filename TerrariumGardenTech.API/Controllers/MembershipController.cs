@@ -23,6 +23,15 @@ namespace TerrariumGardenTech.API.Controllers
             var membershipId = await _membershipService.CreateMembershipAsync(request.UserId, request.MembershipType, request.StartDate, request.EndDate, request.Status);
             return CreatedAtAction(nameof(GetMembership), new { id = membershipId }, request);
         }
+        // API Get all memberships
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllMemberships()
+        {
+            var memberships = await _membershipService.GetAllMembershipsAsync();
+            if (memberships == null || memberships.Count == 0)
+                return NotFound(new { message = "Không tìm thấy memberships" });
+            return Ok(memberships);
+        }
 
         // API Get Membership by ID
         [HttpGet("{id}")]
