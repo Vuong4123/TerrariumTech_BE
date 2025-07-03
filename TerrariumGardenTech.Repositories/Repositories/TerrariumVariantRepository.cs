@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,12 @@ namespace TerrariumGardenTech.Repositories.Repositories
         public TerrariumVariantRepository(TerrariumGardenTechDBContext dbContext)
         {
             _dbContext = dbContext;
+        }
+        public async Task<IEnumerable<TerrariumVariant>> GetAllByTerrariumIdAsync(int terrariumId)
+        {
+            return await _context.TerrariumVariants
+                .Where(ti => ti.TerrariumId == terrariumId)
+                .ToListAsync();
         }
     }
 }
