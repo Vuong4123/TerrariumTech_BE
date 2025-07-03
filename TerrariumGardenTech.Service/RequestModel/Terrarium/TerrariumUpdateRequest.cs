@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.RequestModel.Terrarium
 {
@@ -21,7 +22,7 @@ namespace TerrariumGardenTech.Service.RequestModel.Terrarium
 
         public int Stock { get; set; }
 
-        public string Status { get; set; } = "Active";
+        public TerrariumStatusEnum Status { get; set; }
 
         public string? bodyHTML { get; set; } = string.Empty;
     }
