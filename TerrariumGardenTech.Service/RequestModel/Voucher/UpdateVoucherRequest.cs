@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Service.RequestModel.Voucher
 {
@@ -30,6 +31,6 @@ namespace TerrariumGardenTech.Service.RequestModel.Voucher
         public DateTime ValidTo { get; set; }
 
         [Required]
-        public string Status { get; set; }  // Ví dụ: Active, Inactive
+        public VoucherStatus Status { get; set; }  // Sử dụng VoucherStatus enum thay vì chuỗi
     }
 }
