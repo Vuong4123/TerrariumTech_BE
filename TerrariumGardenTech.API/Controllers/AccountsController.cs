@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.UserManagement;
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -24,7 +25,7 @@ namespace TerrariumGardenTech.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (request.RoleId != 2 && request.RoleId != 3)
+            if (request.RoleId != (int)RoleStatus.Staff && request.RoleId != (int)RoleStatus.Manager)
                 return BadRequest(new { message = "Role không hợp lệ, chỉ được tạo Staff hoặc Manager" });
 
             var (code, message) = await _accountService.CreateAccountAsync(request);
@@ -34,16 +35,43 @@ namespace TerrariumGardenTech.API.Controllers
             return Ok(new { message });
         }
 
+        // Lấy tất cả tài khoản
         [HttpGet]
-        public async Task<IActionResult> GetAccounts(int page = 1, int pageSize = 20)
+        public async Task<IActionResult> GetAllAccounts()
         {
-            var (code, message, accounts) = await _accountService.GetAccountsAsync(page, pageSize);
+            var (code, message, accounts) = await _accountService.GetAllAccountsAsync();
             if (code != Const.SUCCESS_READ_CODE)
                 return BadRequest(new { message });
 
             return Ok(accounts);
         }
 
+        // Lấy tài khoản theo vai trò
+        [HttpGet("role/{role}")]
+        public async Task<IActionResult> GetAccountsByRole(string role, int page = 1, int pageSize = 20)
+        {
+            var (code, message, accounts) = await _accountService.GetAccountsByRoleAsync(role, page, pageSize);
+            if (code != Const.SUCCESS_READ_CODE)
+                return BadRequest(new { message });
+
+            return Ok(accounts);
+        }
+
+        // Thay đổi trạng thái tài khoản
+        [HttpPut("status/{userId}")]
+        public async Task<IActionResult> ChangeAccountStatus(int userId, [FromBody] string status)
+        {
+            if (string.IsNullOrEmpty(status) || !Enum.IsDefined(typeof(AccountStatus), status))
+                return BadRequest(new { message = "Trạng thái không hợp lệ" });
+
+            var (code, message) = await _accountService.ChangeAccountStatusAsync(userId, status);
+            if (code != Const.SUCCESS_UPDATE_CODE)
+                return BadRequest(new { message });
+
+            return Ok(new { message });
+        }
+
+        // Lấy tài khoản theo ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAccountById(int id)
         {
@@ -54,6 +82,7 @@ namespace TerrariumGardenTech.API.Controllers
             return Ok(account);
         }
 
+        // Cập nhật tài khoản
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAccount(int id, [FromBody] AccountUpdateRequest request)
         {
@@ -67,6 +96,7 @@ namespace TerrariumGardenTech.API.Controllers
             return Ok(new { message });
         }
 
+        // Xóa tài khoản
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(int id)
         {
@@ -77,5 +107,4 @@ namespace TerrariumGardenTech.API.Controllers
             return Ok(new { message });
         }
     }
-
 }
