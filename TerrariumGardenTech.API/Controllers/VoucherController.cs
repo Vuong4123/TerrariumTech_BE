@@ -3,6 +3,7 @@ using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Voucher;
 using TerrariumGardenTech.Service.ResponseModel.Voucher;
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -35,17 +36,17 @@ namespace TerrariumGardenTech.API.Controllers
             if (voucher == null)
                 return NotFound();
 
+            // Chuyển đổi các kiểu dữ liệu một cách rõ ràng
             var response = new VoucherResponse
             {
                 VoucherId = voucher.VoucherId,
                 Code = voucher.Code,
                 Description = voucher.Description,
-                DiscountAmount = Convert.ToDecimal(voucher.DiscountAmount),  // Explicit conversion
-                ValidFrom = Convert.ToDateTime(voucher.ValidFrom),  // Explicit conversion
-                ValidTo = Convert.ToDateTime(voucher.ValidTo),      // Explicit conversion
-                Status = voucher.Status
+                DiscountAmount = voucher.DiscountAmount ?? 0m, // Xử lý nullable
+                ValidFrom = voucher.ValidFrom ?? DateTime.MinValue, // Xử lý nullable
+                ValidTo = voucher.ValidTo ?? DateTime.MinValue,     // Xử lý nullable
+                Status = Enum.TryParse<VoucherStatus>(voucher.Status, out var status) ? status : VoucherStatus.Inactive // Chuyển đổi string sang enum
             };
-
 
             return Ok(response);
         }
@@ -64,7 +65,7 @@ namespace TerrariumGardenTech.API.Controllers
                 DiscountAmount = request.DiscountAmount,
                 ValidFrom = request.ValidFrom,
                 ValidTo = request.ValidTo,
-                Status = request.Status
+                Status = request.Status.ToString()
             };
 
             await _voucherService.AddVoucherAsync(voucher);
@@ -89,7 +90,7 @@ namespace TerrariumGardenTech.API.Controllers
                 DiscountAmount = request.DiscountAmount,
                 ValidFrom = request.ValidFrom,
                 ValidTo = request.ValidTo,
-                Status = request.Status
+                Status = request.Status.ToString()
             };
 
             await _voucherService.UpdateVoucherAsync(voucher);
