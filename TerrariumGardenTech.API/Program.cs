@@ -67,6 +67,7 @@ builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITerrariumService, TerrariumService>();
 builder.Services.AddScoped<IAccessoryService, AccessoryService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
@@ -81,6 +82,7 @@ builder.Services.AddScoped<ITerrariumImageService, TerrariumImageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITerrariumVariantService, TerrariumVariantService>();
 builder.Services.AddScoped<IPersonalizeService, PersonalizeService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 
 
