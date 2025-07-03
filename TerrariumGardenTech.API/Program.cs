@@ -80,6 +80,8 @@ builder.Services.AddScoped<ITankMethodService, TankMethodService>();
 builder.Services.AddScoped<ITerrariumImageService, TerrariumImageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITerrariumVariantService, TerrariumVariantService>();
+builder.Services.AddScoped<IPersonalizeService, PersonalizeService>();
+
 
 
 
