@@ -1,4 +1,8 @@
-﻿using MailKit.Net.Smtp;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Oauth2.v2;
+using Google.Apis.Oauth2.v2.Data;
+using Google.Apis.Services;
+using MailKit.Net.Smtp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -56,7 +60,7 @@ namespace TerrariumGardenTech.Service.Service
                     Gender = userRequest.Gender,
                     CreatedAt = DateTime.UtcNow,
                     Status = "Active",
-                    RoleId = 4  // Mặc định role User
+                    RoleId = 1  // Mặc định role User
                 };
 
                 // Tạo OTP và gửi email
@@ -355,17 +359,20 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var httpClient = new HttpClient();
-                var googleApiUrl = $"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={accessToken}";
+                //var httpClient = new HttpClient();
+                //var googleApiUrl = $"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={accessToken}";
 
                 // Lấy thông tin người dùng từ Google API
-                var response = await httpClient.GetStringAsync(googleApiUrl);
+                if (string.IsNullOrEmpty(accessToken))
+                    return new BusinessResult(Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE, null);
 
-                if (string.IsNullOrEmpty(response))
-                    return new BusinessResult (Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE, null);
+                //if (string.IsNullOrEmpty(response))
+                //    return new BusinessResult (Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE, null);
+
 
                 // Giả sử `response` chứa JSON của người dùng, bạn có thể parse nó và lấy các thông tin cần thiết
-                var userInfo = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfo>(response);
+                //var userInfo = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfo>(response);
+                var userInfo = await VerifyGoogleAccessToken(accessToken);
 
                 // Kiểm tra người dùng có trong hệ thống chưa
                 var existingUser = await _unitOfWork.User.FindOneAsync(u => u.Email == userInfo.Email, false);
@@ -395,8 +402,22 @@ namespace TerrariumGardenTech.Service.Service
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi đăng nhập Google");
-                return new BusinessResult(Const.FAIL_LOGIN_CODE, Const.FAIL_LOGIN_MSG, null);
+                return new BusinessResult(Const.FAIL_LOGIN_CODE, Const.FAIL_LOGIN_MSG);
             }
+        }
+
+        private async Task<Userinfo> VerifyGoogleAccessToken(string accessToken)
+        {
+            var oauthService = new Oauth2Service(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = GoogleCredential.FromAccessToken(accessToken),
+                // ApplicationName = "main"
+            });
+
+            // Lấy thông tin user từ Google
+            Userinfo userInfo = await oauthService.Userinfo.Get().ExecuteAsync();
+
+            return userInfo; // Trả về object có sẵn từ thư viện
         }
 
         private string GenerateJwtToken(User user)
