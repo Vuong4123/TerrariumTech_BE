@@ -33,8 +33,9 @@ namespace TerrariumGardenTech.API.Controllers
             }
 
             // Ensure Data is a List<Terrarium> (or any IEnumerable<Category>)
-            var categories = (result.Data as IEnumerable<Category>)?.Select(c => new CategoryCreateRequest
+            var categories = (result.Data as IEnumerable<Category>)?.Select(c => new CategoryUpdateRequest
             {
+                CategoryId = c.CategoryId,
                 CategoryName = c.Name,  
                 Description = c.Description,
             }).ToList();
