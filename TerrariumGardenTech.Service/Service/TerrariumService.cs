@@ -255,12 +255,12 @@ namespace TerrariumGardenTech.Service.Service
                 }
                 else
                 {
-                    return await Task.FromResult<IBusinessResult>(new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG));
+                    return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
                 }
             }
             catch (Exception ex)
             {
-                return await Task.FromResult<IBusinessResult>(new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString()));
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
 
