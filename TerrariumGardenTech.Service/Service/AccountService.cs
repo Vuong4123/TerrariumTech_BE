@@ -140,7 +140,7 @@ namespace TerrariumGardenTech.Service.Service
             if (user == null || (user.RoleId != (int)RoleStatus.User && user.RoleId != (int)RoleStatus.Admin))
                 return (Const.FAIL_DELETE_CODE, "Tài khoản không tồn tại");
 
-            user.Status = AccountStatus.Inactive.ToString(); // Soft delete, sử dụng Enum AccountStatus.Inactive
+            user.Status = AccountStatus.Suspended.ToString(); // Soft delete, sử dụng Enum AccountStatus.Inactive
             await _userRepository.UpdateAsync(user);
             return (Const.SUCCESS_DELETE_CODE, "Tài khoản đã được vô hiệu hóa");
         }
