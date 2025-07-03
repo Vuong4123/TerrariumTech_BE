@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -16,6 +12,13 @@ namespace TerrariumGardenTech.Repositories.Repositories
         public TerrariumImageRepository(TerrariumGardenTechDBContext dbContext)
         {
             _dbContext = dbContext;
+        }
+
+        public async Task<IEnumerable<TerrariumImage>> GetAllByTerrariumIdAsync(int terrariumId)
+        {
+            return await _context.TerrariumImages
+                .Where(ti => ti.TerrariumId == terrariumId)
+                .ToListAsync();
         }
     }
 }

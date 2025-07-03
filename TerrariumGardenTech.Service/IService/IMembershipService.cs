@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TerrariumGardenTech.Repositories.Entity;
+﻿using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.IService
 {
@@ -17,5 +12,6 @@ namespace TerrariumGardenTech.Service.IService
         Task<int> UpdateAllExpiredMembershipsAsync(); // Updates all expired memberships
         Task<int> UpdateExpiredMembershipsByUserIdAsync(int userId); // Updates expired memberships for a user
         bool IsMembershipExpired(Membership membership); // Checks if a membership is expired
+        
     }
 }
