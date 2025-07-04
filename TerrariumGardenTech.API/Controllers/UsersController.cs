@@ -24,27 +24,7 @@ namespace TerrariumGardenTech.API.Controller
             _logger = _logger; // Ensure this is initialized properly
         }
 
-        // tạm cmt lại phần đăng ký user để tránh lỗi không cần thiết
-        //[HttpPost("register")]
-        //public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
 
-        //    var (code, message) = await _userService.RegisterUserAsync(userRequest);
-        //    if (code != Const.SUCCESS_CREATE_CODE)
-        //    {
-        //        if (code == Const.FAIL_CREATE_CODE)
-        //            return Conflict(new { message });
-        //        return BadRequest(new { message });
-        //    }
-
-        //    return Ok(new { message });
-        //}
-
-        // API đăng ký gửi OTP
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
         {
@@ -77,18 +57,6 @@ namespace TerrariumGardenTech.API.Controller
             return Ok(new { message });
         }
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
-        //{
-        //    var (code, message, token) = await _userService.LoginAsync(loginRequest.Username, loginRequest.Password);
-        //    if (code != Const.SUCCESS_READ_CODE || string.IsNullOrEmpty(token))
-        //    {
-        //        return Unauthorized(new { message });
-        //    }
-
-        //    return Ok(new { token });
-        //}
-        // Đăng nhập và trả về Access Token + Refresh Token
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
@@ -167,14 +135,6 @@ namespace TerrariumGardenTech.API.Controller
         }
 
 
-        // API yêu cầu user đã đăng nhập (tất cả role)
-        //[Authorize(Roles = "User,Staff,Manager,Admin")]
-        //[HttpGet("profile")]
-        //public IActionResult GetProfile()
-        //{
-        //    var username = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown";
-        //    return Ok(new { message = $"Hello {username}, đây là profile của bạn." });
-        //}
 
         [Authorize(Roles = "User,Staff,Manager,Admin")]
         [HttpGet("profile")]
