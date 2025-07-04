@@ -28,6 +28,11 @@ namespace TerrariumGardenTech.Service.Service
             await _membershipRepository.CreateAsync(membership);
             return membership.MembershipId;
         }
+        public async Task<List<Membership>> GetAllMembershipsAsync()
+        {
+            // Trả về tất cả các memberships trong bảng
+            return await _membershipRepository.GetAllAsync();
+        }
 
         // Read Membership by ID
         public async Task<Membership> GetMembershipByIdAsync(int membershipId)
