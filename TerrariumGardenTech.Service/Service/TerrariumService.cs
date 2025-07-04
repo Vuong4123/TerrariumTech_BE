@@ -4,6 +4,7 @@ using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Terrarium;
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Service.Service
 {
