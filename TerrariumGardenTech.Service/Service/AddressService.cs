@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using TerrariumGardenTech.Common;
+﻿using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -8,13 +7,9 @@ using TerrariumGardenTech.Service.RequestModel.Address;
 
 namespace TerrariumGardenTech.Service.Service
 {
-    public class AddressService : IAddressService
+    public class AddressService(UnitOfWork _unitOfWork, IUserContextService userContextService) : IAddressService
     {
-        private readonly UnitOfWork _unitOfWork;
-        public AddressService(UnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        }
+        
         public async Task<IBusinessResult> GetAllAddresses()
         {
             var result = await _unitOfWork.Address.GetAllAsync();
@@ -114,9 +109,10 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
+                var GetCurrentUser = userContextService.GetCurrentUser();
                 var address = new Address
                 {
-                    UserId = addressCreateRequest.UserId,
+                    UserId = GetCurrentUser,
                     AddressLine1 = addressCreateRequest.AddressLine1,
                     AddressLine2 = addressCreateRequest.AddressLine2,
                     City = addressCreateRequest.City,
