@@ -7,14 +7,9 @@ using TerrariumGardenTech.Service.RequestModel.Blog;
 
 namespace TerrariumGardenTech.Service.Service
 {
-    public class BlogService : IBlogService
+    public class BlogService(UnitOfWork _unitOfWork, IUserContextService userContextService) : IBlogService
     {
-        private readonly UnitOfWork _unitOfWork;
-        public BlogService(UnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        }
-
+        
         public async Task<IBusinessResult> GetAll()
         {
             var blogs = await _unitOfWork.Blog.GetAllAsync();
@@ -89,6 +84,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     return new BusinessResult(Const.FAIL_CREATE_CODE, "BlogCategoryId không tồn tại.");
                 }
+                
                 int result = -1;
                 var blog = await _unitOfWork.Blog.GetByIdAsync(blogUpdateRequest.BlogId);
                 if (blog != null)
@@ -118,10 +114,11 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
+                var GetCurrentUser = userContextService.GetCurrentUser();
                 var blog = new Blog
                 {
 
-                    UserId = blogCreateRequest.UserId,
+                    UserId = GetCurrentUser,
                     Title = blogCreateRequest.Title,
                     Content = blogCreateRequest.Content,
                     BlogCategoryId = blogCreateRequest.BlogCategoryId,
