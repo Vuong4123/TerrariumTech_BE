@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.UserManagement;
-using TerrariumGardenTech.Repositories.Enums;  
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Service.Service
 {

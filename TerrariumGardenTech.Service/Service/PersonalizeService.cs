@@ -7,13 +7,9 @@ using TerrariumGardenTech.Service.RequestModel.Personalize;
 
 namespace TerrariumGardenTech.Service.Service
 {
-    public class PersonalizeService : IPersonalizeService
+    public class PersonalizeService(UnitOfWork _unitOfWork, IUserContextService userContextService) : IPersonalizeService
     {
-        private readonly UnitOfWork _unitOfWork;
-        public PersonalizeService(UnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork ?? throw new AggregateException(nameof(unitOfWork));
-        }
+        
 
         public async Task<IBusinessResult> GetAllPersonalize()
         {
@@ -83,9 +79,10 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
+                var GetCurrentUser = userContextService.GetCurrentUser();
                 var personalize = new Personalize
                 {
-                    UserId = personalizeCreateRequest.UserId,
+                    UserId = GetCurrentUser,
                     Type = personalizeCreateRequest.Type,
                     Shape = personalizeCreateRequest.Shape,
                     TankMethod = personalizeCreateRequest.TankMethod,
