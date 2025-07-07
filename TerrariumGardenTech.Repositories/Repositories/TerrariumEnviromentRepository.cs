@@ -22,4 +22,11 @@ public class TerrariumEnvironmentRepository : GenericRepository<TerrariumEnviron
             .ToListAsync();
     }
 
+    public async Task<List<TerrariumShape>> GetTerrariumEnvironmentByTerrariumIdAsync(int terrariumId)
+        {
+            return await _dbContext.TerrariumShapes
+                          .Where(ts => ts.TerrariumId == terrariumId)
+                          .ToListAsync();
+        }
+
 }

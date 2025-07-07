@@ -136,7 +136,7 @@ namespace TerrariumGardenTech.Service.Service
                     await transaction.RollbackAsync();
                     return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
                 }
-                catch (Exception )
+                catch (Exception)
                 {
                     // Nếu có lỗi, hủy giao dịch và ghi log
                     await transaction.RollbackAsync();

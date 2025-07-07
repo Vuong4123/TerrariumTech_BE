@@ -89,17 +89,89 @@ namespace TerrariumGardenTech.Service.Service
         public async Task<IBusinessResult> DeleteTankMethodAsync(int Id)
         {
             var tankMethod = await _unitOfWork.TankMethod.GetByIdAsync(Id);
-            if(tankMethod != null)
+            if (tankMethod == null)
             {
-                var result = await _unitOfWork.TankMethod.RemoveAsync(tankMethod);
-                if(result)
+                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+            }
+            var terrariumTankMethods = await _unitOfWork.TerrariumTankMethod.GetAllTerrariumByTankMethods(Id);
+            var terrariumIds = terrariumTankMethods.Select(ts => ts.TerrariumId).Distinct().ToList();
+            var terrariums = await _unitOfWork.Terrarium.GetTerrariumByIdsAsync(terrariumIds);
+
+            using (var transaction = await _unitOfWork.TankMethod.BeginTransactionAsync())
+            {
+                try
                 {
-                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                    foreach (var terrariumTankMethod in terrariumTankMethods)
+                    {
+                        await _unitOfWork.TerrariumTankMethod.RemoveAsync(terrariumTankMethod);
+                    }
+                    //Xoa cac terrarium va cac doi tuong lien quan
+                    if (terrariums != null)
+                    {
+                        foreach (var terrarium in terrariums)
+                        {
+                            //xoa cac doi tuong lien quan den Terrarium
+                            await DeleteRelatedTerrariumAsync(terrarium);
+                        }
+                    }
+                    var result = await _unitOfWork.TankMethod.RemoveAsync(tankMethod);
+                    if (result)
+                    {
+                        //neu xoa thanh cong, commit giao dich
+                        await transaction.CommitAsync();
+                        return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                    }
+                    // xoa that bai, huy giao dich
+                    await transaction.RollbackAsync();
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+
                 }
-                return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+                catch (Exception)
+                {
+                    // Nếu có lỗi, hủy giao dịch và ghi log
+                    await transaction.RollbackAsync();
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, "An error occurred while deleting the environment.");
+                }
 
             }
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+
+
+        }
+
+        private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
+        {
+            // Xóa các đối tượng liên quan đến Terrarium
+            var terrariumTankMethods = await _unitOfWork.TerrariumTankMethod.GetTankMethodsByTerrariumId(terrarium.TerrariumId);
+            foreach (var terrariumTankMethod in terrariumTankMethods)
+            {
+                await _unitOfWork.TerrariumTankMethod.RemoveAsync(terrariumTankMethod);
+            }
+
+            var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
+            foreach (var terrariumImage in terrariumImages)
+            {
+                await _unitOfWork.TerrariumImage.RemoveAsync(terrariumImage);
+            }
+
+            var terrariumEnvironment = await _unitOfWork.TerrariumEnvironment.GetTerrariumEnvironmentByTerrariumIdAsync(terrarium.TerrariumId);
+            foreach (var terrariumEnvironmentItem in terrariumEnvironment)
+            {
+                await _unitOfWork.TerrariumShape.RemoveAsync(terrariumEnvironmentItem);
+            }
+
+            var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetTerrariumAccessoriesByTerrariumAsync(terrarium.TerrariumId);
+            foreach (var terrariumAccessory in terrariumAccessories)
+            {
+                await _unitOfWork.TerrariumAccessory.RemoveAsync(terrariumAccessory);
+            }
+
+            var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
+            foreach (var terrariumVariant in terrariumVariants)
+            {
+                await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
+            }
+
+            await _unitOfWork.Terrarium.RemoveAsync(terrarium);
         }
 
 
