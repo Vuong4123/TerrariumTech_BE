@@ -22,6 +22,7 @@ public partial class Blog
     public DateTime? UpdatedAt { get; set; }
 
     public string Status { get; set; }
+    public string bodyHTML { get; set; }
 
     public virtual BlogCategory BlogCategory { get; set; }
 
