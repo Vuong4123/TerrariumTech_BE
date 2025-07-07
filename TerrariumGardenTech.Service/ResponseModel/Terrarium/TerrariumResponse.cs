@@ -16,6 +16,8 @@ namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string BodyHTML { get; set; } = string.Empty;
+        // Thêm thuộc tính mới để chứa danh sách ảnh
+        public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
     }
     // public record EnvironmentDTO(
     //     int EnvironmentId,
