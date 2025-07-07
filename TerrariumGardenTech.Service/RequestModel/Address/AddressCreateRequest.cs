@@ -8,7 +8,7 @@ namespace TerrariumGardenTech.Service.RequestModel.Address
 {
     public class AddressCreateRequest
     {
-        public int UserId { get; set; }
+        // public int UserId { get; set; }
 
         public string AddressLine1 { get; set; } = string.Empty;
 
