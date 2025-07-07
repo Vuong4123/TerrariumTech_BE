@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -10,6 +11,9 @@ public class TerrariumTankMethodRepository : GenericRepository<TerrariumTankMeth
     //public TerrariumTankMethodRepository() { }
 
     public TerrariumTankMethodRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
-
-    // Additional methods specific to TerrariumTankMethod can be added here
+    public async Task<List<TerrariumTankMethod>> GetTankMethodsByTerrariumId(int terrariumId)
+    {
+        return await _dbContext.TerrariumTankMethods
+        .Where(tm => tm.TerrariumId == terrariumId).ToListAsync();
+    }
 }

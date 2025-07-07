@@ -11,11 +11,17 @@ namespace TerrariumGardenTech.Repositories.Repositories
 
         //public TerrariumShapeRepository() { }
 
-        public TerrariumShapeRepository (TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
-        
+        public TerrariumShapeRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
+
         // public async Task<Shape?> GetByName(string? name)
         // {
         //     return await _dbContext.Set<Shape>().FirstOrDefaultAsync(s => s.ShapeName == name);
         // }
+        public async Task<List<TerrariumShape>> GetTerrariumShapesByTerrariumIdAsync(int terrariumId)
+        {
+            return await _dbContext.TerrariumShapes
+                          .Where(ts => ts.TerrariumId == terrariumId)
+                          .ToListAsync();
+        }
     }
 }

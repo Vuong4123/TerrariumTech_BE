@@ -51,7 +51,16 @@ namespace TerrariumGardenTech.API.Controllers
                 TankMethods = t.TerrariumTankMethods.Select(te => te.TankMethod.TankMethodType).ToList(),
                 CreatedAt = today, // Use a default value if CreatedAt is null
                 UpdatedAt = today,  // Similar for UpdatedAt
-                BodyHTML = t.bodyHTML
+                BodyHTML = t.bodyHTML,
+                // Ánh xạ TerrariumImages thành một danh sách đầy đủ các thông tin
+                TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
+                {
+                    TerrariumImageId = ti.TerrariumImageId,
+                    TerrariumId = ti.TerrariumId,
+                    ImageUrl = ti.ImageUrl,
+                    AltText = ti.AltText,
+                    IsPrimary = ti.IsPrimary
+                }).ToList()
             }).ToList();
 
             if (terrariums == null)
@@ -62,7 +71,7 @@ namespace TerrariumGardenTech.API.Controllers
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
 
         }
-
+        #region Code để dành :))
         // GET: api/<TerrariumController>
         // [HttpGet("get-details")]
         // public async Task<IBusinessResult> GetDetail()
@@ -186,7 +195,7 @@ namespace TerrariumGardenTech.API.Controllers
         //         return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
         //     }
         // }
-
+        #endregion
 
         // GET api/<TerrariumController>/5
         [HttpGet("get-{id}")]
@@ -217,8 +226,17 @@ namespace TerrariumGardenTech.API.Controllers
                     Shapes = terrarium.TerrariumShapes.Select(s => s.Shape.ShapeName).ToList(),
                     TankMethods = terrarium.TerrariumTankMethods.Select(ta => ta.TankMethod.TankMethodType).ToList(),
                     BodyHTML = terrarium.bodyHTML,
-                    CreatedAt =today, // Use a default value if CreatedAt is null
-                    UpdatedAt = today  // Similar for UpdatedAt
+                    CreatedAt = today, // Use a default value if CreatedAt is null
+                    UpdatedAt = today, // Similar for UpdatedAt
+                                       // Ánh xạ TerrariumImages thành một danh sách đầy đủ các thông tin
+                    TerrariumImages = terrarium.TerrariumImages.Select(ti => new TerrariumImageResponse
+                    {
+                        TerrariumImageId = ti.TerrariumImageId,
+                        TerrariumId = ti.TerrariumId,
+                        ImageUrl = ti.ImageUrl,
+                        AltText = ti.AltText,
+                        IsPrimary = ti.IsPrimary
+                    }).ToList()
                 };
 
                 // Trả về BusinessResult với dữ liệu đã ánh xạ
