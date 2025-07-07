@@ -10,7 +10,7 @@ namespace TerrariumGardenTech.Service.RequestModel.Address
     {
         public int AddressId { get; set; }
 
-        public int UserId { get; set; }
+        // public int UserId { get; set; }
 
         public string AddressLine1 { get; set; } = string.Empty;
 
