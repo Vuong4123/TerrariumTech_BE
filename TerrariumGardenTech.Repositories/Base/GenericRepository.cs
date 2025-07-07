@@ -1,10 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Repositories.Base
@@ -19,6 +15,10 @@ namespace TerrariumGardenTech.Repositories.Base
             _context ??= new TerrariumGardenTechDBContext();
         }
 
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
+        }
         public TerrariumGardenTechDBContext Context()
         {
             return _context;
@@ -130,7 +130,7 @@ namespace TerrariumGardenTech.Repositories.Base
             return await _context.Set<T>().Where(predicate).ToListAsync();
         }
 
-    
+
 
     }
 }

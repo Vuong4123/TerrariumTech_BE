@@ -22,6 +22,8 @@ namespace TerrariumGardenTech.Service.RequestModel.Blog
 
         public DateTime? UpdatedAt { get; set; }
 
+        public string bodyHTML { get; set; }
+
         public string Status { get; set; } = string.Empty;
     }
 }

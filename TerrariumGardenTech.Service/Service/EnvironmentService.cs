@@ -1,11 +1,8 @@
-﻿using Azure.Core;
-using Sprache;
-using System.Reflection.Metadata;
+﻿using Sprache;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Blog;
 using TerrariumGardenTech.Service.RequestModel.Environment;
 
 namespace TerrariumGardenTech.Service.Service
@@ -96,18 +93,93 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> DeleteEnvironmentAsync(int environmentId)
         {
-            var envir = await _unitOfWork.Environment.GetByIdAsync(environmentId);
-            if (envir != null)
+            // Kiểm tra sự tồn tại của Environment
+            var environment = await _unitOfWork.Environment.GetByIdAsync(environmentId);
+            if (environment == null)
             {
-                var result = await _unitOfWork.Environment.RemoveAsync(envir);
-                if (result)
-                {
-                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
-                }
-                return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
-
+                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG); 
             }
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+
+            var terrariumEnvironments = await _unitOfWork.TerrariumEnvironment.GetAllTerrariumByEnvironment(environmentId);
+            var terrariumIds = terrariumEnvironments.Select(te => te.TerrariumId).Distinct().ToList();
+            var terrariums = await _unitOfWork.Terrarium.GetTerrariumByIdsAsync(terrariumIds);
+
+            using (var transaction = await _unitOfWork.Environment.BeginTransactionAsync())
+            {
+                try
+                {
+                    foreach (var terrariumEnvironment in terrariumEnvironments)
+                    {
+                        await _unitOfWork.TerrariumEnvironment.RemoveAsync(terrariumEnvironment);
+                    }
+
+                    // Xóa các Terrarium và các đối tượng liên quan
+                    if (terrariums != null)
+                    {
+                        foreach (var terrarium in terrariums)
+                        {
+                            // Xóa các đối tượng liên quan đến Terrarium
+                            await DeleteRelatedTerrariumAsync(terrarium);
+                        }
+                    }
+
+                    // Xóa Environment
+                    var result = await _unitOfWork.Environment.RemoveAsync(environment);
+                    if (result)
+                    {
+                        // Nếu xóa thành công, commit giao dịch
+                        await transaction.CommitAsync();
+                        return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                    }
+
+                    // Nếu xóa thất bại, hủy giao dịch
+                    await transaction.RollbackAsync();
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+                }
+                catch (Exception )
+                {
+                    // Nếu có lỗi, hủy giao dịch và ghi log
+                    await transaction.RollbackAsync();
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, "An error occurred while deleting the environment.");
+                }
+            }
         }
+
+        private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
+        {
+            // Xóa các đối tượng liên quan đến Terrarium
+            var terrariumTankMethods = await _unitOfWork.TerrariumTankMethod.GetTankMethodsByTerrariumId(terrarium.TerrariumId);
+            foreach (var terrariumTankMethod in terrariumTankMethods)
+            {
+                await _unitOfWork.TerrariumTankMethod.RemoveAsync(terrariumTankMethod);
+            }
+
+            var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
+            foreach (var terrariumImage in terrariumImages)
+            {
+                await _unitOfWork.TerrariumImage.RemoveAsync(terrariumImage);
+            }
+
+            var terrariumShapes = await _unitOfWork.TerrariumShape.GetTerrariumShapesByTerrariumIdAsync(terrarium.TerrariumId);
+            foreach (var terrariumShape in terrariumShapes)
+            {
+                await _unitOfWork.TerrariumShape.RemoveAsync(terrariumShape);
+            }
+
+            var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetTerrariumAccessoriesByTerrariumAsync(terrarium.TerrariumId);
+            foreach (var terrariumAccessory in terrariumAccessories)
+            {
+                await _unitOfWork.TerrariumAccessory.RemoveAsync(terrariumAccessory);
+            }
+
+            var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
+            foreach (var terrariumVariant in terrariumVariants)
+            {
+                await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
+            }
+
+            await _unitOfWork.Terrarium.RemoveAsync(terrarium);
+        }
+
     }
 }

@@ -14,8 +14,8 @@ namespace TerrariumGardenTech.Service.RequestModel.Terrarium
         public string TankMethodType { get; set; } = string.Empty; 
         public string Shape { get; set; } = string.Empty;
         public string Environment { get; set; } = string.Empty;
+        public List<string> AccessoryNames { get; set; } = [];
         public string TerrariumName { get; set; } = default!;
-
         public string Description { get; set; } = string.Empty;
 
         public decimal? Price { get; set; }
