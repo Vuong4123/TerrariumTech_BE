@@ -65,7 +65,7 @@ namespace TerrariumGardenTech.Service.Service
                     result = await _unitOfWork.BlogCategory.CreateAsync(blogCategory);
                     if (result > 0)
                     {
-                        return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blogCateEntity);
+                        return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, result);
                     }
                     else
                     {
