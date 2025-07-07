@@ -20,7 +20,8 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateMembership([FromBody] CreateMembershipRequest request)
         {
-            var membershipId = await _membershipService.CreateMembershipAsync(request.UserId, request.MembershipType, request.StartDate, request.EndDate, request.Status);
+            var membershipId = await _membershipService
+            .CreateMembershipAsync( request.MembershipType, request.StartDate, request.EndDate, request.Status);
             return CreatedAtAction(nameof(GetMembership), new { id = membershipId }, request);
         }
         // API Get all memberships

@@ -46,6 +46,8 @@ builder.Services.AddCors(options =>
     //           .AllowAnyHeader();
     // });
 });
+builder.Services.AddHttpContextAccessor();
+
 
 
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
@@ -84,6 +86,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITerrariumVariantService, TerrariumVariantService>();
 builder.Services.AddScoped<IPersonalizeService, PersonalizeService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 
 
 
