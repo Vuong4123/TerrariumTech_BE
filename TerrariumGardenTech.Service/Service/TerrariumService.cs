@@ -166,7 +166,8 @@ namespace TerrariumGardenTech.Service.Service
                 var ShapeName = await _unitOfWork.Shape.GetByName(terrariumCreateRequest.Shape);
                 var TankMethodName = await _unitOfWork.TankMethod.GetByName(terrariumCreateRequest.TankMethodType);
                 var EnvironmentName = await _unitOfWork.Environment.GetByName(terrariumCreateRequest.Environment);
-                if (ShapeName == null || TankMethodName == null || EnvironmentName == null)
+                var AccessoryNames = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
+                if (ShapeName == null || TankMethodName == null || EnvironmentName == null || AccessoryNames == null || AccessoryNames.Count == 0)
                 {
                     return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
                 }
@@ -209,6 +210,16 @@ namespace TerrariumGardenTech.Service.Service
                     _unitOfWork.TerrariumEnvironment.Context().Add(TerrariumEnvironment);
                     await _unitOfWork.TerrariumEnvironment.SaveChangesAsync();
 
+                    foreach (var accessory in AccessoryNames)
+                    {
+                        var terrariumAccessory = new TerrariumAccessory
+                        {
+                            AccessoryId = accessory.AccessoryId,
+                            TerrariumId = newTerrarium.TerrariumId  // Gán TerrariumId cho TerrariumAccessory       
+                        }; 
+                        _unitOfWork.TerrariumAccessory.Context().Add(terrariumAccessory);
+                        await _unitOfWork.TerrariumAccessory.SaveChangesAsync();
+                    }
                     return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, newTerrarium);
                 }
                 else
