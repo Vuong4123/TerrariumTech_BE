@@ -127,6 +127,7 @@ namespace TerrariumGardenTech.Service.Service
                     BlogCategoryId = blogCreateRequest.BlogCategoryId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
+                    bodyHTML = blogCreateRequest.bodyHTML,
                     Status = "Active" // Mặc định trạng thái là Active
                 };
                 var result = await _unitOfWork.Blog.CreateAsync(blog);
