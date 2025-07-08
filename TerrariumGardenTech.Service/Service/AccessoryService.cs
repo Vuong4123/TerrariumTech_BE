@@ -15,26 +15,7 @@ namespace TerrariumGardenTech.Service.Service
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
-        public async Task<IBusinessResult> DeleteById(int id)
-        {
-            var accessory = await _unitOfWork.Accessory.GetByIdAsync(id);
-            if (accessory != null)
-            {
-                var result = await _unitOfWork.Accessory.RemoveAsync(accessory);
-                if (result)
-                {
-                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
-                }
-                else
-                {
-                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
-                }
-            }
-            else
-            {
-                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-            }
-        }
+
 
         public async Task<IBusinessResult> GetAll()
         {
@@ -119,7 +100,7 @@ namespace TerrariumGardenTech.Service.Service
                 CategoryId = accessoryCreateRequest.CategoryId,
                 CreatedAt = accessoryCreateRequest.CreatedAt ?? DateTime.Now,
                 UpdatedAt = accessoryCreateRequest.UpdatedAt ?? DateTime.Now,
-                Status = accessoryCreateRequest.Status 
+                Status = accessoryCreateRequest.Status
             };
             var result = await _unitOfWork.Accessory.CreateAsync(accessory);
             if (result > 0)
@@ -165,6 +146,26 @@ namespace TerrariumGardenTech.Service.Service
             catch (Exception ex)
             {
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+        public async Task<IBusinessResult> DeleteById(int id)
+        {
+            var accessory = await _unitOfWork.Accessory.GetByIdAsync(id);
+            if (accessory != null)
+            {
+                var result = await _unitOfWork.Accessory.RemoveAsync(accessory);
+                if (result)
+                {
+                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                }
+                else
+                {
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+                }
+            }
+            else
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
             }
         }
     }
