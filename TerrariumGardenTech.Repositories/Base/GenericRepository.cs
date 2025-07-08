@@ -9,6 +9,12 @@ namespace TerrariumGardenTech.Repositories.Base
     {
         protected TerrariumGardenTechDBContext _context;
 
+        /* Constructor DI  ➜  dùng AddDbContext trong Program.cs */
+        public GenericRepository(TerrariumGardenTechDBContext context)
+        {
+            _context = context;
+        }
+
         // Chỉ giữ hàm tạo có tham số
         public GenericRepository()
         {
