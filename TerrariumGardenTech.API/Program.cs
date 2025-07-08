@@ -4,16 +4,19 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using TerrariumGardenTech.API.Authorization;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
@@ -66,6 +69,9 @@ builder.Services.AddDbContext<TerrariumGardenTechDBContext>(options =>
 builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped<UnitOfWork>();
 
+/*---------------- Repositorys ----------------*/
+builder.Services.AddScoped<OrderRepository>();
+
 // Đăng ký Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITerrariumService, TerrariumService>();
@@ -87,7 +93,7 @@ builder.Services.AddScoped<ITerrariumVariantService, TerrariumVariantService>();
 builder.Services.AddScoped<IPersonalizeService, PersonalizeService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
-
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 
 
@@ -109,6 +115,25 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = builder.Configuration["GoogleKeys:ClientId"];
     options.ClientSecret = builder.Configuration["GoogleKeys:ClientSecret"];
 });
+
+/*---------------- Authorization ----------------*/
+builder.Services.AddAuthorization(opt =>
+{
+    opt.AddPolicy("Order.ReadAll",
+        p => p.RequireRole("Staff", "Manager", "Admin"));
+
+    opt.AddPolicy("Order.UpdateStatus",
+        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
+
+    opt.AddPolicy("Order.Delete",
+        p => p.RequireRole("Manager", "Admin"));
+
+    opt.AddPolicy("Order.AccessSpecific",
+        p => p.AddRequirements(new OrderAccessRequirement()));    // resource-based
+});
+
+// Handler DI
+builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();
 
 // Cấu hình Authentication với JWT Bearer và logging
 builder.Services.AddAuthentication(options =>
@@ -165,41 +190,7 @@ builder.Services.AddAuthentication(options =>
 // Đăng ký Controller
 builder.Services.AddControllers();
 
-//// Cấu hình Swagger/OpenAPI
-//builder.Services.AddSwaggerGen(c =>
-//{
-//    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TerrariumGardenTech API", Version = "v1" });
 
-//    // Cấu hình JWT trong Swagger để có nút Authorize
-//    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-//    {
-//        Description = @"JWT Authorization header using the Bearer scheme. 
-//                        Enter 'Bearer' [space] and then your token in the text input below.
-//                        Example: 'Bearer abcdef12345'",
-//        Name = "Authorization",
-//        In = ParameterLocation.Header,
-//        Type = SecuritySchemeType.ApiKey,
-//        Scheme = "Bearer"
-//    });
-
-//    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-//    {
-//        {
-//            new OpenApiSecurityScheme
-//            {
-//                Reference = new OpenApiReference
-//                {
-//                    Type = ReferenceType.SecurityScheme,
-//                    Id = "Bearer"
-//                },
-//                Scheme = "oauth2",
-//                Name = "Bearer",
-//                In = ParameterLocation.Header,
-//            },
-//            new List<string>()
-//        }
-//    });
-//});
 
 // Cấu hình Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
@@ -243,22 +234,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-//// Middleware trả về JSON khi lỗi 401 hoặc 403
-//app.Use(async (context, next) =>
-//{
-//    await next();
 
-//    if (context.Response.StatusCode == 401)
-//    {
-//        context.Response.ContentType = "application/json";
-//        await context.Response.WriteAsync("{\"message\":\"Chưa xác thực, vui lòng đăng nhập.\"}");
-//    }
-//    else if (context.Response.StatusCode == 403)
-//    {
-//        context.Response.ContentType = "application/json";
-//        await context.Response.WriteAsync("{\"message\":\"Bạn không có quyền truy cập tài nguyên này.\"}");
-//    }
-//});
 
 // Middleware trả về JSON khi lỗi 401 hoặc 403
 app.Use(async (context, next) =>
