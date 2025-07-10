@@ -1,10 +1,12 @@
-﻿using TerrariumGardenTech.Common;
+﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Enums;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Mappers;
 using TerrariumGardenTech.Service.RequestModel.Terrarium;
-using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -30,48 +32,6 @@ namespace TerrariumGardenTech.Service.Service
             }
 
         }
-
-        // public async Task<BusinessResult> GetAllOfParam(string type, string shape, string tankMethod, string theme, string size)
-        // {
-        //     // Đảm bảo bạn đang sử dụng từ khóa `await` để lấy dữ liệu từ Task
-        //     var result = await _unitOfWork.Terrarium.GetAllAsync();
-
-        //     // Chuyển đổi kết quả thành IQueryable để có thể truy vấn tiếp
-        //     var query = result.AsQueryable();
-
-        //     // Áp dụng các bộ lọc nếu các tham số có giá trị
-        //     if (!string.IsNullOrEmpty(type))
-        //     {
-        //         query = query.Where(t => t.Type.Contains(type));
-        //     }
-
-        //     if (!string.IsNullOrEmpty(shape))
-        //     {
-        //         query = query.Where(t => t.Shape.Contains(shape));
-        //     }
-
-        //     if (!string.IsNullOrEmpty(tankMethod))
-        //     {
-        //         query = query.Where(t => t.TankMethod.Contains(tankMethod));
-        //     }
-
-        //     if (!string.IsNullOrEmpty(theme))
-        //     {
-        //         query = query.Where(t => t.Theme.Contains(theme));
-        //     }
-
-        //     if (!string.IsNullOrEmpty(size))
-        //     {
-        //         query = query.Where(t => t.Size.Contains(size));
-        //     }
-
-        //     // Lấy kết quả từ cơ sở dữ liệu và trả về kết quả dưới dạng danh sách
-        //     var result2 = await query.ToListAsync();
-
-        //     // Trả về kết quả
-        //     return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", result2);
-        // }
-
         public async Task<IBusinessResult> GetById(int id)
         {
             var terrarium = await _unitOfWork.Terrarium.GetTerrariumIdAsync(id);
@@ -130,31 +90,114 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> UpdateTerrarium(TerrariumUpdateRequest terrariumUpdateRequest)
         {
+
             try
             {
+                var terra = await _unitOfWork.Terrarium
+                    .GetTerrariumIdAsync(terrariumUpdateRequest.TerrariumId); // Include quan hệ
 
-                var terra = await _unitOfWork.Terrarium.GetByIdAsync(terrariumUpdateRequest.TerrariumId);
-                if (terra != null)
-                {
-                    _unitOfWork.Terrarium.Context().Entry(terra).CurrentValues.SetValues(terrariumUpdateRequest);
-                    var result = await _unitOfWork.Terrarium.UpdateAsync(terra);
-                    if (result > 0)
-                    {
-                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, terra);
-                    }
-                    else
-                    {
-                        return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
-                    }
-                }
-                else
-                {
+                if (terra == null)
                     return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+
+                // Cập nhật thuộc tính cơ bản
+                terra.TerrariumName = terrariumUpdateRequest.TerrariumName;
+                terra.Description = terrariumUpdateRequest.Description;
+                terra.Price = terrariumUpdateRequest.Price;
+                terra.Stock = terrariumUpdateRequest.Stock;
+                terra.Status = terrariumUpdateRequest.Status;
+                terra.bodyHTML = terrariumUpdateRequest.bodyHTML ?? string.Empty;
+                terra.UpdatedAt = DateTime.UtcNow;
+
+                var ctx = _unitOfWork.Terrarium.Context();
+
+                // ===== XÓA DỮ LIỆU QUAN HỆ CŨ =====
+                ctx.TerrariumAccessory.RemoveRange(ctx.TerrariumAccessory.Where(x => x.TerrariumId == terra.TerrariumId));
+                ctx.TerrariumTankMethods.RemoveRange(ctx.TerrariumTankMethods.Where(x => x.TerrariumId == terra.TerrariumId));
+                ctx.TerrariumShapes.RemoveRange(ctx.TerrariumShapes.Where(x => x.TerrariumId == terra.TerrariumId));
+                ctx.TerrariumEnvironments.RemoveRange(ctx.TerrariumEnvironments.Where(x => x.TerrariumId == terra.TerrariumId));
+                await _unitOfWork.Terrarium.SaveChangesAsync(); // Lưu các thay đổi đã xóa
+                // ===== THÊM DỮ LIỆU QUAN HỆ MỚI =====
+
+                // 1. Accessories
+                if (terrariumUpdateRequest.AccessoryNames?.Any() == true)
+                {
+                    var accessories = await _unitOfWork.Accessory
+                        .FindAsync(a => terrariumUpdateRequest.AccessoryNames.Contains(a.Name));
+
+                    terra.TerrariumAccessory = accessories.Select(a => new TerrariumAccessory
+                    {
+                        TerrariumId = terra.TerrariumId,
+                        AccessoryId = a.AccessoryId
+                    }).ToList();
                 }
+
+                // 2. TankMethods
+                if (!string.IsNullOrWhiteSpace(terrariumUpdateRequest.TankMethodType))
+                {
+                    var tankMethodList = await _unitOfWork.TankMethod
+                        .FindAsync(t => t.TankMethodType == terrariumUpdateRequest.TankMethodType);
+                    var tankMethod = tankMethodList.FirstOrDefault(); // Lấy phần tử đầu tiên nếu có
+                    if (tankMethod != null)
+                    {
+                        terra.TerrariumTankMethods = new List<TerrariumTankMethod>
+                {
+                    new TerrariumTankMethod
+                    {
+                        TerrariumId = terra.TerrariumId,
+                        TankMethodId = tankMethod.TankMethodId
+                    }
+                };
+                    }
+                }
+
+                // 3. Shapes
+                if (!string.IsNullOrWhiteSpace(terrariumUpdateRequest.Shape))
+                {
+                    var shapeList = await _unitOfWork.Shape
+                        .FindAsync(s => s.ShapeName == terrariumUpdateRequest.Shape);
+                    var shape = shapeList.FirstOrDefault(); // Lấy phần tử đầu tiên nếu có
+                    if (shape != null)
+                    {
+                        terra.TerrariumShapes = new List<TerrariumShape>
+                {
+                    new TerrariumShape
+                    {
+                        TerrariumId = terra.TerrariumId,
+                        ShapeId = shape.ShapeId
+                    }
+                };
+                    }
+                }
+
+                // 4. Environments
+                if (!string.IsNullOrWhiteSpace(terrariumUpdateRequest.Environment))
+                {
+                    var envList = await _unitOfWork.Environment
+                        .FindAsync(e => e.EnvironmentName == terrariumUpdateRequest.Environment);
+                    var env = envList.FirstOrDefault(); // Lấy phần tử đầu tiên nếu có
+                    if (env != null)
+                    {
+                        terra.TerrariumEnvironments = new List<TerrariumEnvironment>
+                {
+                    new TerrariumEnvironment
+                    {
+                        TerrariumId = terra.TerrariumId,
+                        EnvironmentId = env.EnvironmentId
+                    }
+                };
+                    }
+                }
+
+                // Cập nhật & lưu
+                _unitOfWork.Terrarium.Update(terra);
+
+                var resultDto = terra.ToTerrariumResponse(); // Sử dụng mapper
+
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, resultDto);
             }
             catch (Exception ex)
             {
-                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
 

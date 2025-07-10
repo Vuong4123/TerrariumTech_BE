@@ -28,6 +28,15 @@ public class TerrariumAccessoryRepository : GenericRepository<TerrariumAccessory
     //     }
     //     await _dbContext.SaveChangesAsync();
     // }
+    public async Task<List<TerrariumAccessory>> GetAllTerrariumByAccessory(int accessoryId)
+    {
+        return await _dbContext
+            .TerrariumAccessory
+            .AsNoTracking()
+            .Include(te => te.Terrarium)
+            .Where(te => te.AccessoryId == accessoryId)
+            .ToListAsync();
+    }
     public async Task<List<TerrariumAccessory>>GetTerrariumAccessoriesByTerrariumAsync(int terrariumId){
         return await _dbContext.
         TerrariumAccessory.
