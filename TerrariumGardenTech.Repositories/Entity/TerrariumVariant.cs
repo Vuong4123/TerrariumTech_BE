@@ -17,7 +17,7 @@ public partial class TerrariumVariant
 
     public int? StockQuantity { get; set; }
 
-    public virtual ICollection<LayoutTerrarium> LayoutTerraria { get; set; } = new List<LayoutTerrarium>();
+    public virtual ICollection<LayoutTerrarium> LayoutTerrarium { get; set; } = new List<LayoutTerrarium>();
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 

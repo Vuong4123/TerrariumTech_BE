@@ -376,7 +376,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasDefaultValueSql("(sysutcdatetime())")
                 .HasColumnName("updatedAt");
 
-            entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.LayoutTerraria)
+            entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.LayoutTerrarium)
                 .HasForeignKey(d => d.TerrariumVariantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
