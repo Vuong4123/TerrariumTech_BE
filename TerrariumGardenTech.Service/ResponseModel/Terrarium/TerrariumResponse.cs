@@ -2,6 +2,14 @@
 
 namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
 {
+    public class TerrariumAccessoryResponse
+    {
+        public int AccessoryId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal? Price { get; set; }
+        // Thêm các thuộc tính khác nếu có
+    }
     public class TerrariumResponse
     {
         public int TerrariumId { get; set; }
@@ -13,6 +21,7 @@ namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
         public List<string> Environments { get; set; } = [];
         public List<string> Shapes { get; set; } = [];
         public List<string> TankMethods { get; set; } = [];
+        public List<TerrariumAccessoryResponse> Accessories { get; set; } = []; // Thông tin chi tiết phụ kiện
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string BodyHTML { get; set; } = string.Empty;
