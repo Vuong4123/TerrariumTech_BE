@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TerrariumGardenTech.Service.ResponseModel.Accessory
+﻿namespace TerrariumGardenTech.Service.ResponseModel.Accessory
 {
     public class AccessoryDetailResponse
     {

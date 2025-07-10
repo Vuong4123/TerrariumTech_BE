@@ -7,13 +7,9 @@ using TerrariumGardenTech.Service.RequestModel.Environment;
 
 namespace TerrariumGardenTech.Service.Service
 {
-    public class EnvironmentService : IEnvironmentService
+    public class EnvironmentService(UnitOfWork _unitOfWork) : IEnvironmentService
     {
-        private readonly UnitOfWork _unitOfWork;
-        public EnvironmentService(UnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
+        
 
 
         public async Task<IBusinessResult> GetAllEnvironmentsAsync()
