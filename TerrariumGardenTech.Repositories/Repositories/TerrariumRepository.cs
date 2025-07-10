@@ -20,6 +20,8 @@ namespace TerrariumGardenTech.Repositories.Repositories
             .Terrariums
             .AsNoTracking()
             .Include(t => t.TerrariumImages)
+            .Include(tac => tac.TerrariumAccessory)
+                .ThenInclude(ac => ac.Accessory)
             .Include(t => t.TerrariumShapes)
                 .ThenInclude(ts => ts.Shape)
             .Include(t => t.TerrariumEnvironments)
@@ -36,6 +38,8 @@ namespace TerrariumGardenTech.Repositories.Repositories
                 .Terrariums
                 .AsNoTracking()
                 .Include(t => t.TerrariumImages)
+                .Include(tac => tac.TerrariumAccessory)
+                    .ThenInclude(ac => ac.Accessory)
                 .Include(ta => ta.TerrariumShapes)
                     .ThenInclude(s => s.Shape)
                 .Include(ta => ta.TerrariumEnvironments)

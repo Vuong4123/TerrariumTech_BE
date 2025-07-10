@@ -49,6 +49,13 @@ namespace TerrariumGardenTech.API.Controllers
                 Environments = t.TerrariumEnvironments.Select(te => te.EnvironmentTerrarium.EnvironmentName).ToList(), // Assuming EnvironmentId is an int
                 Shapes = t.TerrariumShapes.Select(te => te.Shape.ShapeName).ToList(),
                 TankMethods = t.TerrariumTankMethods.Select(te => te.TankMethod.TankMethodType).ToList(),
+                Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+                {
+                    AccessoryId = a.Accessory.AccessoryId,
+                    Name = a.Accessory.Name,
+                    Description = a.Accessory.Description,
+                    Price = a.Accessory.Price
+                }).ToList(),
                 CreatedAt = today, // Use a default value if CreatedAt is null
                 UpdatedAt = today,  // Similar for UpdatedAt
                 BodyHTML = t.bodyHTML,
@@ -225,6 +232,13 @@ namespace TerrariumGardenTech.API.Controllers
                     Environments = terrarium.TerrariumEnvironments.Select(te => te.EnvironmentTerrarium.EnvironmentName).ToList(),
                     Shapes = terrarium.TerrariumShapes.Select(s => s.Shape.ShapeName).ToList(),
                     TankMethods = terrarium.TerrariumTankMethods.Select(ta => ta.TankMethod.TankMethodType).ToList(),
+                    Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+                    {
+                        AccessoryId = a.Accessory.AccessoryId,
+                        Name = a.Accessory.Name,
+                        Description = a.Accessory.Description,
+                        Price = a.Accessory.Price
+                    }).ToList(),
                     BodyHTML = terrarium.bodyHTML,
                     CreatedAt = today, // Use a default value if CreatedAt is null
                     UpdatedAt = today, // Similar for UpdatedAt
