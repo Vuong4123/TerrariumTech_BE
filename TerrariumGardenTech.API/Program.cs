@@ -71,6 +71,7 @@ builder.Services.AddScoped<UnitOfWork>();
 
 /*---------------- Repositorys ----------------*/
 builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<OrderItemRepository>();
 
 // Đăng ký Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -94,6 +95,7 @@ builder.Services.AddScoped<IPersonalizeService, PersonalizeService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 
 
 
