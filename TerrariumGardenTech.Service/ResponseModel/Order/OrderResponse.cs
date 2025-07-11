@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Service.ResponseModel.OrderItem;
 
 namespace TerrariumGardenTech.Service.ResponseModel.Order
 {
@@ -12,12 +13,15 @@ namespace TerrariumGardenTech.Service.ResponseModel.Order
         public int OrderId { get; set; }
         public int UserId { get; set; }
         public decimal TotalAmount { get; set; }
+
+        public decimal? Deposit { get; set; }
+
         public DateTime? OrderDate { get; set; }
 
         public string Status { get; set; } = string.Empty;
         public string PaymentStatus { get; set; } = string.Empty;
         public string ShippingStatus { get; set; } = string.Empty;
 
-        public List<OrderItemResponse> Items { get; set; } = new();
+        public List<OrderItemSummaryResponse> Items { get; set; } = new();
     }
 }
