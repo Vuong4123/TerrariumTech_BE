@@ -24,28 +24,28 @@ namespace TerrariumGardenTech.API.Middlewares
             }
             catch (UnauthorizedAccessException ex)
             {
-                await HandleExceptionAsync(context, Const.UNAUTHORIZED_CODE, Const.UNAUTHORIZED_MSG, ex);
+                await HandleExceptionAsync(context, HttpStatusCode.Unauthorized, Const.UNAUTHORIZED_MSG, ex);
             }
             catch (ArgumentException ex)
             {
-                await HandleExceptionAsync(context, Const.FAIL_CREATE_CODE, ex.Message, ex);
+                await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message, ex);
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(context, Const.ERROR_EXCEPTION, "Lỗi hệ thống", ex);
+                await HandleExceptionAsync(context, HttpStatusCode.InternalServerError, "Lỗi hệ thống", ex);
             }
         }
 
-        private async Task HandleExceptionAsync(HttpContext context, int statusCode, string message, Exception ex)
+        private async Task HandleExceptionAsync(HttpContext context, HttpStatusCode statusCode, string message, Exception ex)
         {
             _logger.LogError(ex, "Lỗi toàn cục");
 
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.OK;
+            context.Response.StatusCode = (int)statusCode;  // Set đúng mã trạng thái HTTP
 
             var result = new BusinessResult
             {
-                Status = statusCode,
+                Status = statusCode.GetHashCode(),  // Thêm mã trạng thái HTTP vào trong kết quả
                 Message = message,
                 Data = null
             };
