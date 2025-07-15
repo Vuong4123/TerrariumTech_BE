@@ -2,9 +2,10 @@
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Enums;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.UserManagement;
-using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -17,12 +18,11 @@ namespace TerrariumGardenTech.Service.Service
             _userRepository = userRepository;
         }
 
-        // Tạo tài khoản mới
-        public async Task<(int, string)> CreateAccountAsync(AccountCreateRequest request)
+        public async Task<IBusinessResult> CreateAccountAsync(AccountCreateRequest request)
         {
-            var existingUser = await _userRepository.FindOneAsync(u => u.Username == request.Username || u.Email == request.Email, false);
+            var existingUser = await _userRepository.FindOneAsync(u => u.Username == request.Username || u.Email == request.Email);
             if (existingUser != null)
-                return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -35,85 +35,80 @@ namespace TerrariumGardenTech.Service.Service
                 PhoneNumber = request.PhoneNumber,
                 DateOfBirth = request.DateOfBirth,
                 Gender = request.Gender,
-                RoleId = (int)RoleStatus.User, // Sử dụng RoleStatus.User thay vì số
-                Status = AccountStatus.Active.ToString(), // Sử dụng AccountStatus.Active
+                RoleId = (int)RoleStatus.User,
+                Status = AccountStatus.Active.ToString(),
                 CreatedAt = DateTime.UtcNow
             };
 
             await _userRepository.CreateAsync(newUser);
-            return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, newUser);
         }
 
-        // Lấy tất cả tài khoản
-        public async Task<(int, string, List<User>)> GetAllAccountsAsync()
+        public async Task<IBusinessResult> GetAllAccountsAsync()
         {
             var users = await _userRepository.GetAllAsync();
-            return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, users);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, users);
         }
 
-        // Lấy tài khoản theo vai trò
-        public async Task<(int, string, List<User>)> GetAccountsByRoleAsync(string role, int page, int pageSize)
+        public async Task<IBusinessResult> GetAccountsByRoleAsync(string roleName, int page, int pageSize)
         {
+            if (!Enum.TryParse<RoleStatus>(roleName, out var roleEnum))
+                return new BusinessResult(Const.FAIL_READ_CODE, "Vai trò không hợp lệ");
+
             var query = _userRepository.Context().Users
-                .Where(u => u.Role.RoleName == role && u.Status == AccountStatus.Active.ToString()); // Sử dụng AccountStatus.Active
+                .Where(u => u.RoleId == (int)roleEnum && u.Status == AccountStatus.Active.ToString());
 
             var users = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, users);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, users);
         }
 
-        // Thay đổi trạng thái tài khoản
-        public async Task<(int, string)> ChangeAccountStatusAsync(int userId, string status)
+        public async Task<IBusinessResult> ChangeAccountStatusAsync(int userId, string status)
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
-                return (Const.FAIL_UPDATE_CODE, "Tài khoản không tồn tại");
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Tài khoản không tồn tại");
 
-            // Kiểm tra trạng thái với Enum
-            if (Enum.TryParse<AccountStatus>(status, out var accountStatus))
-            {
-                user.Status = accountStatus.ToString();
-                await _userRepository.UpdateAsync(user);
-                return (Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG);
-            }
+            if (!Enum.TryParse<AccountStatus>(status, out var parsedStatus))
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Trạng thái không hợp lệ");
 
-            return (Const.FAIL_UPDATE_CODE, "Trạng thái không hợp lệ");
+            user.Status = parsedStatus.ToString();
+            await _userRepository.UpdateAsync(user);
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, user);
         }
 
-        // Lấy tất cả tài khoản có vai trò là User hoặc Admin
-        public async Task<(int, string, List<User>)> GetAccountsAsync(int page, int pageSize)
+        public async Task<IBusinessResult> GetAccountsAsync(int page, int pageSize)
         {
-            var query = _userRepository.Context().Users
-                .Where(u => u.RoleId == (int)RoleStatus.User || u.RoleId == (int)RoleStatus.Admin)  // Kiểm tra vai trò bằng Enum
-                .Where(u => u.Status == AccountStatus.Active.ToString()); // Kiểm tra trạng thái bằng Enum
-
-            var users = await query
+            var users = await _userRepository.Context().Users
+                .Where(u => (u.RoleId == (int)RoleStatus.User || u.RoleId == (int)RoleStatus.Admin) &&
+                            u.Status == AccountStatus.Active.ToString())
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, users);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, users);
         }
 
-        // Lấy tài khoản theo ID
-        public async Task<(int, string, User)> GetAccountByIdAsync(int userId)
+        public async Task<IBusinessResult> GetAccountByIdAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null || (user.RoleId != (int)RoleStatus.User && user.RoleId != (int)RoleStatus.Admin))
-                return (Const.FAIL_READ_CODE, "Tài khoản không tồn tại", null);
+            if (user == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Tài khoản không tồn tại");
 
-            return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, user);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, user);
         }
 
-        // Cập nhật tài khoản
-        public async Task<(int, string)> UpdateAccountAsync(int userId, AccountUpdateRequest request)
+        public async Task<IBusinessResult> UpdateAccountAsync(int userId, AccountUpdateRequest request)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null || (user.RoleId != (int)RoleStatus.User && user.RoleId != (int)RoleStatus.Admin))
-                return (Const.FAIL_UPDATE_CODE, "Tài khoản không tồn tại");
+            if (user == null)
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Tài khoản không tồn tại");
+
+            if (!Enum.IsDefined(typeof(RoleStatus), request.RoleId))
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vai trò không hợp lệ");
 
             user.Email = request.Email;
             user.FullName = request.FullName;
@@ -122,23 +117,22 @@ namespace TerrariumGardenTech.Service.Service
             user.Gender = request.Gender;
             user.RoleId = request.RoleId;
 
-            if (!string.IsNullOrEmpty(request.Password))
+            if (!string.IsNullOrWhiteSpace(request.Password))
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             await _userRepository.UpdateAsync(user);
-            return (Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG);
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, user);
         }
 
-        // Xóa tài khoản
-        public async Task<(int, string)> DeleteAccountAsync(int userId)
+        public async Task<IBusinessResult> DeleteAccountAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null || (user.RoleId != (int)RoleStatus.User && user.RoleId != (int)RoleStatus.Admin))
-                return (Const.FAIL_DELETE_CODE, "Tài khoản không tồn tại");
+            if (user == null)
+                return new BusinessResult(Const.FAIL_DELETE_CODE, "Tài khoản không tồn tại");
 
-            user.Status = AccountStatus.Suspended.ToString(); // Soft delete, sử dụng Enum AccountStatus.Inactive
+            user.Status = AccountStatus.Suspended.ToString(); // Soft delete
             await _userRepository.UpdateAsync(user);
-            return (Const.SUCCESS_DELETE_CODE, "Tài khoản đã được vô hiệu hóa");
+            return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, user);
         }
     }
 }
