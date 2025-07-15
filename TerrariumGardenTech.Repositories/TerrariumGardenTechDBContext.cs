@@ -37,6 +37,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<Accessory> Accessories { get; set; }
 
     public virtual DbSet<AccessoryImage> AccessoryImages { get; set; }
+    public virtual DbSet<AccessoryShape> AccessoryShapes { get; set; }
+
 
     public virtual DbSet<Address> Addresses { get; set; }
 
@@ -160,77 +162,159 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_AccessoryImage_Accessory");
         });
 
+        //modelBuilder.Entity<Address>(entity =>
+        //{
+        //    entity.HasKey(e => e.AddressId).HasName("PK__Address__26A111ADDFE0EDC0");
+
+        //    entity.ToTable("Address");
+
+        //    entity.Property(e => e.AddressId).HasColumnName("addressId");
+        //    entity.Property(e => e.AddressLine1)
+        //        .HasMaxLength(255)
+        //        .HasColumnName("addressLine1");
+        //    entity.Property(e => e.AddressLine2)
+        //        .HasMaxLength(255)
+        //        .HasColumnName("addressLine2");
+        //    entity.Property(e => e.City)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("city");
+        //    entity.Property(e => e.Country)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("country");
+        //    entity.Property(e => e.PostalCode)
+        //        .HasMaxLength(20)
+        //        .HasColumnName("postalCode");
+        //    entity.Property(e => e.State)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("state");
+        //    entity.Property(e => e.UserId).HasColumnName("userId");
+
+        //    entity.HasOne(d => d.User).WithMany(p => p.Addresses)
+        //        .HasForeignKey(d => d.UserId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_Address_User");
+        //});
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__26A111ADDFE0EDC0");
+            entity.HasKey(e => e.Id).HasName("PK_Address");
 
             entity.ToTable("Address");
 
-            entity.Property(e => e.AddressId).HasColumnName("addressId");
-            entity.Property(e => e.AddressLine1)
-                .HasMaxLength(255)
-                .HasColumnName("addressLine1");
-            entity.Property(e => e.AddressLine2)
-                .HasMaxLength(255)
-                .HasColumnName("addressLine2");
-            entity.Property(e => e.City)
-                .HasMaxLength(100)
-                .HasColumnName("city");
-            entity.Property(e => e.Country)
-                .HasMaxLength(100)
-                .HasColumnName("country");
-            entity.Property(e => e.PostalCode)
-                .HasMaxLength(20)
-                .HasColumnName("postalCode");
-            entity.Property(e => e.State)
-                .HasMaxLength(100)
-                .HasColumnName("state");
+            entity.Property(e => e.Id).HasColumnName("id");
+
+            entity.Property(e => e.TagName)
+                .HasMaxLength(250)
+                .HasColumnName("tagName");
+
             entity.Property(e => e.UserId).HasColumnName("userId");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Addresses)
+            entity.Property(e => e.ReceiverName)
+                .HasMaxLength(250)
+                .HasColumnName("receiverName");
+
+            entity.Property(e => e.ReceiverPhone)
+                .HasMaxLength(250)
+                .HasColumnName("receiverPhone");
+
+            entity.Property(e => e.ReceiverAddress)
+                .HasMaxLength(250)
+                .HasColumnName("receiverAddress");
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Address_User");
         });
-
         modelBuilder.Entity<AddressDelivery>(entity =>
         {
-            entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__F090623D8858B94B");
+            entity.HasKey(e => e.Id).HasName("PK_AddressDelivery");
 
             entity.ToTable("AddressDelivery");
 
-            entity.Property(e => e.AddressDeliveryId).HasColumnName("addressDeliveryId");
-            entity.Property(e => e.AddressLine1)
-                .HasMaxLength(255)
-                .HasColumnName("addressLine1");
-            entity.Property(e => e.AddressLine2)
-                .HasMaxLength(255)
-                .HasColumnName("addressLine2");
-            entity.Property(e => e.City)
-                .HasMaxLength(100)
-                .HasColumnName("city");
-            entity.Property(e => e.Country)
-                .HasMaxLength(100)
-                .HasColumnName("country");
-            entity.Property(e => e.OrderId).HasColumnName("orderId");
-            entity.Property(e => e.PhoneNumber)
-                .HasMaxLength(15)
-                .HasColumnName("phoneNumber");
-            entity.Property(e => e.PostalCode)
-                .HasMaxLength(20)
-                .HasColumnName("postalCode");
-            entity.Property(e => e.RecipientName)
-                .HasMaxLength(100)
-                .HasColumnName("recipientName");
-            entity.Property(e => e.State)
-                .HasMaxLength(100)
-                .HasColumnName("state");
+            entity.Property(e => e.Id).HasColumnName("id");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.AddressDeliveries)
+            entity.Property(e => e.OrderId)
+                .HasColumnName("orderId");
+
+            entity.Property(e => e.ReceiverName)
+                .HasMaxLength(250)
+                .HasColumnName("receiverName");
+
+            entity.Property(e => e.ReceiverPhone)
+                .HasMaxLength(250)
+                .HasColumnName("receiverPhone");
+
+            entity.Property(e => e.ReceiverAddress)
+                .HasMaxLength(250)
+                .HasColumnName("receiverAddress");
+
+            //entity.Property(e => e.Longitude)
+            //    .HasColumnType("numeric(9,6)")
+            //    .HasColumnName("longitude");
+
+            //entity.Property(e => e.Latitude)
+            //    .HasColumnType("numeric(9,6)")
+            //    .HasColumnName("latitude");
+
+            //entity.Property(e => e.WardId).HasColumnName("wardId");
+
+            entity.Property(e => e.UserId).HasColumnName("userId");
+
+            entity.Property(e => e.CreatedOnUtc)
+                .HasColumnType("datetime2")
+                .HasColumnName("createdOnUtc");
+
+            entity.Property(e => e.ModifiedOnUtc)
+                .HasColumnType("datetime2")
+                .HasColumnName("modifiedOnUtc");
+
+            entity.Property(e => e.IsDeleted)
+                .HasColumnName("isDeleted");
+
+            entity.HasOne(d => d.Order)
+                .WithMany(p => p.AddressDeliveries)
                 .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AddressDelivery_Order");
         });
+
+        //modelBuilder.Entity<AddressDelivery>(entity =>
+        //{
+        //    entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__F090623D8858B94B");
+
+        //    entity.ToTable("AddressDelivery");
+
+        //    entity.Property(e => e.AddressDeliveryId).HasColumnName("addressDeliveryId");
+        //    entity.Property(e => e.AddressLine1)
+        //        .HasMaxLength(255)
+        //        .HasColumnName("addressLine1");
+        //    entity.Property(e => e.AddressLine2)
+        //        .HasMaxLength(255)
+        //        .HasColumnName("addressLine2");
+        //    entity.Property(e => e.City)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("city");
+        //    entity.Property(e => e.Country)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("country");
+        //    entity.Property(e => e.OrderId).HasColumnName("orderId");
+        //    entity.Property(e => e.PhoneNumber)
+        //        .HasMaxLength(15)
+        //        .HasColumnName("phoneNumber");
+        //    entity.Property(e => e.PostalCode)
+        //        .HasMaxLength(20)
+        //        .HasColumnName("postalCode");
+        //    entity.Property(e => e.RecipientName)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("recipientName");
+        //    entity.Property(e => e.State)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("state");
+
+        //    entity.HasOne(d => d.Order).WithMany(p => p.AddressDeliveries)
+        //        .HasForeignKey(d => d.OrderId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_AddressDelivery_Order");
+        //});
 
         modelBuilder.Entity<AisuggestLayout>(entity =>
         {

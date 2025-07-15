@@ -17,6 +17,27 @@ namespace TerrariumGardenTech.Repositories.Repositories
                                .Where(e => name.Contains(e.Name))  // Tìm tất cả các Accessory có tên nằm trong danh sách names
                                .ToListAsync();
         }
+
+        public async Task<List<Accessory>> GetAllTerrariumAsync()
+        {
+            return await _dbContext
+            .Accessories
+            .AsNoTracking()
+            .Include(acs => acs.AccessoryShapes)
+                .ThenInclude(ac => ac.Shape)
+            .ToListAsync();
+        }
+        public async Task<Accessory?> GetTerrariumIdAsync(int id)
+        {
+            return await _dbContext
+                .Accessories
+                .AsNoTracking()
+                .Include(tac => tac.AccessoryShapes)
+                    .ThenInclude(ac => ac.Shape)
+                    .FirstOrDefaultAsync(ta => ta.AccessoryId == id);
+
+        }
+
     }
 
 }
