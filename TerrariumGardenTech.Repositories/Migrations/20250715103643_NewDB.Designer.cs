@@ -12,15 +12,15 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    [Migration("20250708154905_DB872025")]
-    partial class DB872025
+    [Migration("20250715103643_NewDB")]
+    partial class NewDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -120,51 +120,64 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("AccessoryImage", (string)null);
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AccessoryShape", b =>
+                {
+                    b.Property<int>("AccessoryShapeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AccessoryShapeId"));
+
+                    b.Property<int>("AccessoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShapeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AccessoryShapeId");
+
+                    b.HasIndex("AccessoryId");
+
+                    b.HasIndex("ShapeId");
+
+                    b.ToTable("AccessoryShapes");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Address", b =>
                 {
-                    b.Property<int>("AddressId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("addressId");
+                        .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AddressId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AddressLine1")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("addressLine1");
+                    b.Property<string>("ReceiverAddress")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("receiverAddress");
 
-                    b.Property<string>("AddressLine2")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("addressLine2");
+                    b.Property<string>("ReceiverName")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("receiverName");
 
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("city");
+                    b.Property<string>("ReceiverPhone")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("receiverPhone");
 
-                    b.Property<string>("Country")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("country");
-
-                    b.Property<string>("PostalCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("postalCode");
-
-                    b.Property<string>("State")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("state");
+                    b.Property<string>("TagName")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("tagName");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("userId");
 
-                    b.HasKey("AddressId")
-                        .HasName("PK__Address__26A111ADDFE0EDC0");
+                    b.HasKey("Id")
+                        .HasName("PK_Address");
 
                     b.HasIndex("UserId");
 
@@ -173,59 +186,50 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AddressDelivery", b =>
                 {
-                    b.Property<int>("AddressDeliveryId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("addressDeliveryId");
+                        .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AddressDeliveryId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AddressLine1")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("addressLine1");
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("createdOnUtc");
 
-                    b.Property<string>("AddressLine2")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("addressLine2");
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("isDeleted");
 
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("city");
-
-                    b.Property<string>("Country")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("country");
+                    b.Property<DateTime>("ModifiedOnUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("modifiedOnUtc");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int")
                         .HasColumnName("orderId");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)")
-                        .HasColumnName("phoneNumber");
+                    b.Property<string>("ReceiverAddress")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("receiverAddress");
 
-                    b.Property<string>("PostalCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("postalCode");
+                    b.Property<string>("ReceiverName")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("receiverName");
 
-                    b.Property<string>("RecipientName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("recipientName");
+                    b.Property<string>("ReceiverPhone")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("receiverPhone");
 
-                    b.Property<string>("State")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("state");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("userId");
 
-                    b.HasKey("AddressDeliveryId")
-                        .HasName("PK__AddressD__F090623D8858B94B");
+                    b.HasKey("Id")
+                        .HasName("PK_AddressDelivery");
 
                     b.HasIndex("OrderId");
 
@@ -1462,6 +1466,25 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Accessory");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AccessoryShape", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Accessory", "Accessory")
+                        .WithMany("AccessoryShapes")
+                        .HasForeignKey("AccessoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Shape", "Shape")
+                        .WithMany("AccessoryShapes")
+                        .HasForeignKey("ShapeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Accessory");
+
+                    b.Navigation("Shape");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Address", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
@@ -1478,6 +1501,7 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
                         .WithMany("AddressDeliveries")
                         .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_AddressDelivery_Order");
 
@@ -1833,6 +1857,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
                 {
                     b.Navigation("AccessoryImages");
 
+                    b.Navigation("AccessoryShapes");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("TerrariumAccessory");
@@ -1897,6 +1923,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Shape", b =>
                 {
+                    b.Navigation("AccessoryShapes");
+
                     b.Navigation("TerrariumShapes");
                 });
 
