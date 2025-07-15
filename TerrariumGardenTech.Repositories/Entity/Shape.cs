@@ -16,5 +16,7 @@ public class Shape
     
 
     public virtual ICollection<TerrariumShape> TerrariumShapes { get; set; } = [];
-    
+    public virtual ICollection<AccessoryShape> AccessoryShapes { get; set; } = []; 
+
+
 }
