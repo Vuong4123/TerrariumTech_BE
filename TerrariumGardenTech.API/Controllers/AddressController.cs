@@ -32,15 +32,12 @@ namespace TerrariumGardenTech.API.Controllers
             // Ensure Data is a List<Address> (or any IEnumerable<Address>)
             var addresses = (result.Data as IEnumerable<Address>)?.Select(t => new AddressResponse
             {
-                AddressId = t.AddressId,
+                Id = t.Id,
+                TagName = t.TagName,
                 UserId = t.UserId,
-                AddressLine1 = t.AddressLine1,
-                AddressLine2 = t.AddressLine2,
-                City = t.City,
-                State = t.State,
-                Country = t.Country,
-                PostalCode = t.PostalCode
-
+                ReceiverAddress = t.ReceiverAddress,
+                ReceiverName = t.ReceiverName,
+                ReceiverPhone = t.ReceiverPhone
             }).ToList();
 
             if (addresses == null)
@@ -65,14 +62,12 @@ namespace TerrariumGardenTech.API.Controllers
                 // Ánh xạ dữ liệu từ Category sang CategoryRequest
                 var addressResponse = new AddressResponse
                 {
-                    AddressId = address.AddressId,
+                    Id = address.Id,
+                    TagName = address.TagName,
                     UserId = address.UserId,
-                    AddressLine1 = address.AddressLine1,
-                    AddressLine2 = address.AddressLine2,
-                    City = address.City,
-                    State = address.State,
-                    Country = address.Country,
-                    PostalCode = address.PostalCode
+                    ReceiverAddress = address.ReceiverAddress,
+                    ReceiverName = address.ReceiverName,
+                    ReceiverPhone = address.ReceiverPhone
                 };
 
                 // Trả về BusinessResult với dữ liệu đã ánh xạ
