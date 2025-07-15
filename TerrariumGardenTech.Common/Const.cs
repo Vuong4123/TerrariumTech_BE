@@ -64,5 +64,15 @@ namespace TerrariumGardenTech.Common
         public static string TOKEN_EXPIRED_MSG = "Token đã hết hạn";
 
         #endregion
+
+        #region HTTP Status Codes bổ sung
+
+        public static int BAD_REQUEST_CODE = 400;
+        public static string BAD_REQUEST_MSG = "Yêu cầu không hợp lệ";
+
+        public static int NOT_FOUND_CODE = 404;
+        public static string NOT_FOUND_MSG = "Không tìm thấy dữ liệu";
+        #endregion
+
     }
 }
