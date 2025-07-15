@@ -28,8 +28,8 @@ namespace TerrariumGardenTech.Service.Service
                 OrderItemId = orderItemId,
                 DetailKey = detailKey,
                 DetailValue = detailValue,
-                Quantity = quantity,  // Đảm bảo thuộc tính quantity đã có
-                UnitPrice = unitPrice  // Đảm bảo thuộc tính unitPrice đã có
+                Quantity = quantity,
+                UnitPrice = unitPrice
             };
 
             await _unitOfWork.OrderItemDetailRepository.CreateAsync(orderItemDetail);
@@ -40,7 +40,6 @@ namespace TerrariumGardenTech.Service.Service
         public async Task<IBusinessResult> GetOrderItemDetailsByOrderItemIdAsync(int orderItemId)
         {
             var orderItemDetails = await _unitOfWork.OrderItemDetailRepository.GetOrderItemDetailsByOrderItemIdAsync(orderItemId);
-
             if (orderItemDetails == null || !orderItemDetails.Any())
                 return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy chi tiết cho OrderItem này");
 
@@ -54,7 +53,6 @@ namespace TerrariumGardenTech.Service.Service
             if (orderItemDetail == null)
                 return new BusinessResult(Const.FAIL_UPDATE_CODE, "Chi tiết đơn hàng không tồn tại");
 
-            // Cập nhật thông tin chi tiết
             orderItemDetail.DetailKey = detailKey;
             orderItemDetail.DetailValue = detailValue;
             orderItemDetail.Quantity = quantity;
@@ -75,4 +73,5 @@ namespace TerrariumGardenTech.Service.Service
             return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Chi tiết đơn hàng đã được xóa");
         }
     }
+
 }
