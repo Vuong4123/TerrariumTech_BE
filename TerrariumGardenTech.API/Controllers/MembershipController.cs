@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.MemberShip;
-using System.Threading.Tasks;
+
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -16,90 +20,101 @@ namespace TerrariumGardenTech.API.Controllers
             _membershipService = membershipService;
         }
 
-        // API Create Membership
         [HttpPost("create")]
-        public async Task<IActionResult> CreateMembership([FromBody] CreateMembershipRequest request)
+        public async Task<IBusinessResult> CreateMembership([FromBody] CreateMembershipRequest request)
         {
-            var membershipId = await _membershipService
-            .CreateMembershipAsync( request.MembershipType, request.StartDate, request.EndDate, request.Status);
-            return CreatedAtAction(nameof(GetMembership), new { id = membershipId }, request);
+            try
+            {
+                var membershipId = await _membershipService.CreateMembershipAsync(request.MembershipType, request.StartDate);
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership thành công", membershipId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return new BusinessResult(Const.UNAUTHORIZED_CODE, ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message);
+            }
         }
-        // API Get all memberships
+
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllMemberships()
+        public async Task<IBusinessResult> GetAllMemberships()
         {
             var memberships = await _membershipService.GetAllMembershipsAsync();
             if (memberships == null || memberships.Count == 0)
-                return NotFound(new { message = "Không tìm thấy memberships" });
-            return Ok(memberships);
+                return new BusinessResult(Const.ERROR_EXCEPTION, "Không tìm thấy memberships");
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Thành công", memberships);
         }
 
-        // API Get Membership by ID
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetMembership(int id)
+        public async Task<IBusinessResult> GetMembership(int id)
         {
             var membership = await _membershipService.GetMembershipByIdAsync(id);
             if (membership == null)
-                return NotFound(new { message = "Membership không tồn tại" });
-            return Ok(membership);
+                return new BusinessResult(Const.NOT_FOUND_CODE, "Membership không tồn tại");
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Thành công", membership);
         }
 
-        // API Get all memberships of a user
         [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetMembershipsByUserId(int userId)
+        public async Task<IBusinessResult> GetMembershipsByUserId(int userId)
         {
             var memberships = await _membershipService.GetMembershipsByUserIdAsync(userId);
             if (memberships == null || memberships.Count == 0)
-                return NotFound(new { message = "Không tìm thấy memberships cho người dùng này" });
-            return Ok(memberships);
+                return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy memberships cho người dùng này");
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Thành công", memberships);
         }
 
-        // API Update Membership
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMembership(int id, [FromBody] CreateMembershipRequest request)
+        public async Task<IBusinessResult> UpdateMembership(int id, [FromBody] CreateMembershipRequest request)
         {
-            var success = await _membershipService.UpdateMembershipAsync(id, request.MembershipType, request.StartDate, request.EndDate, request.Status);
-            if (!success)
-                return NotFound(new { message = "Membership không tồn tại hoặc không thể cập nhật" });
-            return NoContent();  // Thành công, nhưng không trả về dữ liệu
+            try
+            {
+                var success = await _membershipService.UpdateMembershipAsync(id, request.MembershipType, request.StartDate);
+                if (!success)
+                    return new BusinessResult(Const.NOT_FOUND_CODE, "Membership không tồn tại hoặc không thể cập nhật");
+
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Cập nhật thành công", id);
+            }
+            catch (ArgumentException ex)
+            {
+                return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message);
+            }
         }
 
-        // API Delete Membership
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMembership(int id)
+        public async Task<IBusinessResult> DeleteMembership(int id)
         {
             var success = await _membershipService.DeleteMembershipAsync(id);
             if (!success)
-                return NotFound(new { message = "Membership không tồn tại hoặc không thể xóa" });
-            return NoContent();  // Xóa thành công
+                return new BusinessResult(Const.NOT_FOUND_CODE, "Membership không tồn tại hoặc không thể xóa");
+
+            return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Xóa thành công", id);
         }
 
-        // API Update all expired memberships
         [HttpPost("update-expired")]
-        public async Task<IActionResult> UpdateAllExpiredMemberships()
+        public async Task<IBusinessResult> UpdateAllExpiredMemberships()
         {
             var updatedCount = await _membershipService.UpdateAllExpiredMembershipsAsync();
-            return Ok(new { updatedCount });
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Đã cập nhật trạng thái hết hạn", updatedCount);
         }
 
-        // API Update expired memberships for a specific user
         [HttpPost("user/{userId}/update-expired")]
-        public async Task<IActionResult> UpdateExpiredMembershipsByUserId(int userId)
+        public async Task<IBusinessResult> UpdateExpiredMembershipsByUserId(int userId)
         {
             var updatedCount = await _membershipService.UpdateExpiredMembershipsByUserIdAsync(userId);
-            return Ok(new { updatedCount });
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Đã cập nhật trạng thái hết hạn", updatedCount);
         }
 
-        // API Check if a membership is expired
         [HttpGet("{id}/is-expired")]
-        public IActionResult CheckIfMembershipIsExpired(int id)
+        public async Task<IBusinessResult> CheckIfMembershipIsExpired(int id)
         {
-            var membership = _membershipService.GetMembershipByIdAsync(id).Result;
+            var membership = await _membershipService.GetMembershipByIdAsync(id);
             if (membership == null)
-                return NotFound(new { message = "Membership không tồn tại" });
+                return new BusinessResult(Const.NOT_FOUND_CODE, "Membership không tồn tại");
 
-            bool isExpired = _membershipService.IsMembershipExpired(membership);
-            return Ok(new { isExpired });
+            var isExpired = _membershipService.IsMembershipExpired(membership);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Thành công", new { isExpired });
         }
     }
 }
