@@ -4,24 +4,34 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.RequestModel.UserManagement;
 
 namespace TerrariumGardenTech.Service.IService
 {
     public interface IAccountService
     {
-        Task<(int, string)> CreateAccountAsync(AccountCreateRequest request);
+        Task<IBusinessResult> CreateAccountAsync(AccountCreateRequest request);
+
         // Get all accounts 
-        Task<(int, string, List<User>)> GetAllAccountsAsync();
-        // Get by role
-        Task<(int, string, List<User>)> GetAccountsByRoleAsync(string role, int page, int pageSize);
-        // change account status
-        Task<(int, string)> ChangeAccountStatusAsync(int userId, string status);
+        Task<IBusinessResult> GetAllAccountsAsync();
 
-        Task<(int, string, List<User>)> GetAccountsAsync(int page, int pageSize);
-        Task<(int, string, User)> GetAccountByIdAsync(int userId);
-        Task<(int, string)> UpdateAccountAsync(int userId, AccountUpdateRequest request);
-        Task<(int, string)> DeleteAccountAsync(int userId);
+        // Get by role (with paging)
+        Task<IBusinessResult> GetAccountsByRoleAsync(string role, int page, int pageSize);
 
+        // Change account status
+        Task<IBusinessResult> ChangeAccountStatusAsync(int userId, string status);
+
+        // Get users with role: User | Admin (with paging)
+        Task<IBusinessResult> GetAccountsAsync(int page, int pageSize);
+
+        // Get by Id
+        Task<IBusinessResult> GetAccountByIdAsync(int userId);
+
+        // Update account
+        Task<IBusinessResult> UpdateAccountAsync(int userId, AccountUpdateRequest request);
+
+        // Delete account
+        Task<IBusinessResult> DeleteAccountAsync(int userId);
     }
 }
