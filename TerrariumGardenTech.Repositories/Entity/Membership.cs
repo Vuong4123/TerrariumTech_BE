@@ -2,6 +2,8 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using TerrariumGardenTech.Repositories.Enums;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -19,5 +21,14 @@ public partial class Membership
 
     public string Status { get; set; }
 
+    [NotMapped]
+    public MembershipStatus StatusEnum
+    {
+        get => Enum.TryParse<MembershipStatus>(Status, out var result) ? result : MembershipStatus.Expired;
+        set => Status = value.ToString();
+    }
+
     public virtual User User { get; set; }
+
+
 }

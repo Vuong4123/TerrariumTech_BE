@@ -20,6 +20,8 @@ using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
+using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.API.Middlewares;
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
 
@@ -269,7 +271,7 @@ app.Use(async (context, next) =>
 // Áp dụng middleware CORS
 app.UseCors("AllowSpecificOrigin");  // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
 
-
+app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
