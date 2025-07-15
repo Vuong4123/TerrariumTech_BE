@@ -7,21 +7,17 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Address
 {
-    public int AddressId { get; set; }
+    public int Id { get; set; }
+
+    public string TagName { get; set; } // max length 250
 
     public int UserId { get; set; }
 
-    public string AddressLine1 { get; set; }
+    public string ReceiverName { get; set; } // max length 250
 
-    public string AddressLine2 { get; set; }
+    public string ReceiverPhone { get; set; } // max length 250
 
-    public string City { get; set; }
-
-    public string State { get; set; }
-
-    public string Country { get; set; }
-
-    public string PostalCode { get; set; }
+    public string ReceiverAddress { get; set; } // max length 250
 
     public virtual User User { get; set; }
 }
