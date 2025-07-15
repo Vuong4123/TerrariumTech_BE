@@ -25,7 +25,7 @@ public partial class Accessory
 
     public string Status { get; set; }
 
-    public virtual ICollection<AccessoryImage> AccessoryImages { get; set; } = new List<AccessoryImage>();
+    public virtual ICollection<AccessoryImage> AccessoryImages { get; set; } = [];
     public virtual ICollection<AccessoryShape> AccessoryShapes { get; set; } = [];
     public virtual Category Category { get; set; }
 
