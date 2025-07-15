@@ -42,7 +42,7 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 int result = -1;
-                var addressEntity = _unitOfWork.Address.GetByIdAsync(address.AddressId);
+                var addressEntity = _unitOfWork.Address.GetByIdAsync(address.Id);
                 if (addressEntity != null)
                 {
                     result = await _unitOfWork.Address.UpdateAsync(address);
@@ -81,7 +81,7 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 var result = -1;
-                var address = await _unitOfWork.Address.GetByIdAsync(addressUpdateRequest.AddressId);
+                var address = await _unitOfWork.Address.GetByIdAsync(addressUpdateRequest.Id);
                 if (address != null)
                 {
                     _unitOfWork.Address.Context().Entry(address).CurrentValues.SetValues(addressUpdateRequest);
@@ -113,12 +113,10 @@ namespace TerrariumGardenTech.Service.Service
                 var address = new Address
                 {
                     UserId = GetCurrentUser,
-                    AddressLine1 = addressCreateRequest.AddressLine1,
-                    AddressLine2 = addressCreateRequest.AddressLine2,
-                    City = addressCreateRequest.City,
-                    State = addressCreateRequest.State,
-                    Country = addressCreateRequest.Country,
-                    PostalCode = addressCreateRequest.PostalCode
+                    TagName = addressCreateRequest.TagName,
+                    ReceiverAddress = addressCreateRequest.ReceiverAddress,
+                    ReceiverName = addressCreateRequest.ReceiverName,
+                    ReceiverPhone = addressCreateRequest.ReceiverPhone
                 };
                 var result = await _unitOfWork.Address.CreateAsync(address);
                 if (address != null)
