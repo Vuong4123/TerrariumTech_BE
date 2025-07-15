@@ -7,25 +7,23 @@ namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class AddressDelivery
 {
-    public int AddressDeliveryId { get; set; }
+    public int Id { get; set; }
 
-    public int OrderId { get; set; }
+    public int OrderId { get; set; } // text(250)
 
-    public string AddressLine1 { get; set; }
+    public string ReceiverName { get; set; } // text(250)
 
-    public string AddressLine2 { get; set; }
+    public string ReceiverPhone { get; set; } // text(250)
 
-    public string City { get; set; }
+    public string ReceiverAddress { get; set; } // text(250)
 
-    public string State { get; set; }
+    public int UserId { get; set; }
 
-    public string Country { get; set; }
+    public DateTime CreatedOnUtc { get; set; }
 
-    public string PostalCode { get; set; }
+    public DateTime ModifiedOnUtc { get; set; }
 
-    public string PhoneNumber { get; set; }
-
-    public string RecipientName { get; set; }
+    public bool IsDeleted { get; set; }
 
     public virtual Order Order { get; set; }
 }
