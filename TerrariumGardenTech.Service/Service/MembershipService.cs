@@ -1,195 +1,195 @@
-﻿using TerrariumGardenTech.Repositories;
-using TerrariumGardenTech.Repositories.Base;
-using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Enums;
-using TerrariumGardenTech.Service.IService;
+﻿//using TerrariumGardenTech.Repositories;
+//using TerrariumGardenTech.Repositories.Base;
+//using TerrariumGardenTech.Repositories.Entity;
+//using TerrariumGardenTech.Repositories.Enums;
+//using TerrariumGardenTech.Service.IService;
 
-namespace TerrariumGardenTech.Service.Service
-{
-    public class MembershipService(IUserContextService userContextService, UnitOfWork _unitOfWork)
-        : IMembershipService
-    {
-        private static readonly Dictionary<string, int> MembershipDurations = new()
-        {
-            {"1Month", 30},
-            {"3Months", 90},
-            {"1Year", 365}
-        };
+//namespace TerrariumGardenTech.Service.Service
+//{
+//    public class MembershipService(IUserContextService userContextService, UnitOfWork _unitOfWork)
+//        : IMembershipService
+//    {
+//        private static readonly Dictionary<string, int> MembershipDurations = new()
+//        {
+//            {"1Month", 30},
+//            {"3Months", 90},
+//            {"1Year", 365}
+//        };
 
-        private int GetDurationDays(string membershipType)
-        {
-            if (!MembershipDurations.TryGetValue(membershipType, out int days))
-                throw new ArgumentException("Loại gói Membership không hợp lệ");
-            return days;
-        }
+//        private int GetDurationDays(string membershipType)
+//        {
+//            if (!MembershipDurations.TryGetValue(membershipType, out int days))
+//                throw new ArgumentException("Loại gói Membership không hợp lệ");
+//            return days;
+//        }
 
-        private bool CanAccessUser(int targetUserId)
-        {
-            var currentUserId = userContextService.GetCurrentUser();
-            var role = userContextService.GetCurrentUserRole();
-            return role is RoleStatus.Admin or RoleStatus.Manager or RoleStatus.Staff || currentUserId == targetUserId;
-        }
+//        private bool CanAccessUser(int targetUserId)
+//        {
+//            var currentUserId = userContextService.GetCurrentUser();
+//            var role = userContextService.GetCurrentUserRole();
+//            return role is RoleStatus.Admin or RoleStatus.Manager or RoleStatus.Staff || currentUserId == targetUserId;
+//        }
 
-        public async Task<int> CreateMembershipAsync(string membershipType, DateTime startDate)
-        {
-            try
-            {
-                var currentUserId = userContextService.GetCurrentUser();
+//        public async Task<int> CreateMembershipAsync(string membershipType, DateTime startDate)
+//        {
+//            try
+//            {
+//                var currentUserId = userContextService.GetCurrentUser();
 
-                // ⚠️ Kiểm tra membership đang hoạt động
-                var activeMemberships = await _unitOfWork.MemberShipRepository.FindAsync(m =>
-                    m.UserId == currentUserId && m.Status == MembershipStatus.Active.ToString());
+//                // ⚠️ Kiểm tra membership đang hoạt động
+//                var activeMemberships = await _unitOfWork.MemberShipRepository.FindAsync(m =>
+//                    m.UserId == currentUserId && m.Status == MembershipStatus.Active.ToString());
 
-                if (activeMemberships.Any())
-                    throw new ArgumentException("Bạn đã có membership đang hoạt động.");
+//                if (activeMemberships.Any())
+//                    throw new ArgumentException("Bạn đã có membership đang hoạt động.");
 
-                var endDate = startDate.AddDays(GetDurationDays(membershipType));
+//                var endDate = startDate.AddDays(GetDurationDays(membershipType));
 
-                var membership = new Membership
-                {
-                    UserId = currentUserId,
-                    MembershipType = membershipType,
-                    StartDate = startDate,
-                    EndDate = endDate,
-                    StatusEnum = MembershipStatus.Active
-                };
+//                var membership = new Membership
+//                {
+//                    UserId = currentUserId,
+//                    MembershipType = membershipType,
+//                    StartDate = startDate,
+//                    EndDate = endDate,
+//                    StatusEnum = MembershipStatus.Active
+//                };
 
-                await _unitOfWork.MemberShipRepository.CreateAsync(membership);
-                return membership.MembershipId;
-            }
-            catch (ArgumentException ex)
-            {
-                // Lỗi hợp lệ – báo cho controller xử lý
-                Console.WriteLine($"[CreateMembershipAsync] Validation error: {ex.Message}");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[CreateMembershipAsync] Exception: {ex.Message}");
-                throw new Exception("Đã xảy ra lỗi khi tạo membership", ex);
-            }
-        }
-
-
+//                await _unitOfWork.MemberShipRepository.CreateAsync(membership);
+//                return membership.MembershipId;
+//            }
+//            catch (ArgumentException ex)
+//            {
+//                // Lỗi hợp lệ – báo cho controller xử lý
+//                Console.WriteLine($"[CreateMembershipAsync] Validation error: {ex.Message}");
+//                throw;
+//            }
+//            catch (Exception ex)
+//            {
+//                Console.WriteLine($"[CreateMembershipAsync] Exception: {ex.Message}");
+//                throw new Exception("Đã xảy ra lỗi khi tạo membership", ex);
+//            }
+//        }
 
 
-        public async Task<List<Membership>> GetAllMembershipsAsync()
-        {
-            var role = userContextService.GetCurrentUserRole();
-            if (role is not RoleStatus.Admin and not RoleStatus.Manager)
-                throw new UnauthorizedAccessException("Bạn không có quyền xem tất cả memberships.");
 
-            return await _unitOfWork.MemberShipRepository.GetAllAsync();
-        }
 
-        public async Task<Membership> GetMembershipByIdAsync(int membershipId)
-        {
-            var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
-            if (membership == null) return null;
+//        public async Task<List<Membership>> GetAllMembershipsAsync()
+//        {
+//            var role = userContextService.GetCurrentUserRole();
+//            if (role is not RoleStatus.Admin and not RoleStatus.Manager)
+//                throw new UnauthorizedAccessException("Bạn không có quyền xem tất cả memberships.");
 
-            if (!CanAccessUser(membership.UserId))
-                throw new UnauthorizedAccessException("Bạn không có quyền truy cập membership này.");
+//            return await _unitOfWork.MemberShipRepository.GetAllAsync();
+//        }
 
-            return membership;
-        }
+//        public async Task<Membership> GetMembershipByIdAsync(int membershipId)
+//        {
+//            var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
+//            if (membership == null) return null;
 
-        public async Task<List<Membership>> GetMembershipsByUserIdAsync(int userId)
-        {
-            if (!CanAccessUser(userId))
-                throw new UnauthorizedAccessException("Bạn không có quyền xem memberships của người dùng này.");
+//            if (!CanAccessUser(membership.UserId))
+//                throw new UnauthorizedAccessException("Bạn không có quyền truy cập membership này.");
 
-            var memberships = await _unitOfWork.MemberShipRepository.FindAsync(m => m.UserId == userId);
-            var now = DateTime.UtcNow;
+//            return membership;
+//        }
 
-            foreach (var membership in memberships)
-            {
-                if (membership.EndDate < now && membership.StatusEnum != MembershipStatus.Expired)
-                {
-                    membership.StatusEnum = MembershipStatus.Expired;
-                    await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
-                }
-            }
+//        public async Task<List<Membership>> GetMembershipsByUserIdAsync(int userId)
+//        {
+//            if (!CanAccessUser(userId))
+//                throw new UnauthorizedAccessException("Bạn không có quyền xem memberships của người dùng này.");
 
-            return memberships;
-        }
+//            var memberships = await _unitOfWork.MemberShipRepository.FindAsync(m => m.UserId == userId);
+//            var now = DateTime.UtcNow;
 
-        public async Task<bool> UpdateMembershipAsync(int membershipId, string membershipType, DateTime startDate)
-        {
-            var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
-            if (membership == null) return false;
+//            foreach (var membership in memberships)
+//            {
+//                if (membership.EndDate < now && membership.StatusEnum != MembershipStatus.Expired)
+//                {
+//                    membership.StatusEnum = MembershipStatus.Expired;
+//                    await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+//                }
+//            }
 
-            if (!CanAccessUser(membership.UserId))
-                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật membership này.");
+//            return memberships;
+//        }
 
-            membership.MembershipType = membershipType;
-            membership.StartDate = startDate;
-            membership.EndDate = startDate.AddDays(GetDurationDays(membershipType));
-            membership.StatusEnum = MembershipStatus.Active;
+//        public async Task<bool> UpdateMembershipAsync(int membershipId, string membershipType, DateTime startDate)
+//        {
+//            var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
+//            if (membership == null) return false;
 
-            await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
-            return true;
-        }
+//            if (!CanAccessUser(membership.UserId))
+//                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật membership này.");
 
-        public async Task<bool> DeleteMembershipAsync(int membershipId)
-        {
-            var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
-            if (membership == null) return false;
+//            membership.MembershipType = membershipType;
+//            membership.StartDate = startDate;
+//            membership.EndDate = startDate.AddDays(GetDurationDays(membershipType));
+//            membership.StatusEnum = MembershipStatus.Active;
 
-            if (!CanAccessUser(membership.UserId))
-                throw new UnauthorizedAccessException("Bạn không có quyền xoá membership này.");
+//            await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+//            return true;
+//        }
 
-            await _unitOfWork.MemberShipRepository.RemoveAsync(membership);
-            return true;
-        }
+//        public async Task<bool> DeleteMembershipAsync(int membershipId)
+//        {
+//            var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
+//            if (membership == null) return false;
 
-        public async Task<int> UpdateAllExpiredMembershipsAsync()
-        {
-            var role = userContextService.GetCurrentUserRole();
-            if (role is not RoleStatus.Admin and not RoleStatus.Manager)
-                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật tất cả memberships.");
+//            if (!CanAccessUser(membership.UserId))
+//                throw new UnauthorizedAccessException("Bạn không có quyền xoá membership này.");
 
-            var allMemberships = await _unitOfWork.MemberShipRepository.GetAllAsync();
-            int updatedCount = 0;
-            var now = DateTime.UtcNow;
+//            await _unitOfWork.MemberShipRepository.RemoveAsync(membership);
+//            return true;
+//        }
 
-            foreach (var membership in allMemberships)
-            {
-                if (membership.EndDate.HasValue && membership.EndDate.Value < now && membership.StatusEnum != MembershipStatus.Expired)
-                {
-                    membership.StatusEnum = MembershipStatus.Expired;
-                    await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
-                    updatedCount++;
-                }
-            }
+//        public async Task<int> UpdateAllExpiredMembershipsAsync()
+//        {
+//            var role = userContextService.GetCurrentUserRole();
+//            if (role is not RoleStatus.Admin and not RoleStatus.Manager)
+//                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật tất cả memberships.");
 
-            return updatedCount;
-        }
+//            var allMemberships = await _unitOfWork.MemberShipRepository.GetAllAsync();
+//            int updatedCount = 0;
+//            var now = DateTime.UtcNow;
 
-        public async Task<int> UpdateExpiredMembershipsByUserIdAsync(int userId)
-        {
-            if (!CanAccessUser(userId))
-                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật memberships của người dùng này.");
+//            foreach (var membership in allMemberships)
+//            {
+//                if (membership.EndDate.HasValue && membership.EndDate.Value < now && membership.StatusEnum != MembershipStatus.Expired)
+//                {
+//                    membership.StatusEnum = MembershipStatus.Expired;
+//                    await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+//                    updatedCount++;
+//                }
+//            }
 
-            var memberships = await _unitOfWork.MemberShipRepository.FindAsync(m => m.UserId == userId);
-            int updatedCount = 0;
-            var now = DateTime.UtcNow;
+//            return updatedCount;
+//        }
 
-            foreach (var membership in memberships)
-            {
-                if (membership.EndDate.HasValue && membership.EndDate.Value < now && membership.StatusEnum != MembershipStatus.Expired)
-                {
-                    membership.StatusEnum = MembershipStatus.Expired;
-                    await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
-                    updatedCount++;
-                }
-            }
+//        public async Task<int> UpdateExpiredMembershipsByUserIdAsync(int userId)
+//        {
+//            if (!CanAccessUser(userId))
+//                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật memberships của người dùng này.");
 
-            return updatedCount;
-        }
+//            var memberships = await _unitOfWork.MemberShipRepository.FindAsync(m => m.UserId == userId);
+//            int updatedCount = 0;
+//            var now = DateTime.UtcNow;
 
-        public bool IsMembershipExpired(Membership membership)
-        {
-            return membership.EndDate.HasValue && membership.EndDate.Value < DateTime.UtcNow;
-        }
-    }
-}
+//            foreach (var membership in memberships)
+//            {
+//                if (membership.EndDate.HasValue && membership.EndDate.Value < now && membership.StatusEnum != MembershipStatus.Expired)
+//                {
+//                    membership.StatusEnum = MembershipStatus.Expired;
+//                    await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+//                    updatedCount++;
+//                }
+//            }
+
+//            return updatedCount;
+//        }
+
+//        public bool IsMembershipExpired(Membership membership)
+//        {
+//            return membership.EndDate.HasValue && membership.EndDate.Value < DateTime.UtcNow;
+//        }
+//    }
+//}
