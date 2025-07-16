@@ -260,7 +260,7 @@ namespace TerrariumGardenTech.Service.Service
                     new Claim("phoneNumber", user.PhoneNumber ?? ""),
                     new Claim("gender", user.Gender ?? ""),
                     new Claim("status", user.Status ?? AccountStatus.Active.ToString()), // Sử dụng enum AccountStatus.Active
-        };
+                };
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
