@@ -9,20 +9,25 @@ namespace TerrariumGardenTech.Service.Service
     public class MembershipService(IUserContextService userContextService, UnitOfWork _unitOfWork)
         : IMembershipService
     {
-        private int GetDurationDays(string membershipType) => membershipType switch
+        private static readonly Dictionary<string, int> MembershipDurations = new()
         {
-            "1Month" => 30,
-            "3Months" => 90,
-            "1Year" => 365,
-            _ => throw new ArgumentException("Loại gói Membership không hợp lệ")
+            {"1Month", 30},
+            {"3Months", 90},
+            {"1Year", 365}
         };
+
+        private int GetDurationDays(string membershipType)
+        {
+            if (!MembershipDurations.TryGetValue(membershipType, out int days))
+                throw new ArgumentException("Loại gói Membership không hợp lệ");
+            return days;
+        }
 
         private bool CanAccessUser(int targetUserId)
         {
             var currentUserId = userContextService.GetCurrentUser();
             var role = userContextService.GetCurrentUserRole();
-
-            return role == RoleStatus.Admin || role == RoleStatus.Manager || role == RoleStatus.Staff || currentUserId == targetUserId;
+            return role is RoleStatus.Admin or RoleStatus.Manager or RoleStatus.Staff || currentUserId == targetUserId;
         }
 
         public async Task<int> CreateMembershipAsync(string membershipType, DateTime startDate)
@@ -30,6 +35,14 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 var currentUserId = userContextService.GetCurrentUser();
+
+                // ⚠️ Kiểm tra membership đang hoạt động
+                var activeMemberships = await _unitOfWork.MemberShipRepository.FindAsync(m =>
+                    m.UserId == currentUserId && m.Status == MembershipStatus.Active.ToString());
+
+                if (activeMemberships.Any())
+                    throw new ArgumentException("Bạn đã có membership đang hoạt động.");
+
                 var endDate = startDate.AddDays(GetDurationDays(membershipType));
 
                 var membership = new Membership
@@ -44,11 +57,21 @@ namespace TerrariumGardenTech.Service.Service
                 await _unitOfWork.MemberShipRepository.CreateAsync(membership);
                 return membership.MembershipId;
             }
-            catch (Exception)
+            catch (ArgumentException ex)
             {
+                // Lỗi hợp lệ – báo cho controller xử lý
+                Console.WriteLine($"[CreateMembershipAsync] Validation error: {ex.Message}");
                 throw;
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CreateMembershipAsync] Exception: {ex.Message}");
+                throw new Exception("Đã xảy ra lỗi khi tạo membership", ex);
+            }
         }
+
+
+
 
         public async Task<List<Membership>> GetAllMembershipsAsync()
         {
