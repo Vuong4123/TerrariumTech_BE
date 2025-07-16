@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -72,6 +73,8 @@ namespace TerrariumGardenTech.Service.Service
             await _unitOfWork.OrderItemDetailRepository.RemoveAsync(orderItemDetail);
             return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Chi tiết đơn hàng đã được xóa");
         }
+
+        
     }
 
 }
