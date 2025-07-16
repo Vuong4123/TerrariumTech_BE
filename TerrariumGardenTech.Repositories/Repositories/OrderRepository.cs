@@ -26,5 +26,11 @@ namespace TerrariumGardenTech.Repositories.Repositories
                                  .Where(o => o.UserId == userId)
                                  .ToListAsync(ct);
         }
+
+        public async Task<int> SaveAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+
     }
 }

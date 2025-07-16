@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.RequestModel.Order;
 using TerrariumGardenTech.Service.ResponseModel.Order;
 
@@ -15,5 +16,6 @@ namespace TerrariumGardenTech.Service.IService
         Task<int> CreateAsync(OrderCreateRequest request);
         Task<bool> UpdateStatusAsync(int id, string status);
         Task<bool> DeleteAsync(int id);
+        Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod, decimal paidAmount);
     }
 }
