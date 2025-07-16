@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories.Entity;
@@ -20,7 +21,9 @@ namespace TerrariumGardenTech.API.Controllers
             _membershipService = membershipService;
         }
 
+        // Dành cho Admin tạo membership cho user (nếu mở rộng theo userId)
         [HttpPost("create")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IBusinessResult> CreateMembership([FromBody] CreateMembershipRequest request)
         {
             try
@@ -38,7 +41,28 @@ namespace TerrariumGardenTech.API.Controllers
             }
         }
 
+        // Người dùng tự mua membership
+        [HttpPost("purchase")]
+        [Authorize]
+        public async Task<IBusinessResult> PurchaseMembership([FromBody] CreateMembershipRequest request)
+        {
+            try
+            {
+                var membershipId = await _membershipService.CreateMembershipAsync(request.MembershipType, request.StartDate);
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Mua membership thành công", membershipId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return new BusinessResult(Const.UNAUTHORIZED_CODE, ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message);
+            }
+        }
+
         [HttpGet("all")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IBusinessResult> GetAllMemberships()
         {
             var memberships = await _membershipService.GetAllMembershipsAsync();
@@ -48,6 +72,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IBusinessResult> GetMembership(int id)
         {
             var membership = await _membershipService.GetMembershipByIdAsync(id);
@@ -57,6 +82,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpGet("user/{userId}")]
+        [Authorize]
         public async Task<IBusinessResult> GetMembershipsByUserId(int userId)
         {
             var memberships = await _membershipService.GetMembershipsByUserIdAsync(userId);
@@ -66,6 +92,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IBusinessResult> UpdateMembership(int id, [FromBody] CreateMembershipRequest request)
         {
             try
@@ -83,6 +110,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IBusinessResult> DeleteMembership(int id)
         {
             var success = await _membershipService.DeleteMembershipAsync(id);
@@ -93,6 +121,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPost("update-expired")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IBusinessResult> UpdateAllExpiredMemberships()
         {
             var updatedCount = await _membershipService.UpdateAllExpiredMembershipsAsync();
@@ -100,6 +129,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPost("user/{userId}/update-expired")]
+        [Authorize]
         public async Task<IBusinessResult> UpdateExpiredMembershipsByUserId(int userId)
         {
             var updatedCount = await _membershipService.UpdateExpiredMembershipsByUserIdAsync(userId);
@@ -107,6 +137,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpGet("{id}/is-expired")]
+        [Authorize]
         public async Task<IBusinessResult> CheckIfMembershipIsExpired(int id)
         {
             var membership = await _membershipService.GetMembershipByIdAsync(id);
