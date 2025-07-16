@@ -27,7 +27,6 @@ namespace TerrariumGardenTech.Repositories
         private TerrariumVariantRepository _terrariumVariantRepository;
         private TerrariumAccessoryRepository _terrariumAccessoryRepository;
         private MemberShipRepository _memberShipRepository;
-
         private OrderItemDetailRepository _orderItemDetailRepository;
         private AccessoryImageRepository _accessoryImageRepository;
 
