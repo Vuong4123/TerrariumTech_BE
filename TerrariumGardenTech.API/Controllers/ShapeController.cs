@@ -29,11 +29,6 @@ namespace TerrariumGardenTech.API.Controllers
                 ShapeId = r.ShapeId,
                 ShapeName = r.ShapeName,
                 ShapeDescription = r.ShapeDescription,
-                ShapeSize = r.ShapeSize,
-                ShapeHeight = r.ShapeHeight,
-                ShapeWidth = r.ShapeWidth,
-                ShapeLength = r.ShapeLength,
-                ShapeVolume = r.ShapeVolume,
                 ShapeMaterial = r.ShapeMaterial
             }).ToList();
             
@@ -62,11 +57,6 @@ namespace TerrariumGardenTech.API.Controllers
                     ShapeId = shape.ShapeId,
                     ShapeName = shape.ShapeName,
                     ShapeDescription = shape.ShapeDescription,
-                    ShapeSize = shape.ShapeSize,
-                    ShapeHeight = shape.ShapeHeight,
-                    ShapeWidth = shape.ShapeWidth,
-                    ShapeLength = shape.ShapeLength,
-                    ShapeVolume = shape.ShapeVolume,
                     ShapeMaterial = shape.ShapeMaterial
                 };
 
