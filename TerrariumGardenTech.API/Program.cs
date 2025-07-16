@@ -74,6 +74,7 @@ builder.Services.AddScoped<UnitOfWork>();
 /*---------------- Repositorys ----------------*/
 builder.Services.AddScoped<OrderRepository>();
 builder.Services.AddScoped<OrderItemRepository>();
+builder.Services.AddScoped<MembershipPackageRepository>();
 
 // Đăng ký Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -84,7 +85,10 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+//membership
+builder.Services.AddScoped<IMembershipPackageService, MembershipPackageService>();
 //builder.Services.AddScoped<IMembershipService, MembershipService>();
+//
 builder.Services.AddScoped<IShapeService, ShapeService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
