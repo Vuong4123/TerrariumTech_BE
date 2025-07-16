@@ -17,5 +17,6 @@ namespace TerrariumGardenTech.Service.IService
         Task<IBusinessResult> CreateAccessory(AccessoryImageCreateRequest accessoryImageCreateRequest);
         Task<IBusinessResult> UpdateAccessory(AccessoryImageUpdateRequest accessoryImageUpdateRequest);
         Task<IBusinessResult> DeleteById(int id);
+        Task<IBusinessResult> GetByAccessoryId(int accessoryId);
     }
 }
