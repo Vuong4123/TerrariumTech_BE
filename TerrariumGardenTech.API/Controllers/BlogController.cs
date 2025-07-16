@@ -94,10 +94,7 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpPost("add-blog")]
         public async Task<IBusinessResult> Post([FromBody] BlogCreateRequest blogCreateRequest)
         {
-            if (blogCreateRequest == null || !!ModelState.IsValid)
-            {
-                return new BusinessResult(Const.FAIL_CREATE_CODE, "Invalid request data.");
-            }
+            
             return await _blogService.CreateBlog(blogCreateRequest);
         }
 
