@@ -21,10 +21,11 @@ namespace TerrariumGardenTech.Repositories.Entity
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; } // Giá hiện tại của gói
 
-        public string? Description { get; set; } // Tuỳ chọn: mô tả thêm
+        public string? Description { get; set; } // Mô tả thêm (tuỳ chọn)
 
         public bool IsActive { get; set; } = true; // Có cho phép mua không?
 
-        public ICollection<Membership> Memberships { get; set; } // Navigation
+        public ICollection<Membership> Memberships { get; set; } // Navigation tới Membership
     }
+
 }

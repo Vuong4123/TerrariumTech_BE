@@ -27,6 +27,7 @@ namespace TerrariumGardenTech.Repositories
         private TerrariumVariantRepository _terrariumVariantRepository;
         private TerrariumAccessoryRepository _terrariumAccessoryRepository;
         private MemberShipRepository _memberShipRepository;
+        private MembershipPackageRepository _membershipPackageRepository;
         private OrderItemDetailRepository _orderItemDetailRepository;
         private AccessoryImageRepository _accessoryImageRepository;
 
@@ -63,8 +64,10 @@ namespace TerrariumGardenTech.Repositories
         {
             get { return _orderItemDetailRepository ??= new OrderItemDetailRepository(_unitOfWorkContext); }
         }
- public AccessoryImageRepository AccessoryImage { get { return _accessoryImageRepository ??= new AccessoryImageRepository(_unitOfWorkContext); } }
+        public AccessoryImageRepository AccessoryImage { get { return _accessoryImageRepository ??= new AccessoryImageRepository(_unitOfWorkContext); } }
 
+        public MembershipPackageRepository MembershipPackage { get { return _membershipPackageRepository ??= new MembershipPackageRepository(_unitOfWorkContext); } }
+        
 
     }
 }
