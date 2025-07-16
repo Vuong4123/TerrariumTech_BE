@@ -39,6 +39,7 @@ namespace TerrariumGardenTech.API.Controllers
             {
                 AccessoryId = a.AccessoryId,
                 Name = a.Name,
+                Size = a.Size,
                 Description = a.Description,
                 Price = (decimal)a.Price,
                 Stock = a.StockQuantity,
@@ -105,6 +106,7 @@ namespace TerrariumGardenTech.API.Controllers
                 {
                     AccessoryId = accessory.AccessoryId,
                     Name = accessory.Name,
+                    Size = accessory.Size,
                     Description = accessory.Description,
                     Price = (decimal)accessory.Price,
                     Stock = accessory.StockQuantity,
