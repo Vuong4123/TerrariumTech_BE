@@ -94,6 +94,7 @@ namespace TerrariumGardenTech.Service.Service
             var accessory = new Accessory
             {
                 Name = accessoryCreateRequest.Name,
+                Size = accessoryCreateRequest.Size,
                 Description = accessoryCreateRequest.Description,
                 Price = accessoryCreateRequest.Price,
                 StockQuantity = accessoryCreateRequest.Stock,
