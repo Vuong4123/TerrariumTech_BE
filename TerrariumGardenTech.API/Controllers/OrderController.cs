@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.API.Extensions;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Order;
 
@@ -94,6 +95,7 @@ namespace TerrariumGardenTech.API.Controllers
             }
         }
 
+
         /// <summary>
         /// Cập nhật trạng thái đơn hàng
         /// </summary>
@@ -127,6 +129,32 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         /// <summary>
+        /// Xử lý thanh toán đơn hàng
+        /// </summary>
+        [HttpPost("{id:int}/checkout")]
+        [Authorize]
+        public async Task<IActionResult> Checkout(int id, [FromBody] CheckoutRequest checkoutRequest)
+        {
+            try
+            {
+                var result = await _svc.CheckoutAsync(id, checkoutRequest.PaymentMethod, checkoutRequest.PaidAmount);
+                if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                {
+                    return Ok(new { message = result.Message, statusCode = result.Status });
+                }
+
+                return BadRequest(new { message = result.Message, statusCode = result.Status });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+
+
+        /// <summary>
         /// Xóa đơn hàng
         /// </summary>
         [HttpDelete("{id:int}")]
@@ -150,5 +178,7 @@ namespace TerrariumGardenTech.API.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+
     }
 }
