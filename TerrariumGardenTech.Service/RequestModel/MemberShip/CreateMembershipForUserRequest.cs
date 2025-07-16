@@ -9,13 +9,8 @@ namespace TerrariumGardenTech.Service.RequestModel.MemberShip
 {
     public class CreateMembershipForUserRequest
     {
-        [Required]
         public int UserId { get; set; }
-
-        [Required]
-        public string MembershipType { get; set; } = string.Empty;
-
-        [Required]
+        public int PackageId { get; set; } 
         public DateTime StartDate { get; set; }
     }
 
