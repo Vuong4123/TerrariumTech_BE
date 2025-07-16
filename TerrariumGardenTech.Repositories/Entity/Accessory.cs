@@ -12,6 +12,7 @@ public partial class Accessory
     public int CategoryId { get; set; }
 
     public string Name { get; set; }
+    public string Size { get; set; }
 
     public string Description { get; set; }
 
@@ -26,7 +27,6 @@ public partial class Accessory
     public string Status { get; set; }
 
     public virtual ICollection<AccessoryImage> AccessoryImages { get; set; } = [];
-    public virtual ICollection<AccessoryShape> AccessoryShapes { get; set; } = [];
     public virtual Category Category { get; set; }
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
