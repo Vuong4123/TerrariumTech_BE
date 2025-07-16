@@ -87,7 +87,7 @@ builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 //membership
 builder.Services.AddScoped<IMembershipPackageService, MembershipPackageService>();
-//builder.Services.AddScoped<IMembershipService, MembershipService>();
+builder.Services.AddScoped<IMembershipService, MembershipService>();
 //
 builder.Services.AddScoped<IShapeService, ShapeService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
