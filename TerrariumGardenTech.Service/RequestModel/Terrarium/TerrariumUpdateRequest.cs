@@ -22,7 +22,7 @@ namespace TerrariumGardenTech.Service.RequestModel.Terrarium
 
         public int Stock { get; set; }
 
-        public TerrariumStatusEnum Status { get; set; }
+        public string Status { get; set; }
 
         public string? bodyHTML { get; set; } = string.Empty;
     }
