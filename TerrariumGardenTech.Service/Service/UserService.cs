@@ -224,72 +224,9 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
-        #region code để dành
-        //public async Task<(int, string, string, string)> LoginAsync(string username, string password)
-        //{
-        //    try
-        //    {
-        //        var user = await _unitOfWork.User.Context().Users
-        //            .Include(u => u.Role)
-        //            .FirstOrDefaultAsync(u => u.Username == username);
 
-        //        if (user == null)
-        //            return (Const.FAIL_READ_CODE, "Tên đăng nhập không tồn tại", null, null);
+        
 
-        //        if (user.PasswordHash == null)
-        //            return (Const.FAIL_READ_CODE, "Mật khẩu không đúng", null, null);
-
-        //        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-        //            return (Const.FAIL_READ_CODE, "Mật khẩu không đúng", null, null);
-
-        //        // Tạo JWT Token
-        //        var jwtSettings = _configuration.GetSection("JwtSettings");
-        //        var secretKey = jwtSettings.GetValue<string>("SecretKey");
-        //        var issuer = jwtSettings.GetValue<string>("Issuer");
-        //        var audience = jwtSettings.GetValue<string>("Audience");
-        //        var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
-
-        //        var claims = new[] {
-        //            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-        //            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-        //            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User"),
-        //            new Claim("email", user.Email ?? ""),
-        //            new Claim("fullName", user.FullName ?? ""),
-        //            new Claim("phoneNumber", user.PhoneNumber ?? ""),
-        //            new Claim("gender", user.Gender ?? ""),
-        //            new Claim("status", user.Status ?? ""),
-        //        };
-
-
-        //        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        //        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        //        var token = new JwtSecurityToken(
-        //            issuer,
-        //            audience,
-        //            claims,
-        //            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-        //            signingCredentials: creds
-        //        );
-
-        //        var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-        //        // Tạo refresh token
-        //        var refreshToken = GenerateRefreshToken();
-        //        user.RefreshToken = refreshToken;
-        //        user.RefreshTokenExpiryDate = DateTime.UtcNow.AddDays(7); // Refresh token hết hạn sau 7 ngày
-
-        //        await _unitOfWork.User.UpdateAsync(user);
-
-        //        return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, jwtToken, refreshToken);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Lỗi khi đăng nhập");
-        //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại", null, null);
-        //    }
-        //}
-        #endregion
         public async Task<(int, string, string, string)> LoginAsync(string username, string password)
         {
             try
@@ -367,57 +304,7 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
-        //public async Task<(int, string, string)> RefreshTokenAsync(string refreshToken)
-        //{
-        //    try
-        //    {
-        //        var user = await _unitOfWork.User.Context().Users
-        //                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
-
-        //        if (user == null || !user.RefreshTokenExpiryDate.HasValue || user.RefreshTokenExpiryDate.Value <= DateTime.UtcNow)
-        //        {
-        //            return (Const.FAIL_READ_CODE, "Refresh token không hợp lệ hoặc đã hết hạn", null);
-        //        }
-
-        //        // Tạo lại JWT token
-        //        var jwtSettings = _configuration.GetSection("JwtSettings");
-        //        var secretKey = jwtSettings.GetValue<string>("SecretKey");
-        //        var issuer = jwtSettings.GetValue<string>("Issuer");
-        //        var audience = jwtSettings.GetValue<string>("Audience");
-        //        var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
-
-        //        var claims = new[] {
-        //            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-        //            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-        //            new Claim(ClaimTypes.Role, user.Role?.RoleName ?? "User"),
-        //            new Claim("email", user.Email ?? ""),
-        //            new Claim("fullName", user.FullName ?? ""),
-        //            new Claim("phoneNumber", user.PhoneNumber ?? ""),
-        //            new Claim("gender", user.Gender ?? ""),
-        //            new Claim("status", user.Status ?? ""),
-        //        };
-
-        //        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        //        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        //        var token = new JwtSecurityToken(
-        //            issuer,
-        //            audience,
-        //            claims,
-        //            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-        //            signingCredentials: creds
-        //        );
-
-        //        var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-        //        return (Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, jwtToken);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Lỗi khi làm mới token");
-        //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại", null);
-        //    }
-        //}
+        
         public async Task<(int, string, string)> RefreshTokenAsync(string refreshToken)
         {
             try
@@ -472,66 +359,7 @@ namespace TerrariumGardenTech.Service.Service
 
 
 
-        //public async Task<(int, string)> SendPasswordResetTokenAsync(string email)
-        //{
-        //    try
-        //    {
-        //        var user = await _unitOfWork.User.FindOneAsync(u => u.Email == email, false);
-        //        if (user == null)
-        //            return (Const.FAIL_READ_CODE, "Email không tồn tại");
-
-        //        var resetToken = Guid.NewGuid().ToString();
-
-        //        user.Token = resetToken;
-        //        user.StartToken = DateTime.UtcNow;
-        //        user.EndToken = DateTime.UtcNow.AddHours(1);
-
-        //        await _unitOfWork.User.UpdateAsync(user);
-
-        //        var resetLink = $"https://your-frontend-domain/reset-password?token={resetToken}";
-
-        //        var subject = "Đặt lại mật khẩu";
-        //        var body = $@"
-        //            <p>Xin chào {user.FullName},</p>
-        //            <p>Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng bấm vào link bên dưới để đặt lại mật khẩu mới:</p>
-        //            <p><a href='{resetLink}'>Đặt lại mật khẩu</a></p>
-        //            <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
-        //            <p>Trân trọng,<br/>TerrariumGardenTech Team</p>";
-
-        //        await SendEmailAsync(user.Email, subject, body);
-
-        //        return (Const.SUCCESS_CREATE_CODE, "Email gửi thành công");
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
-        //    }
-        //}
-
-        //public async Task<(int, string)> ResetPasswordAsync(string token, string newPassword)
-        //{
-        //    try
-        //    {
-        //        var user = await _unitOfWork.User.FindOneAsync(u => u.Token == token, false);
-        //        if (user == null)
-        //            return (Const.FAIL_READ_CODE, "Token không hợp lệ");
-
-        //        if (!user.EndToken.HasValue || user.EndToken.Value < DateTime.UtcNow)
-        //            return (Const.FAIL_READ_CODE, "Token đã hết hạn");
-
-        //        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-        //        user.Token = null;
-        //        user.StartToken = null;
-        //        user.EndToken = null;
-
-        //        await _unitOfWork.User.UpdateAsync(user);
-        //        return (Const.SUCCESS_CREATE_CODE, "Đổi mật khẩu thành công");
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
-        //    }
-        //}
+        
 
         public async Task<(int, string)> SendPasswordResetTokenAsync(string email)
         {
@@ -551,7 +379,7 @@ namespace TerrariumGardenTech.Service.Service
                 await _unitOfWork.User.UpdateAsync(user);
 
                 // Tạo liên kết đặt lại mật khẩu
-                var resetLink = $"https://your-frontend-domain/reset-password?token={resetToken}";
+                var resetLink = $"https://terra-tech-garden.vercel.app/reset-password?token={resetToken}";
 
                 // Cấu hình email
                 var subject = "Đặt lại mật khẩu";
