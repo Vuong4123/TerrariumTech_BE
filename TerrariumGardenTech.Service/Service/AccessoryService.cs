@@ -156,11 +156,17 @@ namespace TerrariumGardenTech.Service.Service
             {
                 return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
             }
+            // Xóa các bản ghi liên quan trong bảng AccessoryImage
+            var relatedImages = await _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(id);
+            foreach (var image in relatedImages)
+            {
+                await _unitOfWork.AccessoryImage.RemoveAsync(image);  // Xóa từng hình ảnh liên quan đến Accessory
+            }
             var terrariumAccessory = await _unitOfWork.TerrariumAccessory.GetAllTerrariumByAccessory(id);
             var terrariumIds = terrariumAccessory.Select(ts => ts.TerrariumId).Distinct().ToList();
             var terrariums = await _unitOfWork.Terrarium.GetTerrariumByIdsAsync(terrariumIds);
 
-            using (var transaction = await _unitOfWork.Shape.BeginTransactionAsync())
+            using (var transaction = await _unitOfWork.Accessory.BeginTransactionAsync())
             {
                 try
                 {
