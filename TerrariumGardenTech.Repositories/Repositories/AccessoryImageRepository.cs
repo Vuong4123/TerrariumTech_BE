@@ -13,6 +13,11 @@ namespace TerrariumGardenTech.Repositories.Repositories
     {
         private readonly TerrariumGardenTechDBContext _dbContext;
         public AccessoryImageRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
-        
+        public async Task<IEnumerable<AccessoryImage>> GetAllByAccessoryIdAsync(int accessoryId)
+        {
+            return await _context.AccessoryImages
+                .Where(ti => ti.AccessoryId == accessoryId)
+                .ToListAsync();
+        }
     }
 }
