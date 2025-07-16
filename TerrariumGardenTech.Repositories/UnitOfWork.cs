@@ -66,8 +66,11 @@ namespace TerrariumGardenTech.Repositories
         }
         public AccessoryImageRepository AccessoryImage { get { return _accessoryImageRepository ??= new AccessoryImageRepository(_unitOfWorkContext); } }
 
-        public MembershipPackageRepository MembershipPackage { get { return _membershipPackageRepository ??= new MembershipPackageRepository(_unitOfWorkContext); } }
-        
+        public MembershipPackageRepository MembershipPackageRepository
+        {
+            get { return _membershipPackageRepository ??= new MembershipPackageRepository(_unitOfWorkContext); }
+        }
+
 
     }
 }
