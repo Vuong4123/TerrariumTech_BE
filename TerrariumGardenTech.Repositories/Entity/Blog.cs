@@ -16,6 +16,7 @@ public partial class Blog
     public string Title { get; set; }
 
     public string Content { get; set; }
+    public string UrlImage { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
