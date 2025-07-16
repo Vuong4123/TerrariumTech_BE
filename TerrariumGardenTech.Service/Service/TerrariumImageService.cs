@@ -87,6 +87,7 @@ namespace TerrariumGardenTech.Service.Service
                     ImageUrl = terrariumImageCreateRequest.ImageUrl,
                     AltText = terrariumImageCreateRequest.AltText,
                     IsPrimary = terrariumImageCreateRequest.IsPrimary ?? false
+
                 };
                 var result = await _unitOfWork.TerrariumImage.CreateAsync(terraImage);
                 if (result > 0)
