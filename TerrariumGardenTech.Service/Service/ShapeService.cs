@@ -48,11 +48,6 @@ public class ShapeService : IShapeService
             {
                 ShapeName = shapeCreateRequest.ShapeName,
                 ShapeDescription = shapeCreateRequest.ShapeDescription,
-                ShapeSize = shapeCreateRequest.ShapeSize,
-                ShapeHeight = shapeCreateRequest.ShapeHeight,
-                ShapeWidth = shapeCreateRequest.ShapeWidth,
-                ShapeLength = shapeCreateRequest.ShapeLength,
-                ShapeVolume = shapeCreateRequest.ShapeVolume,
                 ShapeMaterial = shapeCreateRequest.ShapeMaterial
             };
 
