@@ -17,7 +17,7 @@ public partial class Terrarium
 
     public int Stock { get; set; }
 
-    public TerrariumStatusEnum Status { get; set; }
+    public string Status { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
