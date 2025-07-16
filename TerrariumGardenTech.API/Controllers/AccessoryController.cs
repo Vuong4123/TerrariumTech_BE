@@ -150,16 +150,8 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpDelete("delete-accessory{id}")]
         public async Task<IBusinessResult> Delete(int id)
         {
-            var result = await _accessoryService.DeleteById(id);
-            if (result == null || result.Data == null)
-            {
-                return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-            }
-            if (result.Data is bool isDeleted)
-            {
-                return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Accessory deleted successfully.");
-            }
-            return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete role.");
+            return await _accessoryService.DeleteById(id);
+            
         }
     }
 }

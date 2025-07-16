@@ -2,6 +2,7 @@
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
+using TerrariumGardenTech.Service.Service;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -28,6 +29,13 @@ namespace TerrariumGardenTech.API.Controllers
         public async Task<IBusinessResult?> Get(int id)
         {
             return await _terrariumImageService.GetTerrariumImageByIdAsync(id);
+        }
+
+        // GET api/<TerrariumImageController>/TerrariumId/5
+        [HttpGet("terrariumId/{terrariumId}")]
+        public async Task<IBusinessResult> GetByAccessoryId(int terrariumId)
+        {
+            return await _terrariumImageService.GetByTerrariumId(terrariumId);
         }
 
         // POST api/<TerrariumImageController>
