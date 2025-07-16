@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 
 namespace TerrariumGardenTech.Repositories
@@ -30,8 +31,8 @@ namespace TerrariumGardenTech.Repositories
         private MembershipPackageRepository _membershipPackageRepository;
         private OrderItemDetailRepository _orderItemDetailRepository;
         private AccessoryImageRepository _accessoryImageRepository;
-
-
+        private PaymentTransitionRepository _paymentTransitionRepository;
+        private OrderRepository _orderRepository;
         public UnitOfWork()
         {
             _unitOfWorkContext = new TerrariumGardenTechDBContext();
@@ -69,6 +70,21 @@ namespace TerrariumGardenTech.Repositories
         public MembershipPackageRepository MembershipPackageRepository
         {
             get { return _membershipPackageRepository ??= new MembershipPackageRepository(_unitOfWorkContext); }
+        }
+
+        public PaymentTransitionRepository PaymentTransitionRepository
+        {
+            get { return _paymentTransitionRepository ??= new PaymentTransitionRepository(_unitOfWorkContext); }
+        }
+
+        public OrderRepository OrderRepository
+        {
+            get { return _orderRepository ??= new OrderRepository(_unitOfWorkContext); }
+        }
+
+        public async Task<int> SaveAsync()
+        {
+            return await _unitOfWorkContext.SaveChangesAsync();
         }
 
 
