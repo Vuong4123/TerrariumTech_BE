@@ -25,6 +25,15 @@ namespace TerrariumGardenTech.API.Controllers
             return await _accessoryImageService.GetById(id);
         }
 
+
+        // GET api/<AccessoryImageController>/accessoryId/5
+        [HttpGet("accessoryId/{accessoryId}")]
+        public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
+        {
+            return await _accessoryImageService.GetByAccessoryId(accessoryId);
+        }
+
+
         // POST api/<AccessoryImageController>
         [HttpPost]
         public async Task<IBusinessResult> Post([FromBody] AccessoryImageCreateRequest accessoryImageCreateRequest)
