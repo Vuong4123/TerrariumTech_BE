@@ -84,11 +84,11 @@ namespace TerrariumGardenTech.Service.Service
         {
             try {
                 int result = -1;
-                var blogCate = await _unitOfWork.Blog.GetByIdAsync(blogCategoryRequest.BlogCategoryId);
+                var blogCate = await _unitOfWork.BlogCategory.GetByIdAsync(blogCategoryRequest.BlogCategoryId);
                 if (blogCate != null)
                 {
                     _unitOfWork.Blog.Context().Entry(blogCate).CurrentValues.SetValues(blogCategoryRequest);
-                    result = await _unitOfWork.Blog.UpdateAsync(blogCate);
+                    result = await _unitOfWork.BlogCategory.UpdateAsync(blogCate);
                     if (result > 0)
                     {
                         return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, blogCate);
@@ -136,24 +136,24 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
-        public Task<IBusinessResult> DeleteById(int id)
+        public async Task<IBusinessResult> DeleteById(int id)
         {
-            var blogCategory = _unitOfWork.BlogCategory.GetByIdAsync(id);
+            var blogCategory = await _unitOfWork.BlogCategory.GetByIdAsync(id);
             if (blogCategory != null)
             {
-                var result = _unitOfWork.BlogCategory.RemoveAsync(blogCategory.Result);
-                if (result.Result)
+                var result = _unitOfWork.BlogCategory.RemoveAsync(blogCategory);
+                if (result != null)
                 {
-                    return Task.FromResult<IBusinessResult>(new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG));
+                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
                 }
                 else
                 {
-                    return Task.FromResult<IBusinessResult>(new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG));
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
                 }
             }
             else
             {
-                return Task.FromResult<IBusinessResult>(new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG));
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
             }
         }
     }
