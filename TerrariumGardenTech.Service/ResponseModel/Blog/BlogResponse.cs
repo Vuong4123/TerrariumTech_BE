@@ -13,7 +13,7 @@ namespace TerrariumGardenTech.Service.ResponseModel.Blog
         public int UserId { get; set; }
 
         public int BlogCategoryId { get; set; }
-
+        public string UrlImage { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
 
         public string Content { get; set; } = string.Empty;
