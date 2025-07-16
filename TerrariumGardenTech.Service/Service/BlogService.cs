@@ -121,6 +121,7 @@ namespace TerrariumGardenTech.Service.Service
                     UserId = GetCurrentUser,
                     Title = blogCreateRequest.Title,
                     Content = blogCreateRequest.Content,
+                    UrlImage = blogCreateRequest.UrlImage,
                     BlogCategoryId = blogCreateRequest.BlogCategoryId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
