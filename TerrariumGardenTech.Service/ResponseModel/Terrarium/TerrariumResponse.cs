@@ -17,7 +17,7 @@ namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int Stock { get; set; }
-        public TerrariumStatusEnum Status { get; set; }
+        public string Status { get; set; }
         public List<string> Environments { get; set; } = [];
         public List<string> Shapes { get; set; } = [];
         public List<string> TankMethods { get; set; } = [];
