@@ -37,6 +37,19 @@ namespace TerrariumGardenTech.Service.Service
             return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terraImage);
         }
 
+        public async Task<IBusinessResult> GetByTerrariumId(int terrariumId)
+        {
+            var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrariumId);
+            if (terrariumImages != null && terrariumImages.Any())
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terrariumImages);
+            }
+            else
+            {
+                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "No images found for the given AccessoryId.");
+            }
+        }
+
         public async Task<IBusinessResult> UpdateTerrariumImageAsync(TerrariumImageUpdateRequest terrariumImageUpdateRequest)
         {
             try
