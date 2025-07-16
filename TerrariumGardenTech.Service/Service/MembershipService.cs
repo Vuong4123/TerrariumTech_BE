@@ -30,36 +30,44 @@
 //            return role is RoleStatus.Admin or RoleStatus.Manager or RoleStatus.Staff || currentUserId == targetUserId;
 //        }
 
-//        public async Task<int> CreateMembershipAsync(string membershipType, DateTime startDate)
+//        public async Task<int> CreateMembershipAsync(int packageId, DateTime startDate)
 //        {
 //            try
 //            {
 //                var currentUserId = userContextService.GetCurrentUser();
 
-//                // ⚠️ Kiểm tra membership đang hoạt động
+//                // Lấy gói membership từ packageId
+//                var package = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
+//                if (package == null)
+//                    throw new ArgumentException("Gói membership không tồn tại");
+
+//                // Kiểm tra nếu người dùng đã có gói membership active
 //                var activeMemberships = await _unitOfWork.MemberShipRepository.FindAsync(m =>
 //                    m.UserId == currentUserId && m.Status == MembershipStatus.Active.ToString());
 
 //                if (activeMemberships.Any())
-//                    throw new ArgumentException("Bạn đã có membership đang hoạt động.");
+//                    throw new ArgumentException("Bạn đã có gói membership đang hoạt động.");
 
-//                var endDate = startDate.AddDays(GetDurationDays(membershipType));
+//                // Tính ngày kết thúc
+//                var endDate = startDate.AddDays(package.DurationDays);
 
 //                var membership = new Membership
 //                {
 //                    UserId = currentUserId,
-//                    MembershipType = membershipType,
+//                    PackageId = package.Id,
+//                    Price = package.Price,  // Gán giá từ gói
 //                    StartDate = startDate,
 //                    EndDate = endDate,
 //                    StatusEnum = MembershipStatus.Active
 //                };
 
+//                // Lưu membership vào database
 //                await _unitOfWork.MemberShipRepository.CreateAsync(membership);
 //                return membership.MembershipId;
 //            }
 //            catch (ArgumentException ex)
 //            {
-//                // Lỗi hợp lệ – báo cho controller xử lý
+//                // Log lỗi và ném lại exception
 //                Console.WriteLine($"[CreateMembershipAsync] Validation error: {ex.Message}");
 //                throw;
 //            }
@@ -69,6 +77,7 @@
 //                throw new Exception("Đã xảy ra lỗi khi tạo membership", ex);
 //            }
 //        }
+
 
 
 
@@ -121,7 +130,7 @@
 //            if (!CanAccessUser(membership.UserId))
 //                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật membership này.");
 
-//            membership.MembershipType = membershipType;
+//            membership.Price = 0; // Giá sẽ được cập nhật sau khi thanh toán
 //            membership.StartDate = startDate;
 //            membership.EndDate = startDate.AddDays(GetDurationDays(membershipType));
 //            membership.StatusEnum = MembershipStatus.Active;
