@@ -3,34 +3,33 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq;                                   // cho IEnumerable.Select(...)
-using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Repositories;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Order;
 using TerrariumGardenTech.Service.ResponseModel.Order;
 using TerrariumGardenTech.Service.ResponseModel.OrderItem;
 
-
 namespace TerrariumGardenTech.Service.Service
 {
     public class OrderService : IOrderService
     {
-        private readonly OrderRepository _repo;
+        private readonly UnitOfWork _unitOfWork;
         private readonly ILogger<OrderService> _logger;
 
-        public OrderService(OrderRepository repo, ILogger<OrderService> logger)
+        public OrderService(UnitOfWork unitOfWork, ILogger<OrderService> logger)
         {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<IEnumerable<OrderResponse>> GetAllAsync()
         {
             _logger.LogInformation("Lấy danh sách tất cả đơn hàng");
-            var orders = await _repo.GetAllAsync();
+            var orders = await _unitOfWork.OrderRepository.GetAllAsync(); // Gọi từ UnitOfWork
             return orders.Select(ToResponse);
         }
 
@@ -39,7 +38,7 @@ namespace TerrariumGardenTech.Service.Service
             if (id <= 0)
                 throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
-            var order = await _repo.GetByIdAsync(id);
+            var order = await _unitOfWork.OrderRepository.GetByIdAsync(id); // Gọi từ UnitOfWork
             if (order == null)
             {
                 _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId}", id);
@@ -48,21 +47,25 @@ namespace TerrariumGardenTech.Service.Service
             return ToResponse(order);
         }
 
-        public async Task<int> CreateAsync(OrderCreateRequest r)
+        public async Task<int> CreateAsync(OrderCreateRequest request)
         {
-            ValidateCreateRequest(r);
-            var entity = MapToEntity(r);
+            var order = new Order
+            {
+                UserId = request.UserId,
+                TotalAmount = request.TotalAmount,
+                // Map other properties
+            };
 
             try
             {
-                await _repo.CreateAsync(entity);
-                _logger.LogInformation("Tạo đơn hàng {OrderId} cho user {UserId}", entity.OrderId, r.UserId);
-                return entity.OrderId;
+                await _unitOfWork.OrderRepository.CreateAsync(order);
+                await _unitOfWork.SaveAsync();  // Save changes
+                return order.OrderId;
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tạo đơn hàng cho user {UserId}", r.UserId);
-                throw new InvalidOperationException("Không thể tạo đơn hàng, vui lòng thử lại.");
+                _logger.LogError(ex, "Error creating order");
+                throw new Exception("An error occurred while creating the order.");
             }
         }
 
@@ -73,7 +76,7 @@ namespace TerrariumGardenTech.Service.Service
             if (string.IsNullOrWhiteSpace(status))
                 throw new ArgumentException("Status không được để trống.", nameof(status));
 
-            var order = await _repo.GetByIdAsync(id);
+            var order = await _unitOfWork.OrderRepository.GetByIdAsync(id); // Gọi từ UnitOfWork
             if (order == null)
             {
                 _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId} để cập nhật", id);
@@ -83,7 +86,8 @@ namespace TerrariumGardenTech.Service.Service
             try
             {
                 order.Status = status.Trim();
-                await _repo.UpdateAsync(order);
+                await _unitOfWork.OrderRepository.UpdateAsync(order); // Gọi từ UnitOfWork
+                await _unitOfWork.SaveAsync();  // Lưu các thay đổi
                 _logger.LogInformation("Cập nhật trạng thái đơn hàng {OrderId} thành {Status}", id, status);
                 return true;
             }
@@ -99,7 +103,7 @@ namespace TerrariumGardenTech.Service.Service
             if (id <= 0)
                 throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
-            var order = await _repo.GetByIdAsync(id);
+            var order = await _unitOfWork.OrderRepository.GetByIdAsync(id); // Gọi từ UnitOfWork
             if (order == null)
             {
                 _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId} để xóa", id);
@@ -108,7 +112,8 @@ namespace TerrariumGardenTech.Service.Service
 
             try
             {
-                await _repo.RemoveAsync(order);
+                await _unitOfWork.OrderRepository.RemoveAsync(order); // Gọi từ UnitOfWork
+                await _unitOfWork.SaveAsync();  // Lưu các thay đổi
                 _logger.LogInformation("Xóa đơn hàng {OrderId}", id);
                 return true;
             }
@@ -119,11 +124,51 @@ namespace TerrariumGardenTech.Service.Service
             }
         }
 
+        public async Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod, decimal paidAmount)
+        {
+            var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
+            if (order == null)
+                return new BusinessResult(Const.NOT_FOUND_CODE, "Order does not exist", null);
+
+            if (order.PaymentStatus == "Paid")
+                return new BusinessResult(Const.BAD_REQUEST_CODE, "Order already paid", null);
+
+            // Check if the paid amount is correct
+            if (paidAmount < order.TotalAmount - order.Deposit)
+                return new BusinessResult(Const.BAD_REQUEST_CODE, "Paid amount is insufficient", null);
+
+            // Update payment status
+            order.PaymentStatus = "Paid";
+
+            // Log the payment transaction
+            var paymentTransition = new PaymentTransition
+            {
+                OrderId = order.OrderId,
+                PaymentMethod = paymentMethod,
+                PaymentAmount = paidAmount,
+                PaymentDate = DateTime.UtcNow
+            };
+
+            try
+            {
+                await _unitOfWork.OrderRepository.UpdateAsync(order);
+                await _unitOfWork.PaymentTransitionRepository.AddAsync(paymentTransition);
+                await _unitOfWork.SaveAsync();
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment successful", null);
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "Payment failed, please try again", null);
+            }
+        }
+
+
         #region Helpers
         private static void ValidateCreateRequest(OrderCreateRequest r)
         {
             if (r.UserId <= 0)
                 throw new ArgumentException("UserId phải là số nguyên dương.", nameof(r.UserId));
+
             if (r.Items == null || !r.Items.Any())
                 throw new ArgumentException("Phải có ít nhất một item trong đơn hàng.", nameof(r.Items));
 
@@ -140,6 +185,7 @@ namespace TerrariumGardenTech.Service.Service
             var sum = r.Items.Sum(i => i.Quantity * i.UnitPrice);
             if (r.TotalAmount != sum)
                 throw new ArgumentException($"TotalAmount phải bằng tổng giá trị items ({sum}).", nameof(r.TotalAmount));
+
             if (r.Deposit < 0 || r.Deposit > r.TotalAmount)
                 throw new ArgumentException("Deposit phải >= 0 và <= TotalAmount.", nameof(r.Deposit));
         }
@@ -186,4 +232,5 @@ namespace TerrariumGardenTech.Service.Service
         };
         #endregion
     }
+
 }
