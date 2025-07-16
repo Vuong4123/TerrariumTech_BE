@@ -8,7 +8,6 @@ namespace TerrariumGardenTech.Service.RequestModel.AccessoryImage
 {
     public class AccessoryImageCreateRequest
     {
-        public int AccessoryImageId { get; set; }
 
         public int AccessoryId { get; set; }
 
