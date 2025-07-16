@@ -37,7 +37,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<Accessory> Accessories { get; set; }
 
     public virtual DbSet<AccessoryImage> AccessoryImages { get; set; }
-    public virtual DbSet<AccessoryShape> AccessoryShapes { get; set; }
 
 
     public virtual DbSet<Address> Addresses { get; set; }
