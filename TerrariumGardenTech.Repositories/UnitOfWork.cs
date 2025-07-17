@@ -19,9 +19,6 @@ namespace TerrariumGardenTech.Repositories
         private ShapeRepository _shapeRepository;
         private TankMethodRepository _tankMethodRepository;
         private EnvironmentRepository _environmentRepository;
-        private TerrariumShapeRepository _terrariumShapeRepository;
-        private TerrariumTankMethodRepository _terrariumTankMethodRepository;
-        private TerrariumEnvironmentRepository _terrariumEnvironmentRepository;
         private VoucherRepository _voucherRepository;
         private TerrariumImageRepository _terrariumImageRepository;
         private NotificationRepository _notificationRepository;
@@ -51,9 +48,6 @@ namespace TerrariumGardenTech.Repositories
         public ShapeRepository Shape { get { return _shapeRepository ??= new ShapeRepository(_unitOfWorkContext); } }
         public TankMethodRepository TankMethod { get { return _tankMethodRepository ??= new TankMethodRepository(_unitOfWorkContext); } }
         public EnvironmentRepository Environment { get { return _environmentRepository ??= new EnvironmentRepository(_unitOfWorkContext); } }
-        public TerrariumShapeRepository TerrariumShape { get { return _terrariumShapeRepository ??= new TerrariumShapeRepository(_unitOfWorkContext); } }
-        public TerrariumTankMethodRepository TerrariumTankMethod { get { return _terrariumTankMethodRepository ??= new TerrariumTankMethodRepository(_unitOfWorkContext); } }
-        public TerrariumEnvironmentRepository TerrariumEnvironment { get { return _terrariumEnvironmentRepository ??= new TerrariumEnvironmentRepository(_unitOfWorkContext); } }
         public VoucherRepository Voucher { get { return _voucherRepository ??= new VoucherRepository(_unitOfWorkContext); } }
         public TerrariumImageRepository TerrariumImage { get { return _terrariumImageRepository ??= new TerrariumImageRepository(_unitOfWorkContext); } }
         public NotificationRepository Notification { get { return _notificationRepository ??= new NotificationRepository(_unitOfWorkContext); } }
