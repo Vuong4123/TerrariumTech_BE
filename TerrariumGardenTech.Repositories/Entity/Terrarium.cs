@@ -8,7 +8,9 @@ namespace TerrariumGardenTech.Repositories.Entity;
 public partial class Terrarium
 {
     public int TerrariumId { get; set; }
-
+    public int EnvironmentId { get; set; }
+    public int ShapeId { get; set; }
+    public int TankMethodId { get; set; }
     public string TerrariumName { get; set; }
 
     public string Description { get; set; }
@@ -30,7 +32,7 @@ public partial class Terrarium
     public virtual ICollection<TerrariumAccessory> TerrariumAccessory { get; set; } = [];
     public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = [];
     public virtual ICollection<TerrariumVariant> TerrariumVariants { get; set; } = [];
-    public virtual ICollection<TerrariumTankMethod> TerrariumTankMethods { get; set; } = [];
-    public virtual ICollection<TerrariumEnvironment> TerrariumEnvironments { get; set; } = [];
-    public virtual ICollection<TerrariumShape> TerrariumShapes { get; set; } = [];
+    public virtual TankMethod TankMethods { get; set; } 
+    public virtual EnvironmentTerrarium Environment { get; set; } 
+    public virtual Shape Shapes { get; set; } 
 }
