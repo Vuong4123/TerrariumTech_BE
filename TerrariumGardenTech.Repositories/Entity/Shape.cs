@@ -8,7 +8,7 @@ public class Shape
     public string ShapeName { get; set; } = string.Empty;
     public string ShapeDescription { get; set; }    = string.Empty;
     public string ShapeMaterial { get; set; } = string.Empty;
-    public virtual ICollection<TerrariumShape> TerrariumShapes { get; set; } = [];
+    public virtual ICollection<Terrarium> Terrarium { get; set; } = [];
 
 
 }

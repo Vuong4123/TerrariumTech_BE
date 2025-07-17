@@ -23,7 +23,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     TerrariumId = terrariumVariantCreateRequest.TerrariumId,
                     VariantName = terrariumVariantCreateRequest.VariantName,
-                    AdditionalPrice = terrariumVariantCreateRequest.AdditionalPrice,
+                    Price = terrariumVariantCreateRequest.Price,
                     StockQuantity = terrariumVariantCreateRequest.StockQuantity
                 };  
                 var result = await _unitOfWork.TerrariumVariant.CreateAsync(terrariumVariant);

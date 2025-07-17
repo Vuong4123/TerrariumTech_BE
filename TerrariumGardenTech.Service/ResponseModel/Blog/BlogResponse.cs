@@ -15,7 +15,7 @@ namespace TerrariumGardenTech.Service.ResponseModel.Blog
         public int BlogCategoryId { get; set; }
         public string UrlImage { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
-
+        public string bodyHTML { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
 
         public DateTime? CreatedAt { get; set; }

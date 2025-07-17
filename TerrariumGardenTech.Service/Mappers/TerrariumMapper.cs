@@ -15,6 +15,9 @@ namespace TerrariumGardenTech.Service.Mappers
             return new TerrariumResponse
             {
                 TerrariumId = terrarium.TerrariumId,
+                EnvironmentId = terrarium.EnvironmentId,
+                ShapeId = terrarium.ShapeId,
+                TankMethodId = terrarium.TankMethodId,
                 Name = terrarium.TerrariumName,
                 Description = terrarium.Description,
                 Price = terrarium.Price ?? 0,
@@ -23,9 +26,6 @@ namespace TerrariumGardenTech.Service.Mappers
                 CreatedAt = terrarium.CreatedAt ?? DateTime.MinValue,
                 UpdatedAt = terrarium.UpdatedAt ?? DateTime.MinValue,
                 BodyHTML = terrarium.bodyHTML ?? string.Empty,
-                Environments = terrarium.TerrariumEnvironments.Select(e => e.EnvironmentTerrarium?.EnvironmentName).ToList(),
-                Shapes = terrarium.TerrariumShapes.Select(s => s.Shape?.ShapeName ).ToList(),
-                TankMethods = terrarium.TerrariumTankMethods.Select(t => t.TankMethod?.TankMethodType).ToList(),
                 Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
                 {
                     AccessoryId = a.Accessory.AccessoryId,

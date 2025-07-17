@@ -38,7 +38,7 @@ namespace TerrariumGardenTech.API.Controllers
 
             // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
             var terrariumList = result.Data as IEnumerable<Terrarium>;
-            var terrariums = terrariumList?.Select(t => new TerrariumResponse
+            var terrariums = terrariumList?.Select(t => new TerrariumDetailResponse
             {
                 TerrariumId = t.TerrariumId,
                 Name = t.TerrariumName,
@@ -46,20 +46,17 @@ namespace TerrariumGardenTech.API.Controllers
                 Price = (decimal)t.Price,
                 Stock = t.Stock,
                 Status = t.Status,
-                Environments = t.TerrariumEnvironments.Select(te => te.EnvironmentTerrarium.EnvironmentName).ToList(), // Assuming EnvironmentId is an int
-                Shapes = t.TerrariumShapes.Select(te => te.Shape.ShapeName).ToList(),
-                TankMethods = t.TerrariumTankMethods.Select(te => te.TankMethod.TankMethodType).ToList(),
-                Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
-                {
-                    AccessoryId = a.Accessory.AccessoryId,
-                    Name = a.Accessory.Name,
-                    Description = a.Accessory.Description,
-                    Price = a.Accessory.Price
-                }).ToList(),
-                CreatedAt = today, // Use a default value if CreatedAt is null
-                UpdatedAt = today,  // Similar for UpdatedAt
-                BodyHTML = t.bodyHTML,
-                // Ánh xạ TerrariumImages thành một danh sách đầy đủ các thông tin
+                //Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+                //{
+                //    AccessoryId = a.Accessory.AccessoryId,
+                //    Name = a.Accessory.Name,
+                //    Description = a.Accessory.Description,
+                //    Price = a.Accessory.Price
+                //}).ToList(),
+                //CreatedAt = today, // Use a default value if CreatedAt is null
+                //UpdatedAt = today,  // Similar for UpdatedAt
+                //BodyHTML = t.bodyHTML,
+                //// Ánh xạ TerrariumImages thành một danh sách đầy đủ các thông tin
                 TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
                 {
                     TerrariumImageId = ti.TerrariumImageId,
@@ -224,14 +221,14 @@ namespace TerrariumGardenTech.API.Controllers
                 var terrariumResponse = new TerrariumResponse
                 {
                     TerrariumId = terrarium.TerrariumId,
+                    EnvironmentId = terrarium.EnvironmentId,
+                    ShapeId = terrarium.ShapeId,
+                    TankMethodId = terrarium.TankMethodId,
                     Name = terrarium.TerrariumName,
                     Description = terrarium.Description,
                     Price = (decimal)terrarium.Price  ,
                     Stock = terrarium.Stock,
                     Status = terrarium.Status,
-                    Environments = terrarium.TerrariumEnvironments.Select(te => te.EnvironmentTerrarium.EnvironmentName).ToList(),
-                    Shapes = terrarium.TerrariumShapes.Select(s => s.Shape.ShapeName).ToList(),
-                    TankMethods = terrarium.TerrariumTankMethods.Select(ta => ta.TankMethod.TankMethodType).ToList(),
                     Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
                     {
                         AccessoryId = a.Accessory.AccessoryId,

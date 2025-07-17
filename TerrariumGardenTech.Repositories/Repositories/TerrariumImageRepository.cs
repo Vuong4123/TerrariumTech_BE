@@ -20,5 +20,10 @@ namespace TerrariumGardenTech.Repositories.Repositories
                 .Where(ti => ti.TerrariumId == terrariumId)
                 .ToListAsync();
         }
+        public async Task RemoveRangeAsync(IEnumerable<TerrariumImage> entities)
+        {
+            _context.TerrariumImages.RemoveRange(entities);
+            await _context.SaveChangesAsync();
+        }
     }
 }
