@@ -205,31 +205,14 @@ namespace TerrariumGardenTech.Service.Service
         }
         private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
         {
-            // Xóa các đối tượng liên quan đến Terrarium
-            var terrariumTankMethods = await _unitOfWork.TerrariumTankMethod.GetTankMethodsByTerrariumId(terrarium.TerrariumId);
-            foreach (var terrariumTankMethod in terrariumTankMethods)
-            {
-                await _unitOfWork.TerrariumTankMethod.RemoveAsync(terrariumTankMethod);
-            }
-
+            
             var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
             foreach (var terrariumImage in terrariumImages)
             {
                 await _unitOfWork.TerrariumImage.RemoveAsync(terrariumImage);
             }
 
-            var terrariumShapes = await _unitOfWork.TerrariumShape.GetTerrariumShapesByTerrariumIdAsync(terrarium.TerrariumId);
-            foreach (var terrariumShape in terrariumShapes)
-            {
-                await _unitOfWork.TerrariumShape.RemoveAsync(terrariumShape);
-            }
-
-            var terrariumEnvironment = await _unitOfWork.TerrariumEnvironment.GetTerrariumEnvironmentByTerrariumIdAsync(terrarium.TerrariumId);
-        foreach (var terrariumEnvironmentItem in terrariumEnvironment)
-        {
-            await _unitOfWork.TerrariumShape.RemoveAsync(terrariumEnvironmentItem);
-        }
-
+            
             var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
             foreach (var terrariumVariant in terrariumVariants)
             {
