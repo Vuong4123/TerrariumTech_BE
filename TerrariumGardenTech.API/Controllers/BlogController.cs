@@ -42,6 +42,7 @@ namespace TerrariumGardenTech.API.Controllers
                 UserId = b.UserId,
                 Title = b.Title,
                 Content = b.Content,
+                bodyHTML = b.bodyHTML ?? string.Empty,
                 UrlImage = b.UrlImage ?? string.Empty, // Ensure UrlImage is not null
                 CreatedAt = b.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
                 UpdatedAt = b.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
@@ -78,6 +79,7 @@ namespace TerrariumGardenTech.API.Controllers
                     UserId = blog.UserId,
                     Title = blog.Title,
                     Content = blog.Content,
+                    bodyHTML = blog.bodyHTML ?? string.Empty, // Ensure bodyHtml is not null
                     UrlImage = blog.UrlImage ?? string.Empty, // Ensure UrlImage is not null
                     CreatedAt = blog.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
                     UpdatedAt = blog.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
