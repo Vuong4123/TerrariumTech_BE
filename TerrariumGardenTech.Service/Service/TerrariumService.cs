@@ -324,6 +324,17 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
+        public async Task<IBusinessResult> FilterTerrariumsAsync(int? environmentId, int? shapeId, int? tankMethodId)
+        {
+            var result = await _unitOfWork.Terrarium.FilterTerrariumsAsync(environmentId, shapeId, tankMethodId);
+
+            if (result != null && result.Any())
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
+            }
+
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No terrariums match the filter.");
+        }
 
         public Task<IBusinessResult> GetTerrariumByNameAsync(string terrariumName)
         {
