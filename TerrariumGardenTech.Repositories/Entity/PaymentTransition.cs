@@ -15,6 +15,7 @@ public partial class PaymentTransition
 
     public decimal? PaymentAmount { get; set; }
 
+
     public DateTime? PaymentDate { get; set; }
 
     public string Status { get; set; }
