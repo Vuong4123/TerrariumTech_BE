@@ -27,8 +27,6 @@ public partial class OrderItem
 
     public virtual Order Order { get; set; }
 
-    public virtual ICollection<OrderItemDetail> OrderItemDetails { get; set; } = new List<OrderItemDetail>();
-
     public virtual ICollection<ReturnExchangeRequestItem> ReturnExchangeRequestItems { get; set; } = new List<ReturnExchangeRequestItem>();
 
     public virtual TerrariumVariant TerrariumVariant { get; set; }
