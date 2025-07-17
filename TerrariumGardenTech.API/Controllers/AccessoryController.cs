@@ -85,7 +85,39 @@ namespace TerrariumGardenTech.API.Controllers
 
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", accsessory);
         }
+        [HttpGet("filter")]
+        public async Task<IBusinessResult> FilterTerrariums([FromQuery] int categoryId)
+        {
+            var result = await _accessoryService.FilterAccessoryAsync(categoryId);
+            // Check if result or result.Data is null
+            if (result == null || result.Data == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+            }
 
+            // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
+            var accsessory = (result.Data as IEnumerable<Accessory>)?.Select(a => new AccessoryResponse
+            {
+                AccessoryId = a.AccessoryId,
+                Name = a.Name,
+                Size = a.Size,
+                Description = a.Description,
+                Price = (decimal)a.Price,
+                Stock = a.StockQuantity,
+                Status = a.Status,
+                CategoryId = a.CategoryId,
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+                UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,  // Similar for UpdatedAt
+
+            }).ToList();
+
+            if (accsessory == null)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+            }
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", accsessory);
+        }
         // GET api/<AccessoryController>/5
         [HttpGet("get-{id}")]
         public async Task<IBusinessResult> Get(int id)
