@@ -13,7 +13,7 @@ public partial class TerrariumVariant
 
     public string VariantName { get; set; }
 
-    public decimal? AdditionalPrice { get; set; }
+    public decimal? Price { get; set; }
 
     public int? StockQuantity { get; set; }
 
