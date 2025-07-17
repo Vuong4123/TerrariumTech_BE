@@ -65,8 +65,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<OrderItem> OrderItems { get; set; }
 
-    public virtual DbSet<OrderItemDetail> OrderItemDetails { get; set; }
-
     public virtual DbSet<PaymentTransition> PaymentTransitions { get; set; }
 
     public virtual DbSet<Personalize> Personalizes { get; set; }
@@ -589,24 +587,24 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_OrderItem_TerrariumVariant");
         });
 
-        modelBuilder.Entity<OrderItemDetail>(entity =>
-        {
-            entity.HasKey(e => e.OrderItemDetailId).HasName("PK__OrderIte__098BB1314F361970");
+        //modelBuilder.Entity<OrderItemDetail>(entity =>
+        //{
+        //    entity.HasKey(e => e.OrderItemDetailId).HasName("PK__OrderIte__098BB1314F361970");
 
-            entity.ToTable("OrderItemDetail");
+        //    entity.ToTable("OrderItemDetail");
 
-            entity.Property(e => e.OrderItemDetailId).HasColumnName("orderItemDetailId");
-            entity.Property(e => e.DetailKey)
-                .HasMaxLength(100)
-                .HasColumnName("detailKey");
-            entity.Property(e => e.DetailValue).HasColumnName("detailValue");
-            entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
+        //    entity.Property(e => e.OrderItemDetailId).HasColumnName("orderItemDetailId");
+        //    entity.Property(e => e.DetailKey)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("detailKey");
+        //    entity.Property(e => e.DetailValue).HasColumnName("detailValue");
+        //    entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
 
-            entity.HasOne(d => d.OrderItem).WithMany(p => p.OrderItemDetails)
-                .HasForeignKey(d => d.OrderItemId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_OrderItemDetail_OrderItem");
-        });
+        //    entity.HasOne(d => d.OrderItem).WithMany(p => p.OrderItemDetails)
+        //        .HasForeignKey(d => d.OrderItemId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_OrderItemDetail_OrderItem");
+        //});
 
         modelBuilder.Entity<PaymentTransition>(entity =>
         {
