@@ -92,12 +92,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
-    public virtual DbSet<TerrariumTankMethod> TerrariumTankMethods { get; set; }
     public virtual DbSet<TankMethod> TankMethods { get; set; }
 
     public virtual DbSet<Shape> Shapes { get; set; }
-    public virtual DbSet<TerrariumShape> TerrariumShapes { get; set; }
-    public virtual DbSet<TerrariumEnvironment> TerrariumEnvironments { get; set; }
     public virtual DbSet<TerrariumAccessory> TerrariumAccessory { get; set; }
     public virtual DbSet<EnvironmentTerrarium> Environments { get; set; }
 
@@ -892,7 +889,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.ToTable("TerrariumVariant");
 
             entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
-            entity.Property(e => e.AdditionalPrice)
+            entity.Property(e => e.Price)
                 .HasColumnType("decimal(12, 2)")
                 .HasColumnName("additionalPrice");
             entity.Property(e => e.StockQuantity).HasColumnName("stockQuantity");

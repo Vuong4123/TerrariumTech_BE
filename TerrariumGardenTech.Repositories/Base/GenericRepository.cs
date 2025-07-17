@@ -136,7 +136,11 @@ namespace TerrariumGardenTech.Repositories.Base
             return await _context.Set<T>().Where(predicate).ToListAsync();
         }
 
-
+        public async Task RemoveRangeAsync(IEnumerable<TerrariumImage> images)
+        {
+            _context.TerrariumImages.RemoveRange(images);
+            await _context.SaveChangesAsync();
+        }
 
     }
 }
