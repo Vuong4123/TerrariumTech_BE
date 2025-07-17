@@ -17,8 +17,12 @@ namespace TerrariumGardenTech.Repositories.Repositories
                                .Where(e => name.Contains(e.Name))  // Tìm tất cả các Accessory có tên nằm trong danh sách names
                                .ToListAsync();
         }
+        public async Task<IEnumerable<Accessory>> FilterAccessoryAsync(int? categoryId)
+        {       
+            return await _context.Accessories.Where(a => a.CategoryId == categoryId).ToListAsync();
+        }
 
-        
+
 
     }
 
