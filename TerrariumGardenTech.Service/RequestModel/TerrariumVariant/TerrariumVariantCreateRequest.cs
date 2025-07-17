@@ -13,7 +13,7 @@ namespace TerrariumGardenTech.Service.RequestModel.TerrariumVariant
 
         public string VariantName { get; set; } = string.Empty;
 
-        public decimal? AdditionalPrice { get; set; }
+        public decimal? Price { get; set; }
 
         public int? StockQuantity { get; set; }
     }
