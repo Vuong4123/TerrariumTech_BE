@@ -13,6 +13,7 @@ namespace TerrariumGardenTech.Service.IService
     {
         Task<IBusinessResult> GetAll();
         // Task<BusinessResult> GetAllOfParam(string type, string shape, string tankMethod, string theme, string size);
+        Task<IBusinessResult> FilterTerrariumsAsync(int? environmentId, int? shapeId, int? tankMethodId);
         Task<IBusinessResult> GetById(int id);
         Task<IBusinessResult> CreateTerrarium(TerrariumCreateRequest terrariumCreateRequest);
         Task<IBusinessResult> UpdateTerrarium(TerrariumUpdateRequest terrariumUpdateRequest);
