@@ -51,8 +51,6 @@ namespace TerrariumGardenTech.API.Controllers
                     TerrariumImageId = ti.TerrariumImageId,
                     TerrariumId = ti.TerrariumId,
                     ImageUrl = ti.ImageUrl,
-                    AltText = ti.AltText,
-                    IsPrimary = ti.IsPrimary
                 }).ToList()
             }).ToList();
 
@@ -93,8 +91,6 @@ namespace TerrariumGardenTech.API.Controllers
                     TerrariumImageId = ti.TerrariumImageId,
                     TerrariumId = ti.TerrariumId,
                     ImageUrl = ti.ImageUrl,
-                    AltText = ti.AltText,
-                    IsPrimary = ti.IsPrimary
                 }).ToList() ?? new List<TerrariumImageResponse>()
             }).ToList();
 
@@ -146,8 +142,6 @@ namespace TerrariumGardenTech.API.Controllers
                         TerrariumImageId = ti.TerrariumImageId,
                         TerrariumId = ti.TerrariumId,
                         ImageUrl = ti.ImageUrl,
-                        AltText = ti.AltText,
-                        IsPrimary = ti.IsPrimary
                     }).ToList()
                 };
 
