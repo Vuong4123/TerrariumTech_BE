@@ -31,6 +31,14 @@ namespace TerrariumGardenTech.Repositories.Repositories
         {
             return await _context.SaveChangesAsync();
         }
+        
+        public async Task<Order?> GetByIdWithOrderItemsAsync(int id)
+        {
+            return await _context.Set<Order>()
+                .Include(m => m.OrderItems)
+                .ThenInclude(m => m.TerrariumVariant)
+                .Where(m => m.OrderId == id).SingleOrDefaultAsync();
+        }
 
     }
 }

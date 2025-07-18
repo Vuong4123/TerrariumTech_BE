@@ -30,6 +30,7 @@ namespace TerrariumGardenTech.Repositories
         private AccessoryImageRepository _accessoryImageRepository;
         private PaymentTransitionRepository _paymentTransitionRepository;
         private OrderRepository _orderRepository;
+        private OrderItemRepository _orderItemRepository;
         public UnitOfWork()
         {
             _unitOfWorkContext = new TerrariumGardenTechDBContext();
@@ -71,6 +72,11 @@ namespace TerrariumGardenTech.Repositories
         public OrderRepository OrderRepository
         {
             get { return _orderRepository ??= new OrderRepository(_unitOfWorkContext); }
+        }
+        
+        public OrderItemRepository OrderItemRepository
+        {
+            get { return _orderItemRepository ??= new OrderItemRepository(_unitOfWorkContext); }
         }
 
         public async Task<int> SaveAsync()
