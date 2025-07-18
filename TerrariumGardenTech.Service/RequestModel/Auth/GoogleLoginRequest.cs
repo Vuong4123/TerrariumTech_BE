@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TerrariumGardenTech.Service.RequestModel.Auth;
 
-namespace TerrariumGardenTech.Service.RequestModel.Auth
+public class GoogleLoginRequest
 {
-    public class GoogleLoginRequest
-    {
-        public string AccessToken { get; set; } = string.Empty; // Access token nhận từ Google
-    }
+    public string AccessToken { get; set; } = string.Empty; // Access token nhận từ Google
 }
