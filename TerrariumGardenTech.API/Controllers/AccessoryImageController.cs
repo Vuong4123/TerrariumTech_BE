@@ -34,19 +34,19 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
     }
 
 
-    // POST api/<AccessoryImageController>
-    [HttpPost]
-    public async Task<IBusinessResult> Post([FromBody] AccessoryImageCreateRequest accessoryImageCreateRequest)
-    {
-        return await _accessoryImageService.CreateAccessory(accessoryImageCreateRequest);
-    }
+        // POST api/<AccessoryImageController>
+        [HttpPost("upload")]
+        public async Task<IBusinessResult> Post([FromQuery] int accessoryId,  IFormFile imageFile)
+        {
+            return await _accessoryImageService.CreateAccessory(imageFile, accessoryId);
+        }
 
-    // PUT api/<AccessoryImageController>/5
-    [HttpPut("{id}")]
-    public async Task<IBusinessResult> Put([FromBody] AccessoryImageUpdateRequest accessoryImageUpdateRequest)
-    {
-        return await _accessoryImageService.UpdateAccessory(accessoryImageUpdateRequest);
-    }
+        // PUT api/<AccessoryImageController>/5
+        [HttpPut("{id}")]
+        public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
+        {
+            return await _accessoryImageService.UpdateAccessory(id, imageFile);
+        }
 
     // DELETE api/<AccessoryImageController>/5
     [HttpDelete("{id}")]
