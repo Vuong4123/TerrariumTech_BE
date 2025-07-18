@@ -30,6 +30,9 @@ namespace TerrariumGardenTech.Repositories
         private AccessoryImageRepository _accessoryImageRepository;
         private PaymentTransitionRepository _paymentTransitionRepository;
         private OrderRepository _orderRepository;
+        private CartRepository _cartRepository;
+        private CartItemRepository _cartItemRepository;
+
         public UnitOfWork()
         {
             _unitOfWorkContext = new TerrariumGardenTechDBContext();
@@ -77,6 +80,12 @@ namespace TerrariumGardenTech.Repositories
         {
             return await _unitOfWorkContext.SaveChangesAsync();
         }
+
+        public CartRepository CartRepository { get { return _cartRepository ??= new CartRepository(_unitOfWorkContext); } }
+        public CartItemRepository CartItemRepository { get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); } }
+
+
+
 
 
     }
