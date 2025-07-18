@@ -2,46 +2,42 @@
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Firebase;
 
-namespace TerrariumGardenTech.API.Controllers
+namespace TerrariumGardenTech.API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class FirebaseController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class FirebaseController : ControllerBase
+    private readonly IFirebaseStorageService _firebaseStorageService;
+
+    public FirebaseController(IFirebaseStorageService firebaseStorageService)
     {
-        private readonly IFirebaseStorageService _firebaseStorageService;
+        _firebaseStorageService = firebaseStorageService;
+    }
 
-        public FirebaseController(IFirebaseStorageService firebaseStorageService)
+    [HttpPost("save-fcmtoken")]
+    public async Task<IActionResult> SaveToken([FromBody] CreateTokenRequest request)
+    {
+        if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.FcmToken))
+            return BadRequest("UserId và Token không được để trống.");
+
+        try
         {
-            _firebaseStorageService = firebaseStorageService;
+            await _firebaseStorageService.SaveTokenAsync(request.UserId, request.FcmToken);
+            return Ok("FCMToken đã được lưu thành công!");
         }
-
-        [HttpPost("save-fcmtoken")]
-        public async Task<IActionResult> SaveToken([FromBody] CreateTokenRequest request)
+        catch (Exception ex)
         {
-            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.FcmToken))
-            {
-                return BadRequest("UserId và Token không được để trống.");
-            }
-
-            try
-            {
-                await _firebaseStorageService.SaveTokenAsync(request.UserId, request.FcmToken);
-                return Ok("FCMToken đã được lưu thành công!");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi khi lưu fcmtoken: {ex.Message}");
-            }
-        }
-
-        [HttpDelete("{userId}/{fcmtoken}")]
-        public async Task<IActionResult> DeleteToken([FromRoute] string userId, [FromRoute] string fcmtoken)
-        {
-            bool result = await _firebaseStorageService.DeleteTokenAsync(userId, fcmtoken);
-            if (result)
-                return Ok("Token đã được xóa thành công!");
-            else
-                return BadRequest("Không tìm thấy token để xóa.");
+            return StatusCode(500, $"Lỗi khi lưu fcmtoken: {ex.Message}");
         }
     }
+
+    // [HttpDelete("{userId}/{fcmtoken}")]
+    // public async Task<IActionResult> DeleteToken([FromRoute] string userId, [FromRoute] string fcmtoken)
+    // {
+    //     var result = await _firebaseStorageService.DeleteTokenAsync(userId, fcmtoken);
+    //     if (result)
+    //         return Ok("Token đã được xóa thành công!");
+    //     return BadRequest("Không tìm thấy token để xóa.");
+    // }
 }
