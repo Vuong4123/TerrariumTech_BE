@@ -7,6 +7,4 @@ public class AccessoryImageUpdateRequest
     public int AccessoryId { get; set; }
 
     public string ImageUrl { get; set; }
-
-    }
 }
