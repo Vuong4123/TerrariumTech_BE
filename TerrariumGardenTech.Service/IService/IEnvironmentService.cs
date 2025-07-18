@@ -1,6 +1,8 @@
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.RequestModel.Environment;
 
+namespace TerrariumGardenTech.Service.IService;
+
 public interface IEnvironmentService
 {
     Task<IBusinessResult> CreateEnvironmentAsync(EnvironmentCreateRequest environmentCreateRequest);
