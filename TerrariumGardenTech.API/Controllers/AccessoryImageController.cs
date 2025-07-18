@@ -35,17 +35,17 @@ namespace TerrariumGardenTech.API.Controllers
 
 
         // POST api/<AccessoryImageController>
-        [HttpPost]
-        public async Task<IBusinessResult> Post([FromBody] AccessoryImageCreateRequest accessoryImageCreateRequest)
+        [HttpPost("upload")]
+        public async Task<IBusinessResult> Post([FromQuery] int accessoryId,  IFormFile imageFile)
         {
-            return await _accessoryImageService.CreateAccessory(accessoryImageCreateRequest);
+            return await _accessoryImageService.CreateAccessory(imageFile, accessoryId);
         }
 
         // PUT api/<AccessoryImageController>/5
         [HttpPut("{id}")]
-        public async Task<IBusinessResult> Put([FromBody] AccessoryImageUpdateRequest accessoryImageUpdateRequest)
+        public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
         {
-            return await _accessoryImageService.UpdateAccessory(accessoryImageUpdateRequest);
+            return await _accessoryImageService.UpdateAccessory(id, imageFile);
         }
 
         // DELETE api/<AccessoryImageController>/5
