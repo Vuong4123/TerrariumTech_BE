@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -39,19 +38,19 @@ public class TerrariumImageController : ControllerBase
         return await _terrariumImageService.GetByTerrariumId(terrariumId);
     }
 
-        // POST api/<TerrariumImageController>
-        [HttpPost("upload")]
-        public async Task<IBusinessResult> Post([FromQuery] int terrariumId, IFormFile imageFile)
-        {
-            return await _terrariumImageService.CreateTerrariumImageAsync(imageFile, terrariumId);
-        }
+    // POST api/<TerrariumImageController>
+    [HttpPost("upload")]
+    public async Task<IBusinessResult> Post([FromQuery] int terrariumId, IFormFile imageFile)
+    {
+        return await _terrariumImageService.CreateTerrariumImageAsync(imageFile, terrariumId);
+    }
 
-        // PUT api/<TerrariumImageController>/5
-        [HttpPut("update-terrariumImage-{id}")]
-        public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
-        {
-            return await _terrariumImageService.UpdateTerrariumImageAsync(id, imageFile);
-        }
+    // PUT api/<TerrariumImageController>/5
+    [HttpPut("update-terrariumImage-{id}")]
+    public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
+    {
+        return await _terrariumImageService.UpdateTerrariumImageAsync(id, imageFile);
+    }
 
     // DELETE api/<TerrariumImageController>/5
     [HttpDelete("delete-terrariumImage-{id}")]
