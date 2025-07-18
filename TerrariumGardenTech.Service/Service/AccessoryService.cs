@@ -221,5 +221,15 @@ namespace TerrariumGardenTech.Service.Service
 
             await _unitOfWork.Terrarium.RemoveAsync(terrarium);
         }
+
+        public async Task<IBusinessResult> FilterAccessoryAsync(int? categoryId)
+        {
+            var accessories = await _unitOfWork.Accessory.FilterAccessoryAsync(categoryId);
+            if (accessories != null && accessories.Any())
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
+            }
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No terrariums matched the given filter.");
+        }
     }
 }
