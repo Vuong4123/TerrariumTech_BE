@@ -95,7 +95,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<Shape> Shapes { get; set; }
     public virtual DbSet<TerrariumAccessory> TerrariumAccessory { get; set; }
     public virtual DbSet<EnvironmentTerrarium> Environments { get; set; }
-
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
