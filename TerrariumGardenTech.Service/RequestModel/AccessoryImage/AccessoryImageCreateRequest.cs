@@ -1,20 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TerrariumGardenTech.Service.RequestModel.AccessoryImage;
 
-namespace TerrariumGardenTech.Service.RequestModel.AccessoryImage
+public class AccessoryImageCreateRequest
 {
-    public class AccessoryImageCreateRequest
-    {
+    public int AccessoryId { get; set; }
 
-        public int AccessoryId { get; set; }
-
-        public string ImageUrl { get; set; }
-
-        public string AltText { get; set; }
-
-        public bool? IsPrimary { get; set; }
-    }
+    public string ImageUrl { get; set; }
 }
