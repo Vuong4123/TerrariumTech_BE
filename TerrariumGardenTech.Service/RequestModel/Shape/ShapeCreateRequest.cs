@@ -1,4 +1,5 @@
 namespace TerrariumGardenTech.Service.RequestModel.Shape;
+
 public class ShapeCreateRequest
 {
     public string ShapeName { get; set; } = string.Empty;
