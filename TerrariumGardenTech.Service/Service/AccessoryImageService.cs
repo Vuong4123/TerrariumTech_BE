@@ -26,18 +26,14 @@ namespace AccessoryGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> GetById(int id)
-        {
-            var accessoryImage = await _unitOfWork.AccessoryImage.GetByIdAsync(id);
-            if (accessoryImage != null)
-            {
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImage);
-            }
-            else
-            {
-                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-            }
-        }
+    public async Task<IBusinessResult> GetById(int id)
+    {
+        var accessoryImage = await _unitOfWork.AccessoryImage.GetByIdAsync(id);
+        if (accessoryImage != null)
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImage);
+
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+    }
 
         public async Task<IBusinessResult> UpdateAccessory(int accessoryImageId, IFormFile? newImageFile)
         {
@@ -153,17 +149,13 @@ namespace AccessoryGardenTech.Service.Service
             }
         }
 
-        public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
-        {
-            var accessoryImages = await _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(accessoryId);
-            if (accessoryImages != null && accessoryImages.Any())
-            {
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImages);
-            }
-            else
-            {
-                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "No images found for the given AccessoryId.");
-            }
-        }
+    public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
+    {
+        var accessoryImages = await _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(accessoryId);
+        if (accessoryImages != null && accessoryImages.Any())
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImages);
+
+        return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG,
+            "No images found for the given AccessoryId.");
     }
 }
