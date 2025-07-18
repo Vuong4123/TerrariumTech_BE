@@ -1,21 +1,22 @@
-namespace TerrariumGardenTech.Repositories.Repositories
+using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Repositories.Base;
+using TerrariumGardenTech.Repositories.Entity;
+
+namespace TerrariumGardenTech.Repositories.Repositories;
+
+public class ShapeRepository : GenericRepository<Shape>
 {
-    using System.Threading.Tasks;
-    using Microsoft.EntityFrameworkCore;
-    using TerrariumGardenTech.Repositories.Base;
-    using TerrariumGardenTech.Repositories.Entity;
+    public TerrariumGardenTechDBContext _dbContext;
 
-    public class ShapeRepository : GenericRepository<Shape>
+    //public ShapeRepository() { }
+
+    public ShapeRepository(TerrariumGardenTechDBContext dbContext)
     {
-        public TerrariumGardenTechDBContext _dbContext;
+        _dbContext = dbContext;
+    }
 
-        //public ShapeRepository() { }
-
-        public ShapeRepository(TerrariumGardenTechDBContext dbContext) => _dbContext = dbContext;
-        
-        public async Task<Shape?> GetByName(string? name)
-        {
-            return await _dbContext.Set<Shape>().FirstOrDefaultAsync(s => s.ShapeName == name);
-        }
+    public async Task<Shape?> GetByName(string? name)
+    {
+        return await _dbContext.Set<Shape>().FirstOrDefaultAsync(s => s.ShapeName == name);
     }
 }
