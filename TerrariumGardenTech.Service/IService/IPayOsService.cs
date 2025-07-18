@@ -7,5 +7,4 @@ public interface IPayOsService
 {
     Task<IBusinessResult> CreatePaymentLink(int orderId, string description);
     Task<IBusinessResult> ProcessPaymentCallback(PaymentReturnModel returnModel);
-
 }
