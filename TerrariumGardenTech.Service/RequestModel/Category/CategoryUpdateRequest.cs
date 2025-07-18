@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TerrariumGardenTech.Service.RequestModel.Category;
 
-namespace TerrariumGardenTech.Service.RequestModel.Category
+public class CategoryUpdateRequest
 {
-    public class CategoryUpdateRequest
-    {
-        public int CategoryId { get; set; }
+    public int CategoryId { get; set; }
 
-        public string CategoryName { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
 
-        public string Description { get; set; } = string.Empty;
-    }
+    public string Description { get; set; } = string.Empty;
 }

@@ -1,4 +1,4 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿namespace TerrariumGardenTech.Service.ResponseModel.Terrarium;
 
 namespace TerrariumGardenTech.Service.ResponseModel.Terrarium
 {
