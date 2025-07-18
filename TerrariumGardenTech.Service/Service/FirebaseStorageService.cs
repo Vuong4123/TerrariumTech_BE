@@ -1,34 +1,30 @@
 ﻿using Google.Cloud.Firestore;
 using Google.Cloud.Storage.V1;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using TerrariumGardenTech.Service.IService;
 
-namespace TerrariumGardenTech.Service.Service
+namespace TerrariumGardenTech.Service.Service;
+
+public class FirebaseStorageService : IFirebaseStorageService
 {
-    public class FirebaseStorageService : IFirebaseStorageService
+    private readonly string _bucketName = "notification-terrariumtech";
+    private readonly FirestoreDb _firestore;
+    private readonly StorageClient _storageClient;
+
+    public FirebaseStorageService(IConfiguration configuration)
     {
-        private readonly FirestoreDb _firestore;
-        private readonly string _bucketName = "notification-terrariumtech";
-        private readonly StorageClient _storageClient;
-        public FirebaseStorageService(IConfiguration configuration)
-        {
-            var credentialPath = configuration["Firebase:CredentialPath"];
-            var projectId = configuration["Firebase:ProjectId"];
+        var credentialPath = configuration["Firebase:CredentialPath"];
+        var projectId = configuration["Firebase:ProjectId"];
 
-            if (string.IsNullOrEmpty(credentialPath) || string.IsNullOrEmpty(projectId))
-            {
-                throw new InvalidOperationException("Firebase configuration is missing.");
-            }
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
-            // Khởi tạo Firestore
-            _firestore = FirestoreDb.Create(projectId);
+        if (string.IsNullOrEmpty(credentialPath) || string.IsNullOrEmpty(projectId))
+            throw new InvalidOperationException("Firebase configuration is missing.");
+        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialPath);
+        // Khởi tạo Firestore
+        _firestore = FirestoreDb.Create(projectId);
 
-            // Khởi tạo StorageClient
-            _storageClient = StorageClient.Create();
-
-
-        }
+        // Khởi tạo StorageClient
+        _storageClient = StorageClient.Create();
+    }
 
     public async Task SaveTokenAsync(string userId, string fcmToken)
     {
@@ -101,47 +97,46 @@ namespace TerrariumGardenTech.Service.Service
                     return true;
                 }
 
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error deleting token: {ex.Message}");
-                return false;
-            }
+            return false;
         }
-
-        //public async Task<string> UploadImageAsync(IFormFile file)
-        //{
-        //    var objectName = $"terrarium-images/{Guid.NewGuid()}_{file.FileName}";
-        //    using var stream = file.OpenReadStream();
-
-        //    await _storageClient.UploadObjectAsync(_bucketName, objectName, file.ContentType, stream, new UploadObjectOptions
-        //    {
-        //        PredefinedAcl = PredefinedObjectAcl.PublicRead
-        //    });
-
-        //    return $"https://storage.googleapis.com/{_bucketName}/{objectName}";
-        //}
-
-        //public async Task<bool> DeleteImageAsync(string imageUrl)
-        //{
-        //    try
-        //    {
-        //        var uri = new Uri(imageUrl);
-        //        var objectPath = Uri.UnescapeDataString(uri.AbsolutePath); // /bucket-name/path/to/file
-        //        var bucketPrefix = $"/{_bucketName}/";
-        //        var objectName = objectPath.StartsWith(bucketPrefix)
-        //            ? objectPath.Substring(bucketPrefix.Length)
-        //            : objectPath.TrimStart('/');
-
-        //        await _storageClient.DeleteObjectAsync(_bucketName, objectName);
-        //        return true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Bạn có thể log nếu cần: Console.WriteLine(ex.Message);
-        //        return false;
-        //    }
-        //}
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting token: {ex.Message}");
+            return false;
+        }
     }
+
+    //public async Task<string> UploadImageAsync(IFormFile file)
+    //{
+    //    var objectName = $"terrarium-images/{Guid.NewGuid()}_{file.FileName}";
+    //    using var stream = file.OpenReadStream();
+
+    //    await _storageClient.UploadObjectAsync(_bucketName, objectName, file.ContentType, stream, new UploadObjectOptions
+    //    {
+    //        PredefinedAcl = PredefinedObjectAcl.PublicRead
+    //    });
+
+    //    return $"https://storage.googleapis.com/{_bucketName}/{objectName}";
+    //}
+
+    //public async Task<bool> DeleteImageAsync(string imageUrl)
+    //{
+    //    try
+    //    {
+    //        var uri = new Uri(imageUrl);
+    //        var objectPath = Uri.UnescapeDataString(uri.AbsolutePath); // /bucket-name/path/to/file
+    //        var bucketPrefix = $"/{_bucketName}/";
+    //        var objectName = objectPath.StartsWith(bucketPrefix)
+    //            ? objectPath.Substring(bucketPrefix.Length)
+    //            : objectPath.TrimStart('/');
+
+    //        await _storageClient.DeleteObjectAsync(_bucketName, objectName);
+    //        return true;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        // Bạn có thể log nếu cần: Console.WriteLine(ex.Message);
+    //        return false;
+    //    }
+    //}
 }

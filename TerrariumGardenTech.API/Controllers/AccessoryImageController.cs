@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.AccessoryImage;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -34,19 +33,19 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
     }
 
 
-        // POST api/<AccessoryImageController>
-        [HttpPost("upload")]
-        public async Task<IBusinessResult> Post([FromQuery] int accessoryId,  IFormFile imageFile)
-        {
-            return await _accessoryImageService.CreateAccessory(imageFile, accessoryId);
-        }
+    // POST api/<AccessoryImageController>
+    [HttpPost("upload")]
+    public async Task<IBusinessResult> Post([FromQuery] int accessoryId, IFormFile imageFile)
+    {
+        return await _accessoryImageService.CreateAccessory(imageFile, accessoryId);
+    }
 
-        // PUT api/<AccessoryImageController>/5
-        [HttpPut("{id}")]
-        public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
-        {
-            return await _accessoryImageService.UpdateAccessory(id, imageFile);
-        }
+    // PUT api/<AccessoryImageController>/5
+    [HttpPut("{id}")]
+    public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
+    {
+        return await _accessoryImageService.UpdateAccessory(id, imageFile);
+    }
 
     // DELETE api/<AccessoryImageController>/5
     [HttpDelete("{id}")]
