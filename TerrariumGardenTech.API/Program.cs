@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using DotNetEnv;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -5,24 +7,20 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 using TerrariumGardenTech.API.Authorization;
+using TerrariumGardenTech.API.Middlewares;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
+using TerrariumGardenTech.Service.Configs;
 using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
-using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.API.Middlewares;
-using TerrariumGardenTech.Service.Configs;
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
 
@@ -38,10 +36,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
         // Chỉ cho phép yêu cầu từ địa chỉ cụ thể (ví dụ: frontend đang chạy trên localhost:5173)
-        policy.WithOrigins("http://localhost:5173")  // Địa chỉ của frontend
-              .WithOrigins("https://terra-tech-garden.vercel.app")
-              .AllowAnyMethod()     // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
-              .AllowAnyHeader();    // Cho phép bất kỳ header nào trong yêu cầu
+        policy.WithOrigins("http://localhost:5173") // Địa chỉ của frontend
+            .WithOrigins("https://terra-tech-garden.vercel.app")
+            .AllowAnyMethod() // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
+            .AllowAnyHeader(); // Cho phép bất kỳ header nào trong yêu cầu
     });
 
     // Hoặc bạn có thể cho phép tất cả các nguồn:
@@ -53,10 +51,7 @@ builder.Services.AddCors(options =>
     // });
 });
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddProfile<MappingProfile>();
-});
+builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); });
 
 
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
@@ -118,16 +113,16 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpS
 
 // Thêm các dịch vụ vào container DI
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-})
-.AddCookie()
-.AddGoogle(options =>
-{
-    options.ClientId = builder.Configuration["GoogleKeys:ClientId"];
-    options.ClientSecret = builder.Configuration["GoogleKeys:ClientSecret"];
-});
+    {
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+    })
+    .AddCookie()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["GoogleKeys:ClientId"];
+        options.ClientSecret = builder.Configuration["GoogleKeys:ClientSecret"];
+    });
 
 /*---------------- Authorization ----------------*/
 builder.Services.AddAuthorization(opt =>
@@ -142,7 +137,7 @@ builder.Services.AddAuthorization(opt =>
         p => p.RequireRole("Manager", "Admin"));
 
     opt.AddPolicy("Order.AccessSpecific",
-        p => p.AddRequirements(new OrderAccessRequirement()));    // resource-based
+        p => p.AddRequirements(new OrderAccessRequirement())); // resource-based
 });
 
 // Handler DI
@@ -150,55 +145,56 @@ builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();
 
 // Cấu hình Authentication với JWT Bearer và logging
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
-        ValidAudience = jwtSettings.GetValue<string>("Audience"),
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ClockSkew = TimeSpan.Zero
-    };
-
-    options.Events = new JwtBearerEvents
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
     {
-        OnAuthenticationFailed = context =>
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError(context.Exception, "Authentication failed.");
-            return Task.CompletedTask;
-        },
-        OnChallenge = context =>
-        {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("Unauthorized request: {Path}", context.HttpContext.Request.Path);
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
+            ValidAudience = jwtSettings.GetValue<string>("Audience"),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            ClockSkew = TimeSpan.Zero
+        };
 
-            // Trả về JSON rõ ràng khi lỗi 401
-            context.HandleResponse();
-            context.Response.ContentType = "application/json";
-            var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Chưa xác thực, vui lòng đăng nhập." });
-            return context.Response.WriteAsync(result);
-        },
-        OnForbidden = context =>
+        options.Events = new JwtBearerEvents
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("Forbidden request: {Path} - User does not have permission.", context.HttpContext.Request.Path);
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(context.Exception, "Authentication failed.");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Unauthorized request: {Path}", context.HttpContext.Request.Path);
 
-            // Trả về JSON rõ ràng khi lỗi 403
-            context.Response.ContentType = "application/json";
-            var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Bạn không có quyền truy cập tài nguyên này." });
-            return context.Response.WriteAsync(result);
-        }
-    };
-});
+                // Trả về JSON rõ ràng khi lỗi 401
+                context.HandleResponse();
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new { message = "Chưa xác thực, vui lòng đăng nhập." });
+                return context.Response.WriteAsync(result);
+            },
+            OnForbidden = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Forbidden request: {Path} - User does not have permission.",
+                    context.HttpContext.Request.Path);
+
+                // Trả về JSON rõ ràng khi lỗi 403
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new { message = "Bạn không có quyền truy cập tài nguyên này." });
+                return context.Response.WriteAsync(result);
+            }
+        };
+    });
 
 // Đăng ký Controller
 builder.Services.AddControllers();
@@ -207,7 +203,6 @@ builder.Services.AddControllers();
 //    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
 //    options.JsonSerializerOptions.WriteIndented = true; // (tuỳ chọn) giúp JSON đẹp hơn
 //}); 
-
 
 
 // Cấu hình Swagger/OpenAPI
@@ -229,7 +224,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer"
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -241,17 +236,14 @@ builder.Services.AddSwaggerGen(c =>
                 },
                 Scheme = "oauth2",
                 Name = "Bearer",
-                In = ParameterLocation.Header,
+                In = ParameterLocation.Header
             },
             new List<string>()
         }
     });
-
-
 });
 
 var app = builder.Build();
-
 
 
 // Middleware trả về JSON khi lỗi 401 hoặc 403
@@ -276,9 +268,8 @@ app.Use(async (context, next) =>
 });
 
 
-
 // Áp dụng middleware CORS
-app.UseCors("AllowSpecificOrigin");  // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
+app.UseCors("AllowSpecificOrigin"); // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
 
 app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
@@ -292,14 +283,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "TerrariumGardenTech API V1");
         c.RoutePrefix = "swagger"; // Đặt đường dẫn gốc cho Swagger UI
-        c.DocumentTitle = "TerrariumGardenTech API";  // Tiêu đề
+        c.DocumentTitle = "TerrariumGardenTech API"; // Tiêu đề
         c.DefaultModelsExpandDepth(-1); // Tắt hiển thị model
         c.EnableDeepLinking(); // Bật liên kết sâu (hỗ trợ tìm kiếm các API)
-        c.EnableFilter();  // Bật thanh tìm kiếm trong Swagger UI
+        c.EnableFilter(); // Bật thanh tìm kiếm trong Swagger UI
     });
 }
 
 app.MapControllers();
 
 app.Run();
-

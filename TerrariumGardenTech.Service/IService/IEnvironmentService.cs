@@ -10,5 +10,4 @@ public interface IEnvironmentService
     Task<IBusinessResult> DeleteEnvironmentAsync(int environmentId);
     Task<IBusinessResult?> GetEnvironmentByIdAsync(int environmentId);
     Task<IBusinessResult> GetAllEnvironmentsAsync();
-    
 }
