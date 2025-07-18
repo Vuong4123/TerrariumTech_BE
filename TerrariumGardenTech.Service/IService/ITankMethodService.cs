@@ -1,6 +1,7 @@
 using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Shape;
 using TerrariumGardenTech.Service.RequestModel.TankMethod;
+
+namespace TerrariumGardenTech.Service.IService;
 
 public interface ITankMethodService
 {
