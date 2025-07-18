@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TerrariumGardenTech.Repositories.Enums;
 
-namespace TerrariumGardenTech.Repositories.Enums
+public enum VoucherStatus
 {
-    public enum VoucherStatus
-    {
-        Active,
-        Expired,
-        Inactive
-    }
+    Active,
+    Expired,
+    Inactive
 }

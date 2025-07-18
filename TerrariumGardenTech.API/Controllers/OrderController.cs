@@ -6,179 +6,172 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Order;
 
-namespace TerrariumGardenTech.API.Controllers
+namespace TerrariumGardenTech.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class OrderController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class OrderController : ControllerBase
+    private readonly IAuthorizationService _auth;
+    private readonly IOrderService _svc;
+
+    public OrderController(IOrderService svc, IAuthorizationService auth)
     {
-        private readonly IOrderService _svc;
-        private readonly IAuthorizationService _auth;
+        _svc = svc ?? throw new ArgumentNullException(nameof(svc));
+        _auth = auth ?? throw new ArgumentNullException(nameof(auth));
+    }
 
-        public OrderController(IOrderService svc, IAuthorizationService auth)
+    /// <summary>
+    ///     Lấy danh sách tất cả đơn hàng (quyền Order.ReadAll)
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = "Order.ReadAll")]
+    public async Task<IActionResult> GetAll()
+    {
+        try
         {
-            _svc = svc ?? throw new ArgumentNullException(nameof(svc));
-            _auth = auth ?? throw new ArgumentNullException(nameof(auth));
+            var list = await _svc.GetAllAsync();
+            return Ok(list);
         }
-
-        /// <summary>
-        /// Lấy danh sách tất cả đơn hàng (quyền Order.ReadAll)
-        /// </summary>
-        [HttpGet]
-        [Authorize(Policy = "Order.ReadAll")]
-        public async Task<IActionResult> GetAll()
+        catch (Exception ex)
         {
-            try
-            {
-                var list = await _svc.GetAllAsync();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return StatusCode(500, new { message = ex.Message });
         }
+    }
 
-        /// <summary>
-        /// Lấy chi tiết đơn hàng theo ID
-        /// </summary>
-        [HttpGet("{id:int}")]
-        [Authorize]
-        public async Task<IActionResult> Get(int id)
+    /// <summary>
+    ///     Lấy chi tiết đơn hàng theo ID
+    /// </summary>
+    [HttpGet("{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> Get(int id)
+    {
+        try
         {
-            try
-            {
-                var authResult = await _auth.AuthorizeAsync(User, id, "Order.AccessSpecific");
-                if (!authResult.Succeeded)
-                    return Forbid();
+            var authResult = await _auth.AuthorizeAsync(User, id, "Order.AccessSpecific");
+            if (!authResult.Succeeded)
+                return Forbid();
 
-                var order = await _svc.GetByIdAsync(id);
-                if (order is null)
-                    return NotFound(new { message = $"Đơn hàng ({id}) không tồn tại." });
+            var order = await _svc.GetByIdAsync(id);
+            if (order is null)
+                return NotFound(new { message = $"Đơn hàng ({id}) không tồn tại." });
 
-                return Ok(order);
-            }
-            catch (ArgumentException ae)
-            {
-                return BadRequest(new { message = ae.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return Ok(order);
         }
-
-        /// <summary>
-        /// Tạo mới đơn hàng
-        /// </summary>
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Create([FromBody] OrderCreateRequest req)
+        catch (ArgumentException ae)
         {
-            try
-            {
-                req.UserId = User.GetUserId();
-                var id = await _svc.CreateAsync(req);
-                return CreatedAtAction(nameof(Get), new { id }, new { orderId = id });
-            }
-            catch (ArgumentException ae)
-            {
-                return BadRequest(new { message = ae.Message });
-            }
-            catch (InvalidOperationException ioe)
-            {
-                return Conflict(new { message = ioe.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return BadRequest(new { message = ae.Message });
         }
-
-
-        /// <summary>
-        /// Cập nhật trạng thái đơn hàng
-        /// </summary>
-        [HttpPut("{id:int}/status")]
-        [Authorize(Policy = "Order.UpdateStatus")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
+        catch (Exception ex)
         {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(status))
-                    throw new ArgumentException("Status không được để trống.", nameof(status));
-
-                var updated = await _svc.UpdateStatusAsync(id, status.Trim());
-                if (!updated)
-                    return NotFound(new { message = $"Không tìm thấy đơn hàng ({id}) để cập nhật." });
-
-                return NoContent();
-            }
-            catch (ArgumentException ae)
-            {
-                return BadRequest(new { message = ae.Message });
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Conflict(new { message = "Xung đột dữ liệu, vui lòng thử lại." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return StatusCode(500, new { message = ex.Message });
         }
+    }
 
-        /// <summary>
-        /// Xử lý thanh toán đơn hàng
-        /// </summary>
-        [HttpPost("{id:int}/checkout")]
-        [Authorize]
-        public async Task<IActionResult> Checkout(int id, [FromBody] CheckoutRequest checkoutRequest)
+    /// <summary>
+    ///     Tạo mới đơn hàng
+    /// </summary>
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Create([FromBody] OrderCreateRequest req)
+    {
+        try
         {
-            try
-            {
-                var result = await _svc.CheckoutAsync(id, checkoutRequest.PaymentMethod, checkoutRequest.PaidAmount);
-                if (result.Status == Const.SUCCESS_UPDATE_CODE)
-                {
-                    return Ok(new { message = result.Message, statusCode = result.Status });
-                }
-
-                return BadRequest(new { message = result.Message, statusCode = result.Status });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            req.UserId = User.GetUserId();
+            var id = await _svc.CreateAsync(req);
+            return CreatedAtAction(nameof(Get), new { id }, new { orderId = id });
         }
-
-
-
-
-        /// <summary>
-        /// Xóa đơn hàng
-        /// </summary>
-        [HttpDelete("{id:int}")]
-        [Authorize(Policy = "Order.Delete")]
-        public async Task<IActionResult> Delete(int id)
+        catch (ArgumentException ae)
         {
-            try
-            {
-                var deleted = await _svc.DeleteAsync(id);
-                if (!deleted)
-                    return NotFound(new { message = $"Không tìm thấy đơn hàng ({id}) để xóa." });
-
-                return NoContent();
-            }
-            catch (DbUpdateException)
-            {
-                return Conflict(new { message = "Không thể xóa đơn hàng, vui lòng thử lại." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return BadRequest(new { message = ae.Message });
         }
+        catch (InvalidOperationException ioe)
+        {
+            return Conflict(new { message = ioe.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
 
 
+    /// <summary>
+    ///     Cập nhật trạng thái đơn hàng
+    /// </summary>
+    [HttpPut("{id:int}/status")]
+    [Authorize(Policy = "Order.UpdateStatus")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                throw new ArgumentException("Status không được để trống.", nameof(status));
+
+            var updated = await _svc.UpdateStatusAsync(id, status.Trim());
+            if (!updated)
+                return NotFound(new { message = $"Không tìm thấy đơn hàng ({id}) để cập nhật." });
+
+            return NoContent();
+        }
+        catch (ArgumentException ae)
+        {
+            return BadRequest(new { message = ae.Message });
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "Xung đột dữ liệu, vui lòng thử lại." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    ///     Xử lý thanh toán đơn hàng
+    /// </summary>
+    [HttpPost("{id:int}/checkout")]
+    [Authorize]
+    public async Task<IActionResult> Checkout(int id, [FromBody] CheckoutRequest checkoutRequest)
+    {
+        try
+        {
+            var result = await _svc.CheckoutAsync(id, checkoutRequest.PaymentMethod, checkoutRequest.PaidAmount);
+            if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                return Ok(new { message = result.Message, statusCode = result.Status });
+
+            return BadRequest(new { message = result.Message, statusCode = result.Status });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+
+    /// <summary>
+    ///     Xóa đơn hàng
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    [Authorize(Policy = "Order.Delete")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var deleted = await _svc.DeleteAsync(id);
+            if (!deleted)
+                return NotFound(new { message = $"Không tìm thấy đơn hàng ({id}) để xóa." });
+
+            return NoContent();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "Không thể xóa đơn hàng, vui lòng thử lại." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 }

@@ -1,6 +1,8 @@
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.RequestModel.Shape;
 
+namespace TerrariumGardenTech.Service.IService;
+
 public interface IShapeService
 {
     Task<IBusinessResult> CreateShapeAsync(ShapeCreateRequest shapeCreateRequest);

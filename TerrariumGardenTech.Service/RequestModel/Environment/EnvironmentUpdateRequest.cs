@@ -1,4 +1,5 @@
 namespace TerrariumGardenTech.Service.RequestModel.Environment;
+
 public class EnvironmentUpdateRequest
 {
     public int EnvironmentId { get; set; }
