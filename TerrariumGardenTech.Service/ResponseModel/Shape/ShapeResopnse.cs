@@ -1,3 +1,5 @@
+namespace TerrariumGardenTech.Service.ResponseModel.Shape;
+
 public class ShapeResponse
 {
     public int ShapeId { get; set; }

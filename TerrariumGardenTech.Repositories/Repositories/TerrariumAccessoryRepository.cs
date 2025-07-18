@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
+namespace TerrariumGardenTech.Repositories.Repositories;
+
 public class TerrariumAccessoryRepository : GenericRepository<TerrariumAccessory>
 {
     private readonly TerrariumGardenTechDBContext _dbContext;
@@ -19,7 +21,7 @@ public class TerrariumAccessoryRepository : GenericRepository<TerrariumAccessory
     }
     public async Task<List<TerrariumAccessory>>GetTerrariumAccessoriesByTerrariumAsync(int terrariumId){
         return await _dbContext.
-        TerrariumAccessory.
-        Where(ta => ta.TerrariumId == terrariumId).ToListAsync();
+            TerrariumAccessory.
+            Where(ta => ta.TerrariumId == terrariumId).ToListAsync();
     }
 }

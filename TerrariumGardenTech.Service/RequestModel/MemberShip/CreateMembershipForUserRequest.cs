@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TerrariumGardenTech.Service.RequestModel.MemberShip
-{
-    using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TerrariumGardenTech.Service.RequestModel.MemberShip
 {
@@ -30,10 +20,7 @@ namespace TerrariumGardenTech.Service.RequestModel.MemberShip
         [Required(ErrorMessage = "DurationDays là bắt buộc.")]
         [Range(1, int.MaxValue, ErrorMessage = "Thời gian phải lớn hơn 0.")]
         public int DurationDays { get; set; } // Số ngày của gói membership (thời gian hiệu lực)
-        
+
         public string Description { get; set; } // Mô tả của gói membership
     }
-}
-
-
 }
