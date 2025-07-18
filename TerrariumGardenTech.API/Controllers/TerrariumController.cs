@@ -34,23 +34,23 @@ public class TerrariumController : ControllerBase
         // Check if result or result.Data is null
         if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
 
-            // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
-            var terrariumList = result.Data as IEnumerable<Terrarium>;
-            var terrariums = terrariumList?.Select(t => new TerrariumDetailResponse
+        // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
+        var terrariumList = result.Data as IEnumerable<Terrarium>;
+        var terrariums = terrariumList?.Select(t => new TerrariumDetailResponse
+        {
+            TerrariumId = t.TerrariumId,
+            Name = t.TerrariumName,
+            Description = t.Description,
+            Price = (decimal)t.Price,
+            Stock = t.Stock,
+            Status = t.Status,
+            TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
             {
-                TerrariumId = t.TerrariumId,
-                Name = t.TerrariumName,
-                Description = t.Description,
-                Price = (decimal)t.Price,
-                Stock = t.Stock,
-                Status = t.Status,
-                TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
-                {
-                    TerrariumImageId = ti.TerrariumImageId,
-                    TerrariumId = ti.TerrariumId,
-                    ImageUrl = ti.ImageUrl,
-                }).ToList()
-            }).ToList();
+                TerrariumImageId = ti.TerrariumImageId,
+                TerrariumId = ti.TerrariumId,
+                ImageUrl = ti.ImageUrl
+            }).ToList()
+        }).ToList();
 
         if (terrariums == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
 
@@ -68,21 +68,21 @@ public class TerrariumController : ControllerBase
         var terrariumList = result.Data as IEnumerable<Terrarium>;
         if (terrariumList == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Unexpected data format.");
 
-            var terrariums = terrariumList.Select(t => new TerrariumDetailResponse
+        var terrariums = terrariumList.Select(t => new TerrariumDetailResponse
+        {
+            TerrariumId = t.TerrariumId,
+            Name = t.TerrariumName,
+            Description = t.Description,
+            Price = t.Price ?? 0,
+            Stock = t.Stock,
+            Status = t.Status,
+            TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
             {
-                TerrariumId = t.TerrariumId,
-                Name = t.TerrariumName,
-                Description = t.Description,
-                Price = t.Price ?? 0,
-                Stock = t.Stock,
-                Status = t.Status,
-                TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
-                {
-                    TerrariumImageId = ti.TerrariumImageId,
-                    TerrariumId = ti.TerrariumId,
-                    ImageUrl = ti.ImageUrl,
-                }).ToList() ?? new List<TerrariumImageResponse>()
-            }).ToList();
+                TerrariumImageId = ti.TerrariumImageId,
+                TerrariumId = ti.TerrariumId,
+                ImageUrl = ti.ImageUrl
+            }).ToList() ?? new List<TerrariumImageResponse>()
+        }).ToList();
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
     }
@@ -97,39 +97,39 @@ public class TerrariumController : ControllerBase
         // Kiểm tra nếu result hoặc result.Data là null
         if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
 
-            // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Category, không phải IEnumerable)
-            if (result.Data is Terrarium terrarium)
+        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Category, không phải IEnumerable)
+        if (result.Data is Terrarium terrarium)
+        {
+            // Ánh xạ dữ liệu từ Category sang CategoryRequest
+            var terrariumResponse = new TerrariumResponse
             {
-                // Ánh xạ dữ liệu từ Category sang CategoryRequest
-                var terrariumResponse = new TerrariumResponse
+                TerrariumId = terrarium.TerrariumId,
+                EnvironmentId = terrarium.EnvironmentId,
+                ShapeId = terrarium.ShapeId,
+                TankMethodId = terrarium.TankMethodId,
+                Name = terrarium.TerrariumName,
+                Description = terrarium.Description,
+                Price = (decimal)terrarium.Price,
+                Stock = terrarium.Stock,
+                Status = terrarium.Status,
+                Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
                 {
-                    TerrariumId = terrarium.TerrariumId,
-                    EnvironmentId = terrarium.EnvironmentId,
-                    ShapeId = terrarium.ShapeId,
-                    TankMethodId = terrarium.TankMethodId,
-                    Name = terrarium.TerrariumName,
-                    Description = terrarium.Description,
-                    Price = (decimal)terrarium.Price  ,
-                    Stock = terrarium.Stock,
-                    Status = terrarium.Status,
-                    Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
-                    {
-                        AccessoryId = a.Accessory.AccessoryId,
-                        Name = a.Accessory.Name,
-                        Description = a.Accessory.Description,
-                        Price = a.Accessory.Price
-                    }).ToList(),
-                    BodyHTML = terrarium.bodyHTML,
-                    CreatedAt = today, // Use a default value if CreatedAt is null
-                    UpdatedAt = today, // Similar for UpdatedAt
-                                       // Ánh xạ TerrariumImages thành một danh sách đầy đủ các thông tin
-                    TerrariumImages = terrarium.TerrariumImages.Select(ti => new TerrariumImageResponse
-                    {
-                        TerrariumImageId = ti.TerrariumImageId,
-                        TerrariumId = ti.TerrariumId,
-                        ImageUrl = ti.ImageUrl,
-                    }).ToList()
-                };
+                    AccessoryId = a.Accessory.AccessoryId,
+                    Name = a.Accessory.Name,
+                    Description = a.Accessory.Description,
+                    Price = a.Accessory.Price
+                }).ToList(),
+                BodyHTML = terrarium.bodyHTML,
+                CreatedAt = today, // Use a default value if CreatedAt is null
+                UpdatedAt = today, // Similar for UpdatedAt
+                // Ánh xạ TerrariumImages thành một danh sách đầy đủ các thông tin
+                TerrariumImages = terrarium.TerrariumImages.Select(ti => new TerrariumImageResponse
+                {
+                    TerrariumImageId = ti.TerrariumImageId,
+                    TerrariumId = ti.TerrariumId,
+                    ImageUrl = ti.ImageUrl
+                }).ToList()
+            };
 
             // Trả về BusinessResult với dữ liệu đã ánh xạ
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariumResponse);
