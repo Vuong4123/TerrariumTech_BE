@@ -36,7 +36,15 @@ public class Const
 
     #endregion
 
-    #region Warning Code
+        #region Upload Code
+        public static int  SUCCESS_UPLOAD_CODE = 200;
+        public static string SUCCESS_UPLOAD_MSG = "Upload success";
+
+        public static int FAIL_UPLOAD_CODE = -1;
+        public static string FAIL_UPLOAD_MSG = "Upload fail";
+        #endregion
+
+        #region Warning Code
 
     public static int WARNING_NO_DATA_CODE = 4;
     public static string WARNING_NO_DATA_MSG = "No data";

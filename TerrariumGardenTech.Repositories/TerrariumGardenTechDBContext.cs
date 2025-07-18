@@ -141,15 +141,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
             entity.Property(e => e.AccessoryImageId).HasColumnName("accessoryImageId");
             entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");
-            entity.Property(e => e.AltText)
-                .HasMaxLength(255)
-                .HasColumnName("altText");
             entity.Property(e => e.ImageUrl)
                 .HasMaxLength(255)
                 .HasColumnName("imageUrl");
-            entity.Property(e => e.IsPrimary)
-                .HasDefaultValue(false)
-                .HasColumnName("isPrimary");
 
             entity.HasOne(d => d.Accessory).WithMany(p => p.AccessoryImages)
                 .HasForeignKey(d => d.AccessoryId)
@@ -864,15 +858,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.ToTable("TerrariumImage");
 
             entity.Property(e => e.TerrariumImageId).HasColumnName("terrariumImageId");
-            entity.Property(e => e.AltText)
-                .HasMaxLength(255)
-                .HasColumnName("altText");
             entity.Property(e => e.ImageUrl)
                 .HasMaxLength(255)
                 .HasColumnName("imageUrl");
-            entity.Property(e => e.IsPrimary)
-                .HasDefaultValue(false)
-                .HasColumnName("isPrimary");
             entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
 
             entity.HasOne(d => d.Terrarium).WithMany(p => p.TerrariumImages)
