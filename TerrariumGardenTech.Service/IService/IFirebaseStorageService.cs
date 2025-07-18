@@ -1,8 +1,18 @@
-﻿namespace TerrariumGardenTech.Service.IService;
+﻿using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-public interface IFirebaseStorageService
+namespace TerrariumGardenTech.Service.IService
 {
-    Task SaveTokenAsync(string userId, string fcmToken);
-    Task<List<string>> GetUserFcmTokensAsync(string userId);
-    Task<bool> DeleteTokenAsync(string userId, string fcmToken);
+    public interface IFirebaseStorageService
+    {
+        Task SaveTokenAsync(string userId, string fcmToken);
+        Task<List<string>> GetUserFcmTokensAsync(string userId);
+        //Task<bool> DeleteTokenAsync(string userId, string fcmToken);
+        //Task<string> UploadImageAsync(IFormFile file);
+
+    }
 }
