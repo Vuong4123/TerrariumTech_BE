@@ -1,15 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Auth;
 using TerrariumGardenTech.Service.Service;
 
-namespace TerrariumGardenTech.API.Controller
+namespace TerrariumGardenTech.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

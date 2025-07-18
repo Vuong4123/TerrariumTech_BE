@@ -1,4 +1,4 @@
-namespace TerrariumGardenTech.Repositories.Entity;
+namespace TerrariumGardenTech.Repositories.Enums;
 public enum TerrariumStatusEnum
 {
     Active,
