@@ -22,6 +22,7 @@ using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.API.Middlewares;
+using TerrariumGardenTech.Service.Configs;
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
 
@@ -52,7 +53,10 @@ builder.Services.AddCors(options =>
     // });
 });
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<MappingProfile>();
+});
 
 
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
@@ -67,6 +71,7 @@ builder.Services.AddDbContext<TerrariumGardenTechDBContext>(options =>
 });
 
 
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 // Đăng ký Repository và UnitOfWork
 builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped<UnitOfWork>();
@@ -103,7 +108,6 @@ builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IAccessoryImageService, AccessoryImageService>();
-
 
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
