@@ -14,6 +14,7 @@ namespace TerrariumGardenTech.Service.IService
     {
         Task<IBusinessResult> GetAll();
         Task<IBusinessResult> GetById(int id);
+        Task<IBusinessResult> FilterAccessoryAsync(int? categoryId);
         Task<IBusinessResult> CreateAccessory(AccessoryCreateRequest accessoryCreateRequest);
         Task<IBusinessResult> UpdateAccessory(AccessoryUpdateRequest accessoryUpdateRequest);
         Task<IBusinessResult> Save(Accessory accessory);
