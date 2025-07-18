@@ -17,10 +17,6 @@ public partial class TerrariumImage
     public int TerrariumId { get; set; }
 
     public string ImageUrl { get; set; }
-
-    public string AltText { get; set; }
-
-    public bool? IsPrimary { get; set; }
     [ForeignKey(nameof(TerrariumId))]
 
     public virtual Terrarium Terrarium { get; set; }

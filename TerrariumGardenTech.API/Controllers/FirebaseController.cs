@@ -34,14 +34,26 @@ namespace TerrariumGardenTech.API.Controllers
             }
         }
 
-        [HttpDelete("{userId}/{fcmtoken}")]
-        public async Task<IActionResult> DeleteToken([FromRoute] string userId, [FromRoute] string fcmtoken)
-        {
-            bool result = await _firebaseStorageService.DeleteTokenAsync(userId, fcmtoken);
-            if (result)
-                return Ok("Token đã được xóa thành công!");
-            else
-                return BadRequest("Không tìm thấy token để xóa.");
-        }
+        //[HttpDelete("{userId}/{fcmtoken}")]
+        //public async Task<IActionResult> DeleteToken([FromRoute] string userId, [FromRoute] string fcmtoken)
+        //{
+        //    bool result = await _firebaseStorageService.DeleteTokenAsync(userId, fcmtoken);
+        //    if (result)
+        //        return Ok("Token đã được xóa thành công!");
+        //    else
+        //        return BadRequest("Không tìm thấy token để xóa.");
+        //}
+        //[HttpPost]
+        //[Route("image")]
+        //public async Task<IActionResult> UploadImage([FromForm] IFormFile image)
+        //{
+        //    if (image == null || image.Length == 0)
+        //    {
+        //        return BadRequest("No image file provided.");
+        //    }
+
+        //    var imageUrl = await _firebaseStorageService.UploadImageAsync(image);
+        //    return Ok(new { imageUrl });
+        //}
     }
 }

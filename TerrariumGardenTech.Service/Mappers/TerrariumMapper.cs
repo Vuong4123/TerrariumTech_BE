@@ -35,9 +35,9 @@ namespace TerrariumGardenTech.Service.Mappers
                 }).ToList() ?? [],
                 TerrariumImages = terrarium.TerrariumImages?.Select(i => new TerrariumImageResponse
                 {
+                    TerrariumImageId = i.TerrariumImageId,
+                    TerrariumId = i.TerrariumId,
                     ImageUrl = i.ImageUrl ,
-                    AltText = i.AltText,
-                    IsPrimary = i.IsPrimary
                 }).ToList() ?? []
             };
         }
