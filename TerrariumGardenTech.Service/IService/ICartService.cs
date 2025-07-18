@@ -1,23 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.RequestModel.Order;
+﻿using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.RequestModel.Cart;
+using TerrariumGardenTech.Service.RequestModel.Order;
 
-namespace TerrariumGardenTech.Service.IService
+namespace TerrariumGardenTech.Service.IService;
+
+public interface ICartService
 {
-    public interface ICartService
-    {
-        Task<Cart> GetOrCreateCartAsync(int userId);
-        Task<Cart> GetCartByUserAsync(int userId);
-        Task<CartItem> AddItemAsync(int userId, AddCartItemRequest req);
-        Task<bool> UpdateItemAsync(int userId, int itemId, int quantity);
-        Task<bool> RemoveItemAsync(int userId, int itemId);
-        Task<bool> ClearCartAsync(int userId);
-        Task<Order> CheckoutAsync(int userId, CheckoutRequest req);
-    }
-
+    Task<Cart> GetOrCreateCartAsync(int userId);
+    Task<Cart> GetCartByUserAsync(int userId);
+    Task<CartItem> AddItemAsync(int userId, AddCartItemRequest req);
+    Task<bool> UpdateItemAsync(int userId, int itemId, int quantity);
+    Task<bool> RemoveItemAsync(int userId, int itemId);
+    Task<bool> ClearCartAsync(int userId);
+    Task<Order> CheckoutAsync(int userId, CheckoutRequest req);
 }
