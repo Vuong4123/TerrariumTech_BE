@@ -1,4 +1,5 @@
-using AccessoryGardenTech.Service.Service;
+using System.Text;
+using System.Text.Json;
 using DotNetEnv;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -287,12 +288,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
         app.UseSwagger(); // Kích hoạt Swagger
         app.UseSwaggerUI(c =>
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "TerrariumGardenTech API V1"); // Định nghĩa endpoint của Swagger
+            c.SwaggerEndpoint("/swagger/v1/swagger.json",
+                "TerrariumGardenTech API V1"); // Định nghĩa endpoint của Swagger
             c.RoutePrefix = "swagger"; // Swagger UI sẽ có sẵn ở /swagger
-            c.DocumentTitle = "TerrariumGardenTech API";  // Tiêu đề của Swagger UI
+            c.DocumentTitle = "TerrariumGardenTech API"; // Tiêu đề của Swagger UI
             c.DefaultModelsExpandDepth(-1); // Tùy chọn: Tắt hiển thị model
             c.EnableDeepLinking(); // Bật liên kết sâu
-            c.EnableFilter();  // Bật thanh tìm kiếm trong Swagger UI
+            c.EnableFilter(); // Bật thanh tìm kiếm trong Swagger UI
         });
     });
 }
