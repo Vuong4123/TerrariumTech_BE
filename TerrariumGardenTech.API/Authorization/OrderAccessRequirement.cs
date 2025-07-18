@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace TerrariumGardenTech.API.Authorization
+namespace TerrariumGardenTech.API.Authorization;
+
+public class OrderAccessRequirement : IAuthorizationRequirement
 {
-    public class OrderAccessRequirement : IAuthorizationRequirement { }
 }

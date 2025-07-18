@@ -1,4 +1,5 @@
 namespace TerrariumGardenTech.Service.RequestModel.TankMethod;
+
 public class TankMethodUpdateRequest
 {
     public int TankMethodId { get; set; }
