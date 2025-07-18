@@ -1,13 +1,16 @@
-using System;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Shape;
+
+namespace TerrariumGardenTech.Service.Service;
 
 public class ShapeService : IShapeService
 {
     private readonly UnitOfWork _unitOfWork;
+
     public ShapeService(UnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -17,28 +20,17 @@ public class ShapeService : IShapeService
     public async Task<IBusinessResult> GetAllShapesAsync()
     {
         var shapes = await _unitOfWork.Shape.GetAllAsync();
-        if (shapes == null)
-        {
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+        if (shapes == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
 
-        }
-        else
-        {
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, shapes);
-        }
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, shapes);
     }
 
     public async Task<IBusinessResult> GetShapeByIdAsync(int shapeId)
     {
         var shape = await _unitOfWork.Shape.GetByIdAsync(shapeId);
-        if (shape == null)
-        {
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
-        }
-        else
-        {
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, shape);
-        }
+        if (shape == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, shape);
     }
 
     public async Task<IBusinessResult> CreateShapeAsync(ShapeCreateRequest shapeCreateRequest)
@@ -53,23 +45,16 @@ public class ShapeService : IShapeService
             };
 
             var result = await _unitOfWork.Shape.CreateAsync(shape);
-            if (result > 0)
-            {
-                return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, result);
-            }
-            else
-            {
-                return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
-            }
+            if (result > 0) return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, result);
 
-
+            return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
         }
         catch (Exception ex)
         {
-
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
+
     public async Task<IBusinessResult> UpdateShapeAsync(ShapeUpdateRequest shapeUpdateRequest)
     {
         try
@@ -80,21 +65,12 @@ public class ShapeService : IShapeService
             {
                 _unitOfWork.Shape.Context().Entry(shape).CurrentValues.SetValues(shapeUpdateRequest);
                 result = await _unitOfWork.Shape.UpdateAsync(shape);
-                if (result > 0)
-                {
-                    return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, result);
-                }
-                else
-                {
-                    return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
-                }
-            }
-            else
-            {
-                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+                if (result > 0) return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, result);
+
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
             }
 
-
+            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
         }
         catch (Exception ex)
         {
@@ -106,14 +82,10 @@ public class ShapeService : IShapeService
     {
         //Kiem tra ton tai cua Shape
         var shape = await _unitOfWork.Shape.GetByIdAsync(shapeId);
-        if (shape == null)
-        {
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
-        }
+        if (shape == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
         // Lấy tất cả Terrarium liên quan đến TankMethod
         var terrariums = await _unitOfWork.Terrarium.GetAllByEnvironmentIdAsync(shapeId);
         if (terrariums != null && terrariums.Any())
-        {
             using (var transaction = await _unitOfWork.Environment.BeginTransactionAsync())
             {
                 try
@@ -134,13 +106,12 @@ public class ShapeService : IShapeService
                     if (result)
                     {
                         await transaction.CommitAsync();
-                        return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Tank method and related terrariums deleted successfully.");
+                        return new BusinessResult(Const.SUCCESS_DELETE_CODE,
+                            "Tank method and related terrariums deleted successfully.");
                     }
-                    else
-                    {
-                        await transaction.RollbackAsync();
-                        return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete tank method.");
-                    }
+
+                    await transaction.RollbackAsync();
+                    return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete tank method.");
                 }
                 catch (Exception ex)
                 {
@@ -148,58 +119,56 @@ public class ShapeService : IShapeService
                     return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
                 }
             }
-        }
 
         return new BusinessResult(Const.FAIL_READ_CODE, "No related terrariums found.");
-
     }
 
-        // else
-        // {
-        //     var result = await _unitOfWork.Shape.RemoveAsync(shape);
-        //     if (result)
-        //     {
-        //         return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, result);
-        //     }
-        //     else
-        //     {
-        //         return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
-        //     }
-        // }
-    }
+    // else
+    // {
+    //     var result = await _unitOfWork.Shape.RemoveAsync(shape);
+    //     if (result)
+    //     {
+    //         return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, result);
+    //     }
+    //     else
+    //     {
+    //         return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+    //     }
+    // }
+}
 
-    //private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
-    //{
-    //    // Xóa các đối tượng liên quan đến Terrarium
-    //    var terrariumShapes = await _unitOfWork.TerrariumShape.GetTerrariumShapesByTerrariumIdAsync(terrarium.TerrariumId);
-    //    foreach (var terrariumShape in terrariumShapes)
-    //    {
-    //        await _unitOfWork.TerrariumShape.RemoveAsync(terrariumShape);
-    //    }
+//private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
+//{
+//    // Xóa các đối tượng liên quan đến Terrarium
+//    var terrariumShapes = await _unitOfWork.TerrariumShape.GetTerrariumShapesByTerrariumIdAsync(terrarium.TerrariumId);
+//    foreach (var terrariumShape in terrariumShapes)
+//    {
+//        await _unitOfWork.TerrariumShape.RemoveAsync(terrariumShape);
+//    }
 
-    //    var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
-    //    foreach (var terrariumImage in terrariumImages)
-    //    {
-    //        await _unitOfWork.TerrariumImage.RemoveAsync(terrariumImage);
-    //    }
+//    var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
+//    foreach (var terrariumImage in terrariumImages)
+//    {
+//        await _unitOfWork.TerrariumImage.RemoveAsync(terrariumImage);
+//    }
 
-    //    var terrariumEnvironment = await _unitOfWork.TerrariumEnvironment.GetTerrariumEnvironmentByTerrariumIdAsync(terrarium.TerrariumId);
-    //    foreach (var terrariumEnvironmentItem in terrariumEnvironment)
-    //    {
-    //        await _unitOfWork.TerrariumShape.RemoveAsync(terrariumEnvironmentItem);
-    //    }
+//    var terrariumEnvironment = await _unitOfWork.TerrariumEnvironment.GetTerrariumEnvironmentByTerrariumIdAsync(terrarium.TerrariumId);
+//    foreach (var terrariumEnvironmentItem in terrariumEnvironment)
+//    {
+//        await _unitOfWork.TerrariumShape.RemoveAsync(terrariumEnvironmentItem);
+//    }
 
-    //    var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetTerrariumAccessoriesByTerrariumAsync(terrarium.TerrariumId);
-    //    foreach (var terrariumAccessory in terrariumAccessories)
-    //    {
-    //        await _unitOfWork.TerrariumAccessory.RemoveAsync(terrariumAccessory);
-    //    }
+//    var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetTerrariumAccessoriesByTerrariumAsync(terrarium.TerrariumId);
+//    foreach (var terrariumAccessory in terrariumAccessories)
+//    {
+//        await _unitOfWork.TerrariumAccessory.RemoveAsync(terrariumAccessory);
+//    }
 
-    //    var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
-    //    foreach (var terrariumVariant in terrariumVariants)
-    //    {
-    //        await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
-    //    }
+//    var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrarium.TerrariumId);
+//    foreach (var terrariumVariant in terrariumVariants)
+//    {
+//        await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
+//    }
 
-    //    await _unitOfWork.Terrarium.RemoveAsync(terrarium);
-    //}
+//    await _unitOfWork.Terrarium.RemoveAsync(terrarium);
+//}

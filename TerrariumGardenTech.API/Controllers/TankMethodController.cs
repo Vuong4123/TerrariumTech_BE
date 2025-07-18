@@ -1,55 +1,55 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Org.BouncyCastle.Pqc.Crypto.Ntru;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.TankMethod;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace TerrariumGardenTech.API.Controllers
+namespace TerrariumGardenTech.API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class TankMethodController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TankMethodController : ControllerBase
+    private readonly ITankMethodService _tankMethodService;
+
+    public TankMethodController(ITankMethodService tankMethodService)
     {
-        private readonly ITankMethodService _tankMethodService;
-        public TankMethodController(ITankMethodService tankMethodService)
-        {
-            _tankMethodService = tankMethodService;
-        }
-        // GET: api/<TankMethodController>
-        [HttpGet]
-        public async Task<IBusinessResult> Get()
-        {
-            return await _tankMethodService.GetAllTankMethodAsync();
-        }
+        _tankMethodService = tankMethodService;
+    }
 
-        // GET api/<TankMethodController>/5
-        [HttpGet("{id}")]
-        public async Task<IBusinessResult> Get(int id)
-        {
-            return await _tankMethodService.GetTankMethodByIdAsync(id);
-        }
+    // GET: api/<TankMethodController>
+    [HttpGet]
+    public async Task<IBusinessResult> Get()
+    {
+        return await _tankMethodService.GetAllTankMethodAsync();
+    }
 
-        // POST api/<TankMethodController>
-        [HttpPost]
-        public async Task<IBusinessResult> Post([FromBody] TankMethodCreateRequest tankMethodCreateRequest)
-        {
-            return await _tankMethodService.CreateTankMethodAsync(tankMethodCreateRequest);
-        }
+    // GET api/<TankMethodController>/5
+    [HttpGet("{id}")]
+    public async Task<IBusinessResult> Get(int id)
+    {
+        return await _tankMethodService.GetTankMethodByIdAsync(id);
+    }
 
-        // PUT api/<TankMethodController>/5
-        [HttpPut("{id}")]
-        public async Task<IBusinessResult> Put([FromBody] TankMethodUpdateRequest tankMethodUpdateRequest)
-        {
-            return await _tankMethodService.UpdateTankMethodAsync(tankMethodUpdateRequest);
-        }
+    // POST api/<TankMethodController>
+    [HttpPost]
+    public async Task<IBusinessResult> Post([FromBody] TankMethodCreateRequest tankMethodCreateRequest)
+    {
+        return await _tankMethodService.CreateTankMethodAsync(tankMethodCreateRequest);
+    }
 
-        // DELETE api/<TankMethodController>/5
-        [HttpDelete("{id}")]
-        public async Task<IBusinessResult> Delete(int id)
-        {
-            return await _tankMethodService.DeleteTankMethodAsync(id);
-        }
+    // PUT api/<TankMethodController>/5
+    [HttpPut("{id}")]
+    public async Task<IBusinessResult> Put([FromBody] TankMethodUpdateRequest tankMethodUpdateRequest)
+    {
+        return await _tankMethodService.UpdateTankMethodAsync(tankMethodUpdateRequest);
+    }
+
+    // DELETE api/<TankMethodController>/5
+    [HttpDelete("{id}")]
+    public async Task<IBusinessResult> Delete(int id)
+    {
+        return await _tankMethodService.DeleteTankMethodAsync(id);
     }
 }

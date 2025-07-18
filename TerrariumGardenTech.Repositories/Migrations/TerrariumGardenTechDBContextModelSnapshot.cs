@@ -96,21 +96,10 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int")
                         .HasColumnName("accessoryId");
 
-                    b.Property<string>("AltText")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("altText");
-
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("imageUrl");
-
-                    b.Property<bool?>("IsPrimary")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("isPrimary");
 
                     b.HasKey("AccessoryImageId")
                         .HasName("PK__Accessor__FC8A6368CD989764");
@@ -1197,21 +1186,10 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TerrariumImageId"));
 
-                    b.Property<string>("AltText")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("altText");
-
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("imageUrl");
-
-                    b.Property<bool?>("IsPrimary")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("isPrimary");
 
                     b.Property<int>("TerrariumId")
                         .HasColumnType("int")

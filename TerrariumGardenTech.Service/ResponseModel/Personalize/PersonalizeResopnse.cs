@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TerrariumGardenTech.Service.ResponseModel.Personalize;
 
-namespace TerrariumGardenTech.Service.ResponseModel.Personalize
+public class PersonalizeResponse
 {
-    public class PersonalizeResponse
-    {
-        public int PersonalizeId { get; set; }
-        public int UserId { get; set; }
-        public string Type { get; set; } = string.Empty;
-        public string Shape { get; set; } = string.Empty;
-        public string TankMethod { get; set; } = string.Empty;
-        public string Theme { get; set; } = string.Empty;
-        public string size { get; set; } = string.Empty;
-
-    }
+    public int PersonalizeId { get; set; }
+    public int UserId { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string Shape { get; set; } = string.Empty;
+    public string TankMethod { get; set; } = string.Empty;
+    public string Theme { get; set; } = string.Empty;
+    public string size { get; set; } = string.Empty;
 }

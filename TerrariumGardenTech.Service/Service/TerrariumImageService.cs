@@ -1,118 +1,159 @@
-﻿using TerrariumGardenTech.Common;
+﻿using Microsoft.AspNetCore.Http;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Environment;
-using TerrariumGardenTech.Service.RequestModel.Terrarium;
-using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
 
-namespace TerrariumGardenTech.Service.Service
+namespace TerrariumGardenTech.Service.Service;
+
+public class TerrariumImageService : ITerrariumImageService
 {
-    public class TerrariumImageService : ITerrariumImageService
+    private readonly ICloudinaryService _cloudinaryService;
+    private readonly UnitOfWork _unitOfWork;
+
+    public TerrariumImageService(UnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
     {
-        private readonly UnitOfWork _unitOfWork;
-        public TerrariumImageService(UnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
+        _unitOfWork = unitOfWork;
+        _cloudinaryService = cloudinaryService;
+    }
 
-        public async Task<IBusinessResult> GetAllTerrariumImageAsync()
-        {
-            var terraImage = await _unitOfWork.TerrariumImage.GetAllAsync();
-            if (terraImage == null)
-            {
-                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
-            }
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terraImage);
-        }
+    public async Task<IBusinessResult> GetAllTerrariumImageAsync()
+    {
+        var terraImage = await _unitOfWork.TerrariumImage.GetAllAsync();
+        if (terraImage == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terraImage);
+    }
 
-        public async Task<IBusinessResult?> GetTerrariumImageByIdAsync(int Id)
-        {
-            var terraImage = await _unitOfWork.TerrariumImage.GetByIdAsync(Id);
-            if (terraImage == null)
-            {
-                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
-            }
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terraImage);
-        }
+    public async Task<IBusinessResult?> GetTerrariumImageByIdAsync(int Id)
+    {
+        var terraImage = await _unitOfWork.TerrariumImage.GetByIdAsync(Id);
+        if (terraImage == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terraImage);
+    }
 
-        public async Task<IBusinessResult> GetByTerrariumId(int terrariumId)
-        {
-            var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrariumId);
-            if (terrariumImages != null && terrariumImages.Any())
-            {
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terrariumImages);
-            }
-            else
-            {
-                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "No images found for the given AccessoryId.");
-            }
-        }
+    public async Task<IBusinessResult> GetByTerrariumId(int terrariumId)
+    {
+        var terrariumImages = await _unitOfWork.TerrariumImage.GetAllByTerrariumIdAsync(terrariumId);
+        if (terrariumImages != null && terrariumImages.Any())
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, terrariumImages);
 
-        public async Task<IBusinessResult> UpdateTerrariumImageAsync(TerrariumImageUpdateRequest terrariumImageUpdateRequest)
+        return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG,
+            "No images found for the given AccessoryId.");
+    }
+
+    public async Task<IBusinessResult> UpdateTerrariumImageAsync(int terrariumImageId, IFormFile? newImageFile)
+    {
+        try
         {
-            try
+            var existing = await _unitOfWork.TerrariumImage.GetByIdAsync(terrariumImageId);
+            if (existing == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium image not found.");
+
+            var newUrl = existing.ImageUrl;
+
+            if (newImageFile != null)
             {
-                var result = -1;
-                var terraImage = await _unitOfWork.TerrariumImage.GetByIdAsync(terrariumImageUpdateRequest.TerrariumImageId);
-                if(terraImage != null)
+                // Fix for CS0029: Extract the URL from the IBusinessResult returned by UploadImageAsync
+                var uploadResult =
+                    await _cloudinaryService.UploadImageAsync(newImageFile, $"terrariums/{terrariumImageId}",
+                        string.Empty);
+                if (uploadResult.Status == Const.SUCCESS_UPLOAD_CODE && uploadResult.Data is string uploadedUrl)
                 {
-                    _unitOfWork.TerrariumImage.Context().Entry(terraImage).CurrentValues.SetValues(terrariumImageUpdateRequest);
-                    result = await _unitOfWork.TerrariumImage.UpdateAsync(terraImage);
-                    if(result > 0)
-                    {
-                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, terraImage);
-                    }
-                    return new BusinessResult(Const.FAIL_UPDATE_CODE,Const.FAIL_UPDATE_MSG);
+                    newUrl = uploadedUrl;
+
+                    // Delete the old image if necessary
+                    if (!string.IsNullOrEmpty(existing.ImageUrl))
+                        await _cloudinaryService.DeleteImageAsync(existing.ImageUrl);
+                    existing.ImageUrl = newUrl;
                 }
-                return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "Terrarium image not found.");
-            }
-            catch (Exception ex) 
-            {
-                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
-            }
-        }
-        
-
-        public async Task<IBusinessResult> DeleteTerrariumImageAsync(int environmentId)
-        {
-            var result = await _unitOfWork.TerrariumImage.GetByIdAsync(environmentId);
-            if(result != null)
-            {
-                var deleteResult = await _unitOfWork.TerrariumImage.RemoveAsync(result);
-                if(deleteResult)
+                else
                 {
-                    return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
+                    return new BusinessResult(Const.FAIL_UPLOAD_CODE, "Failed to upload new image.");
                 }
-                return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
             }
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG, "Terrarium image not found.");
+
+            var result = await _unitOfWork.TerrariumImage.UpdateAsync(existing);
+            if (result > 0)
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, existing);
+
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
         }
-
-        public async Task<IBusinessResult> CreateTerrariumImageAsync(TerrariumImageCreateRequest terrariumImageCreateRequest)
+        catch (Exception ex)
         {
-            try
-            {
-                var terraImage = new TerrariumImage
-                {
-                    TerrariumId = terrariumImageCreateRequest.TerrariumId,
-                    ImageUrl = terrariumImageCreateRequest.ImageUrl,
-                    AltText = terrariumImageCreateRequest.AltText,
-                    IsPrimary = terrariumImageCreateRequest.IsPrimary ?? false
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
 
+
+    public async Task<IBusinessResult> CreateTerrariumImageAsync(IFormFile imageFile, int terrariumId)
+    {
+        if (imageFile == null || imageFile.Length == 0)
+            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image file is required.");
+
+        try
+        {
+            // Upload image to Cloudinary and get the result (UploadResult)
+            var imageUrl =
+                await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}",
+                    terrariumId.ToString());
+
+            // Check if the upload was successful
+            if (imageUrl == null ||
+                string.IsNullOrEmpty(imageUrl.ToString())) // Fix: Ensure imageUrl is treated as a string
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary up image fail");
+
+            // Create new TerrariumImage object
+            var terraImage = new TerrariumImage
+            {
+                TerrariumId = terrariumId,
+                ImageUrl = imageUrl.ToString() // Fix: Convert imageUrl to string explicitly
+            };
+
+            // Save the new image into the database
+            var result = await _unitOfWork.TerrariumImage.CreateAsync(terraImage);
+            if (result > 0)
+                return new BusinessResult
+                {
+                    Status = 1,
+                    Message = "Image created successfully.",
+                    Data = imageUrl.ToString() // Fix: Ensure Data contains the string representation of imageUrl
                 };
-                var result = await _unitOfWork.TerrariumImage.CreateAsync(terraImage);
-                if (result > 0)
-                {
-                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, terraImage);
-                }
-                return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
-            }
-            catch (Exception ex)
+
+            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed.");
+        }
+        catch (Exception ex)
+        {
+            // Return exception message if an error occurred
+            return new BusinessResult(Const.FAIL_CREATE_CODE, ex.Message);
+        }
+    }
+
+
+    public async Task<IBusinessResult> DeleteTerrariumImageAsync(int imageId)
+    {
+        var image = await _unitOfWork.TerrariumImage.GetByIdAsync(imageId);
+        if (image == null)
+            return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium image not found.");
+
+        try
+        {
+            // Xóa ảnh khỏi cơ sở dữ liệu
+            var deleted = await _unitOfWork.TerrariumImage.RemoveAsync(image);
+            if (deleted)
             {
-                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+                // Xoá ảnh trong Cloudinary (nếu có URL)
+                if (!string.IsNullOrEmpty(image.ImageUrl))
+                    await _cloudinaryService.DeleteImageAsync(image.ImageUrl);
+
+                return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
             }
+
+            return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
 }

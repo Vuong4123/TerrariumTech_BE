@@ -1,11 +1,9 @@
 using TerrariumGardenTech.Repositories.Enums;
 
-namespace TerrariumGardenTech.Service.IService
-{
-    public interface IUserContextService
-    {
+namespace TerrariumGardenTech.Service.IService;
 
-        public int GetCurrentUser();
-        RoleStatus GetCurrentUserRole();
-    }
+public interface IUserContextService
+{
+    public int GetCurrentUser();
+    RoleStatus GetCurrentUserRole();
 }

@@ -1,27 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TerrariumGardenTech.Common\TerrariumGardenTech.Common.csproj" />
-    <ProjectReference Include="..\TerrariumGardenTech.Repositories\TerrariumGardenTech.Repositories.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\TerrariumGardenTech.Common\TerrariumGardenTech.Common.csproj"/>
+        <ProjectReference Include="..\TerrariumGardenTech.Repositories\TerrariumGardenTech.Repositories.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="FirebaseAdmin" Version="3.2.0" />
-    <PackageReference Include="Google.Apis" Version="1.70.0" />
-    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.68.0.1869" />
-    <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0" />
-    <PackageReference Include="MailKit" Version="4.13.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.6" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.7" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="CloudinaryDotNet" Version="1.27.6"/>
+        <PackageReference Include="FirebaseAdmin" Version="3.2.0"/>
+        <PackageReference Include="Google.Apis" Version="1.70.0"/>
+        <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.68.0.1869"/>
+        <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0"/>
+        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0"/>
+        <PackageReference Include="MailKit" Version="4.13.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.7"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1"/>
+    </ItemGroup>
 
 </Project>
