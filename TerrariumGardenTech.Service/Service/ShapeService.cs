@@ -1,9 +1,11 @@
-using System;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Shape;
+
+namespace TerrariumGardenTech.Service.Service;
 
 public class ShapeService : IShapeService
 {
@@ -154,21 +156,21 @@ public class ShapeService : IShapeService
 
     }
 
-        // else
-        // {
-        //     var result = await _unitOfWork.Shape.RemoveAsync(shape);
-        //     if (result)
-        //     {
-        //         return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, result);
-        //     }
-        //     else
-        //     {
-        //         return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
-        //     }
-        // }
-    }
+    // else
+    // {
+    //     var result = await _unitOfWork.Shape.RemoveAsync(shape);
+    //     if (result)
+    //     {
+    //         return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, result);
+    //     }
+    //     else
+    //     {
+    //         return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
+    //     }
+    // }
+}
 
-    //private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
+//private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
     //{
     //    // Xóa các đối tượng liên quan đến Terrarium
     //    var terrariumShapes = await _unitOfWork.TerrariumShape.GetTerrariumShapesByTerrariumIdAsync(terrarium.TerrariumId);

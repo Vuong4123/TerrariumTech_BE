@@ -5,8 +5,6 @@ using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.MemberShip;
-using TerrariumGardenTech.Service.RequestModel.MemberShip.TerrariumGardenTech.Service.RequestModel.MemberShip;
-using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controllers
 {
