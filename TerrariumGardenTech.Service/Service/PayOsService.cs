@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using System.Security.Cryptography;
+using System.Text;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Net.payOS;
@@ -14,11 +16,11 @@ namespace TerrariumGardenTech.Service.Service;
 
 public class PayOsService : IPayOsService
 {
-    private readonly PayOS _payOS;
-    private readonly UnitOfWork _unitOfWork;
     private readonly IConfiguration _config;
     private readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly IMapper _mapper;
+    private readonly PayOS _payOS;
+    private readonly UnitOfWork _unitOfWork;
 
     public PayOsService(IHttpContextAccessor httpContextAccessor,
         UnitOfWork unitOfWork, IConfiguration config, IMapper mapper)
@@ -59,13 +61,13 @@ public class PayOsService : IPayOsService
         var signature = CreateHmacSha256(signatureData, _config["PayOS:ChecksumKey"]);
 
         var paymentLinkRequest = new PaymentData(
-            orderCode: orderCode,
-            amount: amount,
+            orderCode,
+            amount,
             description,
-            items: itemDatas,
+            itemDatas,
             returnUrl: successReturnUrl,
             cancelUrl: failReturnUrl,
-            expiredAt: (int)(DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds()),
+            expiredAt: (int)DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds(),
             signature: signature
         );
         var response = await _payOS.createPaymentLink(paymentLinkRequest);
@@ -93,9 +95,9 @@ public class PayOsService : IPayOsService
 
     private static string CreateHmacSha256(string data, string? key)
     {
-        using (var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(key)))
+        using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key)))
         {
-            var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(data));
+            var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
     }

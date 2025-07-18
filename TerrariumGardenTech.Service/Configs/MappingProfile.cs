@@ -10,9 +10,9 @@ public class MappingProfile : Profile
     {
         OrderMapping();
     }
+
     private void OrderMapping()
     {
         CreateMap<Order, OrderResponse>().ReverseMap();
     }
-
 }

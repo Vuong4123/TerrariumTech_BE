@@ -9,5 +9,5 @@ public class PaymentReturnModel
 public enum PaymentReturnModelStatus
 {
     Success,
-    Fail,
+    Fail
 }
