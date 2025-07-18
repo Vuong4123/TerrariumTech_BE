@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250718064029_DB187")]
+    partial class DB187
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -317,73 +320,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasName("PK__BlogCate__60848B8FC9999236");
 
                     b.ToTable("BlogCategory", (string)null);
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Cart", b =>
-                {
-                    b.Property<int>("CartId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("CartId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Carts");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.CartItem", b =>
-                {
-                    b.Property<int>("CartItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartItemId"));
-
-                    b.Property<int?>("AccessoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TerrariumVariantId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("CartItemId");
-
-                    b.HasIndex("AccessoryId");
-
-                    b.HasIndex("CartId");
-
-                    b.HasIndex("TerrariumVariantId");
-
-                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Category", b =>
@@ -1467,40 +1403,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Cart", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.CartItem", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Accessory", "Accessory")
-                        .WithMany()
-                        .HasForeignKey("AccessoryId");
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Cart", "Cart")
-                        .WithMany("CartItems")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.TerrariumVariant", "TerrariumVariant")
-                        .WithMany()
-                        .HasForeignKey("TerrariumVariantId");
-
-                    b.Navigation("Accessory");
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("TerrariumVariant");
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Feedback", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.OrderItem", "OrderItem")
@@ -1795,11 +1697,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.BlogCategory", b =>
                 {
                     b.Navigation("Blogs");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Cart", b =>
-                {
-                    b.Navigation("CartItems");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Category", b =>
