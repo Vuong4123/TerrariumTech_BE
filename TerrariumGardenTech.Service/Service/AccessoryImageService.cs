@@ -4,6 +4,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.AccessoryImage;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -28,34 +29,38 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
             return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
         }
 
-    public async Task<IBusinessResult> UpdateAccessory(int accessoryImageId, IFormFile? newImageFile)
+    public async Task<IBusinessResult> UpdateAccessoryImage(AccessoryImageUploadUpdateRequest request)
     {
         try
         {
-            var existing = await _unitOfWork.AccessoryImage.GetByIdAsync(accessoryImageId);
+            var existing = await _unitOfWork.AccessoryImage.GetByIdAsync(request.AccessoryImageId);
             if (existing == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "Accessory image not found.");
 
-            var newUrl = existing.ImageUrl;
+            // Cập nhật AccessoryId nếu có field này trong DB
+            existing.AccessoryId = request.AccessoryId;
 
-            if (newImageFile != null)
+            if (request.ImageFile != null)
             {
-                // Fix for CS0029: Extract the URL from the IBusinessResult returned by UploadImageAsync
-                var uploadResult = await _cloudinaryService.UploadImageAsync(newImageFile,
-                    $"terrariums/{accessoryImageId}", string.Empty);
-                if (uploadResult.Status == Const.SUCCESS_UPLOAD_CODE && uploadResult.Data is string uploadedUrl)
+                var uploadResult = await _cloudinaryService.UploadImageAsync(
+                    request.ImageFile,
+                    $"accessories/{request.AccessoryId}", // đường dẫn lưu ảnh
+                    null
+                );
+
+                if (uploadResult.Status == Const.SUCCESS_CREATE_CODE && uploadResult.Data is string uploadedUrl)
                 {
-                    newUrl = uploadedUrl;
-
-                    // Delete the old image if necessary
+                    // Xoá ảnh cũ nếu có
                     if (!string.IsNullOrEmpty(existing.ImageUrl))
+                    {
                         await _cloudinaryService.DeleteImageAsync(existing.ImageUrl);
+                    }
 
-                    existing.ImageUrl = newUrl;
+                    existing.ImageUrl = uploadedUrl;
                 }
                 else
                 {
-                    return new BusinessResult(Const.FAIL_UPLOAD_CODE, "Failed to upload new image.");
+                    return new BusinessResult(Const.FAIL_UPLOAD_CODE, "Upload ảnh mới thất bại.");
                 }
             }
 
@@ -71,7 +76,7 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         }
     }
 
-    public async Task<IBusinessResult> CreateAccessory(IFormFile imageFile, int accessoryId)
+    public async Task<IBusinessResult> CreateAccessoryImage(IFormFile imageFile, int accessoryId)
     {
         if (imageFile == null || imageFile.Length == 0)
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Image file is required.");
@@ -88,14 +93,14 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
                 return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary up image fail");
 
             // Create new AccessoryImage object
-            var terraImage = new AccessoryImage
+            var accessImage = new AccessoryImage
             {
                 AccessoryId = accessoryId,
                 ImageUrl = imageUrl.ToString() // Fix: Convert imageUrl to string explicitly
             };
 
             // Save the new image into the database
-            var result = await _unitOfWork.AccessoryImage.CreateAsync(terraImage);
+            var result = await _unitOfWork.AccessoryImage.CreateAsync(accessImage);
             if (result > 0)
                 return new BusinessResult
                 {
