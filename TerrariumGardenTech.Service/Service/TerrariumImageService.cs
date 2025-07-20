@@ -94,20 +94,20 @@ public class TerrariumImageService : ITerrariumImageService
         try
         {
             // Upload image to Cloudinary and get the result (UploadResult)
-            var imageUrl =
+            var res_imageUrl =
                 await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}",
                     terrariumId.ToString());
 
             // Check if the upload was successful
-            if (imageUrl == null ||
-                string.IsNullOrEmpty(imageUrl.ToString())) // Fix: Ensure imageUrl is treated as a string
+            if (res_imageUrl.Data == null ||
+                string.IsNullOrEmpty(res_imageUrl.ToString())) // Fix: Ensure res_imageUrl is treated as a string
                 return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary up image fail");
 
             // Create new TerrariumImage object
             var terraImage = new TerrariumImage
             {
                 TerrariumId = terrariumId,
-                ImageUrl = imageUrl.ToString() // Fix: Convert imageUrl to string explicitly
+                ImageUrl = res_imageUrl.Data?.ToString() // Fix: Convert imageUrl to string explicitly
             };
 
             // Save the new image into the database
@@ -117,7 +117,7 @@ public class TerrariumImageService : ITerrariumImageService
                 {
                     Status = 1,
                     Message = "Image created successfully.",
-                    Data = imageUrl.ToString() // Fix: Ensure Data contains the string representation of imageUrl
+                    Data = terraImage
                 };
 
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed.");

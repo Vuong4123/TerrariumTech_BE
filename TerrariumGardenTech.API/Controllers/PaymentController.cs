@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Payment;
 
@@ -6,6 +7,7 @@ namespace TerrariumGardenTech.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[AllowAnonymous]
 public class PaymentController : ControllerBase
 {
     private readonly IPayOsService _payOsService;
@@ -16,14 +18,14 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet("callback")]
-    public async Task<IActionResult> ProcessPaymentCallback([FromQuery] PaymentReturnModel response)
+    public async Task<IActionResult> ProcessPaymentFromPayOsCallback([FromQuery] PaymentReturnModel response)
     {
         await _payOsService.ProcessPaymentCallback(response);
         return Redirect("trang-cam-on");
     }
 
     [HttpPost]
-    public async Task<IActionResult> TestPayOs([FromBody] PaymentCreateRequest request)
+    public async Task<IActionResult> CreatePaymentFromPayOsLink([FromBody] PaymentCreateRequest request)
     {
         var msg = await _payOsService.CreatePaymentLink(request.OrderId, request.Description);
         return Ok(msg);
