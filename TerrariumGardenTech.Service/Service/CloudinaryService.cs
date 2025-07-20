@@ -13,15 +13,12 @@ public class CloudinaryService : ICloudinaryService
 {
     private readonly Cloudinary _cloudinary;
 
-    public CloudinaryService(IConfiguration configuration)
+    public CloudinaryService()
     {
-        var cloudinarySettings = configuration.GetSection("CloudinarySettings");
-        var account = new Account(
-            cloudinarySettings["CloudName"],
-            cloudinarySettings["ApiKey"],
-            cloudinarySettings["ApiSecret"]
-        );
-        _cloudinary = new Cloudinary(account);
+        var cloudinaryUrl = Environment.GetEnvironmentVariable("CLOUDINARY_URL");
+        var cloudinary = new Cloudinary(cloudinaryUrl);
+        cloudinary.Api.Secure = true;
+        _cloudinary = cloudinary;
     }
 
     // Upload ảnh lên Cloudinary
