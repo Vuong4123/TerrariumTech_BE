@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -40,9 +41,9 @@ public class TerrariumImageController : ControllerBase
 
     // POST api/<TerrariumImageController>
     [HttpPost("upload")]
-    public async Task<IBusinessResult> Post([FromQuery] int terrariumId, IFormFile imageFile)
+    public async Task<IBusinessResult> Post([FromForm] TerrariumImageUploadRequest request)
     {
-        return await _terrariumImageService.CreateTerrariumImageAsync(imageFile, terrariumId);
+        return await _terrariumImageService.CreateTerrariumImageAsync(request.ImageFile, request.TerrariumId);
     }
 
     // PUT api/<TerrariumImageController>/5
