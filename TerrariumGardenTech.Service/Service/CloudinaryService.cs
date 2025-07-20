@@ -66,11 +66,17 @@ public class CloudinaryService : ICloudinaryService
 
         try
         {
-            var publicId = imageUrl.Split('/').Last().Split('.').First(); // Lấy publicId từ URL
+            // Phân tích URL để lấy publicId chính xác
+            var uri = new Uri(imageUrl);
+            var segments = uri.AbsolutePath.Split('/');
+            var folder = segments[^2]; // lấy 'blog_images'
+            var fileName = Path.GetFileNameWithoutExtension(segments[^1]); // lấy 'abc123'
+            var publicId = $"{folder}/{fileName}"; // publicId = blog_images/abc123
+
             var deleteParams = new DeletionParams(publicId);
             var deleteResult = await _cloudinary.DestroyAsync(deleteParams);
 
-            if (deleteResult.StatusCode == HttpStatusCode.OK)
+            if (deleteResult.Result == "ok") // hoặc check StatusCode nếu cần
                 return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
 
             return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete image from Cloudinary.");
