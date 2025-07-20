@@ -105,6 +105,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IAccessoryImageService, AccessoryImageService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IPayOsService, PayOsService>();
 
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
