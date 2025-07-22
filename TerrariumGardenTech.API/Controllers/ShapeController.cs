@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.RequestModel.Shape;
+using TerrariumGardenTech.Common.ResponseModel.Shape;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Shape;
-using TerrariumGardenTech.Service.ResponseModel.Shape;
 
 namespace TerrariumGardenTech.API.Controllers;
 

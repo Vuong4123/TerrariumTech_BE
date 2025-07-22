@@ -1,5 +1,5 @@
-﻿using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Auth;
+﻿using TerrariumGardenTech.Common.RequestModel.Auth;
+using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService;
 

@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
-using TerrariumGardenTech.Repositories.Enums;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.Service.Service;

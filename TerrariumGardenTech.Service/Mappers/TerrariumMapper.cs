@@ -1,5 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.ResponseModel.Terrarium;
+﻿using TerrariumGardenTech.Common.ResponseModel.Terrarium;
+using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.Mappers;
 

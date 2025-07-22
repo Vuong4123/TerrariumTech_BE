@@ -20,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\TerrariumGardenTech.Service\TerrariumGardenTech.Service.csproj"/>
+      <ProjectReference Include="..\TerrariumGardenTech.Service\TerrariumGardenTech.Service.csproj" />
     </ItemGroup>
 
 </Project>

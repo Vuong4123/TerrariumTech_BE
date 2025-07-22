@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.MemberShip;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.MemberShip;
 
 namespace TerrariumGardenTech.API.Controllers;
 
