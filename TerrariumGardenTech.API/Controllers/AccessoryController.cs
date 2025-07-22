@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Accessory;
-using TerrariumGardenTech.Service.ResponseModel.Accessory;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

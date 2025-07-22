@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common.RequestModel.AccessoryImage;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.AccessoryImage;
-using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

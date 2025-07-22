@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common.RequestModel.TerrariumVariant;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.TerrariumVariant;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -32,12 +32,14 @@ public class TerrariumVariantController : ControllerBase
     {
         return await _terrariumVariantService.GetTerrariumVariantByIdAsync(id);
     }
+
     // GET api/<TerrariumVariantController>/5
     [HttpGet("get-VariantByTerrarium-{id}")]
     public async Task<IBusinessResult> GetByTerrariumId(int id)
     {
         return await _terrariumVariantService.GetAllVariantByTerrariumIdAsync(id);
     }
+
     // POST api/<TerrariumVariantController>
     [HttpPost("create-terrariumVariant")]
     public async Task<IBusinessResult> Post([FromBody] TerrariumVariantCreateRequest terrariumVariantCreateRequest)

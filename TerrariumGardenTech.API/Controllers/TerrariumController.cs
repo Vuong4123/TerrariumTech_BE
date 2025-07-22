@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Terrarium;
-using TerrariumGardenTech.Service.ResponseModel.Terrarium;
 
 // using TerrariumGardenTech.Service.Service;
 
@@ -27,9 +25,9 @@ public class TerrariumController : ControllerBase
 
     // GET: api/<TerrariumController>
     [HttpGet("get-all")]
-    public async Task<IBusinessResult> Get()
+    public async Task<IBusinessResult> Get([FromQuery] TerrariumGetAllRequest request)
     {
-        return await _terrariumService.GetAll();
+        return await _terrariumService.GetAll(request);
     }
 
     [HttpGet("filter")]
@@ -44,7 +42,7 @@ public class TerrariumController : ControllerBase
     [HttpGet("get-{id}")]
     public async Task<IBusinessResult> GetById(int id)
     {
-        return await _terrariumService.GetById(id);       
+        return await _terrariumService.GetById(id);
     }
 
     // POST api/<TerrariumController>

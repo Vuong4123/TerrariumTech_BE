@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Enums;
+using TerrariumGardenTech.Common.RequestModel.UserManagement;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Enums;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.UserManagement;
 
 namespace TerrariumGardenTech.Service.Service;
 

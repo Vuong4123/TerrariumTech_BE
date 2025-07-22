@@ -1,10 +1,10 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Notification;
+using TerrariumGardenTech.Common.ResponseModel.Notification;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Notification;
-using TerrariumGardenTech.Service.ResponseModel.Notification;
 
 namespace TerrariumGardenTech.Service.Service;
 
