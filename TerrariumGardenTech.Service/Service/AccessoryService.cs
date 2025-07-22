@@ -1,10 +1,10 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Accessory;
+using TerrariumGardenTech.Common.ResponseModel.Accessory;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Accessory;
-using TerrariumGardenTech.Service.ResponseModel.Accessory;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -50,6 +50,7 @@ public class AccessoryService : IAccessoryService
 
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
+
     // Lấy tất cả Accessory
     public async Task<IBusinessResult> GetAllDetail()
     {
@@ -62,7 +63,7 @@ public class AccessoryService : IAccessoryService
                 AccessoryId = a.AccessoryId,
                 Name = a.Name,
                 Description = a.Description,
-                Price = (decimal)a.Price, // Default nếu UpdatedAt là null
+                Price = (decimal)a.Price // Default nếu UpdatedAt là null
             }).ToList();
 
             return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
@@ -273,7 +274,6 @@ public class AccessoryService : IAccessoryService
         }
     }
 
-    
 
     private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
     {

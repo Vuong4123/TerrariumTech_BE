@@ -16,8 +16,4 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\TerrariumGardenTech.Repositories\TerrariumGardenTech.Repositories.csproj"/>
-    </ItemGroup>
-
 </Project>

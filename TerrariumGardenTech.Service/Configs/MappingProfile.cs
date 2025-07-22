@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.ResponseModel.Order;
+using Google.Cloud.Firestore.V1;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 
 namespace TerrariumGardenTech.Service.Configs;
 
@@ -13,6 +13,6 @@ public class MappingProfile : Profile
 
     private void OrderMapping()
     {
-        CreateMap<Order, OrderResponse>().ReverseMap();
+        CreateMap<StructuredQuery.Types.Order, OrderResponse>().ReverseMap();
     }
 }
