@@ -29,6 +29,7 @@ public class CloudinaryService : ICloudinaryService
 
         try
         {
+            // Tạo đối tượng UploadParams
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(file.FileName, file.OpenReadStream()),
@@ -36,25 +37,27 @@ public class CloudinaryService : ICloudinaryService
                 PublicId = publicId
             };
 
+            // Gọi Cloudinary để tải lên
             var uploadResult = await _cloudinary.UploadAsync(uploadParams);
 
-            // Check if the upload was successful
-            if (uploadResult.StatusCode == HttpStatusCode.OK)
-                // Return success result with image URL
+            // Kiểm tra kết quả upload
+            if (uploadResult?.StatusCode == HttpStatusCode.OK && uploadResult.SecureUrl != null)
+            {
                 return new BusinessResult
                 {
                     Status = Const.SUCCESS_CREATE_CODE,
                     Message = "Image uploaded successfully",
-                    Data = uploadResult.SecureUrl.ToString()
+                    Data = uploadResult.SecureUrl.ToString()  // Trả về URL hình ảnh đã upload
                 };
+            }
 
-            // Return failure result if the upload failed
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed.");
+            // Nếu upload thất bại, trả về thông báo lỗi chi tiết
+            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed. Please check Cloudinary configuration or try again later.");
         }
         catch (Exception ex)
         {
-            // Return exception message if an error occurred
-            return new BusinessResult(Const.FAIL_CREATE_CODE, ex.Message);
+            // Trả về lỗi chi tiết khi xảy ra exception
+            return new BusinessResult(Const.FAIL_CREATE_CODE, $"An error occurred: {ex.Message}");
         }
     }
 

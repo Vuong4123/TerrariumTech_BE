@@ -4,6 +4,7 @@ using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.RequestModel.Accessory;
+using TerrariumGardenTech.Service.ResponseModel.Accessory;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -17,21 +18,115 @@ public class AccessoryService : IAccessoryService
     }
 
 
+    // Lấy tất cả Accessory
     public async Task<IBusinessResult> GetAll()
     {
-        var accessoryList = await _unitOfWork.Accessory.GetAllAsync();
+        var accessoryList = await _unitOfWork.Accessory.GetAllWithImagesAsync();
         if (accessoryList != null && accessoryList.Any())
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryList);
+        {
+            // Ánh xạ từ Accessory sang AccessoryResponse
+            var accessories = accessoryList.Select(a => new AccessoryResponse
+            {
+                AccessoryId = a.AccessoryId,
+                Name = a.Name,
+                Size = a.Size,
+                Description = a.Description,
+                Price = (decimal)a.Price,
+                StockQuantity = a.StockQuantity,
+                Status = a.Status,
+                CategoryId = a.CategoryId,
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue, // Default nếu CreatedAt là null
+                UpdatedAt = a.UpdatedAt ?? DateTime.MinValue, // Default nếu UpdatedAt là null
+                AccessoryImages = a.AccessoryImages.Select(ai => new AccessoryImageResponse
+                {
+                    AccessoryImageId = ai.AccessoryImageId,
+                    ImageUrl = ai.ImageUrl,
+                    AccessoryId = ai.AccessoryId
+                }).ToList()
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
+        }
+
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+    }
+    // Lấy tất cả Accessory
+    public async Task<IBusinessResult> GetAllDetail()
+    {
+        var accessoryList = await _unitOfWork.Accessory.GetAllWithImagesAsync();
+        if (accessoryList != null && accessoryList.Any())
+        {
+            // Ánh xạ từ Accessory sang AccessoryResponse
+            var accessories = accessoryList.Select(a => new AccessoryDetailResponse
+            {
+                AccessoryId = a.AccessoryId,
+                Name = a.Name,
+                Description = a.Description,
+                Price = (decimal)a.Price, // Default nếu UpdatedAt là null
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
+        }
 
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
 
+    // Lấy Accessory theo ID
     public async Task<IBusinessResult> GetById(int id)
     {
-        var accessory = await _unitOfWork.Accessory.GetByIdAsync(id);
-        if (accessory != null) return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessory);
+        var accessory = await _unitOfWork.Accessory.GetAccessoryWithImagesByIdAsync(id);
+        if (accessory != null)
+        {
+            var accessoryResponse = new AccessoryResponse
+            {
+                AccessoryId = accessory.AccessoryId,
+                Name = accessory.Name,
+                Size = accessory.Size,
+                Description = accessory.Description,
+                Price = (decimal)accessory.Price,
+                StockQuantity = accessory.StockQuantity,
+                Status = accessory.Status,
+                CategoryId = accessory.CategoryId,
+                CreatedAt = accessory.CreatedAt ?? DateTime.MinValue,
+                UpdatedAt = accessory.UpdatedAt ?? DateTime.MinValue,
+                AccessoryImages = accessory.AccessoryImages.Select(ai => new AccessoryImageResponse
+                {
+                    AccessoryImageId = ai.AccessoryImageId,
+                    ImageUrl = ai.ImageUrl,
+                    AccessoryId = ai.AccessoryId
+                }).ToList()
+            };
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryResponse);
+        }
 
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+    }
+
+    // Lọc Accessory theo CategoryId
+    public async Task<IBusinessResult> FilterAccessoryAsync(int? categoryId)
+    {
+        var accessories = await _unitOfWork.Accessory.FilterAccessoryAsync(categoryId);
+        if (accessories != null && accessories.Any())
+        {
+            var accessoriesResponse = accessories.Select(a => new AccessoryResponse
+            {
+                AccessoryId = a.AccessoryId,
+                Name = a.Name,
+                Size = a.Size,
+                Description = a.Description,
+                Price = (decimal)a.Price,
+                StockQuantity = a.StockQuantity,
+                Status = a.Status,
+                CategoryId = a.CategoryId,
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue,
+                UpdatedAt = a.UpdatedAt ?? DateTime.MinValue
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoriesResponse);
+        }
+
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessories matched the given filter.");
     }
 
     public async Task<IBusinessResult> Save(Accessory accessory)
@@ -67,20 +162,21 @@ public class AccessoryService : IAccessoryService
             await _unitOfWork.Category.AnyAsync(c => c.CategoryId == accessoryCreateRequest.CategoryId);
 
         if (!categoryExists) return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
+
         var accessory = new Accessory
         {
             Name = accessoryCreateRequest.Name,
             Size = accessoryCreateRequest.Size,
             Description = accessoryCreateRequest.Description,
             Price = accessoryCreateRequest.Price,
-            StockQuantity = accessoryCreateRequest.Stock,
+            StockQuantity = accessoryCreateRequest.StockQuantity,
             CategoryId = accessoryCreateRequest.CategoryId,
             CreatedAt = accessoryCreateRequest.CreatedAt ?? DateTime.Now,
             UpdatedAt = accessoryCreateRequest.UpdatedAt ?? DateTime.Now,
             Status = accessoryCreateRequest.Status
         };
         var result = await _unitOfWork.Accessory.CreateAsync(accessory);
-        if (result > 0) return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, accessory);
+        if (result > 0) return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
 
         return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
     }
@@ -89,17 +185,36 @@ public class AccessoryService : IAccessoryService
     {
         try
         {
+            // Check if the Category exists
             var categoryExists =
                 await _unitOfWork.Category.AnyAsync(c => c.CategoryId == accessoryUpdateRequest.CategoryId);
 
             if (!categoryExists) return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
+
             var result = -1;
+
+            // Fetch the existing accessory
             var access = await _unitOfWork.Accessory.GetByIdAsync(accessoryUpdateRequest.AccessoryId);
+
             if (access != null)
             {
-                _unitOfWork.Accessory.Context().Entry(access).CurrentValues.SetValues(accessoryUpdateRequest);
+                // Update the accessory values, including UpdatedAt
+                access.Name = accessoryUpdateRequest.Name;
+                access.Size = accessoryUpdateRequest.Size;
+                access.Description = accessoryUpdateRequest.Description;
+                access.Price = accessoryUpdateRequest.Price;
+                access.StockQuantity = accessoryUpdateRequest.StockQuantity;
+                access.CategoryId = accessoryUpdateRequest.CategoryId;
+                access.Status = accessoryUpdateRequest.Status;
+
+                // Set UpdatedAt to the value from the request or the current timestamp
+                access.UpdatedAt = accessoryUpdateRequest.UpdatedAt ?? DateTime.Now;
+
+                // Perform the update in the database
                 result = await _unitOfWork.Accessory.UpdateAsync(access);
-                if (result > 0) return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, access);
+
+                if (result > 0)
+                    return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG);
 
                 return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
             }
@@ -158,13 +273,7 @@ public class AccessoryService : IAccessoryService
         }
     }
 
-    public async Task<IBusinessResult> FilterAccessoryAsync(int? categoryId)
-    {
-        var accessories = await _unitOfWork.Accessory.FilterAccessoryAsync(categoryId);
-        if (accessories != null && accessories.Any())
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No terrariums matched the given filter.");
-    }
+    
 
     private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
     {
