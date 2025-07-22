@@ -23,7 +23,9 @@ public class TerrariumRepository : GenericRepository<Terrarium>
 
         if (tankMethodId.HasValue) query = query.Where(t => t.TankMethodId == tankMethodId.Value);
 
-        return await query.ToListAsync();
+        return await query
+                .Include(t => t.TerrariumImages)  // Nạp dữ liệu TerrariumImages
+                .ToListAsync();
     }
 
     public async Task<IEnumerable<Terrarium>> GetAllByTankMethodIdAsync(int tankMethodId)
@@ -46,7 +48,25 @@ public class TerrariumRepository : GenericRepository<Terrarium>
             .Where(t => t.EnvironmentId == environmentId)
             .ToListAsync();
     }
+    // Nạp dữ liệu Terrarium cùng với ảnh (TerrariumImages)
+    public async Task<IEnumerable<Terrarium>> GetAllWithImagesAsync()
+    {
+        return await _dbContext.Terrariums
+            .Include(t => t.TerrariumImages) // Nạp dữ liệu TerrariumImages
+            .ToListAsync();
+    }
+    // Lấy dữ liệu Terrarium theo ID kèm theo hình ảnh
+    public async Task<Terrarium> GetTerrariumWithImagesByIdAsync(int id)
+    {
+        // Sử dụng Include để nạp dữ liệu TerrariumImages liên quan
+        return await _dbContext.Terrariums
+            .Include(t => t.TerrariumImages) // Nạp dữ liệu TerrariumImages
+            .Include(t => t.TerrariumAccessory)  // Nạp dữ liệu Accessory liên quan
+                .ThenInclude(ta => ta.Accessory)  // Nạp dữ liệu Accessory
+            .FirstOrDefaultAsync(t => t.TerrariumId == id); // Tìm theo ID// Lọc theo TerrariumId
+    }
 
+    // Lấy danh sách Terrarium theo danh sách ID để delete theo accessory
     public async Task<List<Terrarium>> GetTerrariumByIdsAsync(List<int> terrariumIds)
     {
         return await _dbContext
