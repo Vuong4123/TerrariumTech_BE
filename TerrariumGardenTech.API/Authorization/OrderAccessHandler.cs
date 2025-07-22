@@ -15,11 +15,11 @@ public class OrderAccessHandler
     }
 
     protected override async Task HandleRequirementAsync(
-        AuthorizationHandlerContext context,
-        OrderAccessRequirement requirement,
-        int orderId)
+    AuthorizationHandlerContext context,
+    OrderAccessRequirement requirement,
+    int orderId)
     {
-        // 1) Vai trò đặc quyền
+        // 1) Kiểm tra các vai trò đặc quyền
         if (context.User.IsInRole("Admin") ||
             context.User.IsInRole("Manager") ||
             context.User.IsInRole("Staff") ||
@@ -29,11 +29,16 @@ public class OrderAccessHandler
             return;
         }
 
-        // 2) Kiểm tra chủ sở hữu
-        var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var order = await _repo.GetByIdAsync(orderId);
+        // 2) Kiểm tra chủ sở hữu (chỉ áp dụng cho các vai trò không phải Shipper)
+        if (!context.User.IsInRole("Shipper"))
+        {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var order = await _repo.GetByIdAsync(orderId);
 
-        if (order is not null && order.UserId == userId)
-            context.Succeed(requirement);
+            if (order is not null && order.UserId == userId)
+                context.Succeed(requirement);
+        }
     }
+
+
 }

@@ -131,7 +131,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(opt =>
 {
     opt.AddPolicy("Order.ReadAll",
-        p => p.RequireRole("Staff", "Manager", "Admin"));
+        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper")); // Thêm "Shipper" vào đây
 
     opt.AddPolicy("Order.UpdateStatus",
         p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
@@ -142,6 +142,7 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("Order.AccessSpecific",
         p => p.AddRequirements(new OrderAccessRequirement())); // resource-based
 });
+
 
 // Handler DI
 builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();
