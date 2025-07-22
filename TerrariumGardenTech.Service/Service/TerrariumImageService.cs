@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.TerrariumImage;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -42,37 +43,41 @@ public class TerrariumImageService : ITerrariumImageService
             "No images found for the given AccessoryId.");
     }
 
-    public async Task<IBusinessResult> UpdateTerrariumImageAsync(int terrariumImageId, IFormFile? newImageFile)
+    public async Task<IBusinessResult> UpdateTerrariumImageAsync(TerrariumImageUploadUpdateRequest request)
     {
         try
         {
-            var existing = await _unitOfWork.TerrariumImage.GetByIdAsync(terrariumImageId);
+            var existing = await _unitOfWork.TerrariumImage.GetByIdAsync(request.TerrariumImageId);
             if (existing == null)
-                return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium image not found.");
+                return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy ảnh Terrarium.");
 
-            var newUrl = existing.ImageUrl;
+            // Cập nhật TerrariumId nếu cần
+            existing.TerrariumId = request.TerrariumId;
 
-            if (newImageFile != null)
+            // Nếu có ảnh mới thì xử lý upload
+            if (request.ImageFile != null)
             {
-                // Fix for CS0029: Extract the URL from the IBusinessResult returned by UploadImageAsync
-                var uploadResult =
-                    await _cloudinaryService.UploadImageAsync(newImageFile, $"terrariums/{terrariumImageId}",
-                        string.Empty);
-                if (uploadResult.Status == Const.SUCCESS_UPLOAD_CODE && uploadResult.Data is string uploadedUrl)
-                {
-                    newUrl = uploadedUrl;
+                // Upload ảnh mới lên Cloudinary
+                var uploadResult = await _cloudinaryService.UploadImageAsync(
+                    request.ImageFile,
+                    $"terrariums/{request.TerrariumId}" // publicId optional
+                );
 
-                    // Delete the old image if necessary
+                if (uploadResult.Status == Const.SUCCESS_CREATE_CODE && uploadResult.Data is string uploadedUrl)
+                {
+                    // Xoá ảnh cũ nếu tồn tại
                     if (!string.IsNullOrEmpty(existing.ImageUrl))
                         await _cloudinaryService.DeleteImageAsync(existing.ImageUrl);
-                    existing.ImageUrl = newUrl;
+
+                    existing.ImageUrl = uploadedUrl;
                 }
                 else
                 {
-                    return new BusinessResult(Const.FAIL_UPLOAD_CODE, "Failed to upload new image.");
+                    return new BusinessResult(Const.FAIL_UPLOAD_CODE, "Upload ảnh mới thất bại.");
                 }
             }
 
+            // Cập nhật trong DB
             var result = await _unitOfWork.TerrariumImage.UpdateAsync(existing);
             if (result > 0)
                 return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, existing);
@@ -94,20 +99,19 @@ public class TerrariumImageService : ITerrariumImageService
         try
         {
             // Upload image to Cloudinary and get the result (UploadResult)
-            var imageUrl =
+            var res_imageUrl =
                 await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}",
                     terrariumId.ToString());
 
-            // Check if the upload was successful
-            if (imageUrl == null ||
-                string.IsNullOrEmpty(imageUrl.ToString())) // Fix: Ensure imageUrl is treated as a string
-                return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary up image fail");
+            // Ensure the result is a valid URL
+            if (res_imageUrl == null || string.IsNullOrEmpty(res_imageUrl.ToString()))
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary upload failed.");
 
             // Create new TerrariumImage object
             var terraImage = new TerrariumImage
             {
                 TerrariumId = terrariumId,
-                ImageUrl = imageUrl.ToString() // Fix: Convert imageUrl to string explicitly
+                ImageUrl = res_imageUrl.Data.ToString() // Explicitly convert the result to a string (URL)
             };
 
             // Save the new image into the database
@@ -115,12 +119,12 @@ public class TerrariumImageService : ITerrariumImageService
             if (result > 0)
                 return new BusinessResult
                 {
-                    Status = 1,
+                    Status = Const.SUCCESS_CREATE_CODE,
                     Message = "Image created successfully.",
-                    Data = imageUrl.ToString() // Fix: Ensure Data contains the string representation of imageUrl
+                    Data = terraImage
                 };
 
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed.");
+            return new BusinessResult(Const.FAIL_CREATE_CODE, "Failed to create the image.");
         }
         catch (Exception ex)
         {

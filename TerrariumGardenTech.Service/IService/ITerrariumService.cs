@@ -1,12 +1,12 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿using TerrariumGardenTech.Common.RequestModel.Terrarium;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Terrarium;
 
 namespace TerrariumGardenTech.Service.IService;
 
 public interface ITerrariumService
 {
-    Task<IBusinessResult> GetAll();
+    Task<IBusinessResult> GetAll(TerrariumGetAllRequest request);
 
     // Task<BusinessResult> GetAllOfParam(string type, string shape, string tankMethod, string theme, string size);
     Task<IBusinessResult> FilterTerrariumsAsync(int? environmentId, int? shapeId, int? tankMethodId);

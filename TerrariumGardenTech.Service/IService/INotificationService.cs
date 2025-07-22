@@ -1,5 +1,5 @@
-﻿using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Notification;
+﻿using TerrariumGardenTech.Common.RequestModel.Notification;
+using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService;
 

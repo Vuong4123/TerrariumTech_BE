@@ -6,11 +6,11 @@ using Microsoft.Extensions.Configuration;
 using Net.payOS;
 using Net.payOS.Types;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Payment;
-using TerrariumGardenTech.Service.ResponseModel.Order;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -52,8 +52,9 @@ public class PayOsService : IPayOsService
 
         var domain =
             $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api";
-        var successReturnUrl = $"{domain}/payment?orderId={orderId}&status={PaymentReturnModelStatus.Success}";
-        var failReturnUrl = $"{domain}/payment?orderId={orderId}&status={PaymentReturnModelStatus.Fail}";
+        var successReturnUrl =
+            $"{domain}/Payment/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Success}";
+        var failReturnUrl = $"{domain}/Payment/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Fail}";
         var orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
 
         var signatureData =
@@ -81,7 +82,7 @@ public class PayOsService : IPayOsService
             var order = await _unitOfWork.OrderRepository.GetByIdAsync(returnModel.OrderId);
             if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
-            order.PaymentStatus = "Paid";
+            order.PaymentStatus = returnModel.Status;
             await _unitOfWork.OrderRepository.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
             var orderResponse = _mapper.Map<OrderResponse>(order);

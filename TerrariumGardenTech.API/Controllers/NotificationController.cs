@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common.RequestModel.Notification;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Notification;
 
 namespace TerrariumGardenTech.API.Controllers;
 
