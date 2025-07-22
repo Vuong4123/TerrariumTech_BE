@@ -53,6 +53,7 @@ public class TerrariumRepository : GenericRepository<Terrarium>
     {
         return await _dbContext.Terrariums
             .Include(t => t.TerrariumImages) // Nạp dữ liệu TerrariumImages
+            .DefaultIfEmpty() // Sử dụng DefaultIfEmpty nếu giá trị là NULL
             .ToListAsync();
     }
     // Lấy dữ liệu Terrarium theo ID kèm theo hình ảnh
