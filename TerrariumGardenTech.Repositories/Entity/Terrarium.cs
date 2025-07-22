@@ -15,7 +15,7 @@ public partial class Terrarium
 
     public string Description { get; set; }
 
-    public decimal? Price { get; set; }
+    //public decimal? Price { get; set; }
 
     public int Stock { get; set; }
 
@@ -25,8 +25,10 @@ public partial class Terrarium
 
     public DateTime? UpdatedAt { get; set; }
     public string bodyHTML { get; set; }
+    // Thêm các trường MinPrice và MaxPrice
+    public decimal MinPrice { get; set; }  // Giá thấp nhất
+    public decimal MaxPrice { get; set; }  // Giá cao nhất
 
-    
 
 
     public virtual ICollection<TerrariumAccessory> TerrariumAccessory { get; set; } = [];
