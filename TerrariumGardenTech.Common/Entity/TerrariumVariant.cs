@@ -13,9 +13,13 @@ public partial class TerrariumVariant
 
     public string VariantName { get; set; }
 
-    public decimal? Price { get; set; }
+    public decimal Price { get; set; }
 
-    public int? StockQuantity { get; set; }
+    public int StockQuantity { get; set; }
+    public string UrlImage { get; set; }
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     public virtual ICollection<LayoutTerrarium> LayoutTerrarium { get; set; } = new List<LayoutTerrarium>();
 
