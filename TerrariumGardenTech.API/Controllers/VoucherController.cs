@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common.Enums;
+using TerrariumGardenTech.Common.RequestModel.Voucher;
+using TerrariumGardenTech.Common.ResponseModel.Voucher;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Enums;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Voucher;
-using TerrariumGardenTech.Service.ResponseModel.Voucher;
 
 namespace TerrariumGardenTech.API.Controllers;
 

@@ -6,11 +6,11 @@ using Microsoft.Extensions.Configuration;
 using Net.payOS;
 using Net.payOS.Types;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Payment;
-using TerrariumGardenTech.Service.ResponseModel.Order;
 
 namespace TerrariumGardenTech.Service.Service;
 

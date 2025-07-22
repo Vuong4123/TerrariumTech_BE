@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Payment;
 
 namespace TerrariumGardenTech.API.Controllers;
 

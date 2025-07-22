@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Base;
+﻿using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Repositories.Repositories;

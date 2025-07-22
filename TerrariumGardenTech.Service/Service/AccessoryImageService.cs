@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.AccessoryImage;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.AccessoryImage;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -20,14 +20,14 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
     }
 
-        public async Task<IBusinessResult> GetById(int id)
-        {
-            var accessoryImage = await _unitOfWork.AccessoryImage.GetByIdAsync(id);
-            if (accessoryImage != null)
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImage);
+    public async Task<IBusinessResult> GetById(int id)
+    {
+        var accessoryImage = await _unitOfWork.AccessoryImage.GetByIdAsync(id);
+        if (accessoryImage != null)
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImage);
 
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-        }
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+    }
 
     public async Task<IBusinessResult> UpdateAccessoryImage(AccessoryImageUploadUpdateRequest request)
     {
@@ -44,17 +44,14 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
             {
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
                     request.ImageFile,
-                    $"accessories/{request.AccessoryId}", // đường dẫn lưu ảnh
-                    null
+                    $"accessories/{request.AccessoryId}"
                 );
 
                 if (uploadResult.Status == Const.SUCCESS_CREATE_CODE && uploadResult.Data is string uploadedUrl)
                 {
                     // Xoá ảnh cũ nếu có
                     if (!string.IsNullOrEmpty(existing.ImageUrl))
-                    {
                         await _cloudinaryService.DeleteImageAsync(existing.ImageUrl);
-                    }
 
                     existing.ImageUrl = uploadedUrl;
                 }
@@ -84,13 +81,15 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         try
         {
             // Upload image to Cloudinary and get the result (UploadResult)
-            var uploadResult = await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{accessoryId}", accessoryId.ToString());
+            var uploadResult =
+                await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{accessoryId}",
+                    accessoryId.ToString());
 
             // Check if the upload was successful and the URL is valid
             if (uploadResult == null || string.IsNullOrEmpty(uploadResult.ToString()))
                 return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary image upload failed.");
 
-            string? imageUrl = uploadResult.Data.ToString();  // Extract image URL
+            var imageUrl = uploadResult.Data.ToString(); // Extract image URL
 
             // Create new AccessoryImage object
             var accessImage = new AccessoryImage
@@ -145,13 +144,13 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         }
     }
 
-        public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
-        {
-            var accessoryImages = await _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(accessoryId);
-            if (accessoryImages != null && accessoryImages.Any())
-                return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImages);
+    public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
+    {
+        var accessoryImages = await _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(accessoryId);
+        if (accessoryImages != null && accessoryImages.Any())
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryImages);
 
-            return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG,
-                "No images found for the given AccessoryId.");
-        }
+        return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG,
+            "No images found for the given AccessoryId.");
     }
+}
