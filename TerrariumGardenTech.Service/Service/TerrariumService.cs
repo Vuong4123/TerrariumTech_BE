@@ -25,7 +25,7 @@ public class TerrariumService : ITerrariumService
         try
         {
             // Gọi phương thức từ repository để nạp dữ liệu Terrarium với ảnh
-            var tuple = await _unitOfWork.Terrarium.GetAllWithImagesAsync(request);
+            var tuple = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
 
             var terrariumList = tuple.Item1;
             var enumerable = terrariumList.ToList();
@@ -34,7 +34,7 @@ public class TerrariumService : ITerrariumService
             {
                 if (!request.Pagination.IsPagingEnabled)
                 {
-                    var tuple_ = await _unitOfWork.Terrarium.GetAllWithImagesAsync(request);
+                    var tuple_ = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
 
                     return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
                 }
