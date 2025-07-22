@@ -26,4 +26,20 @@ public class AccessoryRepository : GenericRepository<Accessory>
     {
         return await _context.Accessories.Where(a => a.CategoryId == categoryId).ToListAsync();
     }
+
+    // Nạp dữ liệu Accessory cùng với ảnh (AccessoryImages)
+    public async Task<IEnumerable<Accessory>> GetAllWithImagesAsync()
+    {
+        return await _dbContext.Accessories
+            .Include(t => t.AccessoryImages) // Nạp dữ liệu AccessoryImages
+            .ToListAsync();
+    }
+    // Lấy dữ liệu Terrarium theo ID kèm theo hình ảnh
+    public async Task<Accessory> GetAccessoryWithImagesByIdAsync(int id)
+    {
+        // Sử dụng Include để nạp dữ liệu TerrariumImages liên quan
+        return await _dbContext.Accessories
+            .Include(t => t.AccessoryImages) // Nạp dữ liệu TerrariumImages
+            .FirstOrDefaultAsync(t => t.AccessoryId == id); // Tìm theo ID// Lọc theo TerrariumId
+    }
 }
