@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Blog;
+using TerrariumGardenTech.Common.ResponseModel.Blog;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Blog;
-using TerrariumGardenTech.Service.ResponseModel.Blog;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -38,10 +38,10 @@ public class BlogController : ControllerBase
             UserId = b.UserId,
             Title = b.Title,
             Content = b.Content,
-            bodyHTML = b.bodyHTML ?? string.Empty,
+            //bodyHTML = b.bodyHTML ?? string.Empty,
             UrlImage = b.UrlImage ?? string.Empty, // Ensure UrlImage is not null
-            CreatedAt = b.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-            UpdatedAt = b.UpdatedAt ?? DateTime.MinValue, // Similar for UpdatedAt
+            //CreatedAt = b.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+            //UpdatedAt = b.UpdatedAt ?? DateTime.MinValue, // Similar for UpdatedAt
             Status = b.Status
         }).ToList();
         if (blogs == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
@@ -70,8 +70,8 @@ public class BlogController : ControllerBase
                 Content = blog.Content,
                 bodyHTML = blog.bodyHTML ?? string.Empty, // Ensure bodyHtml is not null
                 UrlImage = blog.UrlImage ?? string.Empty, // Ensure UrlImage is not null
-                CreatedAt = blog.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-                UpdatedAt = blog.UpdatedAt ?? DateTime.MinValue, // Similar for UpdatedAt
+                //CreatedAt = blog.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
+                //UpdatedAt = blog.UpdatedAt ?? DateTime.MinValue, // Similar for UpdatedAt
                 Status = blog.Status
             };
 
@@ -85,29 +85,23 @@ public class BlogController : ControllerBase
 
     // POST api/<BlogController>
     [HttpPost("add-blog")]
-    public async Task<IBusinessResult> Post([FromBody] BlogCreateRequest blogCreateRequest)
+    public async Task<IBusinessResult> Post([FromForm] BlogCreateRequest blogCreateRequest)
     {
         return await _blogService.CreateBlog(blogCreateRequest);
     }
 
     // PUT api/<BlogController>/5
     [HttpPut("update-blog-{id}")]
-    public async Task<IBusinessResult> Put(int id, [FromBody] BlogUpdateRequest blogUpdateRequest)
+    public async Task<IBusinessResult> Put(int id, [FromForm] BlogUpdateRequest request)
     {
-        if (blogUpdateRequest == null || !ModelState.IsValid)
-            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Invalid request data.");
-        blogUpdateRequest.BlogId = id; // Ensure the ID is set for the update
-        return await _blogService.UpdateBlog(blogUpdateRequest);
+        request.BlogId = id;
+        return await _blogService.UpdateBlog(request);
     }
 
     // DELETE api/<BlogController>/5
     [HttpDelete("delete-blog-{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
-        var result = await _blogService.DeleteById(id);
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        if (result.Data is bool isDeleted)
-            return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Blog deleted successfully.");
-        return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete role.");
+        return await _blogService.DeleteById(id);
     }
 }

@@ -1,6 +1,7 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.RequestModel.Cart;
-using TerrariumGardenTech.Service.RequestModel.Order;
+﻿using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.RequestModel.Cart;
+using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.IService;
 
