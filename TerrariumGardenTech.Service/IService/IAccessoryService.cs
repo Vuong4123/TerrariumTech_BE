@@ -6,8 +6,7 @@ namespace TerrariumGardenTech.Service.IService;
 
 public interface IAccessoryService
 {
-    Task<IBusinessResult> GetAll();
-    Task<IBusinessResult> GetAllDetail();
+    Task<IBusinessResult> GetAll(AccessoryGetAllRequest request);
     Task<IBusinessResult> GetById(int id);
     Task<IBusinessResult> FilterAccessoryAsync(int? categoryId);
     Task<IBusinessResult> CreateAccessory(AccessoryCreateRequest accessoryCreateRequest);
