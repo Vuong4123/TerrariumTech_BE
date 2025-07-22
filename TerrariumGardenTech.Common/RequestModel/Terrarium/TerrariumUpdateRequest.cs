@@ -12,8 +12,8 @@ public class TerrariumUpdateRequest
     public List<string> AccessoryNames { get; set; } = [];
     public string TerrariumName { get; set; } = default!;
     public string Description { get; set; } = string.Empty;
-
-    public decimal? Price { get; set; }
+    public decimal? MinPrice { get; set; }  // Giá thấp nhất
+    public decimal? MaxPrice { get; set; }  // Giá cao nhất
 
     public int Stock { get; set; }
 
