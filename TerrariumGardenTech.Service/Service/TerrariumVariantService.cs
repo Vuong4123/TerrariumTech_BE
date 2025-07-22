@@ -16,8 +16,7 @@ public class TerrariumVariantService : ITerrariumVariantService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<IBusinessResult> CreateTerrariumVariantAsync(
-        TerrariumVariantCreateRequest terrariumVariantCreateRequest)
+    public async Task<IBusinessResult> CreateTerrariumVariantAsync(TerrariumVariantCreateRequest terrariumVariantCreateRequest)
     {
         try
         {
@@ -61,7 +60,13 @@ public class TerrariumVariantService : ITerrariumVariantService
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variants retrieved successfully.",
             terrariumVariants);
     }
-
+    public async Task<IBusinessResult> GetAllVariantByTerrariumIdAsync(int terrariumId)
+    {
+        var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrariumId);
+        if (terrariumVariants == null || !terrariumVariants.Any())
+            return new BusinessResult(Const.FAIL_READ_CODE, "No terrarium variants found.");
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variants retrieved successfully.",terrariumVariants);
+    }
     public async Task<IBusinessResult?> GetTerrariumVariantByIdAsync(int id)
     {
         var terrariumVariants = await _unitOfWork.TerrariumVariant.GetByIdAsync(id);
@@ -70,8 +75,7 @@ public class TerrariumVariantService : ITerrariumVariantService
             terrariumVariants);
     }
 
-    public async Task<IBusinessResult> UpdateTerrariumVariantAsync(
-        TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
+    public async Task<IBusinessResult> UpdateTerrariumVariantAsync(TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
     {
         try
         {

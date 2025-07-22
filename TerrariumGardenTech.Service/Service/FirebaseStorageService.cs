@@ -7,7 +7,6 @@ namespace TerrariumGardenTech.Service.Service;
 
 public class FirebaseStorageService : IFirebaseStorageService
 {
-    private readonly string _bucketName = "notification-terrariumtech";
     private readonly FirestoreDb _firestore;
     private readonly StorageClient _storageClient;
 

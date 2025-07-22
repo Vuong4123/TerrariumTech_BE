@@ -36,6 +36,10 @@ public class GenericRepository<T> where T : class
         return _context.Set<T>().ToList();
     }
 
+    public IQueryable<T> GetAllV2()
+    {
+        return _context.Set<T>();
+    }
     public async Task<List<T>> GetAllAsync()
     {
         return await _context.Set<T>().ToListAsync();
