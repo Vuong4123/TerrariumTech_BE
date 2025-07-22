@@ -15,12 +15,12 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Enums;
+using TerrariumGardenTech.Common.RequestModel.Auth;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Enums;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Auth;
 
 namespace TerrariumGardenTech.Service.Service;
 

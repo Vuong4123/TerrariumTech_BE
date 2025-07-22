@@ -1,4 +1,4 @@
-using TerrariumGardenTech.Repositories.Enums;
+using TerrariumGardenTech.Common.Enums;
 
 namespace TerrariumGardenTech.Service.IService;
 
