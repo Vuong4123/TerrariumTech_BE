@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Order;
 
 namespace TerrariumGardenTech.API.Controllers;
 

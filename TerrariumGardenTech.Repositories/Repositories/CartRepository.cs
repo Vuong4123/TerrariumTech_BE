@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 

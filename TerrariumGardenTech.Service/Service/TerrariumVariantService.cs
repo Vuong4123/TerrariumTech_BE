@@ -1,15 +1,22 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.TerrariumVariant;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Blog;
-using TerrariumGardenTech.Service.RequestModel.TerrariumVariant;
 
 namespace TerrariumGardenTech.Service.Service;
 
-public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService _cloudinaryService) : ITerrariumVariantService
+public class TerrariumVariantService : ITerrariumVariantService
 {
+    private readonly UnitOfWork _unitOfWork;
+    private readonly ICloudinaryService _cloudinaryService;
+
+    public TerrariumVariantService(UnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
+    {
+        _unitOfWork = unitOfWork;
+        _cloudinaryService = cloudinaryService;
+    }
 
     public async Task<IBusinessResult> GetAllTerrariumVariantAsync()
     {
@@ -19,13 +26,16 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variants retrieved successfully.",
             terrariumVariants);
     }
+
     public async Task<IBusinessResult> GetAllVariantByTerrariumIdAsync(int terrariumId)
     {
         var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(terrariumId);
         if (terrariumVariants == null || !terrariumVariants.Any())
             return new BusinessResult(Const.FAIL_READ_CODE, "No terrarium variants found.");
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variants retrieved successfully.", terrariumVariants);
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variants retrieved successfully.",
+            terrariumVariants);
     }
+
     public async Task<IBusinessResult?> GetTerrariumVariantByIdAsync(int id)
     {
         var terrariumVariants = await _unitOfWork.TerrariumVariant.GetByIdAsync(id);
@@ -34,7 +44,8 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
             terrariumVariants);
     }
 
-    public async Task<IBusinessResult> CreateTerrariumVariantAsync(TerrariumVariantCreateRequest terrariumVariantCreateRequest)
+    public async Task<IBusinessResult> CreateTerrariumVariantAsync(
+        TerrariumVariantCreateRequest terrariumVariantCreateRequest)
     {
         try
         {
@@ -63,6 +74,7 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
                     return new BusinessResult(Const.FAIL_CREATE_CODE, "Upload ảnh thất bại: " + uploadResult.Message);
                 }
             }
+
             // Tạo mới TerrariumVariant
             var terrariumVariant = new TerrariumVariant
             {
@@ -71,7 +83,6 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
                 Price = terrariumVariantCreateRequest.Price,
                 StockQuantity = terrariumVariantCreateRequest.StockQuantity,
                 UrlImage = uploadedImageUrl
-
             };
 
             // Lưu TerrariumVariant vào cơ sở dữ liệu
@@ -86,20 +97,23 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
             await UpdateTerrariumPricesAsync(terrariumVariantCreateRequest.TerrariumId);
 
             // Trả về kết quả thành công kèm theo dữ liệu TerrariumVariant đã tạo
-            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Terrarium variant created successfully.", terrariumVariant);
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Terrarium variant created successfully.",
+                terrariumVariant);
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
-    
-    public async Task<IBusinessResult> UpdateTerrariumVariantAsync(TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
+
+    public async Task<IBusinessResult> UpdateTerrariumVariantAsync(
+        TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
     {
         try
         {
             // Lấy thông tin TerrariumVariant
-            var terrariumVariant = await _unitOfWork.TerrariumVariant.GetByIdAsync(terrariumVariantUpdateRequest.TerrariumVariantId);
+            var terrariumVariant =
+                await _unitOfWork.TerrariumVariant.GetByIdAsync(terrariumVariantUpdateRequest.TerrariumVariantId);
             if (terrariumVariant == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium variant not found.");
 
@@ -158,13 +172,15 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
             // Cập nhật lại giá của Terrarium sau khi cập nhật variant
             await UpdateTerrariumPricesAsync(terrariumVariant.TerrariumId);
 
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Terrarium variant updated successfully.", terrariumVariant);
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Terrarium variant updated successfully.",
+                terrariumVariant);
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
+
     public async Task<IBusinessResult> DeleteTerrariumVariantAsync(int id)
     {
         var terrariumVariant = _unitOfWork.TerrariumVariant.GetById(id);
@@ -237,8 +253,8 @@ public class TerrariumVariantService(UnitOfWork _unitOfWork, ICloudinaryService 
             var maxPrice = variants.Max(v => v.Price);
 
             // Cập nhật giá của Terrarium
-            terrarium.MinPrice = minPrice;  // Cập nhật giá thấp nhất
-            terrarium.MaxPrice = maxPrice;  // Cập nhật giá cao nhất
+            terrarium.MinPrice = minPrice; // Cập nhật giá thấp nhất
+            terrarium.MaxPrice = maxPrice; // Cập nhật giá cao nhất
             terrarium.UpdatedAt = DateTime.UtcNow;
 
             // Lưu lại thông tin Terrarium

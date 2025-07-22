@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.BlogCategory;
+using TerrariumGardenTech.Common.ResponseModel.BlogCategory;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.BlogCategory;
-using TerrariumGardenTech.Service.ResponseModel.BlogCategory;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
