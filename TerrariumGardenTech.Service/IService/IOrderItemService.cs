@@ -1,5 +1,5 @@
-﻿using TerrariumGardenTech.Service.RequestModel.OrderItem;
-using TerrariumGardenTech.Service.ResponseModel.OrderItem;
+﻿using TerrariumGardenTech.Common.RequestModel.OrderItem;
+using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 
 namespace TerrariumGardenTech.Service.IService;
 

@@ -1,0 +1,10 @@
+﻿namespace TerrariumGardenTech.Common.RequestModel.BlogCategory;
+
+public class BlogCategoryUpdateRequest
+{
+    public int BlogCategoryId { get; set; }
+
+    public string CategoryName { get; set; } = string.Empty;
+
+    public string Description { get; set; } = string.Empty;
+}

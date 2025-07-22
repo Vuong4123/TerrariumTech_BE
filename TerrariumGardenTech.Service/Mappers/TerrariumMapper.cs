@@ -1,5 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Service.ResponseModel.Terrarium;
+﻿using TerrariumGardenTech.Common.ResponseModel.Terrarium;
+using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.Mappers;
 
@@ -13,9 +13,10 @@ public static class TerrariumMapper
             EnvironmentId = terrarium.EnvironmentId,
             ShapeId = terrarium.ShapeId,
             TankMethodId = terrarium.TankMethodId,
-            Name = terrarium.TerrariumName,
+            TerrariumName = terrarium.TerrariumName,
             Description = terrarium.Description,
-            Price = terrarium.Price ?? 0,
+            MinPrice = terrarium.MinPrice,
+            MaxPrice = terrarium.MaxPrice,
             Stock = terrarium.Stock,
             Status = terrarium.Status,
             CreatedAt = terrarium.CreatedAt ?? DateTime.MinValue,

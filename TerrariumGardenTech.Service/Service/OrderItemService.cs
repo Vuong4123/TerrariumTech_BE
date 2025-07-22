@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common.RequestModel.OrderItem;
+using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.OrderItem;
-using TerrariumGardenTech.Service.ResponseModel.OrderItem;
 
 namespace TerrariumGardenTech.Service.Service;
 

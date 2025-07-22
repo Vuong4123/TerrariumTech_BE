@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.API.Extensions;
+using TerrariumGardenTech.Common.RequestModel.Cart;
+using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Cart;
-using TerrariumGardenTech.Service.RequestModel.Order;
 
 namespace TerrariumGardenTech.API.Controllers;
 
