@@ -84,19 +84,19 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         try
         {
             // Upload image to Cloudinary and get the result (UploadResult)
-            var imageUrl = await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{accessoryId}",
-                accessoryId.ToString());
+            var uploadResult = await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{accessoryId}", accessoryId.ToString());
 
-            // Check if the upload was successful
-            if (imageUrl == null ||
-                string.IsNullOrEmpty(imageUrl.ToString())) // Fix: Ensure imageUrl is treated as a string
-                return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary up image fail");
+            // Check if the upload was successful and the URL is valid
+            if (uploadResult == null || string.IsNullOrEmpty(uploadResult.ToString()))
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary image upload failed.");
+
+            string? imageUrl = uploadResult.Data.ToString();  // Extract image URL
 
             // Create new AccessoryImage object
             var accessImage = new AccessoryImage
             {
                 AccessoryId = accessoryId,
-                ImageUrl = imageUrl.ToString() // Fix: Convert imageUrl to string explicitly
+                ImageUrl = imageUrl
             };
 
             // Save the new image into the database
@@ -104,9 +104,9 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
             if (result > 0)
                 return new BusinessResult
                 {
-                    Status = 1,
+                    Status = Const.SUCCESS_CREATE_CODE,
                     Message = "Image created successfully.",
-                    Data = imageUrl.ToString() // Fix: Ensure Data contains the string representation of imageUrl
+                    Data = imageUrl // Return the image URL
                 };
 
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed.");
@@ -114,7 +114,7 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         catch (Exception ex)
         {
             // Return exception message if an error occurred
-            return new BusinessResult(Const.FAIL_CREATE_CODE, ex.Message);
+            return new BusinessResult(Const.FAIL_CREATE_CODE, $"An error occurred: {ex.Message}");
         }
     }
 

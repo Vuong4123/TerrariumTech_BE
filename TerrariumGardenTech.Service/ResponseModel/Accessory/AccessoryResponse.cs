@@ -1,4 +1,6 @@
-﻿namespace TerrariumGardenTech.Service.ResponseModel.Accessory;
+﻿using TerrariumGardenTech.Service.ResponseModel.Terrarium;
+
+namespace TerrariumGardenTech.Service.ResponseModel.Accessory;
 
 public class AccessoryResponse
 {
@@ -10,7 +12,7 @@ public class AccessoryResponse
 
     public decimal Price { get; set; }
 
-    public int? Stock { get; set; }
+    public int? StockQuantity { get; set; }
 
     public int? CategoryId { get; set; }
 
@@ -19,4 +21,5 @@ public class AccessoryResponse
     public DateTime? UpdatedAt { get; set; }
 
     public string Status { get; set; } = string.Empty;
+    public List<AccessoryImageResponse> AccessoryImages { get; set; } = [];
 }
