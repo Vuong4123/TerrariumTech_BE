@@ -2,7 +2,6 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -42,17 +41,16 @@ public class CloudinaryService : ICloudinaryService
 
             // Kiểm tra kết quả upload
             if (uploadResult?.StatusCode == HttpStatusCode.OK && uploadResult.SecureUrl != null)
-            {
                 return new BusinessResult
                 {
                     Status = Const.SUCCESS_CREATE_CODE,
                     Message = "Image uploaded successfully",
-                    Data = uploadResult.SecureUrl.ToString()  // Trả về URL hình ảnh đã upload
+                    Data = uploadResult.SecureUrl.ToString() // Trả về URL hình ảnh đã upload
                 };
-            }
 
             // Nếu upload thất bại, trả về thông báo lỗi chi tiết
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image upload failed. Please check Cloudinary configuration or try again later.");
+            return new BusinessResult(Const.FAIL_CREATE_CODE,
+                "Image upload failed. Please check Cloudinary configuration or try again later.");
         }
         catch (Exception ex)
         {
