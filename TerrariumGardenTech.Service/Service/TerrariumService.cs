@@ -34,16 +34,17 @@ public class TerrariumService : ITerrariumService
                     EnvironmentId = t.EnvironmentId,
                     ShapeId = t.ShapeId,
                     TankMethodId = t.TankMethodId,
-                    Name = t.TerrariumName,
+                    TerrariumName = t.TerrariumName,
                     Description = t.Description,
-                    Price = (decimal)t.Price,
+                    MinPrice = t.MinPrice,
+                    MaxPrice = t.MaxPrice,
                     Stock = t.Stock,
                     Status = t.Status,
-                    TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
+                    TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
                     {
                         TerrariumImageId = ti.TerrariumImageId,
                         TerrariumId = ti.TerrariumId,
-                        ImageUrl = ti.ImageUrl
+                        ImageUrl = ti.ImageUrl ?? string.Empty
                     }).ToList()
                 }).ToList();
 
@@ -76,9 +77,10 @@ public class TerrariumService : ITerrariumService
                 EnvironmentId = terrarium.EnvironmentId,
                 ShapeId = terrarium.ShapeId,
                 TankMethodId = terrarium.TankMethodId,
-                Name = terrarium.TerrariumName,
+                TerrariumName = terrarium.TerrariumName,
                 Description = terrarium.Description,
-                Price = (decimal)terrarium.Price,
+                MinPrice = terrarium.MinPrice,
+                MaxPrice = terrarium.MaxPrice, // Sử dụng giá thấp nhất và cao nhất
                 Stock = terrarium.Stock,
                 Status = terrarium.Status,
                 Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
@@ -206,11 +208,15 @@ public class TerrariumService : ITerrariumService
             terra.EnvironmentId = terrariumUpdateRequest.EnvironmentId;
             terra.ShapeId = terrariumUpdateRequest.ShapeId;
             terra.TankMethodId = terrariumUpdateRequest.TankMethodId;
-            terra.Price = terrariumUpdateRequest.Price;
             terra.Stock = terrariumUpdateRequest.Stock;
             terra.Status = terrariumUpdateRequest.Status;
             terra.bodyHTML = terrariumUpdateRequest.bodyHTML ?? string.Empty;
             terra.UpdatedAt = DateTime.UtcNow;
+
+            // Thiết lập giá trị mặc định nếu không có giá từ variant
+            decimal defaultPrice = 100; // Giá trị mặc định khi không có variant
+            terra.MinPrice = terrariumUpdateRequest.MinPrice ?? defaultPrice;
+            terra.MaxPrice = terrariumUpdateRequest.MaxPrice ?? defaultPrice;
 
             var ctx = _unitOfWork.Terrarium.Context();
 
@@ -232,19 +238,19 @@ public class TerrariumService : ITerrariumService
             }
             else
             {
-                // If no accessories provided, retain the existing ones
+                // Nếu không có accessories mới, giữ nguyên accessories cũ
                 var existingAccessories = await _unitOfWork.TerrariumAccessory
                     .FindAsync(ta => ta.TerrariumId == terra.TerrariumId);
 
                 terra.TerrariumAccessory = existingAccessories.ToList();
             }
 
-            // Cập nhật & lưu
+            // Cập nhật và lưu lại
             await _unitOfWork.Terrarium.UpdateAsync(terra);
 
             var resultDto = terra.ToTerrariumResponse(); // Sử dụng mapper
 
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, resultDto);
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, resultDto);        
         }
         catch (Exception ex)
         {
@@ -257,34 +263,44 @@ public class TerrariumService : ITerrariumService
     {
         try
         {
+            // Lấy danh sách Accessory theo tên
             var AccessoryNames = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
             if (AccessoryNames == null || AccessoryNames.Count == 0)
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
 
+            // Kiểm tra nếu không có variant, hãy gán giá trị mặc định cho MinPrice và MaxPrice
+            decimal defaultPrice = 100; // Giá trị mặc định khi không có variant
+            decimal minPrice = terrariumCreateRequest.MinPrice ?? defaultPrice;
+            decimal maxPrice = terrariumCreateRequest.MaxPrice ?? defaultPrice;
+
+            // Tạo mới Terrarium
             var newTerrarium = new Terrarium
             {
                 TerrariumName = terrariumCreateRequest.TerrariumName,
                 EnvironmentId = terrariumCreateRequest.EnvironmentId,
                 ShapeId = terrariumCreateRequest.ShapeId,
                 TankMethodId = terrariumCreateRequest.TankMethodId,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
                 bodyHTML = terrariumCreateRequest.bodyHTML,
                 Description = terrariumCreateRequest.Description,
-                Price = terrariumCreateRequest.Price,
                 Stock = terrariumCreateRequest.Stock,
                 Status = terrariumCreateRequest.Status,
                 CreatedAt = DateTime.Now
             };
 
+            // Tạo Terrarium vào cơ sở dữ liệu
             var result = await _unitOfWork.Terrarium.CreateAsync(newTerrarium);
 
             if (result > 0)
             {
+                // Gán Accessory vào Terrarium
                 foreach (var accessory in AccessoryNames)
                 {
                     var terrariumAccessory = new TerrariumAccessory
                     {
                         AccessoryId = accessory.AccessoryId,
-                        TerrariumId = newTerrarium.TerrariumId // Gán TerrariumId cho TerrariumAccessory       
+                        TerrariumId = newTerrarium.TerrariumId
                     };
                     _unitOfWork.TerrariumAccessory.Context().Add(terrariumAccessory);
                     await _unitOfWork.TerrariumAccessory.SaveChangesAsync();
@@ -351,9 +367,10 @@ public class TerrariumService : ITerrariumService
                 var terrariums = terrariumList.Select(t => new TerrariumDetailResponse
                 {
                     TerrariumId = t.TerrariumId,
-                    Name = t.TerrariumName,
+                    TerrariumName = t.TerrariumName,
                     Description = t.Description,
-                    Price = (decimal)t.Price,
+                    MinPrice = (decimal)t.MinPrice,
+                    MaxPrice = (decimal)t.MaxPrice,
                     Stock = t.Stock,
                     Status = t.Status,
                     TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
