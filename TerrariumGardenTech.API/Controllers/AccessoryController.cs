@@ -22,15 +22,9 @@ public class AccessoryController : ControllerBase
 
     // GET: api/<AccessoryController>
     [HttpGet("get-all")]
-    public async Task<IBusinessResult> Get()
+    public async Task<IBusinessResult> Get([FromQuery] AccessoryGetAllRequest request)
     {
-        return await _accessoryService.GetAll();
-    }
-
-    [HttpGet("get-details")]
-    public async Task<IBusinessResult> GetDetail()
-    {
-        return await _accessoryService.GetAllDetail();
+        return await _accessoryService.GetAll(request);
     }
 
     [HttpGet("filter")]
