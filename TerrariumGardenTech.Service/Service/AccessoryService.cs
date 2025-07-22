@@ -1,10 +1,11 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.Accessory;
+using TerrariumGardenTech.Common.ResponseModel.Accessory;
+using TerrariumGardenTech.Common.ResponseModel.Base;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Accessory;
-using TerrariumGardenTech.Service.ResponseModel.Accessory;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -19,13 +20,23 @@ public class AccessoryService : IAccessoryService
 
 
     // Lấy tất cả Accessory
-    public async Task<IBusinessResult> GetAll()
+    public async Task<IBusinessResult> GetAll(AccessoryGetAllRequest request)
     {
-        var accessoryList = await _unitOfWork.Accessory.GetAllWithImagesAsync();
-        if (accessoryList != null && accessoryList.Any())
+        var tuple = await _unitOfWork.Accessory.GetFilterAndPagedAsync(request);
+
+        var list = tuple.Item1;
+        var enumerable = list.ToList();
+            
+        if (enumerable.Any())
         {
+            if (!request.Pagination.IsPagingEnabled)
+            {
+                var tuple_ = await _unitOfWork.Accessory.GetFilterAndPagedAsync(request);
+
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
+            }
             // Ánh xạ từ Accessory sang AccessoryResponse
-            var accessories = accessoryList.Select(a => new AccessoryResponse
+            var accessories = enumerable.Select(a => new AccessoryResponse
             {
                 AccessoryId = a.AccessoryId,
                 Name = a.Name,
@@ -44,28 +55,10 @@ public class AccessoryService : IAccessoryService
                     AccessoryId = ai.AccessoryId
                 }).ToList()
             }).ToList();
-
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
-        }
-
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-    }
-    // Lấy tất cả Accessory
-    public async Task<IBusinessResult> GetAllDetail()
-    {
-        var accessoryList = await _unitOfWork.Accessory.GetAllWithImagesAsync();
-        if (accessoryList != null && accessoryList.Any())
-        {
-            // Ánh xạ từ Accessory sang AccessoryResponse
-            var accessories = accessoryList.Select(a => new AccessoryDetailResponse
-            {
-                AccessoryId = a.AccessoryId,
-                Name = a.Name,
-                Description = a.Description,
-                Price = (decimal)a.Price, // Default nếu UpdatedAt là null
-            }).ToList();
-
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessories);
+            
+            var tableResponse = new QueryTableResult(request, accessories, tuple.Item2);
+            
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, tableResponse);
         }
 
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
@@ -273,7 +266,6 @@ public class AccessoryService : IAccessoryService
         }
     }
 
-    
 
     private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
     {

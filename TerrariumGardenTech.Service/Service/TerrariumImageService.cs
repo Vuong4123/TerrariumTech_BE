@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.RequestModel.TerrariumImage;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.TerrariumImage;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -60,17 +60,14 @@ public class TerrariumImageService : ITerrariumImageService
                 // Upload ảnh mới lên Cloudinary
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
                     request.ImageFile,
-                    $"terrariums/{request.TerrariumId}",
-                    null // publicId optional
+                    $"terrariums/{request.TerrariumId}" // publicId optional
                 );
 
                 if (uploadResult.Status == Const.SUCCESS_CREATE_CODE && uploadResult.Data is string uploadedUrl)
                 {
                     // Xoá ảnh cũ nếu tồn tại
                     if (!string.IsNullOrEmpty(existing.ImageUrl))
-                    {
                         await _cloudinaryService.DeleteImageAsync(existing.ImageUrl);
-                    }
 
                     existing.ImageUrl = uploadedUrl;
                 }
@@ -102,7 +99,9 @@ public class TerrariumImageService : ITerrariumImageService
         try
         {
             // Upload image to Cloudinary and get the result (UploadResult)
-            var res_imageUrl = await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}", terrariumId.ToString());
+            var res_imageUrl =
+                await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}",
+                    terrariumId.ToString());
 
             // Ensure the result is a valid URL
             if (res_imageUrl == null || string.IsNullOrEmpty(res_imageUrl.ToString()))

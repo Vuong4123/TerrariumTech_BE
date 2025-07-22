@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
-using Environment = TerrariumGardenTech.Repositories.Entity.EnvironmentTerrarium;
+using Environment = TerrariumGardenTech.Common.Entity.EnvironmentTerrarium;
 
 namespace TerrariumGardenTech.Repositories.Repositories;
 

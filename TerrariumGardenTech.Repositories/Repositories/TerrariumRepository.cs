@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -49,12 +50,19 @@ public class TerrariumRepository : GenericRepository<Terrarium>
             .ToListAsync();
     }
     // Nạp dữ liệu Terrarium cùng với ảnh (TerrariumImages)
-    public async Task<IEnumerable<Terrarium>> GetAllWithImagesAsync()
+    public async Task<(IEnumerable<Terrarium>, int)> GetFilterAndPagedAsync(TerrariumGetAllRequest request)
     {
-        return await _dbContext.Terrariums
-            .Include(t => t.TerrariumImages) // Nạp dữ liệu TerrariumImages
-            .DefaultIfEmpty() // Sử dụng DefaultIfEmpty nếu giá trị là NULL
-            .ToListAsync();
+        var queryable = _dbContext.Terrariums.AsQueryable(); 
+        queryable = Include(queryable, request.IncludeProperties);
+        var totalOrigin = queryable.Count();
+
+        // filter
+        
+        // end
+        
+        queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
+
+        return (await queryable.ToListAsync(), totalOrigin);
     }
     // Lấy dữ liệu Terrarium theo ID kèm theo hình ảnh
     public async Task<Terrarium> GetTerrariumWithImagesByIdAsync(int id)

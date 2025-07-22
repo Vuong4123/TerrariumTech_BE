@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Accessory;
-using TerrariumGardenTech.Service.ResponseModel.Accessory;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -24,15 +22,9 @@ public class AccessoryController : ControllerBase
 
     // GET: api/<AccessoryController>
     [HttpGet("get-all")]
-    public async Task<IBusinessResult> Get()
+    public async Task<IBusinessResult> Get([FromQuery] AccessoryGetAllRequest request)
     {
-        return await _accessoryService.GetAll();
-    }
-
-    [HttpGet("get-details")]
-    public async Task<IBusinessResult> GetDetail()
-    {
-        return await _accessoryService.GetAllDetail();
+        return await _accessoryService.GetAll(request);
     }
 
     [HttpGet("filter")]

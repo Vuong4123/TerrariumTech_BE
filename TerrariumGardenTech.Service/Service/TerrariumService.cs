@@ -1,12 +1,13 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.RequestModel.Terrarium;
+using TerrariumGardenTech.Common.ResponseModel.Base;
+using TerrariumGardenTech.Common.ResponseModel.Terrarium;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Mappers;
-using TerrariumGardenTech.Service.RequestModel.Terrarium;
-using TerrariumGardenTech.Service.ResponseModel.Terrarium;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -19,16 +20,26 @@ public class TerrariumService : ITerrariumService
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
-    public async Task<IBusinessResult> GetAll()
+    public async Task<IBusinessResult> GetAll(TerrariumGetAllRequest request)
     {
         try
         {
             // Gọi phương thức từ repository để nạp dữ liệu Terrarium với ảnh
-            var terrariumList = await _unitOfWork.Terrarium.GetAllWithImagesAsync();
+            var tuple = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
 
-            if (terrariumList != null && terrariumList.Any())
+            var terrariumList = tuple.Item1;
+            var enumerable = terrariumList.ToList();
+            
+            if (enumerable.Any())
             {
-                var terrariums = terrariumList.Select(t => new TerrariumDetailResponse
+                if (!request.Pagination.IsPagingEnabled)
+                {
+                    var tuple_ = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
+
+                    return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
+                }
+
+                var terrariums = enumerable.Select(t => new TerrariumDetailResponse
                 {
                     TerrariumId = t.TerrariumId,
                     EnvironmentId = t.EnvironmentId,
@@ -48,7 +59,9 @@ public class TerrariumService : ITerrariumService
                     }).ToList()
                 }).ToList();
 
-                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariums);
+                var tableResponse = new QueryTableResult(request, terrariums, tuple.Item2);
+
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tableResponse);
             }
 
             return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
@@ -63,7 +76,6 @@ public class TerrariumService : ITerrariumService
     {
         try
         {
-
             // Lấy Terrarium từ repository
             var terrarium = await _unitOfWork.Terrarium.GetTerrariumWithImagesByIdAsync(id);
 
