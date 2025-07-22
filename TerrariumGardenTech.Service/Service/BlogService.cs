@@ -132,7 +132,7 @@ public class BlogService(UnitOfWork _unitOfWork, IUserContextService userContext
 
                 if (uploadResult.Status == Const.SUCCESS_CREATE_CODE)
                 {
-                    uploadedImageUrl = uploadResult.ToString();
+                    uploadedImageUrl = uploadResult.Data.ToString();
                 }
                 else
                 {

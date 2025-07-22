@@ -26,111 +26,26 @@ public class AccessoryController : ControllerBase
     [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
-        var result = await _accessoryService.GetAll();
-        // Check if result or result.Data is null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-
-        // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
-        var accsessory = (result.Data as IEnumerable<Accessory>)?.Select(a => new AccessoryResponse
-        {
-            AccessoryId = a.AccessoryId,
-            Name = a.Name,
-            Size = a.Size,
-            Description = a.Description,
-            Price = (decimal)a.Price,
-            Stock = a.StockQuantity,
-            Status = a.Status,
-            CategoryId = a.CategoryId,
-            CreatedAt = a.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-            UpdatedAt = a.UpdatedAt ?? DateTime.MinValue // Similar for UpdatedAt
-        }).ToList();
-
-        if (accsessory == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", accsessory);
+        return await _accessoryService.GetAll();
     }
 
     [HttpGet("get-details")]
     public async Task<IBusinessResult> GetDetail()
     {
-        var result = await _accessoryService.GetAll();
-        // Check if result or result.Data is null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-
-        // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
-        var accsessory = (result.Data as IEnumerable<Accessory>)?.Select(a => new AccessoryDetailResponse
-        {
-            AccessoryId = a.AccessoryId,
-            Name = a.Name,
-            Description = a.Description,
-            Price = (decimal)a.Price
-        }).ToList();
-
-        if (accsessory == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", accsessory);
+        return await _accessoryService.GetAllDetail();
     }
 
     [HttpGet("filter")]
     public async Task<IBusinessResult> FilterTerrariums([FromQuery] int categoryId)
     {
-        var result = await _accessoryService.FilterAccessoryAsync(categoryId);
-        // Check if result or result.Data is null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-
-        // Ensure Data is a List<Terrarium> (or any IEnumerable<Terrarium>)
-        var accsessory = (result.Data as IEnumerable<Accessory>)?.Select(a => new AccessoryResponse
-        {
-            AccessoryId = a.AccessoryId,
-            Name = a.Name,
-            Size = a.Size,
-            Description = a.Description,
-            Price = (decimal)a.Price,
-            Stock = a.StockQuantity,
-            Status = a.Status,
-            CategoryId = a.CategoryId,
-            CreatedAt = a.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-            UpdatedAt = a.UpdatedAt ?? DateTime.MinValue // Similar for UpdatedAt
-        }).ToList();
-
-        if (accsessory == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", accsessory);
+        return await _accessoryService.FilterAccessoryAsync(categoryId);
     }
 
     // GET api/<AccessoryController>/5
     [HttpGet("get-{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
-        var result = await _accessoryService.GetById(id);
-
-        // Kiểm tra nếu result hoặc result.Data là null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-
-        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Category, không phải IEnumerable)
-        if (result.Data is Accessory accessory)
-        {
-            // Ánh xạ dữ liệu từ Category sang CategoryRequest
-            var accessorryResponse = new AccessoryResponse
-            {
-                AccessoryId = accessory.AccessoryId,
-                Name = accessory.Name,
-                Size = accessory.Size,
-                Description = accessory.Description,
-                Price = (decimal)accessory.Price,
-                Stock = accessory.StockQuantity,
-                Status = accessory.Status,
-                CategoryId = accessory.CategoryId,
-                CreatedAt = accessory.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-                UpdatedAt = accessory.UpdatedAt ?? DateTime.MinValue // Similar for UpdatedAt
-            };
-
-            // Trả về BusinessResult với dữ liệu đã ánh xạ
-            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", accessorryResponse);
-        }
-
-        // Trả về lỗi nếu không thể ánh xạ
-        return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+        return await _accessoryService.GetById(id);
     }
 
     // POST api/<AccessoryController>
