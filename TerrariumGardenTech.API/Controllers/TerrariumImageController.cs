@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common.RequestModel.TerrariumImage;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -40,16 +41,17 @@ public class TerrariumImageController : ControllerBase
 
     // POST api/<TerrariumImageController>
     [HttpPost("upload")]
-    public async Task<IBusinessResult> Post([FromQuery] int terrariumId, IFormFile imageFile)
+    public async Task<IBusinessResult> Post([FromForm] TerrariumImageUploadRequest request)
     {
-        return await _terrariumImageService.CreateTerrariumImageAsync(imageFile, terrariumId);
+        return await _terrariumImageService.CreateTerrariumImageAsync(request.ImageFile, request.TerrariumId);
     }
 
     // PUT api/<TerrariumImageController>/5
     [HttpPut("update-terrariumImage-{id}")]
-    public async Task<IBusinessResult> Put(int id, [FromQuery] IFormFile? imageFile)
+    public async Task<IBusinessResult> Put(int id, [FromForm] TerrariumImageUploadUpdateRequest request)
     {
-        return await _terrariumImageService.UpdateTerrariumImageAsync(id, imageFile);
+        request.TerrariumImageId = id; // Set the ID for the update request
+        return await _terrariumImageService.UpdateTerrariumImageAsync(request);
     }
 
     // DELETE api/<TerrariumImageController>/5

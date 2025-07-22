@@ -1,9 +1,9 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.RequestModel.Environment;
 using TerrariumGardenTech.Repositories;
-using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.RequestModel.Environment;
 
 namespace TerrariumGardenTech.Service.Service;
 

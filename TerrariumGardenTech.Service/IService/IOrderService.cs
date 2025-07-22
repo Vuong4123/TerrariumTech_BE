@@ -1,6 +1,6 @@
-﻿using TerrariumGardenTech.Service.Base;
-using TerrariumGardenTech.Service.RequestModel.Order;
-using TerrariumGardenTech.Service.ResponseModel.Order;
+﻿using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.ResponseModel.Order;
+using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService;
 

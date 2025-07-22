@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using TerrariumGardenTech.Common.Entity;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace TerrariumGardenTech.Repositories.Entity;

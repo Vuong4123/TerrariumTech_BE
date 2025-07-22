@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using TerrariumGardenTech.Common.RequestModel.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Repositories.Base;
@@ -36,6 +37,10 @@ public class GenericRepository<T> where T : class
         return _context.Set<T>().ToList();
     }
 
+    public IQueryable<T> GetAllV2()
+    {
+        return _context.Set<T>();
+    }
     public async Task<List<T>> GetAllAsync()
     {
         return await _context.Set<T>().ToListAsync();
@@ -144,5 +149,24 @@ public class GenericRepository<T> where T : class
     {
         _context.TerrariumImages.RemoveRange(images);
         await _context.SaveChangesAsync();
+    }
+    
+    // Add more pagination and include
+    
+    public static IQueryable<T> Include(IQueryable<T> queryable, string[]? includeProperties)
+    {
+        if (includeProperties != null)
+            foreach (var property in includeProperties)
+                queryable = queryable.Include(property);
+
+        return queryable;
+    }
+    
+    public IQueryable<T> GetQueryablePagination(IQueryable<T> queryable, GetQueryableQuery query)
+    {
+        queryable = queryable
+            .Skip((query.Pagination.PageNumber - 1) * query.Pagination.PageSize)
+            .Take(query.Pagination.PageSize);
+        return queryable;
     }
 }

@@ -1,5 +1,5 @@
-﻿using TerrariumGardenTech.Repositories;
-using TerrariumGardenTech.Repositories.Entity;
+﻿using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.Service.Service;
