@@ -10,7 +10,7 @@ namespace TerrariumGardenTech.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Shipper")]
 public class AccountsController : ControllerBase
 {
     private readonly IAccountService _accountService;
@@ -58,6 +58,7 @@ public class AccountsController : ControllerBase
 
     // Lấy tài khoản theo ID
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Shipper")]
     public async Task<IBusinessResult> GetAccountById(int id)
     {
         return await _accountService.GetAccountByIdAsync(id);
