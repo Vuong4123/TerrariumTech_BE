@@ -15,11 +15,13 @@ public class OrderService : IOrderService
 {
     private readonly ILogger<OrderService> _logger;
     private readonly UnitOfWork _unitOfWork;
+    //private readonly IUserContextService _userContextService;
 
-    public OrderService(UnitOfWork unitOfWork, ILogger<OrderService> logger)
+    public OrderService(UnitOfWork unitOfWork,IUserContextService userContextService, ILogger<OrderService> logger)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        //_userContextService = userContextService ?? throw new ArgumentNullException(nameof(userContextService));
     }
 
     public async Task<IEnumerable<OrderResponse>> GetAllAsync()
@@ -46,6 +48,7 @@ public class OrderService : IOrderService
 
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
+        //var currentUserId = _userContextService.GetCurrentUser();
         var order = new Order
         {
             UserId = request.UserId,
@@ -138,7 +141,7 @@ public class OrderService : IOrderService
         order.PaymentStatus = "Paid";
 
         // Log the payment transaction
-        var paymentTransition = new PaymentTransition
+        var paymentTransition = new Payment
         {
             OrderId = order.OrderId,
             PaymentMethod = paymentMethod,
@@ -164,6 +167,7 @@ public class OrderService : IOrderService
 
     private static void ValidateCreateRequest(OrderCreateRequest r)
     {
+        
         if (r.UserId <= 0)
             throw new ArgumentException("UserId phải là số nguyên dương.", nameof(r.UserId));
 

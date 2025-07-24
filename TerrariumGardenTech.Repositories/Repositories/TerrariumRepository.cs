@@ -88,4 +88,14 @@ public class TerrariumRepository : GenericRepository<Terrarium>
     {
         return _dbContext.Terrariums.ToList(); // Trả về IQueryable
     }
+
+    public async Task<Terrarium> GetByNameAsync(string name)
+    {
+        return await _dbContext.Terrariums
+            .Where(a => a.TerrariumName.Contains(name)) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
+            .Include(t => t.TerrariumAccessory)  // Nạp dữ liệu Accessory liên quan
+                .ThenInclude(ta => ta.Accessory)  // Nạp dữ liệu Accessory
+            .Include(t => t.TerrariumImages)
+            .FirstOrDefaultAsync();
+    }
 }
