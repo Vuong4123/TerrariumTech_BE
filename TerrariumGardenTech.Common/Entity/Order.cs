@@ -29,7 +29,7 @@ public partial class Order
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
-    public virtual ICollection<PaymentTransition> PaymentTransitions { get; set; } = new List<PaymentTransition>();
+    public virtual ICollection<Payment> PaymentTransitions { get; set; } = new List<Payment>();
 
     public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
 
