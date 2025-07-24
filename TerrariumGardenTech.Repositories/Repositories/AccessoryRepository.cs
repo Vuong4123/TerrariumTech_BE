@@ -52,10 +52,11 @@ public class AccessoryRepository : GenericRepository<Accessory>
             .FirstOrDefaultAsync(t => t.AccessoryId == id); // Tìm theo ID// Lọc theo TerrariumId
     }
     // Tìm kiếm Accessory theo tên
-    public async Task<Accessory> GetByNameAsync(string name)
+    public async Task<IEnumerable<Accessory>> GetByNameAsync(string name)
     {
         return await _dbContext.Accessories
             .Where(a => a.Name.Contains(name)) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
-            .FirstOrDefaultAsync();
+            .Include(t => t.AccessoryImages)
+            .ToListAsync();
     }
 }
