@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TerrariumGardenTech.Common.Entity;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -14,10 +15,13 @@ public partial class Personalize
     public int PersonalizeId { get; set; }
 
     public int UserId { get; set; }
-    public string Type { get; set; }
-    public string Shape { get; set; }
-    public string TankMethod { get; set; }
-    public string Theme { get; set; }
-    public string Size { get; set; }
+    public int EnvironmentId { get; set; }
+    public int TankMethodId { get; set; }
+    public int ShapeId { get; set; }
     [ForeignKey(nameof(UserId))]
-    public virtual User User { get; set; }}
+    public virtual User User { get; set; }
+
+    public virtual TankMethod TankMethods { get; set; }
+    public virtual EnvironmentTerrarium Environment { get; set; }
+    public virtual Shape Shapes { get; set; }
+}
