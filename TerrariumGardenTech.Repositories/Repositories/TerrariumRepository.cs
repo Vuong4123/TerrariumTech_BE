@@ -82,4 +82,10 @@ public class TerrariumRepository : GenericRepository<Terrarium>
             .Terrariums
             .Where(t => terrariumIds.Contains(t.TerrariumId)).ToListAsync();
     }
+
+    // Sửa lại GetAllAsync() trả về IQueryable<T>
+    public async Task<List<Terrarium>> GetAllAsyncV2()
+    {
+        return _dbContext.Terrariums.ToList(); // Trả về IQueryable
+    }
 }
