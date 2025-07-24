@@ -75,6 +75,7 @@ builder.Services.AddScoped<UnitOfWork>();
 builder.Services.AddScoped<OrderRepository>();
 builder.Services.AddScoped<OrderItemRepository>();
 builder.Services.AddScoped<MembershipPackageRepository>();
+builder.Services.AddScoped<ICartService, CartService>(); // Đăng ký CartService vào DI container
 
 
 // Đăng ký Service
@@ -106,6 +107,8 @@ builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IAccessoryImageService, AccessoryImageService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IPayOsService, PayOsService>();
+builder.Services.AddScoped<ICartService, CartService>(); // Đăng ký CartService vào DI
+
 
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
