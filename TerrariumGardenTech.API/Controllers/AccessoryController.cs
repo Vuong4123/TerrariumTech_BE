@@ -27,6 +27,12 @@ public class AccessoryController : ControllerBase
         return await _accessoryService.GetAll(request);
     }
 
+    [HttpGet("get-by-name/{name}")]
+    public async Task<IBusinessResult> GetByAccesname(string name)
+    {
+        return await _accessoryService.GetByAccesname(name);
+    }
+
     [HttpGet("filter")]
     public async Task<IBusinessResult> FilterTerrariums([FromQuery] int categoryId)
     {
