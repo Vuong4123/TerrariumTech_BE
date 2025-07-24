@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿using System.Text.Json.Serialization;
+using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Common.Entity;
 
@@ -6,7 +7,9 @@ public class CartItem
 {
     public int CartItemId { get; set; } // Khóa chính
     public int CartId { get; set; } // Khóa ngoại đến Cart
-    public Cart Cart { get; set; } // Liên kết đến Cart
+
+    [JsonIgnore] // Không tuần tự hóa thuộc tính này để tránh chu trình
+    public Cart Cart { get; set; }
 
     // Khóa ngoại đến sản phẩm (Accessory hoặc TerrariumVariant)
     public int? AccessoryId { get; set; }

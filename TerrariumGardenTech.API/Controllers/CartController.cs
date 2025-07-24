@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.API.Extensions;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Service.IService;
+using Microsoft.Extensions.Logging;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -12,10 +14,12 @@ namespace TerrariumGardenTech.API.Controllers;
 public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;
+    private readonly ILogger<CartController> _logger;
 
-    public CartController(ICartService cartService)
+    public CartController(ICartService cartService, ILogger<CartController> logger)
     {
         _cartService = cartService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -34,20 +38,47 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    ///     Thêm một món vào giỏ hàng
+    ///     Thêm nhiều món vào giỏ hàng
     /// </summary>
-    [HttpPost("items")]
+    [HttpPost("items/multiple")]
     [Authorize]
-    public async Task<IActionResult> AddItem([FromBody] AddCartItemRequest request)
+    public async Task<IActionResult> AddItems([FromBody] List<AddCartItemRequest> requests)
     {
         var userId = User.GetUserId();
+        var items = new List<CartItem>();
+        decimal totalCartPrice = 0; // Tổng giá trị của giỏ hàng
+        var failedItems = new List<string>(); // Dùng để lưu các món hàng không hợp lệ
 
-        // Validate item request
-        if (request.Quantity <= 0) return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0" });
+        try
+        {
+            foreach (var request in requests)
+            {
+                if (request.Quantity <= 0)
+                {
+                    failedItems.Add("Số lượng sản phẩm phải lớn hơn 0");
+                    continue; // Bỏ qua món hàng không hợp lệ
+                }
 
-        var item = await _cartService.AddItemAsync(userId, request);
-        return CreatedAtAction(nameof(GetCart), new { itemId = item.CartItemId }, item);
+                var item = await _cartService.AddItemAsync(userId, request);
+                totalCartPrice += item.TotalPrice;
+                items.Add(item);
+            }
+
+            if (failedItems.Any())
+            {
+                return BadRequest(new { message = "Có lỗi với một số món hàng", details = failedItems });
+            }
+
+            return CreatedAtAction(nameof(GetCart), new { userId }, new { items, totalCartPrice });
+        }
+        catch (Exception ex)
+        {
+            // Ghi log chi tiết lỗi
+            _logger.LogError(ex, "Error occurred while adding items to the cart.");
+            return StatusCode(500, new { message = "Đã có lỗi xảy ra trong quá trình xử lý giỏ hàng", error = ex.Message });
+        }
     }
+
 
     /// <summary>
     ///     Cập nhật số lượng món trong giỏ hàng
@@ -58,7 +89,8 @@ public class CartController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        if (request.Quantity <= 0) return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0" });
+        if (request.Quantity <= 0)
+            return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0" });
 
         var success = await _cartService.UpdateItemAsync(userId, itemId, request.Quantity);
         if (!success)
@@ -111,17 +143,14 @@ public class CartController : ControllerBase
         {
             var order = await _cartService.CheckoutAsync(userId, request);
 
-            // Trả về thông tin đơn hàng vừa được tạo
             return CreatedAtAction(nameof(OrderController.Get), new { id = order.OrderId }, order);
         }
         catch (InvalidOperationException ex)
         {
-            // Trường hợp lỗi trong quá trình checkout
             return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
-            // Các lỗi khác
             return StatusCode(500, new { message = "Đã có lỗi xảy ra trong quá trình thanh toán", error = ex.Message });
         }
     }
