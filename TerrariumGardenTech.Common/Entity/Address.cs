@@ -19,5 +19,7 @@ public partial class Address
 
     public string ReceiverAddress { get; set; } // max length 250
 
+    public bool IsDefault { get; set; } // true or false
+
     public virtual User User { get; set; }
 }

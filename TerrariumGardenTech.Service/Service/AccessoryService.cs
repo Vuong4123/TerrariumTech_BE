@@ -2,8 +2,10 @@
 using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Common.ResponseModel.Accessory;
 using TerrariumGardenTech.Common.ResponseModel.Base;
+using TerrariumGardenTech.Common.ResponseModel.Terrarium;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -278,5 +280,42 @@ public class AccessoryService : IAccessoryService
             await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
 
         await _unitOfWork.Terrarium.RemoveAsync(terrarium);
+    }
+
+    public async Task<IBusinessResult> GetByAccesname(string name)
+    {
+        try
+        {
+            // Tìm Accessory theo tên
+            var accessory = await _unitOfWork.Accessory.GetByNameAsync(name);
+
+            if (accessory == null)
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessory found with that name.");
+
+            // Mapping dữ liệu từ Accessory sang response model nếu cần thiết
+            var accessoryResponse = accessory.Select(a => new AccessoryResponse
+            {
+                AccessoryId = a.AccessoryId,
+                Name = a.Name,
+                Size = a.Size,
+                Description = a.Description,
+                Price = a.Price ?? 0,
+                StockQuantity = a.StockQuantity ?? 0,
+                Status = a.Status,
+                CategoryId = a.CategoryId,
+                AccessoryImages = a.AccessoryImages.Select(ti => new AccessoryImageResponse
+                {
+                    AccessoryId = ti.AccessoryId,
+                    AccessoryImageId = ti.AccessoryImageId,
+                    ImageUrl = ti.ImageUrl,
+                }).ToList()
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Accessory found.", accessoryResponse);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 }
