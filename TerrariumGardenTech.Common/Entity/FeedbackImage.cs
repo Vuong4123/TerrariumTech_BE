@@ -13,7 +13,5 @@ public partial class FeedbackImage
 
     public string ImageUrl { get; set; }
 
-    public string AltText { get; set; }
-
     public virtual Feedback Feedback { get; set; }
 }
