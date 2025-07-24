@@ -20,7 +20,7 @@ public class UnitOfWork
     private MemberShipRepository _memberShipRepository;
     private NotificationRepository _notificationRepository;
     private OrderRepository _orderRepository;
-    private PaymentTransitionRepository _paymentTransitionRepository;
+    private PaymentRepository _paymentTransitionRepository;
     private PersonalizeRepository _personalizeRepository;
     private RoleRepository _roleRepository;
     private ShapeRepository _shapeRepository;
@@ -139,9 +139,9 @@ public class UnitOfWork
         get { return _membershipPackageRepository ??= new MembershipPackageRepository(_unitOfWorkContext); }
     }
 
-    public PaymentTransitionRepository PaymentTransitionRepository
+    public PaymentRepository PaymentTransitionRepository
     {
-        get { return _paymentTransitionRepository ??= new PaymentTransitionRepository(_unitOfWorkContext); }
+        get { return _paymentTransitionRepository ??= new PaymentRepository(_unitOfWorkContext); }
     }
 
     public OrderRepository OrderRepository
