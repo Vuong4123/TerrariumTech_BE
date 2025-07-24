@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Service.IService;
-using Microsoft.Extensions.Logging;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -34,8 +35,31 @@ public class CartController : ControllerBase
 
         if (cart == null) return NotFound(new { message = "Giỏ hàng không tồn tại" });
 
-        return Ok(cart);
+        var cartItems = cart.CartItems.Select(item => new
+        {
+            item.CartItemId,
+            item.CartId,
+            item.AccessoryId,
+            Accessory = item.Accessory?.Name,  // Thêm tên phụ kiện nếu có
+            item.TerrariumVariantId,
+            TerrariumVariant = item.TerrariumVariant?.VariantName,  // Thêm tên biến thể terrarium nếu có
+            item.Quantity,  // Số lượng của mỗi món
+            item.UnitPrice,
+            item.TotalPrice,
+            item.CreatedAt,
+            item.UpdatedAt
+        }).ToList();
+
+        var totalCartPrice = cartItems.Sum(x => x.TotalPrice);
+        return Ok(new
+        {
+            cart.CartId,
+            cart.UserId,
+            cartItems,
+            totalCartPrice
+        });
     }
+
 
     /// <summary>
     ///     Thêm nhiều món vào giỏ hàng
@@ -45,7 +69,7 @@ public class CartController : ControllerBase
     public async Task<IActionResult> AddItems([FromBody] List<AddCartItemRequest> requests)
     {
         var userId = User.GetUserId();
-        var items = new List<CartItem>();
+        var items = new List<CartItemResponse>();  // Dùng CartItemResponse thay vì anonymous type
         decimal totalCartPrice = 0; // Tổng giá trị của giỏ hàng
         var failedItems = new List<string>(); // Dùng để lưu các món hàng không hợp lệ
 
@@ -53,14 +77,19 @@ public class CartController : ControllerBase
         {
             foreach (var request in requests)
             {
-                if (request.Quantity <= 0)
+                // Kiểm tra quantity cho phụ kiện hoặc variant
+                if ((request.AccessoryQuantity.HasValue && request.AccessoryQuantity.Value <= 0) &&
+                    (request.VariantQuantity.HasValue && request.VariantQuantity.Value <= 0))
                 {
                     failedItems.Add("Số lượng sản phẩm phải lớn hơn 0");
                     continue; // Bỏ qua món hàng không hợp lệ
                 }
 
+                // Thêm sản phẩm vào giỏ
                 var item = await _cartService.AddItemAsync(userId, request);
                 totalCartPrice += item.TotalPrice;
+
+                // Thêm các thông tin sản phẩm vào danh sách
                 items.Add(item);
             }
 
@@ -80,24 +109,40 @@ public class CartController : ControllerBase
     }
 
 
-    /// <summary>
-    ///     Cập nhật số lượng món trong giỏ hàng
-    /// </summary>
-    [HttpPut("items/{itemId}")]
+
+
+
+    [HttpPut("items/{cartItemId}")]
     [Authorize]
-    public async Task<IActionResult> UpdateItem(int itemId, [FromBody] UpdateCartItemRequest request)
+    public async Task<IActionResult> UpdateItem(int cartItemId, [FromBody] UpdateCartItemRequest request)
     {
         var userId = User.GetUserId();
 
-        if (request.Quantity <= 0)
+        // Logging userId và cartItemId
+        Console.WriteLine($"Updating CartItem with ID {cartItemId} for UserID {userId}");
+
+        // Kiểm tra số lượng phải lớn hơn 0
+        if ((request.AccessoryQuantity.HasValue && request.AccessoryQuantity <= 0) &&
+            (request.VariantQuantity.HasValue && request.VariantQuantity <= 0))
+        {
             return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0" });
+        }
 
-        var success = await _cartService.UpdateItemAsync(userId, itemId, request.Quantity);
+        // Cập nhật giỏ hàng
+        var success = await _cartService.UpdateItemAsync(userId, cartItemId, request.AccessoryQuantity, request.VariantQuantity);
         if (!success)
-            return NotFound(new { message = "Item không tìm thấy trong giỏ hàng" });
+        {
+            // Logging lỗi không tìm thấy mục giỏ hàng
+            Console.WriteLine($"CartItem with ID {cartItemId} not found or not owned by user {userId}");
+            return NotFound(new { message = "Item không tìm thấy trong giỏ hàng hoặc không thuộc quyền sở hữu của người dùng" });
+        }
 
+        // Nếu cập nhật thành công
         return NoContent();
     }
+
+
+
 
     /// <summary>
     ///     Xóa một món khỏi giỏ hàng
