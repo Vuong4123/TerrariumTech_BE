@@ -382,7 +382,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
             entity.Property(e => e.CategoryId).HasColumnName("categoryId");
             entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.Name)
+            entity.Property(e => e.CategoryName)
                 .HasMaxLength(100)
                 .HasColumnName("name");
         });
@@ -420,9 +420,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.ToTable("FeedbackImage");
 
             entity.Property(e => e.FeedbackImageId).HasColumnName("feedbackImageId");
-            entity.Property(e => e.AltText)
-                .HasMaxLength(255)
-                .HasColumnName("altText");
             entity.Property(e => e.FeedbackId).HasColumnName("feedbackId");
             entity.Property(e => e.ImageUrl)
                 .HasMaxLength(255)
