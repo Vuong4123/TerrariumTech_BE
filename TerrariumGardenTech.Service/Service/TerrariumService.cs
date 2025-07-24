@@ -210,8 +210,56 @@ public class TerrariumService : ITerrariumService
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
+    public async Task<IBusinessResult> GetTerrariumSuggestions(int userId)
+    {
+        try
+        {
+            // Lấy dữ liệu từ bảng Personalize dựa trên userId
+            var userPersonalize = await _unitOfWork.Personalize.GetByUserIdAsync(userId);
+            if (userPersonalize == null)
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "User personalize data not found.");
 
+            // Lấy dữ liệu Terrariums theo các thuộc tính đã chọn trong Personalize
+            var suggestedTerrariums = await _unitOfWork.Terrarium.GetAllAsync(); // Đảm bảo gọi await để lấy List<Terrarium>
 
+            // Sử dụng Where sau khi có danh sách
+            var filteredTerrariums = suggestedTerrariums
+                .Where(t => t.EnvironmentId == userPersonalize.EnvironmentId &&
+                            t.ShapeId == userPersonalize.ShapeId &&
+                            t.TankMethodId == userPersonalize.TankMethodId)
+                .ToList();
+
+            if (suggestedTerrariums == null || !suggestedTerrariums.Any())
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No matching terrariums found.");
+
+            // Mapping dữ liệu Terrarium sang response
+            var terrariumResponses = suggestedTerrariums.Select(t => new TerrariumResponse
+            {
+                TerrariumId = t.TerrariumId,
+                TerrariumName = t.TerrariumName,
+                Description = t.Description,
+                MinPrice = t.MinPrice,
+                MaxPrice = t.MaxPrice,
+                Stock = t.Stock,
+                Status = t.Status,
+                EnvironmentId = t.EnvironmentId,
+                ShapeId = t.EnvironmentId,
+                TankMethodId = t.EnvironmentId,
+                TerrariumImages = t.TerrariumImages.Select(img => new TerrariumImageResponse
+                {
+                    TerrariumId = img.TerrariumId,
+                    TerrariumImageId = img.TerrariumImageId,
+                    ImageUrl = img.ImageUrl
+                }).ToList() // Ánh xạ đúng kiểu
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium suggestions retrieved successfully.", terrariumResponses);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
     public async Task<IBusinessResult> CreateTerrarium(TerrariumCreateRequest terrariumCreateRequest)
     {
         try
