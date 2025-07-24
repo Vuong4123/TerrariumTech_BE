@@ -45,6 +45,20 @@ public class TerrariumController : ControllerBase
         return await _terrariumService.GetById(id);
     }
 
+    // GET: api/Terrarium/get-suggestions/{userId}
+    [HttpGet("get-suggestions/{userId}")]
+    public async Task<IBusinessResult> GetTerrariumSuggestions(int userId)
+    {
+        var result = await _terrariumService.GetTerrariumSuggestions(userId);
+
+        // Kiểm tra nếu kết quả hoặc dữ liệu là null
+        if (result == null || result.Data == null)
+            return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+
+        // Trả về kết quả gợi ý Terrarium
+        return result;
+    }
+
     // POST api/<TerrariumController>
     [HttpPost("add-terrarium")]
     public async Task<IBusinessResult> Post([FromBody] TerrariumCreateRequest terrariumCreate)
