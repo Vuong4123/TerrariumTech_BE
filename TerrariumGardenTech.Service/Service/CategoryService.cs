@@ -1,5 +1,6 @@
 ﻿using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Category;
+using TerrariumGardenTech.Common.ResponseModel.Category;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -21,19 +22,46 @@ public class CategoryService : ICategoryService
 
     public async Task<IBusinessResult> GetAll()
     {
+        // Lấy tất cả danh mục từ repository
         var categories = await _unitOfWork.Category.GetAllAsync();
-        if (categories != null && categories.Any())
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, categories);
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Kiểm tra kết quả
+        if (categories == null || !categories.Any())
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
+        }
+
+        // Ánh xạ từ entity sang DTO (CategoryUpdateRequest)
+        var categoryResponses = categories.Select(c => new CategoryResponse
+        {
+            CategoryId = c.CategoryId,
+            CategoryName = c.CategoryName,
+            Description = c.Description
+        }).ToList();
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", categoryResponses);
     }
 
     public async Task<IBusinessResult> GetById(int id)
     {
+        // Lấy Category theo ID từ repository
         var category = await _unitOfWork.Category.GetByIdAsync(id);
-        if (category != null) return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, category);
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Kiểm tra nếu Category không tồn tại
+        if (category == null)
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "Category not found.");
+        }
+
+        // Ánh xạ từ entity sang DTO (CategoryResponse)
+        var categoryResponse = new CategoryResponse
+        {
+            CategoryId = category.CategoryId,
+            CategoryName = category.CategoryName,
+            Description = category.Description
+        };
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", categoryResponse);
     }
 
     public async Task<IBusinessResult> Save(Category category)
@@ -67,12 +95,6 @@ public class CategoryService : ICategoryService
     {
         try
         {
-            //var categoryExists = await _unitOfWork.Category.AnyAsync(c => c.CategoryId == accessoryUpdateRequest.CategoryId);
-
-            //if (!categoryExists)
-            //{
-            //    return new BusinessResult(Const.FAIL_CREATE_CODE, "CategoryId không tồn tại.");
-            //}
             var result = -1;
             var cate = await _unitOfWork.Category.GetByIdAsync(categoryRequest.CategoryId);
             if (cate != null)
@@ -96,7 +118,7 @@ public class CategoryService : ICategoryService
     {
         var category = new Category
         {
-            Name = categoryRequest.CategoryName,
+            CategoryName = categoryRequest.CategoryName,
             Description = categoryRequest.Description
         };
         var result = await _unitOfWork.Category.CreateAsync(category);
