@@ -3,6 +3,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Service;
 
 // using TerrariumGardenTech.Service.Service;
 
@@ -37,6 +38,12 @@ public class TerrariumController : ControllerBase
         return await _terrariumService.FilterTerrariumsAsync(environmentId, shapeId, tankMethodId);
     }
 
+
+    [HttpGet("get-by-name/{name}")]
+    public async Task<IBusinessResult> GetByAccesname(string name)
+    {
+        return await _terrariumService.GetByAccesname(name);
+    }
 
     // GET api/<TerrariumController>/5
     [HttpGet("get-{id}")]
