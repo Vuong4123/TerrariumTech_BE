@@ -31,14 +31,14 @@ public class AccessoryRepository : GenericRepository<Accessory>
     // Nạp dữ liệu Accessory cùng với ảnh (AccessoryImages)
     public async Task<(IEnumerable<Accessory>, int)> GetFilterAndPagedAsync(AccessoryGetAllRequest request)
     {
-        var queryable = _dbContext.Accessories.AsQueryable(); 
+        var queryable = _dbContext.Accessories.AsQueryable();
         queryable = Include(queryable, request.IncludeProperties);
         var totalOrigin = queryable.Count();
 
         // filter
-        
+
         // end
-        
+
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 
         return (await queryable.ToListAsync(), totalOrigin);
@@ -50,5 +50,13 @@ public class AccessoryRepository : GenericRepository<Accessory>
         return await _dbContext.Accessories
             .Include(t => t.AccessoryImages) // Nạp dữ liệu TerrariumImages
             .FirstOrDefaultAsync(t => t.AccessoryId == id); // Tìm theo ID// Lọc theo TerrariumId
+    }
+    // Tìm kiếm Accessory theo tên
+    public async Task<IEnumerable<Accessory>> GetByNameAsync(string name)
+    {
+        return await _dbContext.Accessories
+            .Where(a => a.Name.Contains(name)) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
+            .Include(t => t.AccessoryImages)
+            .ToListAsync();
     }
 }

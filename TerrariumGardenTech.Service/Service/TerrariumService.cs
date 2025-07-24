@@ -1,6 +1,7 @@
 ﻿using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
+using TerrariumGardenTech.Common.ResponseModel.Accessory;
 using TerrariumGardenTech.Common.ResponseModel.Base;
 using TerrariumGardenTech.Common.ResponseModel.Terrarium;
 using TerrariumGardenTech.Repositories;
@@ -160,6 +161,9 @@ public class TerrariumService : ITerrariumService
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
 
             // Cập nhật thuộc tính cơ bản
+            terra.EnvironmentId = terrariumUpdateRequest.EnvironmentId;
+            terra.ShapeId = terrariumUpdateRequest.ShapeId;
+            terra.TankMethodId = terrariumUpdateRequest.TankMethodId;
             terra.TerrariumName = terrariumUpdateRequest.TerrariumName;
             terra.Description = terrariumUpdateRequest.Description;
             terra.Status = terrariumUpdateRequest.Status;
@@ -201,15 +205,64 @@ public class TerrariumService : ITerrariumService
             // Cập nhật và lưu lại
             await _unitOfWork.Terrarium.UpdateAsync(terra);
 
-            var resultDto = terra.ToTerrariumResponse(); // Sử dụng mapper
 
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, resultDto);        
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG);        
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
+
+    public async Task<IBusinessResult> GetByAccesname(string name)
+    {
+        try
+        {
+            // Tìm Accessory theo tên
+            var terrarium = await _unitOfWork.Terrarium.GetByNameAsync(name);
+
+            if (terrarium == null)
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessory found with that name.");
+
+            // Mapping dữ liệu từ Accessory sang response model nếu cần thiết
+            var terrariumResponse = terrarium.Select(t => new TerrariumResponse
+            {
+                TerrariumId = t.TerrariumId,
+                EnvironmentId = t.EnvironmentId,
+                ShapeId = t.ShapeId,
+                TankMethodId = t.TankMethodId,
+                TerrariumName = t.TerrariumName,
+                Description = t.Description,
+                //MinPrice = terrarium.MinPrice,
+                //MaxPrice = terrarium.MaxPrice,
+                //Stock = terrarium.Stock,
+                //Status = terrarium.Status,
+                //BodyHTML = terrarium.bodyHTML ?? string.Empty, // Dùng giá trị mặc định nếu bodyHTML là null
+                //CreatedAt = terrarium.CreatedAt ?? DateTime.UtcNow, // Dùng giá trị mặc định nếu CreatedAt là null
+                //UpdatedAt = terrarium.UpdatedAt ?? DateTime.UtcNow, // Tương tự cho UpdatedAt
+                Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+                {
+                    AccessoryId = a.Accessory.AccessoryId,
+                    Name = a.Accessory.Name,
+                    Description = a.Accessory.Description,
+                    Price = a.Accessory.Price
+                }).ToList(),
+                TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
+                {
+                    TerrariumImageId = ti.TerrariumImageId,
+                    TerrariumId = ti.TerrariumId,
+                    ImageUrl = ti.ImageUrl ?? string.Empty // Dùng giá trị mặc định nếu ImageUrl là null
+                }).ToList()
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Accessory found.", terrariumResponse);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
+
     public async Task<IBusinessResult> GetTerrariumSuggestions(int userId)
     {
         try
