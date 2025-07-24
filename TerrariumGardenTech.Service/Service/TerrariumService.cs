@@ -225,14 +225,14 @@ public class TerrariumService : ITerrariumService
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessory found with that name.");
 
             // Mapping dữ liệu từ Accessory sang response model nếu cần thiết
-            var terrariumResponse = new TerrariumResponse
+            var terrariumResponse = terrarium.Select(t => new TerrariumResponse
             {
-                TerrariumId = terrarium.TerrariumId,
-                EnvironmentId = terrarium.EnvironmentId,
-                ShapeId = terrarium.ShapeId,
-                TankMethodId = terrarium.TankMethodId,
-                TerrariumName = terrarium.TerrariumName,
-                Description = terrarium.Description,
+                TerrariumId = t.TerrariumId,
+                EnvironmentId = t.EnvironmentId,
+                ShapeId = t.ShapeId,
+                TankMethodId = t.TankMethodId,
+                TerrariumName = t.TerrariumName,
+                Description = t.Description,
                 //MinPrice = terrarium.MinPrice,
                 //MaxPrice = terrarium.MaxPrice,
                 //Stock = terrarium.Stock,
@@ -240,20 +240,20 @@ public class TerrariumService : ITerrariumService
                 //BodyHTML = terrarium.bodyHTML ?? string.Empty, // Dùng giá trị mặc định nếu bodyHTML là null
                 //CreatedAt = terrarium.CreatedAt ?? DateTime.UtcNow, // Dùng giá trị mặc định nếu CreatedAt là null
                 //UpdatedAt = terrarium.UpdatedAt ?? DateTime.UtcNow, // Tương tự cho UpdatedAt
-                Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+                Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
                 {
                     AccessoryId = a.Accessory.AccessoryId,
                     Name = a.Accessory.Name,
                     Description = a.Accessory.Description,
                     Price = a.Accessory.Price
                 }).ToList(),
-                TerrariumImages = terrarium.TerrariumImages.Select(ti => new TerrariumImageResponse
+                TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
                 {
                     TerrariumImageId = ti.TerrariumImageId,
                     TerrariumId = ti.TerrariumId,
                     ImageUrl = ti.ImageUrl ?? string.Empty // Dùng giá trị mặc định nếu ImageUrl là null
                 }).ToList()
-            };
+            }).ToList();
 
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Accessory found.", terrariumResponse);
         }
