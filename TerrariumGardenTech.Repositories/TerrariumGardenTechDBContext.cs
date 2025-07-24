@@ -66,7 +66,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<OrderItem> OrderItems { get; set; }
 
-    public virtual DbSet<PaymentTransition> PaymentTransitions { get; set; }
+    public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<Personalize> Personalizes { get; set; }
 
@@ -599,11 +599,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
         //        .HasConstraintName("FK_OrderItemDetail_OrderItem");
         //});
 
-        modelBuilder.Entity<PaymentTransition>(entity =>
+        modelBuilder.Entity<Payment>(entity =>
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__PaymentT__A0D9EFC6B78D0C95");
 
-            entity.ToTable("PaymentTransition");
+            entity.ToTable("Payment");
 
             entity.Property(e => e.PaymentId).HasColumnName("paymentId");
             entity.Property(e => e.OrderId).HasColumnName("orderId");

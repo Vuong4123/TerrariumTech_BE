@@ -10,6 +10,7 @@ public interface ITerrariumService
 
     // Task<BusinessResult> GetAllOfParam(string type, string shape, string tankMethod, string theme, string size);
     Task<IBusinessResult> GetTerrariumSuggestions(int userId);
+    Task<IBusinessResult> GetByAccesname(string name);
     Task<IBusinessResult> FilterTerrariumsAsync(int? environmentId, int? shapeId, int? tankMethodId);
     Task<IBusinessResult> GetById(int id);
     Task<IBusinessResult> CreateTerrarium(TerrariumCreateRequest terrariumCreateRequest);
