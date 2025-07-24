@@ -4,6 +4,7 @@ using TerrariumGardenTech.Common.ResponseModel.Accessory;
 using TerrariumGardenTech.Common.ResponseModel.Base;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -278,5 +279,36 @@ public class AccessoryService : IAccessoryService
             await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
 
         await _unitOfWork.Terrarium.RemoveAsync(terrarium);
+    }
+
+    public async Task<IBusinessResult> GetByAccesname(string name)
+    {
+        try
+        {
+            // Tìm Accessory theo tên
+            var accessory = await _unitOfWork.Accessory.GetByNameAsync(name);
+
+            if (accessory == null)
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessory found with that name.");
+
+            // Mapping dữ liệu từ Accessory sang response model nếu cần thiết
+            var accessoryResponse = new AccessoryResponse
+            {
+                AccessoryId = accessory.AccessoryId,
+                Name = accessory.Name,
+                Size = accessory.Size,
+                Description = accessory.Description,
+                Price = accessory.Price ?? 0,
+                StockQuantity = accessory.StockQuantity ?? 0,
+                Status = accessory.Status,
+                CategoryId = accessory.CategoryId
+            };
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Accessory found.", accessoryResponse);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 }

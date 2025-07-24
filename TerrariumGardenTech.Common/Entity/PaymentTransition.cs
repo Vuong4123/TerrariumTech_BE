@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
-public partial class PaymentTransition
+public partial class Payment
 {
     public int PaymentId { get; set; }
 
