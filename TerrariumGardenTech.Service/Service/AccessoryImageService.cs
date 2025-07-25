@@ -82,7 +82,7 @@ public class AccessoryImageService(UnitOfWork _unitOfWork, ICloudinaryService _c
         {
             // Upload image to Cloudinary and get the result (UploadResult)
             var uploadResult =
-                await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{accessoryId}",
+                await _cloudinaryService.UploadImageAsync(imageFile, $"accesories/{accessoryId}",
                     accessoryId.ToString());
 
             // Check if the upload was successful and the URL is valid
