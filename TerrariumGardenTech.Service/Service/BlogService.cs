@@ -81,7 +81,7 @@ public class BlogService(
                 // Upload ảnh mới
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
                     blogUpdateRequest.ImageFile,
-                    "blog_images"
+                    folder: "blog_images"
                 );
 
                 if (uploadResult.Status == Const.SUCCESS_CREATE_CODE)
