@@ -4,11 +4,12 @@ namespace TerrariumGardenTech.Common.RequestModel.Cart;
 
 public class AddCartItemRequest
 {
-    [Required] public int? AccessoryId { get; set; } // Khóa ngoại đến Accessory, có thể null nếu là TerrariumVariant
-    [Required] public int? TerrariumVariantId { get; set; } // Khóa ngoại đến TerrariumVariant, có thể null nếu là Accessory
+    // Các tham số truyền vào giỏ hàng
+    public int? AccessoryId { get; set; } // Phụ kiện, có thể null nếu chỉ là variant
+    public int? TerrariumVariantId { get; set; } // Variant, có thể null nếu chỉ là phụ kiện
 
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải lớn hơn 0.")]
-    public int Quantity { get; set; } // Số lượng sản phẩm trong giỏ
+    public int? AccessoryQuantity { get; set; } // Số lượng cho phụ kiện, có thể null nếu không mua phụ kiện
+    public int? VariantQuantity { get; set; } // Số lượng cho variant, có thể null nếu không mua variant
 }
+
 
