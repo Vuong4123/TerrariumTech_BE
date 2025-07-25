@@ -2,5 +2,6 @@
 
 public class UpdateCartItemRequest
 {
-    public int Quantity { get; set; }
+    public int? AccessoryQuantity { get; set; } // Số lượng cho phụ kiện
+    public int? VariantQuantity { get; set; } // Số lượng cho variant
 }
