@@ -36,7 +36,8 @@ public class AddressController : ControllerBase
             UserId = t.UserId,
             ReceiverAddress = t.ReceiverAddress,
             ReceiverName = t.ReceiverName,
-            ReceiverPhone = t.ReceiverPhone
+            ReceiverPhone = t.ReceiverPhone,
+            IsDefault = t.IsDefault
         }).ToList();
 
         if (addresses == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
