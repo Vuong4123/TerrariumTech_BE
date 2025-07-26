@@ -18,5 +18,11 @@ public class CartItemRepository : GenericRepository<CartItem>
             .Include(ci => ci.TerrariumVariant)  // Bao gồm TerrariumVariant
             .FirstOrDefaultAsync(ci => ci.CartItemId == cartItemId);
     }
+    public async Task<CartItem> GetByIdWithCartAsync(int itemId)
+    {
+        return await _context.CartItems
+            .Include(ci => ci.Cart)
+            .FirstOrDefaultAsync(ci => ci.CartItemId == itemId);
+    }
 
 }
