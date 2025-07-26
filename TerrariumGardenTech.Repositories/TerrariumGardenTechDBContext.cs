@@ -878,6 +878,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasColumnType("decimal(12, 2)")
                 .HasColumnName("additionalPrice");
             entity.Property(e => e.StockQuantity).HasColumnName("stockQuantity");
+            //entity.Property(e => e.UrlImage)
+            //    .HasMaxLength(250)
+            //    .HasColumnName("urlImage"); 
             entity.Property(e => e.TerrariumId).HasColumnName("terrariumId");
             entity.Property(e => e.VariantName)
                 .HasMaxLength(100)
