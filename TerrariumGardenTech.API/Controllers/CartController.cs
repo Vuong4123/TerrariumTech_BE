@@ -31,33 +31,11 @@ public class CartController : ControllerBase
     public async Task<IActionResult> GetCart()
     {
         var userId = User.GetUserId();
-        var cart = await _cartService.GetCartByUserAsync(userId);
+        var cart = await _cartService.GetCartAsync(userId);
+        if (cart == null)
+            return NotFound();
 
-        if (cart == null) return NotFound(new { message = "Giỏ hàng không tồn tại" });
-
-        var cartItems = cart.CartItems.Select(item => new
-        {
-            item.CartItemId,
-            item.CartId,
-            item.AccessoryId,
-            Accessory = item.Accessory?.Name,  // Thêm tên phụ kiện nếu có
-            item.TerrariumVariantId,
-            TerrariumVariant = item.TerrariumVariant?.VariantName,  // Thêm tên biến thể terrarium nếu có
-            item.Quantity,  // Số lượng của mỗi món
-            item.UnitPrice,
-            item.TotalPrice,
-            item.CreatedAt,
-            item.UpdatedAt
-        }).ToList();
-
-        var totalCartPrice = cartItems.Sum(x => x.TotalPrice);
-        return Ok(new
-        {
-            cart.CartId,
-            cart.UserId,
-            cartItems,
-            totalCartPrice
-        });
+        return Ok(cart);
     }
 
 
@@ -66,46 +44,18 @@ public class CartController : ControllerBase
     /// </summary>
     [HttpPost("items/multiple")]
     [Authorize]
-    public async Task<IActionResult> AddItems([FromBody] List<AddCartItemRequest> requests)
+    public async Task<IActionResult> AddItems([FromBody] AddCartItemRequest request)
     {
         var userId = User.GetUserId();
-        var items = new List<CartItemResponse>();  // Dùng CartItemResponse thay vì anonymous type
-        decimal totalCartPrice = 0; // Tổng giá trị của giỏ hàng
-        var failedItems = new List<string>(); // Dùng để lưu các món hàng không hợp lệ
-
-        try
+        if (request == null ||
+         (request.AccessoryQuantity is null && request.VariantQuantity is null) ||
+         (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
         {
-            foreach (var request in requests)
-            {
-                // Kiểm tra quantity cho phụ kiện hoặc variant
-                if ((request.AccessoryQuantity.HasValue && request.AccessoryQuantity.Value <= 0) &&
-                    (request.VariantQuantity.HasValue && request.VariantQuantity.Value <= 0))
-                {
-                    failedItems.Add("Số lượng sản phẩm phải lớn hơn 0");
-                    continue; // Bỏ qua món hàng không hợp lệ
-                }
-
-                // Thêm sản phẩm vào giỏ
-                var item = await _cartService.AddItemAsync(userId, request);
-                totalCartPrice += item.TotalPrice;
-
-                // Thêm các thông tin sản phẩm vào danh sách
-                items.Add(item);
-            }
-
-            if (failedItems.Any())
-            {
-                return BadRequest(new { message = "Có lỗi với một số món hàng", details = failedItems });
-            }
-
-            return CreatedAtAction(nameof(GetCart), new { userId }, new { items, totalCartPrice });
+            return BadRequest(new { message = "Thông tin thêm vào giỏ hàng không hợp lệ." });
         }
-        catch (Exception ex)
-        {
-            // Ghi log chi tiết lỗi
-            _logger.LogError(ex, "Error occurred while adding items to the cart.");
-            return StatusCode(500, new { message = "Đã có lỗi xảy ra trong quá trình xử lý giỏ hàng", error = ex.Message });
-        }
+
+        var result = await _cartService.AddItemAsync(userId, request);
+        return CreatedAtAction(nameof(GetCart), new {userId}, result);
     }
 
 
@@ -118,27 +68,19 @@ public class CartController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        // Logging userId và cartItemId
-        Console.WriteLine($"Updating CartItem with ID {cartItemId} for UserID {userId}");
-
-        // Kiểm tra số lượng phải lớn hơn 0
-        if ((request.AccessoryQuantity.HasValue && request.AccessoryQuantity <= 0) &&
-            (request.VariantQuantity.HasValue && request.VariantQuantity <= 0))
+        if (request == null ||
+         (request.AccessoryQuantity is null && request.VariantQuantity is null) ||
+         (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
         {
-            return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0" });
+            return BadRequest(new { message = "Thông tin cập nhật không hợp lệ." });
         }
 
-        // Cập nhật giỏ hàng
-        var success = await _cartService.UpdateItemAsync(userId, cartItemId, request.AccessoryQuantity, request.VariantQuantity);
-        if (!success)
-        {
-            // Logging lỗi không tìm thấy mục giỏ hàng
-            Console.WriteLine($"CartItem with ID {cartItemId} not found or not owned by user {userId}");
-            return NotFound(new { message = "Item không tìm thấy trong giỏ hàng hoặc không thuộc quyền sở hữu của người dùng" });
-        }
+        var result = await _cartService.UpdateItemAsync(userId, cartItemId, request);
 
-        // Nếu cập nhật thành công
-        return NoContent();
+        if (result == null)
+            return NotFound(new { message = "Không tìm thấy item trong giỏ hàng hoặc không thuộc về người dùng." });
+
+        return Ok(result);
     }
 
 
