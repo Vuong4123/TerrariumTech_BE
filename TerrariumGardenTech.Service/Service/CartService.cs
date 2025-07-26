@@ -105,7 +105,6 @@ public class CartService : ICartService
         };
 
         await _unitOfWork.CartItemRepository.CreateAsync(cartItem);
-        await _unitOfWork.SaveAsync();
 
         return cartItemResponse;  // Trả về thông tin giỏ hàng đầy đủ
     }
