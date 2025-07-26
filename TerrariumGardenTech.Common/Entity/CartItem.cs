@@ -14,6 +14,8 @@ public class CartItem
     // Khóa ngoại đến sản phẩm (Accessory hoặc TerrariumVariant)
     public int? AccessoryId { get; set; }
     public Accessory Accessory { get; set; }
+    public int? AccessoryQuantity { get; set; }
+    public int? TerrariumVariantQuantity { get; set; }
 
     public int? TerrariumVariantId { get; set; }
     public TerrariumVariant TerrariumVariant { get; set; }

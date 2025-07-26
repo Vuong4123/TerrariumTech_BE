@@ -299,7 +299,7 @@ public class AccessoryService : IAccessoryService
                 Name = a.Name,
                 Size = a.Size,
                 Description = a.Description,
-                Price = a.Price ?? 0,
+                Price = a.Price,
                 StockQuantity = a.StockQuantity ?? 0,
                 Status = a.Status,
                 CategoryId = a.CategoryId,
