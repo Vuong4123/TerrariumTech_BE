@@ -124,7 +124,7 @@ public class OrderService : IOrderService
         }
     }
 
-    public async Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod, decimal paidAmount)
+    public async Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod)
     {
         var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
         if (order == null)
@@ -134,7 +134,7 @@ public class OrderService : IOrderService
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Order already paid", null);
 
         // Check if the paid amount is correct
-        if (paidAmount < order.TotalAmount - order.Deposit)
+        if (order.TotalAmount < order.TotalAmount - order.Deposit)
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Paid amount is insufficient", null);
 
         // Update payment status
@@ -145,7 +145,7 @@ public class OrderService : IOrderService
         {
             OrderId = order.OrderId,
             PaymentMethod = paymentMethod,
-            PaymentAmount = paidAmount,
+            PaymentAmount = order.TotalAmount,
             PaymentDate = DateTime.UtcNow
         };
 
@@ -227,7 +227,7 @@ public class OrderService : IOrderService
             Status = o.Status,
             PaymentStatus = o.PaymentStatus,
             ShippingStatus = o.ShippingStatus,
-            Items = o.OrderItems.Select(i => new OrderItemSummaryResponse
+            OrderItems = o.OrderItems.Select(i => new OrderItemSummaryResponse
             {
                 OrderItemId = i.OrderItemId,
                 AccessoryId = i.AccessoryId,

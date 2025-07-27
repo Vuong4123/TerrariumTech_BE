@@ -31,12 +31,13 @@ public class AddressController : ControllerBase
         // Ensure Data is a List<Address> (or any IEnumerable<Address>)
         var addresses = (result.Data as IEnumerable<Address>)?.Select(t => new AddressResponse
         {
-            Id = t.Id,
+            Id = t.AddressId,
             TagName = t.TagName,
             UserId = t.UserId,
             ReceiverAddress = t.ReceiverAddress,
             ReceiverName = t.ReceiverName,
-            ReceiverPhone = t.ReceiverPhone
+            ReceiverPhone = t.ReceiverPhone,
+            IsDefault = t.IsDefault
         }).ToList();
 
         if (addresses == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
@@ -55,7 +56,7 @@ public class AddressController : ControllerBase
             // Ánh xạ dữ liệu từ Category sang CategoryRequest
             var addressResponse = new AddressResponse
             {
-                Id = address.Id,
+                Id = address.AddressId,
                 TagName = address.TagName,
                 UserId = address.UserId,
                 ReceiverAddress = address.ReceiverAddress,
@@ -84,7 +85,7 @@ public class AddressController : ControllerBase
             // Ánh xạ dữ liệu từ Address sang AddressResponse
             var addressResponses = addresses.Select(t => new AddressResponse
             {
-                Id = t.Id,
+                Id = t.AddressId,
                 TagName = t.TagName,
                 UserId = t.UserId,
                 ReceiverAddress = t.ReceiverAddress,

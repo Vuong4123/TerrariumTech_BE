@@ -42,7 +42,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<Address> Addresses { get; set; }
 
-    public virtual DbSet<AddressDelivery> AddressDeliveries { get; set; }
 
     public virtual DbSet<AisuggestLayout> AisuggestLayouts { get; set; }
 
@@ -79,8 +78,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<ReturnExchangeRequestItem> ReturnExchangeRequestItems { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
-
-    public virtual DbSet<ShippingDetail> ShippingDetails { get; set; }
 
     public virtual DbSet<Terrarium> Terrariums { get; set; }
 
@@ -186,11 +183,11 @@ public partial class TerrariumGardenTechDBContext : DbContext
         //});
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK_Address");
+            entity.HasKey(e => e.AddressId).HasName("PK_Address");
 
             entity.ToTable("Address");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.AddressId).HasColumnName("id");
 
             entity.Property(e => e.TagName)
                 .HasMaxLength(250)
@@ -215,57 +212,57 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Address_User");
         });
-        modelBuilder.Entity<AddressDelivery>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_AddressDelivery");
+        //modelBuilder.Entity<AddressDelivery>(entity =>
+        //{
+        //    entity.HasKey(e => e.AddressDeliveryId).HasName("PK_AddressDelivery");
 
-            entity.ToTable("AddressDelivery");
+        //    entity.ToTable("AddressDelivery");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+        //    entity.Property(e => e.AddressDeliveryId).HasColumnName("id");
 
-            entity.Property(e => e.OrderId)
-                .HasColumnName("orderId");
+        //    entity.Property(e => e.OrderId)
+        //        .HasColumnName("orderId");
 
-            entity.Property(e => e.ReceiverName)
-                .HasMaxLength(250)
-                .HasColumnName("receiverName");
+        //    entity.Property(e => e.ReceiverName)
+        //        .HasMaxLength(250)
+        //        .HasColumnName("receiverName");
 
-            entity.Property(e => e.ReceiverPhone)
-                .HasMaxLength(250)
-                .HasColumnName("receiverPhone");
+        //    entity.Property(e => e.ReceiverPhone)
+        //        .HasMaxLength(250)
+        //        .HasColumnName("receiverPhone");
 
-            entity.Property(e => e.ReceiverAddress)
-                .HasMaxLength(250)
-                .HasColumnName("receiverAddress");
+        //    entity.Property(e => e.ReceiverAddress)
+        //        .HasMaxLength(250)
+        //        .HasColumnName("receiverAddress");
 
-            //entity.Property(e => e.Longitude)
-            //    .HasColumnType("numeric(9,6)")
-            //    .HasColumnName("longitude");
+        //    //entity.Property(e => e.Longitude)
+        //    //    .HasColumnType("numeric(9,6)")
+        //    //    .HasColumnName("longitude");
 
-            //entity.Property(e => e.Latitude)
-            //    .HasColumnType("numeric(9,6)")
-            //    .HasColumnName("latitude");
+        //    //entity.Property(e => e.Latitude)
+        //    //    .HasColumnType("numeric(9,6)")
+        //    //    .HasColumnName("latitude");
 
-            //entity.Property(e => e.WardId).HasColumnName("wardId");
+        //    //entity.Property(e => e.WardId).HasColumnName("wardId");
 
-            entity.Property(e => e.UserId).HasColumnName("userId");
+        //    entity.Property(e => e.UserId).HasColumnName("userId");
 
-            entity.Property(e => e.CreatedOnUtc)
-                .HasColumnType("datetime2")
-                .HasColumnName("createdOnUtc");
+        //    entity.Property(e => e.CreatedOnUtc)
+        //        .HasColumnType("datetime2")
+        //        .HasColumnName("createdOnUtc");
 
-            entity.Property(e => e.ModifiedOnUtc)
-                .HasColumnType("datetime2")
-                .HasColumnName("modifiedOnUtc");
+        //    entity.Property(e => e.ModifiedOnUtc)
+        //        .HasColumnType("datetime2")
+        //        .HasColumnName("modifiedOnUtc");
 
-            entity.Property(e => e.IsDeleted)
-                .HasColumnName("isDeleted");
+        //    entity.Property(e => e.IsDeleted)
+        //        .HasColumnName("isDeleted");
 
-            entity.HasOne(d => d.Order)
-                .WithMany(p => p.AddressDeliveries)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_AddressDelivery_Order");
-        });
+        //    entity.HasOne(d => d.Order)
+        //        .WithMany(p => p.AddressDeliveries)
+        //        .HasForeignKey(d => d.OrderId)
+        //        .HasConstraintName("FK_AddressDelivery_Order");
+        //});
 
         //modelBuilder.Entity<AddressDelivery>(entity =>
         //{
@@ -621,7 +618,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasDefaultValue("pending")
                 .HasColumnName("status");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.PaymentTransitions)
+            entity.HasOne(d => d.Order).WithMany(p => p.Payment)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PaymentTransition_Order");
@@ -774,32 +771,32 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasColumnName("roleName");
         });
 
-        modelBuilder.Entity<ShippingDetail>(entity =>
-        {
-            entity.HasKey(e => e.ShippingDetailId).HasName("PK__Shipping__DDF63975E50C620D");
+        //modelBuilder.Entity<ShippingDetail>(entity =>
+        //{
+        //    entity.HasKey(e => e.ShippingDetailId).HasName("PK__Shipping__DDF63975E50C620D");
 
-            entity.ToTable("ShippingDetail");
+        //    entity.ToTable("ShippingDetail");
 
-            entity.Property(e => e.ShippingDetailId).HasColumnName("shippingDetailId");
-            entity.Property(e => e.EstimatedDeliveryDate)
-                .HasColumnType("date")
-                .HasColumnName("estimatedDeliveryDate");
-            entity.Property(e => e.OrderId).HasColumnName("orderId");
-            entity.Property(e => e.ShippingCost)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("shippingCost");
-            entity.Property(e => e.ShippingMethod)
-                .HasMaxLength(50)
-                .HasColumnName("shippingMethod");
-            entity.Property(e => e.TrackingNumber)
-                .HasMaxLength(100)
-                .HasColumnName("trackingNumber");
+        //    entity.Property(e => e.ShippingDetailId).HasColumnName("shippingDetailId");
+        //    entity.Property(e => e.EstimatedDeliveryDate)
+        //        .HasColumnType("date")
+        //        .HasColumnName("estimatedDeliveryDate");
+        //    entity.Property(e => e.OrderId).HasColumnName("orderId");
+        //    entity.Property(e => e.ShippingCost)
+        //        .HasColumnType("decimal(10, 2)")
+        //        .HasColumnName("shippingCost");
+        //    entity.Property(e => e.ShippingMethod)
+        //        .HasMaxLength(50)
+        //        .HasColumnName("shippingMethod");
+        //    entity.Property(e => e.TrackingNumber)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("trackingNumber");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.ShippingDetails)
-                .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ShippingDetail_Order");
-        });
+        //    entity.HasOne(d => d.Order).WithMany(p => p.ShippingDetails)
+        //        .HasForeignKey(d => d.OrderId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_ShippingDetail_Order");
+        //});
 
         // modelBuilder.Entity<Terrarium>(entity =>
         // {
