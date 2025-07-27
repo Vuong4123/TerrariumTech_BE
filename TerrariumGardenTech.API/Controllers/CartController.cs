@@ -123,22 +123,16 @@ public class CartController : ControllerBase
     /// </summary>
     [HttpPost("checkout")]
     [Authorize]
-    public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
+    public async Task<IActionResult> Checkout()
     {
-        var userId = User.GetUserId();
-        try
-        {
-            var order = await _cartService.CheckoutAsync(userId, request);
+        var userId = User.GetUserId(); // Lấy userId từ JWT token
 
+        
+            // Gọi service để xử lý thanh toán
+            var order = await _cartService.CheckoutAsync(userId);
+
+            // Trả về thông tin đơn hàng sau khi thanh toán
             return CreatedAtAction(nameof(OrderController.Get), new { id = order.OrderId }, order);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Đã có lỗi xảy ra trong quá trình thanh toán", error = ex.Message });
-        }
+        
     }
 }
