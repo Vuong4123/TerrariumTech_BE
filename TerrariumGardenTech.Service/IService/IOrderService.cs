@@ -11,5 +11,5 @@ public interface IOrderService
     Task<int> CreateAsync(OrderCreateRequest request);
     Task<bool> UpdateStatusAsync(int id, string status);
     Task<bool> DeleteAsync(int id);
-    Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod, decimal paidAmount);
+    Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod);
 }
