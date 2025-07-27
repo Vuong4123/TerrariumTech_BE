@@ -2,6 +2,7 @@
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.IService;
@@ -18,5 +19,5 @@ public interface ICartService
 
     Task<bool> RemoveItemAsync(int userId, int itemId);
     Task<bool> ClearCartAsync(int userId);
-    Task<Order> CheckoutAsync(int userId, CheckoutRequest req);
+    Task<OrderResponse> CheckoutAsync(int userId);
 }
