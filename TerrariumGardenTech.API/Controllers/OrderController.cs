@@ -137,7 +137,7 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var result = await _svc.CheckoutAsync(id, checkoutRequest.PaymentMethod, checkoutRequest.PaidAmount);
+            var result = await _svc.CheckoutAsync(id, checkoutRequest.PaymentMethod);
             if (result.Status == Const.SUCCESS_UPDATE_CODE)
                 return Ok(new { message = result.Message, statusCode = result.Status });
 
