@@ -105,7 +105,7 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
         try
         {
             var result = -1;
-            var addressEntity = _unitOfWork.Address.GetByIdAsync(address.Id);
+            var addressEntity = _unitOfWork.Address.GetByIdAsync(address.AddressId);
             if (addressEntity != null)
             {
                 result = await _unitOfWork.Address.UpdateAsync(address);

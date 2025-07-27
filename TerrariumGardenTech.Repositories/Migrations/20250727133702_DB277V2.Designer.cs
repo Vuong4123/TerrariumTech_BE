@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250727133702_DB277V2")]
+    partial class DB277V2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -687,6 +690,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("orderDate")
                         .HasDefaultValueSql("(sysutcdatetime())");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PaymentStatus")
                         .ValueGeneratedOnAdd()
