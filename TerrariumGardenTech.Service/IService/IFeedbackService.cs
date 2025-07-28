@@ -10,7 +10,7 @@ namespace TerrariumGardenTech.Service.IService
 {
     public interface IFeedbackService
     {
-        Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest request);
+        Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest request, int userId);
         Task<List<FeedbackResponse>> GetByOrderItemAsync(int orderItemId);
     }
 }

@@ -23,12 +23,27 @@ namespace TerrariumGardenTech.Service.Service
             _mapper = mapper;
         }
 
-        public async Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest request)
+        public async Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest request, int userId)
         {
+            // 1. Map request → entity (chưa có FK, chưa có ảnh)
             var entity = _mapper.Map<Feedback>(request);
-            await _uow.Feedback.CreateAsync(entity);
-            await _uow.SaveAsync();
 
+            // 2. Gán FK User
+            entity.UserId = userId;
+
+            // 3. Khởi tạo danh sách ảnh (nếu có)
+            if (request.ImageUrls != null && request.ImageUrls.Any())
+            {
+                entity.FeedbackImages = request.ImageUrls
+                                               .Select(url => new FeedbackImage { ImageUrl = url })
+                                               .ToList();
+            }
+
+            // 4. Lưu vào DB (CreateAsync trong GenericRepository chỉ Add + SaveChanges)
+            await _uow.Feedback.CreateAsync(entity);
+            // Nếu CreateAsync đã SaveChanges, không cần _uow.SaveAsync() nữa.
+
+            // 5. Trả về DTO
             return _mapper.Map<FeedbackResponse>(entity);
         }
 
