@@ -53,8 +53,8 @@ public class PayOsService : IPayOsService
         var domain =
             $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api";
         var successReturnUrl =
-            $"{domain}/Payment/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Success}";
-        var failReturnUrl = $"{domain}/Payment/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Fail}";
+            $"{domain}/Payment/pay-os/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Success}";
+        var failReturnUrl = $"{domain}/Payment/pay-os/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Fail}";
         var orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
 
         var signatureData =
@@ -72,6 +72,12 @@ public class PayOsService : IPayOsService
             signature: signature
         );
         var response = await _payOS.createPaymentLink(paymentLinkRequest);
+        
+        if (string.IsNullOrEmpty(response.checkoutUrl))
+        {
+            return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", response.checkoutUrl);
+        }
+        
         return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Success", response.checkoutUrl);
     }
 
