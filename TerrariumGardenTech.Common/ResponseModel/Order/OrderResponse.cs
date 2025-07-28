@@ -17,6 +17,7 @@ public class OrderResponse
     public string Status { get; set; } = string.Empty;
     public string PaymentStatus { get; set; } = string.Empty;
     public string ShippingStatus { get; set; } = string.Empty;
+    public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
 
     public List<OrderItemSummaryResponse> OrderItems { get; set; } = new();
