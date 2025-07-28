@@ -107,7 +107,8 @@ builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IAccessoryImageService, AccessoryImageService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IPayOsService, PayOsService>();
-builder.Services.AddScoped<ICartService, CartService>(); // Đăng ký CartService vào DI
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddScoped<ICartService, CartService>(); 
 
 
 
