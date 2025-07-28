@@ -31,6 +31,8 @@ public class UnitOfWork
     private TerrariumVariantRepository _terrariumVariantRepository;
     private UserRepository _userRepository;
     private VoucherRepository _voucherRepository;
+    private FeedbackRepository _feedbackRepository;
+
 
     public UnitOfWork()
     {
@@ -162,5 +164,10 @@ public class UnitOfWork
     public async Task<int> SaveAsync()
     {
         return await _unitOfWorkContext.SaveChangesAsync();
+    }
+
+    public FeedbackRepository Feedback
+    {
+        get => _feedbackRepository ??= new FeedbackRepository(_unitOfWorkContext);
     }
 }
