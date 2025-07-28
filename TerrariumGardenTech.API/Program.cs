@@ -1,13 +1,16 @@
 using DotNetEnv;
 using FirebaseAdmin;
+using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System;
 using System.Text;
 using System.Text.Json;
 using TerrariumGardenTech.API.Authorization;
@@ -52,10 +55,10 @@ builder.Services.AddCors(options =>
     // });
 });
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); });
+builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); cfg.AddProfile<FeedbackProfile>(); });
 // Thêm AutoMapper
 
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<FeedbackProfile>());
+
 
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
 
