@@ -23,6 +23,7 @@ public class VnPayLibrary
     {
         var vnPay = new VnPayLibrary();
 
+        
         foreach (var (key, value) in collection)
         {
             if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
@@ -31,34 +32,90 @@ public class VnPayLibrary
             }
         }
 
-        var orderId = Convert.ToInt64(vnPay.GetResponseData("vnp_TxnRef"));
-        var vnPayTranId = Convert.ToInt64(vnPay.GetResponseData("vnp_TransactionNo"));
-        var vnpResponseCode = vnPay.GetResponseData("vnp_ResponseCode");
-        var vnpSecureHash =
-            collection.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value; //hash của dữ liệu trả về
-        var orderInfo = vnPay.GetResponseData("vnp_OrderInfo");
+        // --- Lấy các giá trị cần thiết từ vnPay (đã được thêm data ở bước trên) ---
+        // Sử dụng TryParse để an toàn hơn thay vì Convert.ToInt64 trực tiếp
+        long? orderId = null;
+        if (long.TryParse(vnPay.GetResponseData("vnp_TxnRef"), out var parsedOrderId))
+        {
+            orderId = parsedOrderId;
+        }
 
-        var checkSignature =
-            vnPay.ValidateSignature(vnpSecureHash, hashSecret); //check Signature
+        long? vnPayTranId = null;
+        if (long.TryParse(vnPay.GetResponseData("vnp_TransactionNo"), out var parsedTranId))
+        {
+            vnPayTranId = parsedTranId;
+        }
+
+        string vnpResponseCode = vnPay.GetResponseData("vnp_ResponseCode");
+        string orderInfo = vnPay.GetResponseData("vnp_OrderInfo");
+        string amountString = vnPay.GetResponseData("vnp_Amount"); // Lấy chuỗi số tiền
+        string vnpPayDateString = vnPay.GetResponseData("vnp_PayDate"); // Lấy ngày thanh toán (ưu tiên)
+        string vnpCreateDateString = vnPay.GetResponseData("vnp_CreateDate"); // Lấy ngày tạo (phòng khi không có PayDate)
+
+
+        // --- Xác thực chữ ký ---
+        // Lấy vnp_SecureHash từ collection (đã được parse sẵn)
+        var vnpSecureHash = collection.FirstOrDefault(k => k.Key == "vnp_SecureHash").Value.ToString();
+        if (string.IsNullOrEmpty(vnpSecureHash))
+        {
+            // Hoặc trả về lỗi, hoặc coi là không thành công
+            return new PaymentResponseModel { Success = false };
+        }
+
+        var checkSignature = vnPay.ValidateSignature(vnpSecureHash, hashSecret);
 
         if (!checkSignature)
+        {
             return new PaymentResponseModel()
             {
-                Success = false
+                Success = false,
+                OrderDescription = "Signature validation failed." // Thêm thông báo lỗi rõ ràng hơn
             };
+        }
 
+        // --- Chuyển đổi giá tiền ---
+        decimal? amount = null;
+        if (decimal.TryParse(amountString, out decimal rawAmount))
+        {
+            amount = rawAmount / 100; // Chia 100 để lấy giá tiền thực tế
+        }
+
+        // --- Chuyển đổi ngày thanh toán ---
+        DateTime? paymentDate = null;
+        string dateToParse = vnpPayDateString; // Ưu tiên vnp_PayDate
+        if (string.IsNullOrEmpty(dateToParse))
+        {
+            dateToParse = vnpCreateDateString; // Nếu không có, dùng vnp_CreateDate
+        }
+
+        if (!string.IsNullOrEmpty(dateToParse) &&
+            DateTime.TryParseExact(dateToParse, "yyyyMMddHHmmss",
+                                   System.Globalization.CultureInfo.InvariantCulture,
+                                   System.Globalization.DateTimeStyles.None,
+                                   out DateTime parsedDate))
+        {
+            paymentDate = parsedDate;
+        }
+
+        // --- Trả về PaymentResponseModel ---
         return new PaymentResponseModel()
         {
-            Success = vnpResponseCode.Equals("00"),
+            Success = vnpResponseCode.Equals("00"), // Trạng thái thành công/thất bại
             PaymentMethod = "VnPay",
             OrderDescription = orderInfo,
-            OrderId = orderId.ToString(),
-            PaymentId = vnPayTranId.ToString(),
-            TransactionId = vnPayTranId.ToString(),
+            OrderId = orderId?.ToString(), // Sử dụng ?.ToString() để tránh NullReferenceException
+            PaymentId = vnPayTranId?.ToString(),
+            TransactionId = vnPayTranId?.ToString(),
             Token = vnpSecureHash,
-            VnPayResponseCode = vnpResponseCode
+            VnPayResponseCode = vnpResponseCode, // Mã phản hồi thô từ VnPay
+
+            Amount = amount, // Gán giá tiền đã chia 100
+            PaymentDate = paymentDate // Gán ngày thanh toán
         };
     }
+
+
+
     public string GetIpAddress(HttpContext context)
     {
         var ipAddress = string.Empty;
@@ -106,6 +163,7 @@ public class VnPayLibrary
     {
         return _responseData.TryGetValue(key, out var retValue) ? retValue : string.Empty;
     }
+
 
     public string CreateRequestUrl(string baseUrl, string vnpHashSecret)
     {
