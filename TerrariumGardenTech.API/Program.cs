@@ -1,15 +1,18 @@
-using System.Text;
-using System.Text.Json;
 using DotNetEnv;
 using FirebaseAdmin;
+using Google.Api;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Text;
+using System.Text.Json;
 using TerrariumGardenTech.API.Authorization;
 using TerrariumGardenTech.API.Middlewares;
 using TerrariumGardenTech.Common;
@@ -20,6 +23,7 @@ using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Configs;
 using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Mappers;
 using TerrariumGardenTech.Service.Service;
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
@@ -51,7 +55,9 @@ builder.Services.AddCors(options =>
     // });
 });
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); });
+builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); cfg.AddProfile<FeedbackProfile>(); });
+// Thêm AutoMapper
+
 
 
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
@@ -107,6 +113,8 @@ builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IAccessoryImageService, AccessoryImageService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IPayOsService, PayOsService>();
+
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>(); 
 
@@ -114,6 +122,8 @@ builder.Services.AddScoped<ICartService, CartService>();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
+
+
 
 // Đăng ký cấu hình SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
