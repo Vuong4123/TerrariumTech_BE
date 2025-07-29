@@ -18,39 +18,53 @@ namespace TerrariumGardenTech.Service.Service
         private readonly IMapper _mapper;
 
         public FeedbackService(UnitOfWork uow, IMapper mapper)
+            => (_uow, _mapper) = (uow, mapper);
+
+        public async Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest req, int userId)
         {
-            _uow = uow;
-            _mapper = mapper;
+            var e = _mapper.Map<Feedback>(req);
+            e.UserId = userId;
+            if (req.ImageUrls?.Any() == true)
+                e.FeedbackImages = req.ImageUrls
+                                     .Select(u => new FeedbackImage { ImageUrl = u })
+                                     .ToList();
+            await _uow.Feedback.CreateAsync(e);
+            return _mapper.Map<FeedbackResponse>(e);
         }
 
-        public async Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest request, int userId)
+        public async Task<(IEnumerable<FeedbackResponse>, int)> GetAllAsync(int page, int pageSize)
         {
-            // 1. Map request → entity (chưa có FK, chưa có ảnh)
-            var entity = _mapper.Map<Feedback>(request);
-
-            // 2. Gán FK User
-            entity.UserId = userId;
-
-            // 3. Khởi tạo danh sách ảnh (nếu có)
-            if (request.ImageUrls != null && request.ImageUrls.Any())
-            {
-                entity.FeedbackImages = request.ImageUrls
-                                               .Select(url => new FeedbackImage { ImageUrl = url })
-                                               .ToList();
-            }
-
-            // 4. Lưu vào DB (CreateAsync trong GenericRepository chỉ Add + SaveChanges)
-            await _uow.Feedback.CreateAsync(entity);
-            // Nếu CreateAsync đã SaveChanges, không cần _uow.SaveAsync() nữa.
-
-            // 5. Trả về DTO
-            return _mapper.Map<FeedbackResponse>(entity);
+            var (list, total) = await _uow.Feedback.GetAllAsync(page, pageSize);
+            return (_mapper.Map<List<FeedbackResponse>>(list), total);
         }
 
         public async Task<List<FeedbackResponse>> GetByOrderItemAsync(int orderItemId)
         {
             var list = await _uow.Feedback.GetByOrderItemAsync(orderItemId);
             return _mapper.Map<List<FeedbackResponse>>(list);
+        }
+
+        public async Task<FeedbackResponse> UpdateAsync(int id, FeedbackUpdateRequest req, int userId)
+        {
+            var e = await _uow.Feedback.GetByIdAsync(id)
+                  ?? throw new KeyNotFoundException("Feedback không tồn tại");
+            if (e.UserId != userId) throw new UnauthorizedAccessException();
+            _mapper.Map(req, e);
+            e.FeedbackImages.Clear();
+            if (req.ImageUrls?.Any() == true)
+                e.FeedbackImages = req.ImageUrls
+                                     .Select(u => new FeedbackImage { ImageUrl = u })
+                                     .ToList();
+            await _uow.Feedback.UpdateAsync(e);
+            return _mapper.Map<FeedbackResponse>(e);
+        }
+
+        public async Task<bool> DeleteAsync(int id, int userId)
+        {
+            var e = await _uow.Feedback.GetByIdAsync(id);
+            if (e == null || e.IsDeleted) return false;
+            if (e.UserId != userId) throw new UnauthorizedAccessException();
+            return await _uow.Feedback.SoftDeleteAsync(id);
         }
     }
 }
