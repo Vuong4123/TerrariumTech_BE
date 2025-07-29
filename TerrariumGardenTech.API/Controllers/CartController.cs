@@ -44,18 +44,46 @@ public class CartController : ControllerBase
     /// </summary>
     [HttpPost("items/multiple")]
     [Authorize]
-    public async Task<IActionResult> AddItems([FromBody] AddCartItemRequest request)
+    public async Task<IActionResult> AddItems([FromBody] List<AddCartItemRequest> requests)
     {
         var userId = User.GetUserId();
-        if (request == null ||
-         (request.AccessoryQuantity is null && request.VariantQuantity is null) ||
-         (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
+
+        if (requests == null || !requests.Any())
         {
-            return BadRequest(new { message = "Thông tin thêm vào giỏ hàng không hợp lệ." });
+            return BadRequest(new { message = "Danh sách sản phẩm không được để trống." });
         }
 
-        var result = await _cartService.AddItemAsync(userId, request);
-        return CreatedAtAction(nameof(GetCart), new {userId}, result);
+        var responses = new List<CartItemResponse>();
+
+        foreach (var request in requests)
+        {
+            // Bỏ qua item không hợp lệ
+            if ((request.AccessoryQuantity is null && request.VariantQuantity is null) ||
+                (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
+            {
+                continue;
+            }
+
+            try
+            {
+                var result = await _cartService.AddItemAsync(userId, request);
+                responses.Add(result);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log nếu cần
+                // _logger.LogWarning($"Không thể thêm sản phẩm: {ex.Message}");
+                // Có thể tiếp tục hoặc dừng tùy logic
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        if (!responses.Any())
+        {
+            return BadRequest(new { message = "Không có sản phẩm hợp lệ nào được thêm vào giỏ hàng." });
+        }
+
+        return Ok(responses);
     }
 
 
