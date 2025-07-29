@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -227,7 +226,7 @@ public class OrderService : IOrderService
             Status = o.Status,
             PaymentStatus = o.PaymentStatus,
             ShippingStatus = o.ShippingStatus,
-            OrderItems = o.OrderItems.Select(i => new OrderItemSummaryResponse
+            OrderItems = o.OrderItems.Select(i => new OrderItemResponse
             {
                 OrderItemId = i.OrderItemId,
                 AccessoryId = i.AccessoryId,
