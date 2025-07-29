@@ -6,6 +6,7 @@ namespace TerrariumGardenTech.Service.IService;
 public interface INotificationService
 {
     Task<IBusinessResult> CreateNotificationAsync(NotificationCreateRequest notificationCreateRequest);
+    Task<IBusinessResult> CreateAndPushAsync(NotificationCreateRequest req);
     Task<IBusinessResult> GetAllNotificationAsync();
     Task<IBusinessResult?> GetNotificationByIdAsync(int id);
     Task<IBusinessResult> GetNotificationByUserIdAsync(int userId);
