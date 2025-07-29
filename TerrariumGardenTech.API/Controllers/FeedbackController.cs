@@ -8,36 +8,44 @@ namespace TerrariumGardenTech.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]   // Bắt buộc xác thực để có Claim
+    [Authorize]
     public class FeedbackController : ControllerBase
     {
-        private readonly IFeedbackService _service;
+        private readonly IFeedbackService _svc;
+        public FeedbackController(IFeedbackService svc) => _svc = svc;
 
-        public FeedbackController(IFeedbackService service)
-            => _service = service;
+        int UserId => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] FeedbackCreateRequest request)
+        public async Task<IActionResult> Post([FromBody] FeedbackCreateRequest req)
         {
-            // 1. Lấy claim userId (NameIdentifier thường là claim sub/nameid)
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-                return Unauthorized(new { message = "Invalid token" });
-
-            // 2. Gọi service
-            var result = await _service.CreateAsync(request, userId);
-
-            // 3. Trả về Created 201
+            var res = await _svc.CreateAsync(req, UserId);
             return CreatedAtAction(nameof(GetByOrderItem),
-                                   new { orderItemId = result.OrderItemId },
-                                   result);
+                                   new { orderItemId = res.OrderItemId }, res);
         }
 
-        [HttpGet("{orderItemId:int}")]
-        public async Task<IActionResult> GetByOrderItem(int orderItemId)
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var list = await _service.GetByOrderItemAsync(orderItemId);
-            return Ok(list);
+            var (items, total) = await _svc.GetAllAsync(page, pageSize);
+            Response.Headers.Add("X-Total-Count", total.ToString());
+            return Ok(items);
+        }
+
+        [HttpGet("order/{orderItemId:int}")]
+        public async Task<IActionResult> GetByOrderItem(int orderItemId)
+            => Ok(await _svc.GetByOrderItemAsync(orderItemId));
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put(int id, [FromBody] FeedbackUpdateRequest req)
+            => Ok(await _svc.UpdateAsync(id, req, UserId));
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var ok = await _svc.DeleteAsync(id, UserId);
+            return ok ? NoContent() : NotFound();
         }
     }
 }
