@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
@@ -46,6 +47,18 @@ public class OrderService : IOrderService
         return ToResponse(order);
     }
 
+    public async Task<IBusinessResult> GetAddressesByUserId(int userId)
+    {
+        var address = await _unitOfWork.OrderRepository.GetByUserIdAsync(userId);
+
+        if (address == null || !address.Any())
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        }
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, address);
+    }
+
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
         //var currentUserId = _userContextService.GetCurrentUser();
@@ -69,14 +82,16 @@ public class OrderService : IOrderService
         }
     }
 
-    public async Task<bool> UpdateStatusAsync(int id, string status)
+    public async Task<bool> UpdateStatusAsync(int id, OrderStatus status)
     {
         if (id <= 0)
             throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
-        if (string.IsNullOrWhiteSpace(status))
-            throw new ArgumentException("Status không được để trống.", nameof(status));
 
-        var order = await _unitOfWork.OrderRepository.GetByIdAsync(id); // Gọi từ UnitOfWork
+        // Optional: kiểm tra giá trị enum có hợp lệ hay không
+        if (!Enum.IsDefined(typeof(OrderStatus), status))
+            throw new ArgumentException("Status không hợp lệ.", nameof(status));
+
+        var order = await _unitOfWork.OrderRepository.GetByIdAsync(id);
         if (order == null)
         {
             _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId} để cập nhật", id);
@@ -85,9 +100,9 @@ public class OrderService : IOrderService
 
         try
         {
-            order.Status = status.Trim();
-            await _unitOfWork.OrderRepository.UpdateAsync(order); // Gọi từ UnitOfWork
-            await _unitOfWork.SaveAsync(); // Lưu các thay đổi
+            order.Status = status;
+            await _unitOfWork.OrderRepository.UpdateAsync(order);
+            await _unitOfWork.SaveAsync();
             _logger.LogInformation("Cập nhật trạng thái đơn hàng {OrderId} thành {Status}", id, status);
             return true;
         }
@@ -96,6 +111,17 @@ public class OrderService : IOrderService
             _logger.LogError(ex, "Xung đột khi cập nhật trạng thái đơn hàng {OrderId}", id);
             throw new InvalidOperationException("Xung đột dữ liệu, vui lòng thử lại.");
         }
+    }
+
+
+    public async Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId)
+    {
+        if (userId <= 0)
+            throw new ArgumentException("UserId phải là số nguyên dương.", nameof(userId));
+
+        // OrderRepository đã có sẵn phương thức FindByUserAsync
+        var orders = await _unitOfWork.OrderRepository.FindByUserAsync(userId);
+        return orders.Select(ToResponse);
     }
 
     public async Task<bool> DeleteAsync(int id)
@@ -126,41 +152,55 @@ public class OrderService : IOrderService
 
     public async Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod)
     {
+        // 1. Validate input
+        if (orderId <= 0)
+            return new BusinessResult(Const.BAD_REQUEST_CODE, "OrderId không hợp lệ.", null);
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+            return new BusinessResult(Const.BAD_REQUEST_CODE, "Payment method là bắt buộc.", null);
+
+        // 2. Lấy order
         var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
         if (order == null)
             return new BusinessResult(Const.NOT_FOUND_CODE, "Order does not exist", null);
 
+        // 3. Đã thanh toán rồi thì thôi
         if (order.PaymentStatus == "Paid")
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Order already paid", null);
 
-        // Check if the paid amount is correct
-        if (order.TotalAmount < order.TotalAmount - order.Deposit)
-            return new BusinessResult(Const.BAD_REQUEST_CODE, "Paid amount is insufficient", null);
+        // 4. Tính số tiền còn phải trả (trừ deposit nếu có)
+        decimal deposit = order.Deposit ?? 0m;
+        decimal due = order.TotalAmount - deposit;
+        if (due <= 0)
+            return new BusinessResult(Const.BAD_REQUEST_CODE, "Nothing to pay—order already covered by deposit.", null);
 
-        // Update payment status
+        // 5. Cập nhật trạng thái thanh toán
         order.PaymentStatus = "Paid";
 
-        // Log the payment transaction
-        var paymentTransition = new Payment
+        // 6. Tạo record giao dịch thanh toán
+        var payment = new Payment
         {
             OrderId = order.OrderId,
-            PaymentMethod = paymentMethod,
-            PaymentAmount = order.TotalAmount,
+            PaymentMethod = paymentMethod.Trim(),
+            PaymentAmount = due,
             PaymentDate = DateTime.UtcNow
         };
 
         try
         {
+            // 7. Lưu thay đổi
             await _unitOfWork.OrderRepository.UpdateAsync(order);
-            await _unitOfWork.PaymentTransitionRepository.AddAsync(paymentTransition);
+            await _unitOfWork.PaymentTransitionRepository.AddAsync(payment);
             await _unitOfWork.SaveAsync();
+
             return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment successful", null);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Checkout failed for OrderId {OrderId}", orderId);
             return new BusinessResult(Const.ERROR_EXCEPTION, "Payment failed, please try again", null);
         }
     }
+
 
 
     #region Helpers
@@ -201,7 +241,7 @@ public class OrderService : IOrderService
             TotalAmount = r.TotalAmount,
             Deposit = r.Deposit,
             OrderDate = DateTime.UtcNow,
-            Status = "Pending",
+            Status = OrderStatus.Pending,
             PaymentStatus = "Unpaid",
             ShippingStatus = "Unprocessed",
             OrderItems = r.Items.Select(i => new OrderItem
