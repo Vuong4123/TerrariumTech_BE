@@ -147,9 +147,16 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("Order.Delete",
         p => p.RequireRole("Manager", "Admin"));
 
-    opt.AddPolicy("Order.AccessSpecific",
-        p => p.AddRequirements(new OrderAccessRequirement())); // resource-based
+    // Cho phép cả User (và các role đặc quyền) truy cập GET /api/order/{id},
+    // sau đó handler OrderAccessRequirement sẽ tiếp tục kiểm tra xem
+    // nếu là User thì phải là chủ đơn (order.UserId == User.GetUserId()).
+    opt.AddPolicy("Order.AccessSpecific", p =>
+    {
+        p.RequireRole("Staff", "Manager", "Admin", "Shipper", "User");
+        p.AddRequirements(new OrderAccessRequirement());
+    });
 });
+
 
 // Handler DI
 builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();
@@ -220,6 +227,7 @@ builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TerrariumGardenTech API", Version = "v1" });
+
 
     // Thêm OperationFilter để hiển thị Authorization cho refresh-token
     c.OperationFilter<AddAuthorizationHeaderOperationFilter>();
