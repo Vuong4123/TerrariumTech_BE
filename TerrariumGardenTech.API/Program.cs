@@ -138,7 +138,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(opt =>
 {
     opt.AddPolicy("Order.ReadAll",
-        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper")); // Thêm "Shipper" vào đây
+        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
 
     opt.AddPolicy("Order.UpdateStatus",
         p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
@@ -146,9 +146,16 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("Order.Delete",
         p => p.RequireRole("Manager", "Admin"));
 
-    opt.AddPolicy("Order.AccessSpecific",
-        p => p.AddRequirements(new OrderAccessRequirement())); // resource-based
+    // Cho phép cả User (và các role đặc quyền) truy cập GET /api/order/{id},
+    // sau đó handler OrderAccessRequirement sẽ tiếp tục kiểm tra xem
+    // nếu là User thì phải là chủ đơn (order.UserId == User.GetUserId()).
+    opt.AddPolicy("Order.AccessSpecific", p =>
+    {
+        p.RequireRole("Staff", "Manager", "Admin", "Shipper", "User");
+        p.AddRequirements(new OrderAccessRequirement());
+    });
 });
+
 
 // Handler DI
 builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();

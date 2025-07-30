@@ -36,4 +36,10 @@ public sealed class OrderRepository : GenericRepository<Order>
             .ThenInclude(m => m.TerrariumVariant)
             .Where(m => m.OrderId == id).SingleOrDefaultAsync();
     }
+    public async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
+    {
+        return await _context.Orders
+            .Where(a => a.UserId == userId) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
+            .ToListAsync();
+    }
 }
