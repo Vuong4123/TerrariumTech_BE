@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
+
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -47,17 +49,6 @@ public class OrderService : IOrderService
         return ToResponse(order);
     }
 
-    public async Task<IBusinessResult> GetAddressesByUserId(int userId)
-    {
-        var address = await _unitOfWork.OrderRepository.GetByUserIdAsync(userId);
-
-        if (address == null || !address.Any())
-        {
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-        }
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, address);
-    }
 
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
@@ -82,6 +73,7 @@ public class OrderService : IOrderService
         }
     }
 
+
     public async Task<bool> UpdateStatusAsync(int id, OrderStatus status)
     {
         if (id <= 0)
@@ -92,6 +84,7 @@ public class OrderService : IOrderService
             throw new ArgumentException("Status không hợp lệ.", nameof(status));
 
         var order = await _unitOfWork.OrderRepository.GetByIdAsync(id);
+
         if (order == null)
         {
             _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId} để cập nhật", id);
@@ -100,9 +93,11 @@ public class OrderService : IOrderService
 
         try
         {
+
             order.Status = status;
             await _unitOfWork.OrderRepository.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
+
             _logger.LogInformation("Cập nhật trạng thái đơn hàng {OrderId} thành {Status}", id, status);
             return true;
         }
@@ -114,6 +109,7 @@ public class OrderService : IOrderService
     }
 
 
+
     public async Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId)
     {
         if (userId <= 0)
@@ -123,6 +119,7 @@ public class OrderService : IOrderService
         var orders = await _unitOfWork.OrderRepository.FindByUserAsync(userId);
         return orders.Select(ToResponse);
     }
+
 
     public async Task<bool> DeleteAsync(int id)
     {
@@ -152,6 +149,7 @@ public class OrderService : IOrderService
 
     public async Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod)
     {
+
         // 1. Validate input
         if (orderId <= 0)
             return new BusinessResult(Const.BAD_REQUEST_CODE, "OrderId không hợp lệ.", null);
@@ -159,9 +157,11 @@ public class OrderService : IOrderService
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Payment method là bắt buộc.", null);
 
         // 2. Lấy order
+
         var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
         if (order == null)
             return new BusinessResult(Const.NOT_FOUND_CODE, "Order does not exist", null);
+
 
         // 3. Đã thanh toán rồi thì thôi
         if (order.PaymentStatus == "Paid")
@@ -182,21 +182,26 @@ public class OrderService : IOrderService
             OrderId = order.OrderId,
             PaymentMethod = paymentMethod.Trim(),
             PaymentAmount = due,
+
             PaymentDate = DateTime.UtcNow
         };
 
         try
         {
+
             // 7. Lưu thay đổi
             await _unitOfWork.OrderRepository.UpdateAsync(order);
             await _unitOfWork.PaymentTransitionRepository.AddAsync(payment);
             await _unitOfWork.SaveAsync();
 
+
             return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment successful", null);
         }
         catch (Exception ex)
         {
+
             _logger.LogError(ex, "Checkout failed for OrderId {OrderId}", orderId);
+
             return new BusinessResult(Const.ERROR_EXCEPTION, "Payment failed, please try again", null);
         }
     }
@@ -241,7 +246,9 @@ public class OrderService : IOrderService
             TotalAmount = r.TotalAmount,
             Deposit = r.Deposit,
             OrderDate = DateTime.UtcNow,
+
             Status = OrderStatus.Pending,
+
             PaymentStatus = "Unpaid",
             ShippingStatus = "Unprocessed",
             OrderItems = r.Items.Select(i => new OrderItem

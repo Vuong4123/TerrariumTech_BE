@@ -156,7 +156,6 @@ public class CartController : ControllerBase
     {
         var userId = User.GetUserId(); // Lấy userId từ JWT token
 
-        
         // Gọi service để xử lý thanh toán
         var order = await _cartService.CheckoutAsync(userId);
 

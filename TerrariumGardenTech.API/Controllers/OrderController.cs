@@ -129,6 +129,7 @@ public class OrderController : ControllerBase
     /// </summary>
     [HttpPut("{id:int}/status")]
     [Authorize(Policy = "Order.UpdateStatus")]
+
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatus status)
     {
         try
@@ -206,7 +207,6 @@ public class OrderController : ControllerBase
             return StatusCode(500, new { message = ex.Message });
         }
     }
-
 
 
     /// <summary>
