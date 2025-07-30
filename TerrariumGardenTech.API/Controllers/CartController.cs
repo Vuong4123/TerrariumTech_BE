@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.API.Controllers;
@@ -151,16 +152,21 @@ public class CartController : ControllerBase
     /// </summary>
     [HttpPost("checkout")]
     [Authorize]
-    public async Task<IActionResult> Checkout()
+    public async Task<IBusinessResult> Checkout()
     {
         var userId = User.GetUserId(); // Lấy userId từ JWT token
 
-        
-            // Gọi service để xử lý thanh toán
-            var order = await _cartService.CheckoutAsync(userId);
+        // Gọi service để xử lý thanh toán
+        var order = await _cartService.CheckoutAsync(userId);
 
-            // Trả về thông tin đơn hàng sau khi thanh toán
-            return CreatedAtAction(nameof(OrderController.Get), new { id = order.OrderId }, order);
-        
+        // Trả về thông tin đơn hàng sau khi thanh toán
+        //return CreatedAtAction(nameof(OrderController.Get), new { id = order.OrderId }, order);
+        return new BusinessResult
+        {
+            Status = 1,
+            Message = order.Message,
+            Data = order.Data
+        };
+
     }
 }
