@@ -32,6 +32,8 @@ public class UnitOfWork
     private UserRepository _userRepository;
     private VoucherRepository _voucherRepository;
     private FeedbackRepository _feedbackRepository;
+    private ChatRepository _chatRepository;
+    private ChatMessageRepository _chatMessageRepository;
 
 
     public UnitOfWork()
@@ -159,6 +161,16 @@ public class UnitOfWork
     public CartItemRepository CartItemRepository
     {
         get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
+    }
+
+    public ChatRepository Chat
+    {
+        get { return _chatRepository ??= new ChatRepository(_unitOfWorkContext); }
+    }
+
+    public ChatMessageRepository ChatMessage
+    {
+        get { return _chatMessageRepository ??= new ChatMessageRepository(_unitOfWorkContext); }
     }
 
     public async Task<int> SaveAsync()

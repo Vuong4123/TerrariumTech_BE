@@ -114,6 +114,7 @@ builder.Services.AddScoped<IPayOsService, PayOsService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
