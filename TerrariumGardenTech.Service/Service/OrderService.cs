@@ -267,7 +267,7 @@ public class OrderService : IOrderService
             Status = o.Status,
             PaymentStatus = o.PaymentStatus,
             ShippingStatus = o.ShippingStatus,
-            OrderItems = o.OrderItems.Select(i => new OrderItemSummaryResponse
+            OrderItems = o.OrderItems.Select(i => new OrderItemResponse
             {
                 OrderItemId = i.OrderItemId,
                 AccessoryId = i.AccessoryId,

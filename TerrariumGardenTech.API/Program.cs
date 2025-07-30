@@ -41,6 +41,7 @@ builder.Services.AddCors(options =>
         // Chỉ cho phép yêu cầu từ địa chỉ cụ thể (ví dụ: frontend đang chạy trên localhost:5173)
         policy.WithOrigins("http://localhost:5173") // Địa chỉ của frontend
             .WithOrigins("https://terra-tech-garden.vercel.app")
+            .WithOrigins("https://localhost:7072/api/Payment/vn-pay")
             .AllowAnyMethod() // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
             .AllowAnyHeader(); // Cho phép bất kỳ header nào trong yêu cầu
     });
@@ -138,7 +139,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(opt =>
 {
     opt.AddPolicy("Order.ReadAll",
-        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
+        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper")); // Thêm "Shipper" vào đây
 
     opt.AddPolicy("Order.UpdateStatus",
         p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
@@ -146,16 +147,9 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("Order.Delete",
         p => p.RequireRole("Manager", "Admin"));
 
-    // Cho phép cả User (và các role đặc quyền) truy cập GET /api/order/{id},
-    // sau đó handler OrderAccessRequirement sẽ tiếp tục kiểm tra xem
-    // nếu là User thì phải là chủ đơn (order.UserId == User.GetUserId()).
-    opt.AddPolicy("Order.AccessSpecific", p =>
-    {
-        p.RequireRole("Staff", "Manager", "Admin", "Shipper", "User");
-        p.AddRequirements(new OrderAccessRequirement());
-    });
+    opt.AddPolicy("Order.AccessSpecific",
+        p => p.AddRequirements(new OrderAccessRequirement())); // resource-based
 });
-
 
 // Handler DI
 builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();

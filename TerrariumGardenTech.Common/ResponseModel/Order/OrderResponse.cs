@@ -22,5 +22,5 @@ public class OrderResponse
     public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
 
-    public List<OrderItemSummaryResponse> OrderItems { get; set; } = new();
+    public List<OrderItemResponse> OrderItems { get; set; } = new();
 }
