@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Order;
@@ -7,6 +8,7 @@ using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.Service.Service;
@@ -53,15 +55,15 @@ public class CartService : ICartService
     }
 
 
-    public async Task<CartResponse> GetCartAsync(int userId)
+    public async Task<IBusinessResult> GetCartAsync(int userId)
     {
         var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
         if (cart == null)
-            return null;
+            return new BusinessResult (Const.FAIL_READ_CODE,"không có giỏ hàng");
         // Lấy thông tin người dùng từ bảng User (giả sử bạn có repository User)
         var user = await _unitOfWork.User.GetByIdAsync(userId);
         if (user == null)
-            throw new InvalidOperationException($"User with ID {userId} not found.");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"User with ID {userId} not found.");
         var cartResponse = new CartResponse
         {
             CartId = cart.CartId,
@@ -148,7 +150,7 @@ public class CartService : ICartService
         cartResponse.TotalCartPrice = totalCartPrice;
         cartResponse.TotalCartQuantity = totalCartQuantity;
 
-        return cartResponse;
+        return new BusinessResult(Const.SUCCESS_READ_CODE,Const.SUCCESS_READ_MSG, cartResponse);
     }
 
 
@@ -316,20 +318,21 @@ public class CartService : ICartService
 
 
 
-    public async Task<CartItemResponse> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request)
+    public async Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request)
     {
         var cartItem = await _unitOfWork.CartItemRepository
         .Include(ci => ci.Cart)
         .FirstOrDefaultAsync(ci => ci.CartItemId == cartItemId);
 
         if (cartItem == null)
-            throw new InvalidOperationException($"CartItem with ID {cartItemId} not found.");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"Cart for CartItem with ID {cartItemId} not found.");
 
         if (cartItem.Cart == null)
-            throw new InvalidOperationException($"Cart for CartItem with ID {cartItemId} not found.");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"Cart for CartItem with ID {cartItemId} not found."); 
+             
 
         if (cartItem.Cart.UserId != userId)
-            throw new UnauthorizedAccessException("You do not have permission to update this cart item.");
+            return new BusinessResult(Const.FAIL_READ_CODE, "You do not have permission to update this cart item.");
 
         var cartItemResponse = new CartItemResponse
         {
@@ -408,7 +411,7 @@ public class CartService : ICartService
 
         await _unitOfWork.CartItemRepository.UpdateAsync(cartItem);
 
-        return cartItemResponse;
+        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, cartItemResponse);
     }
 
 
@@ -436,14 +439,14 @@ public class CartService : ICartService
         return true;
     }
 
-    public async Task<OrderResponse> CheckoutAsync(int userId)
+    public async Task<IBusinessResult> CheckoutAsync(int userId)
     {
         try
         {
             // Lấy giỏ hàng của người dùng
             var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
             if (cart == null || !cart.CartItems.Any())
-                throw new InvalidOperationException("Giỏ hàng trống hoặc không tồn tại.");
+                return new BusinessResult(Const.FAIL_READ_CODE, "Giỏ hàng trống hoặc không tồn tại.");
 
             decimal totalCartPrice = 0;
             int totalCartQuantity = 0;
@@ -546,13 +549,13 @@ public class CartService : ICartService
             orderResponse.OrderId = order.OrderId;
             orderResponse.TotalAmount = totalCartPrice;
 
-            return orderResponse;
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Checkout thành công", orderResponse);
         }
         catch (Exception ex)
         {
             // Log lỗi và throw lại exception để có thể xử lý ở ngoài
             // Ghi log chi tiết tại đây
-            throw new Exception("Đã xảy ra lỗi trong quá trình xử lý giỏ hàng", ex);
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
 }
