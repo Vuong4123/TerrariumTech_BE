@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using TerrariumGardenTech.Common.Entity;
+
 using TerrariumGardenTech.Common.Enums;
+
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace TerrariumGardenTech.Repositories.Entity;
@@ -308,6 +310,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
         {
             entity.HasKey(e => e.LayoutId).HasName("PK__AISugges__023A37EFFA219D01");
 
+
             entity.ToTable("AISuggestLayout");
 
             entity.Property(e => e.LayoutId).HasColumnName("layoutId");
@@ -316,6 +319,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasColumnName("createdAt");
             entity.Property(e => e.LayoutData).HasColumnName("layoutData");
             entity.Property(e => e.UserId).HasColumnName("userId");
+
 
             entity.HasOne(d => d.User).WithMany(p => p.AisuggestLayouts)
                 .HasForeignKey(d => d.UserId)
@@ -512,6 +516,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
             entity.ToTable("Order");
 
+
             entity.Property(e => e.OrderId)
               .HasColumnName("orderId");
 
@@ -533,6 +538,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                   .HasMaxLength(20)
                   .HasDefaultValue("pending")
                   .HasColumnName("shippingStatus");
+
 
             // —— CẬP NHẬT CHÍNH —— 
             entity.Property(e => e.Status)
@@ -632,10 +638,12 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("paymentMethod");
             entity.Property(e => e.Status)
+
         .HasConversion<string>()               // lưu enum dưới dạng chuỗi
         .HasMaxLength(20)
         .HasDefaultValue(OrderStatus.Pending) // default là enum, EF sẽ convert thành "Pending"
         .HasColumnName("status");
+
 
             entity.HasOne(d => d.Order).WithMany(p => p.Payment)
                 .HasForeignKey(d => d.OrderId)

@@ -139,7 +139,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(opt =>
 {
     opt.AddPolicy("Order.ReadAll",
-        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
+        p => p.RequireRole("Staff", "Manager", "Admin", "Shipper")); // Thêm "Shipper" vào đây
 
     opt.AddPolicy("Order.UpdateStatus",
         p => p.RequireRole("Staff", "Manager", "Admin", "Shipper"));
@@ -227,6 +227,7 @@ builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TerrariumGardenTech API", Version = "v1" });
+
 
     // Thêm OperationFilter để hiển thị Authorization cho refresh-token
     c.OperationFilter<AddAuthorizationHeaderOperationFilter>();
