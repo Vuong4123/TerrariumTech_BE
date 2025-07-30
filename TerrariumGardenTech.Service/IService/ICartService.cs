@@ -4,20 +4,21 @@ using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService;
 
 public interface ICartService
 {
-    Task<CartResponse> GetCartAsync(int userId);
+    Task<IBusinessResult> GetCartAsync(int userId);
     Task<Cart> GetOrCreateCartAsync(int userId);
     Task<Cart> GetCartByUserAsync(int userId);
     Task<CartItemResponse> AddItemAsync(int userId, AddCartItemRequest req);
 
     // Cập nhật phương thức UpdateItemAsync để hỗ trợ 4 tham số
-    Task<CartItemResponse> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request);
+    Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request);
 
     Task<bool> RemoveItemAsync(int userId, int itemId);
     Task<bool> ClearCartAsync(int userId);
-    Task<OrderResponse> CheckoutAsync(int userId);
+    Task<IBusinessResult> CheckoutAsync(int userId);
 }
