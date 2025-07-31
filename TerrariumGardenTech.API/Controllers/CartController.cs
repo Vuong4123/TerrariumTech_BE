@@ -27,7 +27,7 @@ public class CartController : ControllerBase
     /// <summary>
     ///     Lấy giỏ hàng của người dùng
     /// </summary>
-    [HttpGet]
+    [HttpGet("get-all")]
     [Authorize]
     public async Task<IActionResult> GetCart()
     {
@@ -43,7 +43,7 @@ public class CartController : ControllerBase
     /// <summary>
     ///     Thêm nhiều món vào giỏ hàng
     /// </summary>
-    [HttpPost("items/multiple")]
+    [HttpPost("add-items/multiple")]
     [Authorize]
     public async Task<IActionResult> AddItems([FromBody] List<AddCartItemRequest> requests)
     {
@@ -91,7 +91,7 @@ public class CartController : ControllerBase
 
 
 
-    [HttpPut("items/{cartItemId}")]
+    [HttpPut("upadate-items/{cartItemId}")]
     [Authorize]
     public async Task<IActionResult> UpdateItem(int cartItemId, [FromBody] UpdateCartItemRequest request)
     {
@@ -118,7 +118,7 @@ public class CartController : ControllerBase
     /// <summary>
     ///     Xóa một món khỏi giỏ hàng
     /// </summary>
-    [HttpDelete("items/{itemId}")]
+    [HttpDelete("delete-items/{itemId}")]
     [Authorize]
     public async Task<IActionResult> RemoveItem(int itemId)
     {
@@ -134,7 +134,7 @@ public class CartController : ControllerBase
     /// <summary>
     ///     Xóa toàn bộ giỏ hàng của người dùng
     /// </summary>
-    [HttpDelete]
+    [HttpDelete("delete-all-items")]
     [Authorize]
     public async Task<IActionResult> ClearCart()
     {
@@ -150,7 +150,7 @@ public class CartController : ControllerBase
     /// <summary>
     ///     Tiến hành thanh toán cho giỏ hàng (Checkout)
     /// </summary>
-    [HttpPost("checkout")]
+    [HttpPost("checkout-cart")]
     [Authorize]
     public async Task<IBusinessResult> Checkout()
     {

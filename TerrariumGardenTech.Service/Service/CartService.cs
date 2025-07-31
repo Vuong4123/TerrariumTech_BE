@@ -465,7 +465,6 @@ public class CartService : ICartService
             Status = OrderStatus.Pending,
             PaymentStatus = "Unpaid",
             ShippingStatus = "Unprocessed",
-            PaymentMethod = "PayOs",
             OrderItems = new List<OrderItemResponse>(),
         };
 
