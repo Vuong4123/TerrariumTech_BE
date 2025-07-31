@@ -27,14 +27,14 @@ public class TerrariumVariantController : ControllerBase
     }
 
     // GET api/<TerrariumVariantController>/5
-    [HttpGet("get-terrariumVariant-{id}")]
+    [HttpGet("get-terrariumVariant/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _terrariumVariantService.GetTerrariumVariantByIdAsync(id);
     }
 
     // GET api/<TerrariumVariantController>/5
-    [HttpGet("get-VariantByTerrarium-{id}")]
+    [HttpGet("get-VariantByTerrarium/{id}")]
     public async Task<IBusinessResult> GetByTerrariumId(int id)
     {
         return await _terrariumVariantService.GetAllVariantByTerrariumIdAsync(id);
@@ -48,14 +48,14 @@ public class TerrariumVariantController : ControllerBase
     }
 
     // PUT api/<TerrariumVariantController>/5
-    [HttpPut("update-terrariumVariant-{id}")]
+    [HttpPut("update-terrariumVariant/{id}")]
     public async Task<IBusinessResult> Put([FromForm] TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
     {
         return await _terrariumVariantService.UpdateTerrariumVariantAsync(terrariumVariantUpdateRequest);
     }
 
     // DELETE api/<TerrariumVariantController>/5
-    [HttpDelete("delete-terrariumVariant-{id}")]
+    [HttpDelete("delete-terrariumVariant/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _terrariumVariantService.DeleteTerrariumVariantAsync(id);

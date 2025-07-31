@@ -45,9 +45,21 @@ public class PayOsService : IPayOsService
         var amount = 0;
         foreach (var orderItem in order.OrderItems)
         {
-            itemDatas.Add(new ItemData(orderItem.TerrariumVariant.VariantName, orderItem.Quantity ?? 0,
-                (int)(orderItem.UnitPrice ?? 0)));
-            amount += (int)(orderItem.TotalPrice ?? 0);
+            // Kiểm tra và xử lý Accessory
+            if (orderItem.AccessoryId.HasValue)
+            {
+                itemDatas.Add(new ItemData(orderItem.Accessory.Name, orderItem.Quantity ?? 0,
+                    (int)(orderItem.UnitPrice ?? 0)));
+                amount += (int)(orderItem.TotalPrice ?? 0);
+            }
+
+            // Kiểm tra và xử lý TerrariumVariant
+            if (orderItem.TerrariumVariantId.HasValue)
+            {
+                itemDatas.Add(new ItemData(orderItem.TerrariumVariant.VariantName, orderItem.Quantity ?? 0,
+                    (int)(orderItem.UnitPrice ?? 0)));
+                amount += (int)(orderItem.TotalPrice ?? 0);
+            }
         }
 
         var domain =
@@ -78,7 +90,7 @@ public class PayOsService : IPayOsService
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", response.checkoutUrl);
         }
         
-        return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Success", response.checkoutUrl);
+        return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Paid", response.checkoutUrl);
     }
 
     public async Task<IBusinessResult> ProcessPaymentCallback(PaymentReturnModel returnModel)
