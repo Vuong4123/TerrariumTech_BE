@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Service.IService;
 
@@ -69,6 +70,33 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
+    ///     Lấy chi tiết đơn hàng theo ID
+    /// </summary>
+    [HttpGet("getbyuserid{id:int}")]
+    
+    public async Task<IActionResult> GetByUserdId(int userId)
+    {
+        try
+        {
+            
+
+            var order = await _svc.GetByUserAsync(userId);
+            if (order is null)
+                return NotFound(new { message = $"Đơn hàng ({userId}) không tồn tại." });
+
+            return Ok(order);
+        }
+        catch (ArgumentException ae)
+        {
+            return BadRequest(new { message = ae.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
     ///     Tạo mới đơn hàng
     /// </summary>
     [HttpPost]
@@ -101,14 +129,13 @@ public class OrderController : ControllerBase
     /// </summary>
     [HttpPut("{id:int}/status")]
     [Authorize(Policy = "Order.UpdateStatus")]
-    public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
+
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatus status)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(status))
-                throw new ArgumentException("Status không được để trống.", nameof(status));
-
-            var updated = await _svc.UpdateStatusAsync(id, status.Trim());
+            // gọi service với enum, không cần trim
+            var updated = await _svc.UpdateStatusAsync(id, status);
             if (!updated)
                 return NotFound(new { message = $"Không tìm thấy đơn hàng ({id}) để cập nhật." });
 
@@ -142,6 +169,38 @@ public class OrderController : ControllerBase
                 return Ok(new { message = result.Message, statusCode = result.Status });
 
             return BadRequest(new { message = result.Message, statusCode = result.Status });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    ///     Lấy danh sách đơn hàng theo UserId
+    /// </summary>
+    [HttpGet("user/{userId:int}")]
+    [Authorize(Roles = "User,Staff,Manager,Admin,Shipper")]
+    public async Task<IActionResult> GetByUser(int userId)
+    {
+        try
+        {
+            var currentUserId = User.GetUserId();
+
+            // Nếu không phải chủ đơn, phải có quyền Order.ReadAll mới xem được đơn của người khác
+            if (currentUserId != userId)
+            {
+                var authResult = await _auth.AuthorizeAsync(User, null, "Order.ReadAll");
+                if (!authResult.Succeeded)
+                    return Forbid();
+            }
+
+            var orders = await _svc.GetByUserAsync(userId);
+            return Ok(orders);
+        }
+        catch (ArgumentException ae)
+        {
+            return BadRequest(new { message = ae.Message });
         }
         catch (Exception ex)
         {
