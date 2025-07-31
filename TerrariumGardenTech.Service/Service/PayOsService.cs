@@ -38,7 +38,7 @@ public class PayOsService : IPayOsService
 
     public async Task<IBusinessResult> CreatePaymentLink(int orderId, string description)
     {
-        var order = await _unitOfWork.OrderRepository.GetByIdWithOrderItemsAsync(orderId);
+        var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(orderId);
         if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
         var itemDatas = new List<ItemData>();
@@ -97,11 +97,11 @@ public class PayOsService : IPayOsService
     {
         try
         {
-            var order = await _unitOfWork.OrderRepository.GetByIdAsync(returnModel.OrderId);
+            var order = await _unitOfWork.Order.GetByIdAsync(returnModel.OrderId);
             if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
             order.PaymentStatus = returnModel.Status;
-            await _unitOfWork.OrderRepository.UpdateAsync(order);
+            await _unitOfWork.Order.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
             var orderResponse = _mapper.Map<OrderResponse>(order);
             return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, orderResponse);

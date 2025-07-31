@@ -34,7 +34,7 @@ public class VnPayService : IVnPayService
     {
         try
         {
-            var order = await _unitOfWork.OrderRepository.GetByIdWithOrderItemsAsync(model.OrderId);
+            var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(model.OrderId);
             if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
             // Kiểm tra nếu không có order items
@@ -120,7 +120,7 @@ public class VnPayService : IVnPayService
             return new BusinessResult(Const.FAIL_READ_CODE, null);
         }
 
-        var order = await _unitOfWork.OrderRepository.GetOrderbyIdAsync(orderId);
+        var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
         if (order == null)
         {
             return new BusinessResult(Const.NOT_FOUND_CODE, null);
@@ -128,7 +128,7 @@ public class VnPayService : IVnPayService
 
         order.PaymentStatus = response.Success ? "PAID" : "FAILED";
         order.TransactionId = response.TransactionId;
-        await _unitOfWork.OrderRepository.UpdateAsync(order);
+        await _unitOfWork.Order.UpdateAsync(order);
         if (order.Payment == null || !order.Payment.Any())
         {
             order.Payment = new List<Payment>();

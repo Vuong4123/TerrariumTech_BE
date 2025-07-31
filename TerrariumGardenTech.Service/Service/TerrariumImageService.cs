@@ -93,44 +93,44 @@ public class TerrariumImageService : ITerrariumImageService
 
     public async Task<IBusinessResult> CreateTerrariumImageAsync(IFormFile imageFile, int terrariumId)
     {
-        if (imageFile == null || imageFile.Length == 0)
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Image file is required.");
+            if (imageFile == null || imageFile.Length == 0)
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Image file is required.");
 
-        try
-        {
-            // Upload image to Cloudinary and get the result (UploadResult)
-            var res_imageUrl =
-                await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}",
-                    terrariumId.ToString());
-
-            // Ensure the result is a valid URL
-            if (res_imageUrl == null || string.IsNullOrEmpty(res_imageUrl.ToString()))
-                return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary upload failed.");
-
-            // Create new TerrariumImage object
-            var terraImage = new TerrariumImage
+            try
             {
-                TerrariumId = terrariumId,
-                ImageUrl = res_imageUrl.Data.ToString() // Explicitly convert the result to a string (URL)
-            };
+                // Upload image to Cloudinary and get the result (UploadResult)
+                var res_imageUrl =
+                    await _cloudinaryService.UploadImageAsync(imageFile, $"terrariums/{terrariumId}",
+                        terrariumId.ToString());
 
-            // Save the new image into the database
-            var result = await _unitOfWork.TerrariumImage.CreateAsync(terraImage);
-            if (result > 0)
-                return new BusinessResult
+                // Ensure the result is a valid URL
+                if (res_imageUrl == null || string.IsNullOrEmpty(res_imageUrl.ToString()))
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, "Cloudinary upload failed.");
+
+                // Create new TerrariumImage object
+                var terraImage = new TerrariumImage
                 {
-                    Status = Const.SUCCESS_CREATE_CODE,
-                    Message = "Image created successfully.",
-                    Data = terraImage
+                    TerrariumId = terrariumId,
+                    ImageUrl = res_imageUrl.Data.ToString() // Explicitly convert the result to a string (URL)
                 };
 
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Failed to create the image.");
-        }
-        catch (Exception ex)
-        {
-            // Return exception message if an error occurred
-            return new BusinessResult(Const.FAIL_CREATE_CODE, ex.Message);
-        }
+                // Save the new image into the database
+                var result = await _unitOfWork.TerrariumImage.CreateAsync(terraImage);
+                if (result > 0)
+                    return new BusinessResult
+                    {
+                        Status = Const.SUCCESS_CREATE_CODE,
+                        Message = "Image created successfully.",
+                        Data = terraImage
+                    };
+
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Failed to create the image.");
+            }
+            catch (Exception ex)
+            {
+                // Return exception message if an error occurred
+                return new BusinessResult(Const.FAIL_CREATE_CODE, ex.Message);
+            }
     }
 
 

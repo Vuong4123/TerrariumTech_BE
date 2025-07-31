@@ -30,7 +30,7 @@ public class OrderService : IOrderService
     public async Task<IEnumerable<OrderResponse>> GetAllAsync()
     {
         _logger.LogInformation("Lấy danh sách tất cả đơn hàng");
-        var orders = await _unitOfWork.OrderRepository.GetAllAsync(); // Gọi từ UnitOfWork
+        var orders = await _unitOfWork.Order.GetAllAsync(); // Gọi từ UnitOfWork
         return orders.Select(ToResponse);
     }
 
@@ -39,7 +39,7 @@ public class OrderService : IOrderService
         if (id <= 0)
             throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
-        var order = await _unitOfWork.OrderRepository.GetByIdAsync(id); // Gọi từ UnitOfWork
+        var order = await _unitOfWork.Order.GetByIdAsync(id); // Gọi từ UnitOfWork
         if (order == null)
         {
             _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId}", id);
@@ -62,7 +62,7 @@ public class OrderService : IOrderService
 
         try
         {
-            await _unitOfWork.OrderRepository.CreateAsync(order);
+            await _unitOfWork.Order.CreateAsync(order);
             await _unitOfWork.SaveAsync(); // Save changes
             return order.OrderId;
         }
@@ -83,7 +83,7 @@ public class OrderService : IOrderService
         if (!Enum.IsDefined(typeof(OrderStatus), status))
             throw new ArgumentException("Status không hợp lệ.", nameof(status));
 
-        var order = await _unitOfWork.OrderRepository.GetByIdAsync(id);
+        var order = await _unitOfWork.Order.GetByIdAsync(id);
 
         if (order == null)
         {
@@ -95,7 +95,7 @@ public class OrderService : IOrderService
         {
 
             order.Status = status;
-            await _unitOfWork.OrderRepository.UpdateAsync(order);
+            await _unitOfWork.Order.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
 
             _logger.LogInformation("Cập nhật trạng thái đơn hàng {OrderId} thành {Status}", id, status);
@@ -116,7 +116,7 @@ public class OrderService : IOrderService
             throw new ArgumentException("UserId phải là số nguyên dương.", nameof(userId));
 
         // OrderRepository đã có sẵn phương thức FindByUserAsync
-        var orders = await _unitOfWork.OrderRepository.FindByUserAsync(userId);
+        var orders = await _unitOfWork.Order.FindByUserAsync(userId);
         return orders.Select(ToResponse);
     }
 
@@ -126,7 +126,7 @@ public class OrderService : IOrderService
         if (id <= 0)
             throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
-        var order = await _unitOfWork.OrderRepository.GetByIdAsync(id); // Gọi từ UnitOfWork
+        var order = await _unitOfWork.Order.GetByIdAsync(id); // Gọi từ UnitOfWork
         if (order == null)
         {
             _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId} để xóa", id);
@@ -135,7 +135,7 @@ public class OrderService : IOrderService
 
         try
         {
-            await _unitOfWork.OrderRepository.RemoveAsync(order); // Gọi từ UnitOfWork
+            await _unitOfWork.Order.RemoveAsync(order); // Gọi từ UnitOfWork
             await _unitOfWork.SaveAsync(); // Lưu các thay đổi
             _logger.LogInformation("Xóa đơn hàng {OrderId}", id);
             return true;
@@ -158,7 +158,7 @@ public class OrderService : IOrderService
 
         // 2. Lấy order
 
-        var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
+        var order = await _unitOfWork.Order.GetByIdAsync(orderId);
         if (order == null)
             return new BusinessResult(Const.NOT_FOUND_CODE, "Order does not exist", null);
 
@@ -190,8 +190,8 @@ public class OrderService : IOrderService
         {
 
             // 7. Lưu thay đổi
-            await _unitOfWork.OrderRepository.UpdateAsync(order);
-            await _unitOfWork.PaymentTransitionRepository.AddAsync(payment);
+            await _unitOfWork.Order.UpdateAsync(order);
+            await _unitOfWork.Payment.AddAsync(payment);
             await _unitOfWork.SaveAsync();
 
 
