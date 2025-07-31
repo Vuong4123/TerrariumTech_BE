@@ -30,7 +30,7 @@ public class BlogController : ControllerBase
     }
 
     // GET api/<BlogController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogService.GetById(id);
@@ -44,7 +44,7 @@ public class BlogController : ControllerBase
     }
 
     // PUT api/<BlogController>/5
-    [HttpPut("update-blog-{id}")]
+    [HttpPut("update-blog/{id}")]
     public async Task<IBusinessResult> Put(int id, [FromForm] BlogUpdateRequest request)
     {
         request.BlogId = id;
@@ -52,7 +52,7 @@ public class BlogController : ControllerBase
     }
 
     // DELETE api/<BlogController>/5
-    [HttpDelete("delete-blog-{id}")]
+    [HttpDelete("delete-blog/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _blogService.DeleteById(id);

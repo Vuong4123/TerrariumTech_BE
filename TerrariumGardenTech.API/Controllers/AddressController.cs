@@ -29,13 +29,13 @@ public class AddressController : ControllerBase
     }
 
     // GET api/<AddressController>/5
-    [HttpGet("get-/{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _addressService.GetAddressById(id);
     }
 
-    [HttpGet("get-by-user-id-/{userId}")]
+    [HttpGet("get-by-user-id/{userId}")]
     public async Task<IBusinessResult> GetByUserId(int userId)
     {
         return await _addressService.GetAddressesByUserId(userId);
@@ -49,14 +49,14 @@ public class AddressController : ControllerBase
     }
 
     // PUT api/<AddressController>/5
-    [HttpPut("uodate-adrress-{id}")]
+    [HttpPut("uodate-adrress/{id}")]
     public async Task<IBusinessResult> Put([FromBody] AddressUpdateRequest addressUpdateRequest)
     {
         return await _addressService.UpdateAddress(addressUpdateRequest);
     }
 
     // DELETE api/<AddressController>/5
-    [HttpDelete("{id}")]
+    [HttpDelete("delete-address/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _addressService.DeleteAddressById(id);
