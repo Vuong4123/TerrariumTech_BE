@@ -26,7 +26,7 @@ public class MembershipService : IMembershipService
             throw new ArgumentException("Gói membership không tồn tại");
 
         // Kiểm tra nếu người dùng đã có membership active
-        var activeMemberships = await _unitOfWork.MemberShipRepository.FindAsync(m =>
+        var activeMemberships = await _unitOfWork.MemberShip.FindAsync(m =>
             m.UserId == currentUserId && m.Status == MembershipStatus.Active.ToString());
 
         if (activeMemberships.Any())
@@ -45,7 +45,7 @@ public class MembershipService : IMembershipService
             StatusEnum = MembershipStatus.Active
         };
 
-        await _unitOfWork.MemberShipRepository.CreateAsync(membership);
+        await _unitOfWork.MemberShip.CreateAsync(membership);
         return membership.MembershipId;
     }
 
@@ -65,7 +65,7 @@ public class MembershipService : IMembershipService
             StatusEnum = MembershipStatus.Active
         };
 
-        await _unitOfWork.MemberShipRepository.CreateAsync(membership);
+        await _unitOfWork.MemberShip.CreateAsync(membership);
         return membership.MembershipId;
     }
 
@@ -75,12 +75,12 @@ public class MembershipService : IMembershipService
         if (role is not RoleStatus.Admin and not RoleStatus.Manager)
             throw new UnauthorizedAccessException("Bạn không có quyền xem tất cả memberships.");
 
-        return await _unitOfWork.MemberShipRepository.GetAllAsync();
+        return await _unitOfWork.MemberShip.GetAllAsync();
     }
 
     public async Task<Membership> GetMembershipByIdAsync(int membershipId)
     {
-        var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
+        var membership = await _unitOfWork.MemberShip.GetByIdAsync(membershipId);
         if (membership == null) return null;
 
         if (!CanAccessUser(membership.UserId))
@@ -94,14 +94,14 @@ public class MembershipService : IMembershipService
         if (!CanAccessUser(userId))
             throw new UnauthorizedAccessException("Bạn không có quyền xem memberships của người dùng này.");
 
-        var memberships = await _unitOfWork.MemberShipRepository.FindAsync(m => m.UserId == userId);
+        var memberships = await _unitOfWork.MemberShip.FindAsync(m => m.UserId == userId);
         var now = DateTime.UtcNow;
 
         foreach (var membership in memberships)
             if (membership.EndDate < now && membership.StatusEnum != MembershipStatus.Expired)
             {
                 membership.StatusEnum = MembershipStatus.Expired;
-                await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+                await _unitOfWork.MemberShip.UpdateAsync(membership);
             }
 
         return memberships;
@@ -109,7 +109,7 @@ public class MembershipService : IMembershipService
 
     public async Task<bool> UpdateMembershipAsync(int membershipId, int packageId, DateTime startDate)
     {
-        var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
+        var membership = await _unitOfWork.MemberShip.GetByIdAsync(membershipId);
         if (membership == null) return false;
 
         var package = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
@@ -122,19 +122,19 @@ public class MembershipService : IMembershipService
         membership.EndDate = startDate.AddDays(package.DurationDays); // Tính lại ngày kết thúc từ gói
         membership.StatusEnum = MembershipStatus.Active;
 
-        await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+        await _unitOfWork.MemberShip.UpdateAsync(membership);
         return true;
     }
 
     public async Task<bool> DeleteMembershipAsync(int membershipId)
     {
-        var membership = await _unitOfWork.MemberShipRepository.GetByIdAsync(membershipId);
+        var membership = await _unitOfWork.MemberShip.GetByIdAsync(membershipId);
         if (membership == null) return false;
 
         if (!CanAccessUser(membership.UserId))
             throw new UnauthorizedAccessException("Bạn không có quyền xoá membership này.");
 
-        await _unitOfWork.MemberShipRepository.RemoveAsync(membership);
+        await _unitOfWork.MemberShip.RemoveAsync(membership);
         return true;
     }
 
@@ -144,7 +144,7 @@ public class MembershipService : IMembershipService
         if (role is not RoleStatus.Admin and not RoleStatus.Manager)
             throw new UnauthorizedAccessException("Bạn không có quyền cập nhật tất cả memberships.");
 
-        var allMemberships = await _unitOfWork.MemberShipRepository.GetAllAsync();
+        var allMemberships = await _unitOfWork.MemberShip.GetAllAsync();
         var updatedCount = 0;
         var now = DateTime.UtcNow;
 
@@ -153,7 +153,7 @@ public class MembershipService : IMembershipService
                 membership.StatusEnum != MembershipStatus.Expired)
             {
                 membership.StatusEnum = MembershipStatus.Expired;
-                await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+                await _unitOfWork.MemberShip.UpdateAsync(membership);
                 updatedCount++;
             }
 
@@ -165,7 +165,7 @@ public class MembershipService : IMembershipService
         if (!CanAccessUser(userId))
             throw new UnauthorizedAccessException("Bạn không có quyền cập nhật memberships của người dùng này.");
 
-        var memberships = await _unitOfWork.MemberShipRepository.FindAsync(m => m.UserId == userId);
+        var memberships = await _unitOfWork.MemberShip.FindAsync(m => m.UserId == userId);
         var updatedCount = 0;
         var now = DateTime.UtcNow;
 
@@ -174,7 +174,7 @@ public class MembershipService : IMembershipService
                 membership.StatusEnum != MembershipStatus.Expired)
             {
                 membership.StatusEnum = MembershipStatus.Expired;
-                await _unitOfWork.MemberShipRepository.UpdateAsync(membership);
+                await _unitOfWork.MemberShip.UpdateAsync(membership);
                 updatedCount++;
             }
 
