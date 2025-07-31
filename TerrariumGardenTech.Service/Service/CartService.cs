@@ -2,14 +2,19 @@
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
+
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+
+using TerrariumGardenTech.Common.Enums;
+
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -451,29 +456,30 @@ public class CartService : ICartService
             decimal totalCartPrice = 0;
             int totalCartQuantity = 0;
 
-            // Tạo đối tượng phản hồi cho đơn hàng
-            var orderResponse = new OrderResponse
-            {
-                UserId = userId,
-                OrderDate = DateTime.UtcNow,
-                Status = "Pending",
-                PaymentStatus = "Unpaid",
-                ShippingStatus = "Unprocessed",
-                PaymentMethod = "PayOs",
-                OrderItems = new List<OrderItemResponse>(),
-            };
 
-            // Tạo đối tượng đơn hàng mới
-            var order = new Order
-            {
-                UserId = userId,
-                TotalAmount = totalCartPrice, // Sẽ tính lại sau
-                OrderDate = DateTime.UtcNow,
-                Status = "Pending",
-                PaymentStatus = "Unpaid",
-                ShippingStatus = "Unprocessed",
-                OrderItems = new List<OrderItem>(), // Khởi tạo OrderItems để chứa danh sách các mục trong đơn hàng
-            };
+        // Tạo đối tượng phản hồi cho đơn hàng
+        var orderResponse = new OrderResponse
+        {
+            UserId = userId,
+            OrderDate = DateTime.UtcNow,
+            Status = OrderStatus.Pending,
+            PaymentStatus = "Unpaid",
+            ShippingStatus = "Unprocessed",
+            PaymentMethod = "PayOs",
+            OrderItems = new List<OrderItemResponse>(),
+        };
+
+        var order = new Order
+        {
+            UserId = userId,
+            TotalAmount = totalCartPrice, // Sẽ tính lại sau
+            OrderDate = DateTime.UtcNow,
+            Status = OrderStatus.Pending,
+            PaymentStatus = "Unpaid",
+            ShippingStatus = "Unprocessed",
+            OrderItems = new List<OrderItem>(),
+        };
+
 
             // Xử lý từng mục trong giỏ hàng để chuyển thành đơn hàng
             foreach (var cartItem in cart.CartItems)

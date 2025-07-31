@@ -1,4 +1,7 @@
 ﻿using Org.BouncyCastle.Asn1.Ocsp;
+
+using TerrariumGardenTech.Common.Enums;
+
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Order;
@@ -14,7 +17,10 @@ public class OrderResponse
 
     public DateTime? OrderDate { get; set; }
 
-    public string Status { get; set; } = string.Empty;
+
+    public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
+
     public string PaymentStatus { get; set; } = string.Empty;
     public string ShippingStatus { get; set; } = string.Empty;
     public string TransactionId { get; set; }
