@@ -23,6 +23,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Where(o => o.UserId == userId)
             .ToListAsync(ct);
     }
+
     public async Task<Order>GetOrderbyIdAsync(int id)
     {
         return await _context.Orders
@@ -34,6 +35,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.ReturnExchangeRequests)
             .FirstOrDefaultAsync(o => o.OrderId == id);
     }
+
     public async Task<int> SaveAsync()
     {
         return await _context.SaveChangesAsync();
@@ -48,4 +50,13 @@ public sealed class OrderRepository : GenericRepository<Order>
                 .ThenInclude(m => m.Accessory)
             .Where(m => m.OrderId == id).SingleOrDefaultAsync();
     }
+
+
+    public async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
+    {
+        return await _context.Orders
+            .Where(a => a.UserId == userId) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
+            .ToListAsync();
+    }
+
 }
