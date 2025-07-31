@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 
+using TerrariumGardenTech.Common.Enums;
+
 namespace TerrariumGardenTech.Repositories.Entity;
 
 public partial class Order
@@ -19,21 +21,23 @@ public partial class Order
 
     public DateTime? OrderDate { get; set; }
 
-    public string Status { get; set; }
+
+    public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
 
     public string PaymentStatus { get; set; }
+    
+    public string TransactionId { get; set; }
 
     public string ShippingStatus { get; set; }
-
-    public virtual ICollection<AddressDelivery> AddressDeliveries { get; set; } = new List<AddressDelivery>();
+    //// Thêm thuộc tính PaymentMethod để lưu phương thức thanh toán
+    //public string PaymentMethod { get; set; }
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
-    public virtual ICollection<Payment> PaymentTransitions { get; set; } = new List<Payment>();
+    public virtual ICollection<Payment> Payment { get; set; } = new List<Payment>();
 
     public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
-
-    public virtual ICollection<ShippingDetail> ShippingDetails { get; set; } = new List<ShippingDetail>();
 
     public virtual User User { get; set; }
 

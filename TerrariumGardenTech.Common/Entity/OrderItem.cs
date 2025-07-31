@@ -14,6 +14,9 @@ public partial class OrderItem
     public int? AccessoryId { get; set; }
 
     public int? TerrariumVariantId { get; set; }
+    // Các thông tin số lượng riêng biệt
+    public int? AccessoryQuantity { get; set; } // Số lượng phụ kiện
+    public int? TerrariumVariantQuantity { get; set; } // Số lượng terrarium
 
     public int? Quantity { get; set; }
 

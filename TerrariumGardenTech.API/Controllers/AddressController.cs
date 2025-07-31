@@ -31,12 +31,13 @@ public class AddressController : ControllerBase
         // Ensure Data is a List<Address> (or any IEnumerable<Address>)
         var addresses = (result.Data as IEnumerable<Address>)?.Select(t => new AddressResponse
         {
-            Id = t.Id,
+            Id = t.AddressId,
             TagName = t.TagName,
             UserId = t.UserId,
             ReceiverAddress = t.ReceiverAddress,
             ReceiverName = t.ReceiverName,
-            ReceiverPhone = t.ReceiverPhone
+            ReceiverPhone = t.ReceiverPhone,
+            IsDefault = t.IsDefault
         }).ToList();
 
         if (addresses == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
@@ -44,7 +45,7 @@ public class AddressController : ControllerBase
     }
 
     // GET api/<AddressController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get-/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         var result = await _addressService.GetAddressById(id);
@@ -55,18 +56,46 @@ public class AddressController : ControllerBase
             // Ánh xạ dữ liệu từ Category sang CategoryRequest
             var addressResponse = new AddressResponse
             {
-                Id = address.Id,
+                Id = address.AddressId,
                 TagName = address.TagName,
                 UserId = address.UserId,
                 ReceiverAddress = address.ReceiverAddress,
                 ReceiverName = address.ReceiverName,
-                ReceiverPhone = address.ReceiverPhone
+                ReceiverPhone = address.ReceiverPhone,
+                IsDefault = address.IsDefault
+
             };
 
             // Trả về BusinessResult với dữ liệu đã ánh xạ
             return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponse);
         }
 
+        // Trả về lỗi nếu không thể ánh xạ
+        return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+    }
+
+    [HttpGet("get-by-user-id-/{userId}")]
+    public async Task<IBusinessResult> GetByUserId(int userId)
+    {
+        var result = await _addressService.GetAddressesByUserId(userId);
+        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là IEnumerable<Address>)
+        if (result.Data is IEnumerable<Address> addresses)
+        {
+            // Ánh xạ dữ liệu từ Address sang AddressResponse
+            var addressResponses = addresses.Select(t => new AddressResponse
+            {
+                Id = t.AddressId,
+                TagName = t.TagName,
+                UserId = t.UserId,
+                ReceiverAddress = t.ReceiverAddress,
+                ReceiverName = t.ReceiverName,
+                ReceiverPhone = t.ReceiverPhone,
+                IsDefault = t.IsDefault
+            }).ToList();
+            // Trả về BusinessResult với dữ liệu đã ánh xạ
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponses);
+        }
         // Trả về lỗi nếu không thể ánh xạ
         return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
     }
