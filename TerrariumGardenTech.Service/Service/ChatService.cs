@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Enums;
