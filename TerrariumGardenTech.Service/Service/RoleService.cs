@@ -1,5 +1,6 @@
 ﻿using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Role;
+using TerrariumGardenTech.Common.ResponseModel.Role;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -18,19 +19,50 @@ public class RoleService : IRoleService
 
     public async Task<IBusinessResult> GetAll()
     {
+        // Lấy tất cả các role từ cơ sở dữ liệu
         var roles = await _unitOfWork.Role.GetAllAsync();
-        if (roles != null && roles.Any())
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, roles);
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Kiểm tra nếu có dữ liệu
+        if (roles != null && roles.Any())
+        {
+            // Ánh xạ Role thành RoleResponse
+            var roleResponses = roles.Select(r => new RoleResponse
+            {
+                RoleId = r.RoleId,
+                RoleName = r.RoleName,
+                Description = r.Description
+            }).ToList();
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", roleResponses);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
     }
 
     public async Task<IBusinessResult> GetById(int id)
     {
+        // Lấy role theo ID từ cơ sở dữ liệu
         var role = await _unitOfWork.Role.GetByIdAsync(id);
-        if (role != null) return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, role);
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Kiểm tra nếu có dữ liệu
+        if (role != null)
+        {
+            // Ánh xạ Role thành RoleResponse
+            var roleResponse = new RoleResponse
+            {
+                RoleId = role.RoleId,
+                RoleName = role.RoleName,
+                Description = role.Description
+            };
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", roleResponse);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
     }
 
     public async Task<IBusinessResult> Save(Role role)

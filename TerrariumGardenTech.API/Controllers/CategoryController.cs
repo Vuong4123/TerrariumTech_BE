@@ -22,35 +22,35 @@ public class CategoryController : ControllerBase
     }
 
     // GET: api/<CategoryController>
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
         return await _categoryService.GetAll();
     }
 
     // GET api/<CategoryController>/5
-    [HttpGet("{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _categoryService.GetById(id);
     }
 
     // POST api/<CategoryController>
-    [HttpPost]
+    [HttpPost("add-category")]
     public async Task<IBusinessResult> Post(CategoryCreateRequest categoryRequest)
     {
         return await _categoryService.CreateCategory(categoryRequest);
     }
 
     // PUT api/<CategoryController>/5
-    [HttpPut("{id}")]
+    [HttpPut("update-category/{id}")]
     public async Task<IBusinessResult> Put(CategoryUpdateRequest categoryRequest)
     {
        return await _categoryService.UpdateCategory(categoryRequest);
     }
 
     // DELETE api/<CategoryController>/5
-    [HttpDelete("{id}")]
+    [HttpDelete("delete-category/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _categoryService.DeleteById(id);

@@ -28,9 +28,9 @@ public sealed class OrderRepository : GenericRepository<Order>
     {
         return await _context.Orders
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.TerrariumVariant)
+                .ThenInclude(oi => oi.TerrariumVariant)
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Accessory)
+                .ThenInclude(oi => oi.Accessory)
             .Include(o => o.Payment)
             .Include(o => o.ReturnExchangeRequests)
             .FirstOrDefaultAsync(o => o.OrderId == id);

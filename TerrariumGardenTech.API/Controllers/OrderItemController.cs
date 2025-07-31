@@ -22,7 +22,7 @@ public class OrderItemController : ControllerBase
     /// <summary>
     ///     Lấy danh sách tất cả OrderItem
     /// </summary>
-    [HttpGet]
+    [HttpGet("get-all")]
     [Authorize(Policy = "Order.ReadAll")]
     public async Task<IActionResult> GetAll()
     {
@@ -68,7 +68,7 @@ public class OrderItemController : ControllerBase
     /// <summary>
     ///     Lấy tất cả OrderItem của một đơn hàng
     /// </summary>
-    [HttpGet("by-order/{orderId:int}")]
+    [HttpGet("get-by-order/{orderId:int}")]
     public async Task<IActionResult> GetByOrder(int orderId)
     {
         try

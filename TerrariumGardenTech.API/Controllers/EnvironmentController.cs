@@ -19,35 +19,35 @@ public class EnvironmentController : ControllerBase
     }
 
     // GET: api/<EnvironmentController>
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
         return await _environmentService.GetAllEnvironmentsAsync();
     }
 
     // GET api/<EnvironmentController>/5
-    [HttpGet("{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _environmentService.GetEnvironmentByIdAsync(id);
     }
 
     // POST api/<EnvironmentController>
-    [HttpPost]
+    [HttpPost("add-environment")]
     public async Task<IBusinessResult> Post([FromBody] EnvironmentCreateRequest environmentCreateRequest)
     {
         return await _environmentService.CreateEnvironmentAsync(environmentCreateRequest);
     }
 
     // PUT api/<EnvironmentController>/5
-    [HttpPut("{id}")]
+    [HttpPut("update-environment/{id}")]
     public async Task<IBusinessResult> Put([FromBody] EnvironmentUpdateRequest environmentUpdateRequest)
     {
         return await _environmentService.UpdateEnvironmentAsync(environmentUpdateRequest);
     }
 
     // DELETE api/<EnvironmentController>/5
-    [HttpDelete("{id}")]
+    [HttpDelete("delete-environment/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _environmentService.DeleteEnvironmentAsync(id);
