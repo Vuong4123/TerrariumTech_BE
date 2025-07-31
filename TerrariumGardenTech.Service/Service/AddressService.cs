@@ -26,6 +26,7 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
     }
 
+
     public async Task<IBusinessResult> UpdateAddress(AddressUpdateRequest addressUpdateRequest)
     {
         try
@@ -60,7 +61,8 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 TagName = addressCreateRequest.TagName,
                 ReceiverAddress = addressCreateRequest.ReceiverAddress,
                 ReceiverName = addressCreateRequest.ReceiverName,
-                ReceiverPhone = addressCreateRequest.ReceiverPhone
+                ReceiverPhone = addressCreateRequest.ReceiverPhone,
+                IsDefault = addressCreateRequest.IsDefault,
             };
             var result = await _unitOfWork.Address.CreateAsync(address);
             if (address != null)
@@ -87,13 +89,23 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
 
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
+    public async Task<IBusinessResult> GetAddressesByUserId(int userId)
+    {
+        var address = await _unitOfWork.Address.GetByUserIdAsync(userId);
 
+        if (address == null || !address.Any())
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        }
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, address);
+    }
     public async Task<IBusinessResult> Save(Address address)
     {
         try
         {
             var result = -1;
-            var addressEntity = _unitOfWork.Address.GetByIdAsync(address.Id);
+            var addressEntity = _unitOfWork.Address.GetByIdAsync(address.AddressId);
             if (addressEntity != null)
             {
                 result = await _unitOfWork.Address.UpdateAsync(address);

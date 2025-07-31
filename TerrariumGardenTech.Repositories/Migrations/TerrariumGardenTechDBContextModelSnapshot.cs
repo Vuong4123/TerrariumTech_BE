@@ -57,6 +57,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<int?>("AccessoryId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("AccessoryQuantity")
+                        .HasColumnType("int");
+
                     b.Property<int>("CartId")
                         .HasColumnType("int");
 
@@ -67,6 +70,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("TerrariumVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TerrariumVariantQuantity")
                         .HasColumnType("int");
 
                     b.Property<decimal>("TotalPrice")
@@ -236,7 +242,7 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("nvarchar(150)")
                         .HasColumnName("name");
 
-                    b.Property<decimal?>("Price")
+                    b.Property<decimal>("Price")
                         .HasColumnType("decimal(12, 2)")
                         .HasColumnName("price");
 
@@ -297,12 +303,12 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Address", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("AddressId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AddressId"));
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("bit");
@@ -331,64 +337,12 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int")
                         .HasColumnName("userId");
 
-                    b.HasKey("Id")
+                    b.HasKey("AddressId")
                         .HasName("PK_Address");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("Address", (string)null);
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AddressDelivery", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedOnUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("createdOnUtc");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit")
-                        .HasColumnName("isDeleted");
-
-                    b.Property<DateTime>("ModifiedOnUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("modifiedOnUtc");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int")
-                        .HasColumnName("orderId");
-
-                    b.Property<string>("ReceiverAddress")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)")
-                        .HasColumnName("receiverAddress");
-
-                    b.Property<string>("ReceiverName")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)")
-                        .HasColumnName("receiverName");
-
-                    b.Property<string>("ReceiverPhone")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)")
-                        .HasColumnName("receiverPhone");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("userId");
-
-                    b.HasKey("Id")
-                        .HasName("PK_AddressDelivery");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("AddressDelivery", (string)null);
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AisuggestLayout", b =>
@@ -551,6 +505,12 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnName("createdAt")
                         .HasDefaultValueSql("(sysutcdatetime())");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<int>("OrderItemId")
                         .HasColumnType("int")
                         .HasColumnName("orderItemId");
@@ -558,6 +518,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<int?>("Rating")
                         .HasColumnType("int")
                         .HasColumnName("rating");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int")
@@ -759,6 +722,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("decimal(12, 2)")
                         .HasColumnName("totalAmount");
 
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("userId");
@@ -790,6 +756,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int")
                         .HasColumnName("accessoryId");
 
+                    b.Property<int?>("AccessoryQuantity")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int")
                         .HasColumnName("orderId");
@@ -801,6 +770,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<int?>("TerrariumVariantId")
                         .HasColumnType("int")
                         .HasColumnName("terrariumVariantId");
+
+                    b.Property<int?>("TerrariumVariantQuantity")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("TotalPrice")
                         .HasColumnType("decimal(12, 2)")
@@ -1082,45 +1054,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasName("PK__Role__CD98462A2156B115");
 
                     b.ToTable("Role", (string)null);
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ShippingDetail", b =>
-                {
-                    b.Property<int>("ShippingDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("shippingDetailId");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ShippingDetailId"));
-
-                    b.Property<DateTime?>("EstimatedDeliveryDate")
-                        .HasColumnType("date")
-                        .HasColumnName("estimatedDeliveryDate");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int")
-                        .HasColumnName("orderId");
-
-                    b.Property<decimal?>("ShippingCost")
-                        .HasColumnType("decimal(10, 2)")
-                        .HasColumnName("shippingCost");
-
-                    b.Property<string>("ShippingMethod")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("shippingMethod");
-
-                    b.Property<string>("TrackingNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("trackingNumber");
-
-                    b.HasKey("ShippingDetailId")
-                        .HasName("PK__Shipping__DDF63975E50C620D");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("ShippingDetail", (string)null);
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Terrarium", b =>
@@ -1488,18 +1421,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AddressDelivery", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
-                        .WithMany("AddressDeliveries")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_AddressDelivery_Order");
-
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AisuggestLayout", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
@@ -1647,7 +1568,7 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Payment", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
-                        .WithMany("PaymentTransitions")
+                        .WithMany("Payment")
                         .HasForeignKey("OrderId")
                         .IsRequired()
                         .HasConstraintName("FK_PaymentTransition_Order");
@@ -1745,17 +1666,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("OrderItem");
 
                     b.Navigation("Request");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ShippingDetail", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
-                        .WithMany("ShippingDetails")
-                        .HasForeignKey("OrderId")
-                        .IsRequired()
-                        .HasConstraintName("FK_ShippingDetail_Order");
-
-                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Terrarium", b =>
@@ -1868,15 +1778,11 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Order", b =>
                 {
-                    b.Navigation("AddressDeliveries");
-
                     b.Navigation("OrderItems");
 
-                    b.Navigation("PaymentTransitions");
+                    b.Navigation("Payment");
 
                     b.Navigation("ReturnExchangeRequests");
-
-                    b.Navigation("ShippingDetails");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.OrderItem", b =>

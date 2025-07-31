@@ -169,4 +169,17 @@ public class GenericRepository<T> where T : class
             .Take(query.Pagination.PageSize);
         return queryable;
     }
+    public IQueryable<T> Include(Expression<Func<T, object>> includeProperties)
+    {
+        return _context.Set<T>().Include(includeProperties);
+    }
+    public IQueryable<T> Include(params string[] includeProperties)
+    {
+        var query = _context.Set<T>().AsQueryable();
+        foreach (var includeProperty in includeProperties)
+        {
+            query = query.Include(includeProperty);
+        }
+        return query;
+    }
 }

@@ -32,12 +32,12 @@ public class FirebaseController : ControllerBase
         }
     }
 
-    // [HttpDelete("{userId}/{fcmtoken}")]
-    // public async Task<IActionResult> DeleteToken([FromRoute] string userId, [FromRoute] string fcmtoken)
-    // {
-    //     var result = await _firebaseStorageService.DeleteTokenAsync(userId, fcmtoken);
-    //     if (result)
-    //         return Ok("Token đã được xóa thành công!");
-    //     return BadRequest("Không tìm thấy token để xóa.");
-    // }
+    [HttpDelete("{userId}/{fcmtoken}")]
+    public async Task<IActionResult> DeleteToken([FromRoute] string userId, [FromRoute] string fcmtoken)
+    {
+        var result = await _firebaseStorageService.DeleteTokenAsync(userId, fcmtoken);
+        if (result)
+            return Ok("Token đã được xóa thành công!");
+        return BadRequest("Không tìm thấy token để xóa.");
+    }
 }

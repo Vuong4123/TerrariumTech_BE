@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.API.Controllers;
@@ -31,33 +32,11 @@ public class CartController : ControllerBase
     public async Task<IActionResult> GetCart()
     {
         var userId = User.GetUserId();
-        var cart = await _cartService.GetCartByUserAsync(userId);
+        var cart = await _cartService.GetCartAsync(userId);
+        if (cart == null)
+            return NotFound();
 
-        if (cart == null) return NotFound(new { message = "Giỏ hàng không tồn tại" });
-
-        var cartItems = cart.CartItems.Select(item => new
-        {
-            item.CartItemId,
-            item.CartId,
-            item.AccessoryId,
-            Accessory = item.Accessory?.Name,  // Thêm tên phụ kiện nếu có
-            item.TerrariumVariantId,
-            TerrariumVariant = item.TerrariumVariant?.VariantName,  // Thêm tên biến thể terrarium nếu có
-            item.Quantity,  // Số lượng của mỗi món
-            item.UnitPrice,
-            item.TotalPrice,
-            item.CreatedAt,
-            item.UpdatedAt
-        }).ToList();
-
-        var totalCartPrice = cartItems.Sum(x => x.TotalPrice);
-        return Ok(new
-        {
-            cart.CartId,
-            cart.UserId,
-            cartItems,
-            totalCartPrice
-        });
+        return Ok(cart);
     }
 
 
@@ -69,43 +48,43 @@ public class CartController : ControllerBase
     public async Task<IActionResult> AddItems([FromBody] List<AddCartItemRequest> requests)
     {
         var userId = User.GetUserId();
-        var items = new List<CartItemResponse>();  // Dùng CartItemResponse thay vì anonymous type
-        decimal totalCartPrice = 0; // Tổng giá trị của giỏ hàng
-        var failedItems = new List<string>(); // Dùng để lưu các món hàng không hợp lệ
 
-        try
+        if (requests == null || !requests.Any())
         {
-            foreach (var request in requests)
+            return BadRequest(new { message = "Danh sách sản phẩm không được để trống." });
+        }
+
+        var responses = new List<CartItemResponse>();
+
+        foreach (var request in requests)
+        {
+            // Bỏ qua item không hợp lệ
+            if ((request.AccessoryQuantity is null && request.VariantQuantity is null) ||
+                (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
             {
-                // Kiểm tra quantity cho phụ kiện hoặc variant
-                if ((request.AccessoryQuantity.HasValue && request.AccessoryQuantity.Value <= 0) &&
-                    (request.VariantQuantity.HasValue && request.VariantQuantity.Value <= 0))
-                {
-                    failedItems.Add("Số lượng sản phẩm phải lớn hơn 0");
-                    continue; // Bỏ qua món hàng không hợp lệ
-                }
-
-                // Thêm sản phẩm vào giỏ
-                var item = await _cartService.AddItemAsync(userId, request);
-                totalCartPrice += item.TotalPrice;
-
-                // Thêm các thông tin sản phẩm vào danh sách
-                items.Add(item);
+                continue;
             }
 
-            if (failedItems.Any())
+            try
             {
-                return BadRequest(new { message = "Có lỗi với một số món hàng", details = failedItems });
+                var result = await _cartService.AddItemAsync(userId, request);
+                responses.Add(result);
             }
+            catch (Exception ex)
+            {
+                // Ghi log nếu cần
+                // _logger.LogWarning($"Không thể thêm sản phẩm: {ex.Message}");
+                // Có thể tiếp tục hoặc dừng tùy logic
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
-            return CreatedAtAction(nameof(GetCart), new { userId }, new { items, totalCartPrice });
-        }
-        catch (Exception ex)
+        if (!responses.Any())
         {
-            // Ghi log chi tiết lỗi
-            _logger.LogError(ex, "Error occurred while adding items to the cart.");
-            return StatusCode(500, new { message = "Đã có lỗi xảy ra trong quá trình xử lý giỏ hàng", error = ex.Message });
+            return BadRequest(new { message = "Không có sản phẩm hợp lệ nào được thêm vào giỏ hàng." });
         }
+
+        return Ok(responses);
     }
 
 
@@ -118,27 +97,19 @@ public class CartController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        // Logging userId và cartItemId
-        Console.WriteLine($"Updating CartItem with ID {cartItemId} for UserID {userId}");
-
-        // Kiểm tra số lượng phải lớn hơn 0
-        if ((request.AccessoryQuantity.HasValue && request.AccessoryQuantity <= 0) &&
-            (request.VariantQuantity.HasValue && request.VariantQuantity <= 0))
+        if (request == null ||
+         (request.AccessoryQuantity is null && request.VariantQuantity is null) ||
+         (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
         {
-            return BadRequest(new { message = "Số lượng sản phẩm phải lớn hơn 0" });
+            return BadRequest(new { message = "Thông tin cập nhật không hợp lệ." });
         }
 
-        // Cập nhật giỏ hàng
-        var success = await _cartService.UpdateItemAsync(userId, cartItemId, request.AccessoryQuantity, request.VariantQuantity);
-        if (!success)
-        {
-            // Logging lỗi không tìm thấy mục giỏ hàng
-            Console.WriteLine($"CartItem with ID {cartItemId} not found or not owned by user {userId}");
-            return NotFound(new { message = "Item không tìm thấy trong giỏ hàng hoặc không thuộc quyền sở hữu của người dùng" });
-        }
+        var result = await _cartService.UpdateItemAsync(userId, cartItemId, request);
 
-        // Nếu cập nhật thành công
-        return NoContent();
+        if (result == null)
+            return NotFound(new { message = "Không tìm thấy item trong giỏ hàng hoặc không thuộc về người dùng." });
+
+        return Ok(result);
     }
 
 
@@ -181,22 +152,21 @@ public class CartController : ControllerBase
     /// </summary>
     [HttpPost("checkout")]
     [Authorize]
-    public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
+    public async Task<IBusinessResult> Checkout()
     {
-        var userId = User.GetUserId();
-        try
-        {
-            var order = await _cartService.CheckoutAsync(userId, request);
+        var userId = User.GetUserId(); // Lấy userId từ JWT token
 
-            return CreatedAtAction(nameof(OrderController.Get), new { id = order.OrderId }, order);
-        }
-        catch (InvalidOperationException ex)
+        // Gọi service để xử lý thanh toán
+        var order = await _cartService.CheckoutAsync(userId);
+
+        // Trả về thông tin đơn hàng sau khi thanh toán
+        //return CreatedAtAction(nameof(OrderController.Get), new { id = order.OrderId }, order);
+        return new BusinessResult
         {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Đã có lỗi xảy ra trong quá trình thanh toán", error = ex.Message });
-        }
+            Status = 1,
+            Message = order.Message,
+            Data = order.Data
+        };
+
     }
 }

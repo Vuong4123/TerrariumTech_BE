@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Notification;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -18,9 +19,12 @@ public class NotificationController : ControllerBase
 
     // Create a new notification
     [HttpPost("create")]
-    public async Task<IBusinessResult> Post([FromBody] NotificationCreateRequest notificationCreateRequest)
+    public async Task<IActionResult> CreateAndPush([FromBody] NotificationCreateRequest request)
     {
-        return await _notificationService.CreateNotificationAsync(notificationCreateRequest);
+        var result = await _notificationService.CreateAndPushAsync(request);
+        if (result.Status == Const.SUCCESS_CREATE_CODE)
+            return Ok(result);
+        return BadRequest(result);
     }
 
     // Get all notifications

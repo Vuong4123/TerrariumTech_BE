@@ -13,4 +13,5 @@ public class AddressResponse
     public string ReceiverPhone { get; set; } // max length 250
 
     public string ReceiverAddress { get; set; }
+    public bool IsDefault { get; set; }
 }
