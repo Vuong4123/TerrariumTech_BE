@@ -1,5 +1,6 @@
 ﻿using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Blog;
+using TerrariumGardenTech.Common.ResponseModel.Blog;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -14,19 +15,59 @@ public class BlogService(
 {
     public async Task<IBusinessResult> GetAll()
     {
+        // Lấy tất cả blog từ cơ sở dữ liệu
         var blogs = await _unitOfWork.Blog.GetAllAsync();
-        if (blogs != null && blogs.Any())
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, blogs);
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Kiểm tra nếu có dữ liệu
+        if (blogs != null && blogs.Any())
+        {
+            // Ánh xạ Blog thành BlogResponse
+            var blogResponses = blogs.Select(b => new BlogResponse
+            {
+                BlogCategoryId = b.BlogCategoryId,
+                BlogId = b.BlogId,
+                UserId = b.UserId,
+                Title = b.Title,
+                Content = b.Content,
+                UrlImage = b.UrlImage ?? string.Empty,  // Đảm bảo UrlImage không null
+                Status = b.Status
+            }).ToList();
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", blogResponses);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
     }
 
     public async Task<IBusinessResult> GetById(int id)
     {
+        // Lấy blog theo ID từ cơ sở dữ liệu
         var blog = await _unitOfWork.Blog.GetByIdAsync(id);
-        if (blog != null) return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, blog);
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Kiểm tra nếu có dữ liệu
+        if (blog != null)
+        {
+            // Ánh xạ Blog thành BlogResponse
+            var blogResponse = new BlogResponse
+            {
+                BlogId = blog.BlogId,
+                BlogCategoryId = blog.BlogCategoryId,
+                UserId = blog.UserId,
+                Title = blog.Title,
+                Content = blog.Content,
+                bodyHTML = blog.bodyHTML ?? string.Empty, // Đảm bảo bodyHTML không null
+                UrlImage = blog.UrlImage ?? string.Empty, // Đảm bảo UrlImage không null
+                Status = blog.Status
+            };
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", blogResponse);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
     }
 
     public async Task<IBusinessResult> Save(Blog blog)

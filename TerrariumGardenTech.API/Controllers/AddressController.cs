@@ -25,79 +25,20 @@ public class AddressController : ControllerBase
     [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
-        var result = await _addressService.GetAllAddresses();
-        // Check if result or result.Data is null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        // Ensure Data is a List<Address> (or any IEnumerable<Address>)
-        var addresses = (result.Data as IEnumerable<Address>)?.Select(t => new AddressResponse
-        {
-            Id = t.AddressId,
-            TagName = t.TagName,
-            UserId = t.UserId,
-            ReceiverAddress = t.ReceiverAddress,
-            ReceiverName = t.ReceiverName,
-            ReceiverPhone = t.ReceiverPhone,
-            IsDefault = t.IsDefault
-        }).ToList();
-
-        if (addresses == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addresses);
+        return await _addressService.GetAllAddresses();
     }
 
     // GET api/<AddressController>/5
     [HttpGet("get-/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
-        var result = await _addressService.GetAddressById(id);
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Terrarium, không phải IEnumerable)
-        if (result.Data is Address address)
-        {
-            // Ánh xạ dữ liệu từ Category sang CategoryRequest
-            var addressResponse = new AddressResponse
-            {
-                Id = address.AddressId,
-                TagName = address.TagName,
-                UserId = address.UserId,
-                ReceiverAddress = address.ReceiverAddress,
-                ReceiverName = address.ReceiverName,
-                ReceiverPhone = address.ReceiverPhone,
-                IsDefault = address.IsDefault
-
-            };
-
-            // Trả về BusinessResult với dữ liệu đã ánh xạ
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponse);
-        }
-
-        // Trả về lỗi nếu không thể ánh xạ
-        return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+        return await _addressService.GetAddressById(id);
     }
 
     [HttpGet("get-by-user-id-/{userId}")]
     public async Task<IBusinessResult> GetByUserId(int userId)
     {
-        var result = await _addressService.GetAddressesByUserId(userId);
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là IEnumerable<Address>)
-        if (result.Data is IEnumerable<Address> addresses)
-        {
-            // Ánh xạ dữ liệu từ Address sang AddressResponse
-            var addressResponses = addresses.Select(t => new AddressResponse
-            {
-                Id = t.AddressId,
-                TagName = t.TagName,
-                UserId = t.UserId,
-                ReceiverAddress = t.ReceiverAddress,
-                ReceiverName = t.ReceiverName,
-                ReceiverPhone = t.ReceiverPhone,
-                IsDefault = t.IsDefault
-            }).ToList();
-            // Trả về BusinessResult với dữ liệu đã ánh xạ
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponses);
-        }
-        // Trả về lỗi nếu không thể ánh xạ
-        return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+        return await _addressService.GetAddressesByUserId(userId);
     }
 
     // POST api/<AddressController>
@@ -112,11 +53,6 @@ public class AddressController : ControllerBase
     public async Task<IBusinessResult> Put([FromBody] AddressUpdateRequest addressUpdateRequest)
     {
         return await _addressService.UpdateAddress(addressUpdateRequest);
-        //if (result == null || result.Data == null)
-        //{
-        //    return new BusinessResult(Const.ERROR_EXCEPTION, "Update Fail");
-        //}
-        //return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, result);
     }
 
     // DELETE api/<AddressController>/5
