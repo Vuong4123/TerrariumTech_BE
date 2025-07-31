@@ -45,14 +45,14 @@ public class BlogCategoryController : ControllerBase
     }
 
     // PUT api/<BlogCategoryController>/5
-    [HttpPut("update-blogCategory-{id}")]
+    [HttpPut("update-blogCategory/{id}")]
     public async Task<IBusinessResult> Put([FromBody] BlogCategoryUpdateRequest blogCategoryUpdateRequest)
     {
         return await _blogCategoryService.UpdateBlogCategory(blogCategoryUpdateRequest);
     }
 
     // DELETE api/<BlogCategoryController>/5
-    [HttpDelete("delete-blogCategory-{id}")]
+    [HttpDelete("delete-blogCategory/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _blogCategoryService.DeleteById(id);
