@@ -98,6 +98,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<EnvironmentTerrarium> Environments { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
+    public virtual DbSet<Chat> Chats { get; set; }
+    public virtual DbSet<ChatMessage> ChatMessages { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
@@ -1002,6 +1004,59 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.Property(e => e.ValidTo)
                 .HasColumnType("date")
                 .HasColumnName("validTo");
+        });
+
+        // Chat entity configuration
+        modelBuilder.Entity<Chat>(entity =>
+        {
+            entity.HasKey(e => e.ChatId);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+
+            // Configure relationships
+            entity.HasOne(d => d.User1)
+                .WithMany(p => p.ChatsAsUser1)
+                .HasForeignKey(d => d.User1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.User2)
+                .WithMany(p => p.ChatsAsUser2)
+                .HasForeignKey(d => d.User2Id)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ChatMessage entity configuration
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.MessageId);
+
+            entity.Property(e => e.Content)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.SentAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false);
+
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
+
+            // Configure relationships
+            entity.HasOne(d => d.Chat)
+                .WithMany(p => p.ChatMessages)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Sender)
+                .WithMany(p => p.SentMessages)
+                .HasForeignKey(d => d.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -115,6 +115,10 @@ builder.Services.AddScoped<IPayOsService, PayOsService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
+// Đăng ký SignalR cho real-time chat
+builder.Services.AddSignalR();
 
 // Đăng ký thêm service quản lý tài khoản Staff/Manager cho Admin CRUD
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -194,9 +198,18 @@ builder.Services.AddAuthentication(options =>
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 logger.LogWarning("Unauthorized request: {Path}", context.HttpContext.Request.Path);
 
-                // Trả về JSON rõ ràng khi lỗi 401
+                // Bỏ qua nếu là SignalR/WebSocket connection
+                if (context.HttpContext.Request.Path.StartsWithSegments("/chatHub"))
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                }
+
+                // Trả về JSON rõ ràng khi lỗi 401 cho REST API
                 context.HandleResponse();
                 context.Response.ContentType = "application/json";
+                context.Response.StatusCode = 401;
                 var result = JsonSerializer.Serialize(new { message = "Chưa xác thực, vui lòng đăng nhập." });
                 return context.Response.WriteAsync(result);
             },
@@ -206,8 +219,16 @@ builder.Services.AddAuthentication(options =>
                 logger.LogWarning("Forbidden request: {Path} - User does not have permission.",
                     context.HttpContext.Request.Path);
 
-                // Trả về JSON rõ ràng khi lỗi 403
+                // Skip response body for WebSocket requests (SignalR)
+                if (context.HttpContext.Request.Path.StartsWithSegments("/chatHub"))
+                {
+                    context.Response.StatusCode = 403;
+                    return Task.CompletedTask;
+                }
+
+                // Trả về JSON rõ ràng khi lỗi 403 cho REST API
                 context.Response.ContentType = "application/json";
+                context.Response.StatusCode = 403;
                 var result = JsonSerializer.Serialize(new { message = "Bạn không có quyền truy cập tài nguyên này." });
                 return context.Response.WriteAsync(result);
             }
@@ -290,6 +311,10 @@ app.UseCors("AllowSpecificOrigin"); // Hoặc "AllowAll" nếu bạn cấu hình
 
 app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
+
+// Enable static files (for wwwroot folder)
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -309,5 +334,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 app.MapControllers();
+
+// Map SignalR ChatHub
+app.MapHub<TerrariumGardenTech.API.Hubs.ChatHub>("/chatHub");
 
 app.Run();

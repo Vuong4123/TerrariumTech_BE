@@ -61,5 +61,11 @@ public partial class User
 
     public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
 
+    public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new List<Chat>();
+
+    public virtual ICollection<Chat> ChatsAsUser2 { get; set; } = new List<Chat>();
+
+    public virtual ICollection<ChatMessage> SentMessages { get; set; } = new List<ChatMessage>();
+
     public virtual Role Role { get; set; }
 }
