@@ -1,6 +1,8 @@
 ﻿using TerrariumGardenTech.Common.RequestModel.Terrarium;
+using TerrariumGardenTech.Common.ResponseModel.Terrarium;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.Service.IService;
 
@@ -18,4 +20,5 @@ public interface ITerrariumService
     Task<IBusinessResult> Save(Terrarium terrarium);
     Task<IBusinessResult> DeleteById(int id);
     Task<IBusinessResult> GetTerrariumByNameAsync(string terrariumName);
+    Task<AITerrariumResponse> PredictTerrariumAsync(AITerrariumRequest request);
 }
