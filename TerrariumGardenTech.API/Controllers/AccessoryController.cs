@@ -56,7 +56,7 @@ public class AccessoryController : ControllerBase
     }
 
     // PUT api/<AccessoryController>/5
-    [HttpPut("update-accessory{id}")]
+    [HttpPut("update-accessory/{id}")]
     public async Task<IBusinessResult> Put(AccessoryUpdateRequest accessoryUpdateRequest)
     {
         if (accessoryUpdateRequest == null || !ModelState.IsValid)
@@ -65,7 +65,7 @@ public class AccessoryController : ControllerBase
     }
 
     // DELETE api/<AccessoryController>/5
-    [HttpDelete("delete-accessory{id}")]
+    [HttpDelete("delete-accessory/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _accessoryService.DeleteById(id);

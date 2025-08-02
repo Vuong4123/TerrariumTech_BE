@@ -29,7 +29,7 @@ public class VoucherController : ControllerBase
     }
 
     // Lấy Voucher theo mã code
-    [HttpGet("{code}")]
+    [HttpGet("get-by-code/{code}")]
     public async Task<IActionResult> GetVoucherByCode(string code)
     {
         var voucher = await _voucherService.GetVoucherByCodeAsync(code);
@@ -75,7 +75,7 @@ public class VoucherController : ControllerBase
     }
 
     // Cập nhật Voucher
-    [HttpPut("{id}")]
+    [HttpPut("update-voucher/{id}")]
     public async Task<IActionResult> UpdateVoucher(int id, [FromBody] UpdateVoucherRequest request)
     {
         if (!ModelState.IsValid)
@@ -100,7 +100,7 @@ public class VoucherController : ControllerBase
     }
 
     // Xóa Voucher
-    [HttpDelete("{id}")]
+    [HttpDelete("delete-voucher/{id}")]
     public async Task<IActionResult> DeleteVoucher(int id)
     {
         await _voucherService.DeleteVoucherAsync(id);

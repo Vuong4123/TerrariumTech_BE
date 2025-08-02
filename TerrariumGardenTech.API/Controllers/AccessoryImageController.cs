@@ -12,14 +12,14 @@ namespace TerrariumGardenTech.API.Controllers;
 public class AccessoryImageController(IAccessoryImageService _accessoryImageService) : ControllerBase
 {
     // GET: api/<AccessoryImageController>
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
         return await _accessoryImageService.GetAll();
     }
 
     // GET api/<AccessoryImageController>/5
-    [HttpGet("{id}")]
+    [HttpGet("get-by/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _accessoryImageService.GetById(id);
@@ -27,7 +27,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
 
     // GET api/<AccessoryImageController>/accessoryId/5
-    [HttpGet("accessoryId/{accessoryId}")]
+    [HttpGet("get-accessoryId/{accessoryId}")]
     public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
     {
         return await _accessoryImageService.GetByAccessoryId(accessoryId);
@@ -35,14 +35,14 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
 
     // POST api/<AccessoryImageController>
-    [HttpPost("upload")]
+    [HttpPost("add-accessoryimage")]
     public async Task<IBusinessResult> Post([FromForm] AccessoryImageUploadRequest request)
     {
         return await _accessoryImageService.CreateAccessoryImage(request.ImageFile, request.AccessoryId);
     }
 
     // PUT api/<AccessoryImageController>/5
-    [HttpPut("{id}")]
+    [HttpPut("update-accessoryimage/{id}")]
     public async Task<IBusinessResult> Put(int id, [FromForm] AccessoryImageUploadUpdateRequest request)
     {
         request.AccessoryImageId = id; // Set the ID for the update request
@@ -50,7 +50,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
     }
 
     // DELETE api/<AccessoryImageController>/5
-    [HttpDelete("{id}")]
+    [HttpDelete("delete-accessoryimage/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _accessoryImageService.DeleteById(id);

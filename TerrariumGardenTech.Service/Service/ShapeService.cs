@@ -1,6 +1,7 @@
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Shape;
+using TerrariumGardenTech.Common.ResponseModel.Shape;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -19,18 +20,52 @@ public class ShapeService : IShapeService
 
     public async Task<IBusinessResult> GetAllShapesAsync()
     {
+        // Lấy tất cả các hình dạng từ cơ sở dữ liệu
         var shapes = await _unitOfWork.Shape.GetAllAsync();
-        if (shapes == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
 
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, shapes);
+        // Kiểm tra nếu có dữ liệu
+        if (shapes != null && shapes.Any())
+        {
+            // Ánh xạ Shape thành ShapeResponse
+            var shapeResponses = shapes.Select(r => new ShapeResponse
+            {
+                ShapeId = r.ShapeId,
+                ShapeName = r.ShapeName,
+                ShapeDescription = r.ShapeDescription,
+                ShapeMaterial = r.ShapeMaterial
+            }).ToList();
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", shapeResponses);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
     }
 
     public async Task<IBusinessResult> GetShapeByIdAsync(int shapeId)
     {
+        // Lấy hình dạng theo ID từ cơ sở dữ liệu
         var shape = await _unitOfWork.Shape.GetByIdAsync(shapeId);
-        if (shape == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
 
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, shape);
+        // Kiểm tra nếu có dữ liệu
+        if (shape != null)
+        {
+            // Ánh xạ Shape thành ShapeResponse
+            var shapeResponse = new ShapeResponse
+            {
+                ShapeId = shape.ShapeId,
+                ShapeName = shape.ShapeName,
+                ShapeDescription = shape.ShapeDescription,
+                ShapeMaterial = shape.ShapeMaterial
+            };
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", shapeResponse);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
     }
 
     public async Task<IBusinessResult> CreateShapeAsync(ShapeCreateRequest shapeCreateRequest)

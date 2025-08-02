@@ -1,5 +1,6 @@
 ﻿using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Address;
+using TerrariumGardenTech.Common.ResponseModel.Address;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -11,21 +12,85 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
 {
     public async Task<IBusinessResult> GetAllAddresses()
     {
-        var result = await _unitOfWork.Address.GetAllAsync();
-        if (result == null || !result.Any())
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Lấy tất cả các địa chỉ từ cơ sở dữ liệu
+        var addresses = await _unitOfWork.Address.GetAllAsync();
 
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
+        // Kiểm tra nếu có dữ liệu
+        if (addresses != null && addresses.Any())
+        {
+            // Ánh xạ Address thành AddressResponse
+            var addressResponses = addresses.Select(t => new AddressResponse
+            {
+                Id = t.AddressId,
+                TagName = t.TagName,
+                UserId = t.UserId,
+                ReceiverAddress = t.ReceiverAddress,
+                ReceiverName = t.ReceiverName,
+                ReceiverPhone = t.ReceiverPhone,
+                IsDefault = t.IsDefault
+            }).ToList();
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponses);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
 
     public async Task<IBusinessResult> GetAddressById(int id)
     {
-        var result = await _unitOfWork.Address.GetByIdAsync(id);
-        if (result == null) return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Lấy địa chỉ theo ID từ cơ sở dữ liệu
+        var address = await _unitOfWork.Address.GetByIdAsync(id);
 
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, result);
+        // Kiểm tra nếu có dữ liệu
+        if (address != null)
+        {
+            // Ánh xạ Address thành AddressResponse
+            var addressResponse = new AddressResponse
+            {
+                Id = address.AddressId,
+                TagName = address.TagName,
+                UserId = address.UserId,
+                ReceiverAddress = address.ReceiverAddress,
+                ReceiverName = address.ReceiverName,
+                ReceiverPhone = address.ReceiverPhone,
+                IsDefault = address.IsDefault
+            };
+
+            // Trả về kết quả với mã thành công
+            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponse);
+        }
+
+        // Trả về lỗi nếu không có dữ liệu
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
+    public async Task<IBusinessResult> GetAddressesByUserId(int userId)
+    {
+        // Lấy các địa chỉ theo userId từ cơ sở dữ liệu
+        var addresses = await _unitOfWork.Address.GetByUserIdAsync(userId);
 
+        // Kiểm tra nếu không có dữ liệu
+        if (addresses == null || !addresses.Any())
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        }
+
+        // Ánh xạ địa chỉ thành AddressResponse
+        var addressResponses = addresses.Select(t => new AddressResponse
+        {
+            Id = t.AddressId,
+            TagName = t.TagName,
+            UserId = t.UserId,
+            ReceiverAddress = t.ReceiverAddress,
+            ReceiverName = t.ReceiverName,
+            ReceiverPhone = t.ReceiverPhone,
+            IsDefault = t.IsDefault
+        }).ToList();
+
+        // Trả về kết quả với dữ liệu đã ánh xạ
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, addressResponses);
+    }
 
     public async Task<IBusinessResult> UpdateAddress(AddressUpdateRequest addressUpdateRequest)
     {
@@ -89,17 +154,7 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
 
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
-    public async Task<IBusinessResult> GetAddressesByUserId(int userId)
-    {
-        var address = await _unitOfWork.Address.GetByUserIdAsync(userId);
-
-        if (address == null || !address.Any())
-        {
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-        }
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, address);
-    }
+    
     public async Task<IBusinessResult> Save(Address address)
     {
         try

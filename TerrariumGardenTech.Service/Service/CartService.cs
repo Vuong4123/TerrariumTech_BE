@@ -2,12 +2,8 @@
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
-
-using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Common.ResponseModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.OrderItem;
-
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -31,7 +27,7 @@ public class CartService : ICartService
     {
         Console.WriteLine($"Attempting to fetch cart for user with ID {userId}");
 
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
 
         // Kiểm tra nếu giỏ hàng không tồn tại
         if (cart == null)
@@ -47,7 +43,7 @@ public class CartService : ICartService
             };
 
             // Lưu giỏ hàng mới vào cơ sở dữ liệu
-            await _unitOfWork.CartRepository.CreateAsync(cart);
+            await _unitOfWork.Cart.CreateAsync(cart);
             Console.WriteLine($"Created new cart with ID {cart.CartId} for user with ID {userId}.");
         }
         else
@@ -62,7 +58,7 @@ public class CartService : ICartService
 
     public async Task<IBusinessResult> GetCartAsync(int userId)
     {
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
         if (cart == null)
             return new BusinessResult (Const.FAIL_READ_CODE,"không có giỏ hàng");
         // Lấy thông tin người dùng từ bảng User (giả sử bạn có repository User)
@@ -161,7 +157,7 @@ public class CartService : ICartService
 
     public async Task<Cart> GetCartByUserAsync(int userId)
     {
-        return await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        return await _unitOfWork.Cart.GetByUserIdAsync(userId);
     }
 
     public async Task<CartItemResponse> AddItemAsync(int userId, AddCartItemRequest request)
@@ -169,7 +165,7 @@ public class CartService : ICartService
         // Lấy giỏ hàng của người dùng, nếu không có thì tạo mới
         var cart = await GetOrCreateCartAsync(userId);
         // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng thông qua repository
-        var existingItem = await _unitOfWork.CartItemRepository.GetExistingItemAsync(
+        var existingItem = await _unitOfWork.CartItem.GetExistingItemAsync(
             cart.CartId,
             request.AccessoryId,
             request.TerrariumVariantId
@@ -217,7 +213,7 @@ public class CartService : ICartService
             existingItem.UnitPrice = existingItem.Quantity > 0 ? totalPrice / existingItem.Quantity : 0;
             existingItem.UpdatedAt = now;
 
-            await _unitOfWork.CartItemRepository.UpdateAsync(existingItem);
+            await _unitOfWork.CartItem.UpdateAsync(existingItem);
             cartItem = existingItem;
         }
         else
@@ -254,7 +250,7 @@ public class CartService : ICartService
                 UpdatedAt = now
             };
 
-            await _unitOfWork.CartItemRepository.CreateAsync(cartItem);
+            await _unitOfWork.CartItem.CreateAsync(cartItem);
         }
 
         // Tạo response để trả về cho client
@@ -325,7 +321,7 @@ public class CartService : ICartService
 
     public async Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request)
     {
-        var cartItem = await _unitOfWork.CartItemRepository
+        var cartItem = await _unitOfWork.CartItem
         .Include(ci => ci.Cart)
         .FirstOrDefaultAsync(ci => ci.CartItemId == cartItemId);
 
@@ -414,7 +410,7 @@ public class CartService : ICartService
         cartItemResponse.TotalCartPrice = totalCartPrice;
         cartItemResponse.TotalCartQuantity = totalCartQuantity;
 
-        await _unitOfWork.CartItemRepository.UpdateAsync(cartItem);
+        await _unitOfWork.CartItem.UpdateAsync(cartItem);
 
         return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, cartItemResponse);
     }
@@ -426,21 +422,21 @@ public class CartService : ICartService
 
     public async Task<bool> RemoveItemAsync(int userId, int itemId)
     {
-        var cartItem = await _unitOfWork.CartItemRepository.GetByIdWithCartAsync(itemId);
+        var cartItem = await _unitOfWork.CartItem.GetByIdWithCartAsync(itemId);
         if (cartItem == null || cartItem.Cart.UserId != userId)
             return false;
 
-        await _unitOfWork.CartItemRepository.RemoveAsync(cartItem);
+        await _unitOfWork.CartItem.RemoveAsync(cartItem);
         return true;
     }
 
     public async Task<bool> ClearCartAsync(int userId)
     {
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
         if (cart == null)
             return false;
 
-        await _unitOfWork.CartRepository.ClearAsync(userId);
+        await _unitOfWork.Cart.ClearAsync(userId);
         return true;
     }
 
@@ -449,7 +445,7 @@ public class CartService : ICartService
         try
         {
             // Lấy giỏ hàng của người dùng
-            var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+            var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
             if (cart == null || !cart.CartItems.Any())
                 return new BusinessResult(Const.FAIL_READ_CODE, "Giỏ hàng trống hoặc không tồn tại.");
 
@@ -465,7 +461,6 @@ public class CartService : ICartService
             Status = OrderStatus.Pending,
             PaymentStatus = "Unpaid",
             ShippingStatus = "Unprocessed",
-            PaymentMethod = "PayOs",
             OrderItems = new List<OrderItemResponse>(),
         };
 
@@ -540,14 +535,14 @@ public class CartService : ICartService
             order.TotalAmount = totalCartPrice; // Cập nhật tổng giá trị đơn hàng
 
             // Lưu đơn hàng vào cơ sở dữ liệu
-            await _unitOfWork.OrderRepository.CreateAsync(order);
+            await _unitOfWork.Order.CreateAsync(order);
 
             // Lưu các mục cần xóa vào danh sách tạm
             var cartItemsToRemove = cart.CartItems.ToList(); // ToList() để tạo một bản sao tách biệt của CartItems
                                                              // Xóa các mục đã thanh toán từ giỏ hàng
             foreach (var cartItem in cartItemsToRemove)
             {
-                await _unitOfWork.CartItemRepository.RemoveAsync(cartItem);
+                await _unitOfWork.CartItem.RemoveAsync(cartItem);
             }
             await _unitOfWork.SaveAsync();
 
