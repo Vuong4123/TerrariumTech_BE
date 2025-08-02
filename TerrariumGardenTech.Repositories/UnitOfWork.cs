@@ -20,7 +20,7 @@ public class UnitOfWork
     private MemberShipRepository _memberShipRepository;
     private NotificationRepository _notificationRepository;
     private OrderRepository _orderRepository;
-    private PaymentRepository _paymentTransitionRepository;
+    private PaymentRepository _paymentRepository;
     private PersonalizeRepository _personalizeRepository;
     private RoleRepository _roleRepository;
     private ShapeRepository _shapeRepository;
@@ -34,6 +34,7 @@ public class UnitOfWork
     private FeedbackRepository _feedbackRepository;
     private ChatRepository _chatRepository;
     private ChatMessageRepository _chatMessageRepository;
+    private FeedbackImageRepository _feedbackImageRepository;
 
 
     public UnitOfWork()
@@ -127,7 +128,7 @@ public class UnitOfWork
         get { return _terrariumAccessoryRepository ??= new TerrariumAccessoryRepository(_unitOfWorkContext); }
     }
 
-    public MemberShipRepository MemberShipRepository
+    public MemberShipRepository MemberShip
     {
         get { return _memberShipRepository ??= new MemberShipRepository(_unitOfWorkContext); }
     }
@@ -143,22 +144,22 @@ public class UnitOfWork
         get { return _membershipPackageRepository ??= new MembershipPackageRepository(_unitOfWorkContext); }
     }
 
-    public PaymentRepository PaymentTransitionRepository
+    public PaymentRepository Payment
     {
-        get { return _paymentTransitionRepository ??= new PaymentRepository(_unitOfWorkContext); }
+        get { return _paymentRepository ??= new PaymentRepository(_unitOfWorkContext); }
     }
 
-    public OrderRepository OrderRepository
+    public OrderRepository Order
     {
         get { return _orderRepository ??= new OrderRepository(_unitOfWorkContext); }
     }
 
-    public CartRepository CartRepository
+    public CartRepository Cart
     {
         get { return _cartRepository ??= new CartRepository(_unitOfWorkContext); }
     }
 
-    public CartItemRepository CartItemRepository
+    public CartItemRepository CartItem
     {
         get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
     }
@@ -181,5 +182,9 @@ public class UnitOfWork
     public FeedbackRepository Feedback
     {
         get => _feedbackRepository ??= new FeedbackRepository(_unitOfWorkContext);
+    }
+    public FeedbackImageRepository FeedbackImage
+    {
+        get => _feedbackImageRepository ??= new FeedbackImageRepository(_unitOfWorkContext);
     }
 }

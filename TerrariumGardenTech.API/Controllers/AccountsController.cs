@@ -33,7 +33,7 @@ public class AccountsController : ControllerBase
     }
 
     // Lấy tất cả tài khoản
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IBusinessResult> GetAllAccounts()
     {
         return await _accountService.GetAllAccountsAsync();

@@ -72,7 +72,7 @@ public class OrderController : ControllerBase
     /// <summary>
     ///     Lấy chi tiết đơn hàng theo ID
     /// </summary>
-    [HttpGet("getbyuserid{id:int}")]
+    [HttpGet("getbyuserid/{id:int}")]
     
     public async Task<IActionResult> GetByUserdId(int userId)
     {

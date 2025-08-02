@@ -19,35 +19,35 @@ public class TankMethodController : ControllerBase
     }
 
     // GET: api/<TankMethodController>
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
         return await _tankMethodService.GetAllTankMethodAsync();
     }
 
     // GET api/<TankMethodController>/5
-    [HttpGet("{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _tankMethodService.GetTankMethodByIdAsync(id);
     }
 
     // POST api/<TankMethodController>
-    [HttpPost]
+    [HttpPost("add-tankmethod")]
     public async Task<IBusinessResult> Post([FromBody] TankMethodCreateRequest tankMethodCreateRequest)
     {
         return await _tankMethodService.CreateTankMethodAsync(tankMethodCreateRequest);
     }
 
     // PUT api/<TankMethodController>/5
-    [HttpPut("{id}")]
+    [HttpPut("update-tankmethod/{id}")]
     public async Task<IBusinessResult> Put([FromBody] TankMethodUpdateRequest tankMethodUpdateRequest)
     {
         return await _tankMethodService.UpdateTankMethodAsync(tankMethodUpdateRequest);
     }
 
     // DELETE api/<TankMethodController>/5
-    [HttpDelete("{id}")]
+    [HttpDelete("delete-tankmethod/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _tankMethodService.DeleteTankMethodAsync(id);

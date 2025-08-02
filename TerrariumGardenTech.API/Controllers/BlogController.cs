@@ -26,61 +26,14 @@ public class BlogController : ControllerBase
     [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
-        var result = await _blogService.GetAll();
-        // Check if result or result.Data is null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-
-        // Ensure Data is a List<Terrarium> (or any IEnumerable<Category>)
-        var blogs = (result.Data as IEnumerable<Blog>)?.Select(b => new BlogResponse
-        {
-            BlogCategoryId = b.BlogCategoryId,
-            BlogId = b.BlogId,
-            UserId = b.UserId,
-            Title = b.Title,
-            Content = b.Content,
-            //bodyHTML = b.bodyHTML ?? string.Empty,
-            UrlImage = b.UrlImage ?? string.Empty, // Ensure UrlImage is not null
-            //CreatedAt = b.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-            //UpdatedAt = b.UpdatedAt ?? DateTime.MinValue, // Similar for UpdatedAt
-            Status = b.Status
-        }).ToList();
-        if (blogs == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", blogs);
+        return await _blogService.GetAll();
     }
 
     // GET api/<BlogController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
-        var result = await _blogService.GetById(id);
-
-        // Kiểm tra nếu result hoặc result.Data là null
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-
-        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Category, không phải IEnumerable)
-        if (result.Data is Blog blog)
-        {
-            // Ánh xạ dữ liệu từ Category sang CategoryRequest
-            var blogResponse = new BlogResponse
-            {
-                BlogId = blog.BlogId,
-                BlogCategoryId = blog.BlogCategoryId,
-                UserId = blog.UserId,
-                Title = blog.Title,
-                Content = blog.Content,
-                bodyHTML = blog.bodyHTML ?? string.Empty, // Ensure bodyHtml is not null
-                UrlImage = blog.UrlImage ?? string.Empty, // Ensure UrlImage is not null
-                //CreatedAt = blog.CreatedAt ?? DateTime.MinValue, // Use a default value if CreatedAt is null
-                //UpdatedAt = blog.UpdatedAt ?? DateTime.MinValue, // Similar for UpdatedAt
-                Status = blog.Status
-            };
-
-            // Trả về BusinessResult với dữ liệu đã ánh xạ
-            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", blogResponse);
-        }
-
-        // Trả về lỗi nếu không thể ánh xạ
-        return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+        return await _blogService.GetById(id);
     }
 
     // POST api/<BlogController>
@@ -91,7 +44,7 @@ public class BlogController : ControllerBase
     }
 
     // PUT api/<BlogController>/5
-    [HttpPut("update-blog-{id}")]
+    [HttpPut("update-blog/{id}")]
     public async Task<IBusinessResult> Put(int id, [FromForm] BlogUpdateRequest request)
     {
         request.BlogId = id;
@@ -99,7 +52,7 @@ public class BlogController : ControllerBase
     }
 
     // DELETE api/<BlogController>/5
-    [HttpDelete("delete-blog-{id}")]
+    [HttpDelete("delete-blog/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _blogService.DeleteById(id);
