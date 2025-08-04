@@ -32,6 +32,8 @@ public class UnitOfWork
     private UserRepository _userRepository;
     private VoucherRepository _voucherRepository;
     private FeedbackRepository _feedbackRepository;
+    private ChatRepository _chatRepository;
+    private ChatMessageRepository _chatMessageRepository;
     private FeedbackImageRepository _feedbackImageRepository;
 
 
@@ -157,6 +159,14 @@ public class UnitOfWork
         get { return _cartRepository ??= new CartRepository(_unitOfWorkContext); }
     }
 
+    public ChatRepository Chat
+    {
+        get { return _chatRepository ??= new ChatRepository(_unitOfWorkContext); }
+    }
+    public ChatMessageRepository ChatMessage
+    {
+        get { return _chatMessageRepository ??= new ChatMessageRepository(_unitOfWorkContext); }
+    }
     public CartItemRepository CartItem
     {
         get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
