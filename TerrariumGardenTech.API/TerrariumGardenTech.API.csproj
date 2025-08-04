@@ -24,4 +24,8 @@
       <ProjectReference Include="..\TerrariumGardenTech.Service\TerrariumGardenTech.Service.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\" />
+    </ItemGroup>
+
 </Project>

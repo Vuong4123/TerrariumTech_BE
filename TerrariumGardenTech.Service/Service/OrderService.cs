@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.RequestModel.Transports;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 using TerrariumGardenTech.Repositories;
@@ -82,10 +85,16 @@ public class OrderService : IOrderService
             _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId} để cập nhật", id);
             return false;
         }
+        OrderStatusEnum enumStatus;
+        if (Enum.TryParse<OrderStatusEnum>(status, true, out enumStatus))
+        {
+            _logger.LogWarning("Mã trạng thái đơn hàng với ID {OderId} không chính xác", id);
+            return false;
+        }    
 
         try
         {
-            order.Status = status.Trim();
+            order.Status = enumStatus;
             await _unitOfWork.OrderRepository.UpdateAsync(order); // Gọi từ UnitOfWork
             await _unitOfWork.SaveAsync(); // Lưu các thay đổi
             _logger.LogInformation("Cập nhật trạng thái đơn hàng {OrderId} thành {Status}", id, status);
@@ -163,6 +172,126 @@ public class OrderService : IOrderService
     }
 
 
+    public async Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId)
+    {
+        var order = await _unitOfWork.OrderRepository.DbSet().FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.UserId == currentUserId);
+        if (order == null)
+            return (false, "Không tìm thấy thông tin hóa đơn!");
+
+        if (order.Status != OrderStatusEnum.Completed)
+            return (false, "Đơn hàng này không cho phép hoàn tiền!");
+
+        if (string.IsNullOrEmpty(request.Reason))
+            return (false, "Lý do yêu cầu hoàn tiền không được để trống!");
+
+        var refundRequest = new OrderRequestRefund
+        {
+            OrderId = order.OrderId,
+            Reason = request.Reason,
+            Status = RequestRefundStatusEnum.Waiting,
+            RequestDate = DateTime.Today            
+        };
+        order.Status = OrderStatusEnum.RequestRefund;
+        await _unitOfWork.OrderRequestRefund.CreateAsync(refundRequest);
+        await _unitOfWork.SaveAsync();
+        return (true, "Yêu cầu hoàn tiền đã được gửi thành công!");
+    }
+
+    public async Task<(bool, string)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId)
+    {
+        var refund = await _unitOfWork.OrderRequestRefund.DbSet().Include(x => x.OrderId).FirstOrDefaultAsync(x => x.RequestRefundId == request.RefundId);
+        if (refund == null)
+            return (false, "Không tìm thấy yêu cầu hoàn tiền!");
+        if (refund.Order.UserId != currentUserId && request.Status != RequestRefundStatusEnum.Cancle)
+            return (false, "Bạn không có quyền thực hiện thao tác này!");
+
+        if (request.Status == RequestRefundStatusEnum.Waiting)
+            return (false, "Trạng thái cho đơn yêu cầu hoàn tiền không hợp lệ!");
+
+        if ((request.Status == RequestRefundStatusEnum.Cancle || request.Status == RequestRefundStatusEnum.Approved || request.Status == RequestRefundStatusEnum.Rejected) && refund.Status != RequestRefundStatusEnum.Waiting)
+            return (false, "Yêu cầu hoàn tiền này không thể hủy!");
+
+        if (request.Status == RequestRefundStatusEnum.Rejected && string.IsNullOrEmpty(request.Reason))
+            return (false, "Lý do từ chối yêu cầu hoàn tiền không được để trống!");
+        if (request.Status == RequestRefundStatusEnum.Approved && (!request.RefundAmount.HasValue && request.RefundAmount < 0))
+            return (false, "Số tiền hoàn lại hoặc số điểm hoàn lại phải lớn hơn 0!");
+
+        var order = await _unitOfWork.OrderRepository.FindOneAsync(x => x.OrderId == refund.OrderId);
+        if (order == null)
+            return (false, "Không tìm thấy đơn hàng cần hoàn tiền!");
+        OrderTransport? transport = null;
+        if (request.Status == RequestRefundStatusEnum.Approved && request.CreateTransport)
+        {
+            if (!request.EstimateCompletedDate.HasValue)
+                return (false, "Vui lòng chọn ngày dự kiến sẽ lấy hàng hoàn tiền!");
+
+            var users = await _unitOfWork.User.DbSet().AsNoTracking()
+                .Where(x => x.UserId == request.UserId || x.UserId == currentUserId)
+                .Select(x => new { x.UserId, x.Username }).ToArrayAsync();
+            var assignUser = users.FirstOrDefault(x => x.UserId == request.UserId);
+            var currentUser = users.FirstOrDefault(x => x.UserId == currentUserId);
+            if ((request.UserId.HasValue && assignUser == null) || currentUser == null)
+                return (false, "Thông tin người sẽ đến nhận hàng không hợp lệ!");
+
+            transport = new OrderTransport
+            {
+                OrderId = refund.OrderId,
+                Status = TransportStatusEnum.InCustomer,
+                EstimateCompletedDate = request.EstimateCompletedDate.Value,
+                Note = request.Note,
+                IsRefund = true,
+                UserId = assignUser?.UserId,
+                CreatedDate = DateTime.Now,
+                CreatedBy = currentUser.Username
+            };
+        }
+        using (var trans = await _unitOfWork.OrderRequestRefund.BeginTransactionAsync())
+        {
+            refund.Status = request.Status;
+            refund.ReasonModified = request.Reason;
+            refund.UserModified = currentUserId;
+            refund.LastModifiedDate = DateTime.Now;
+            refund.IsPoint = request.IsPoint;
+            if (refund.Status == RequestRefundStatusEnum.Approved)
+            {
+                order.Status = OrderStatusEnum.Refuning;
+                refund.RefundAmount = request.RefundAmount;
+                // Tích điểm của khách hàng ở đây
+            }
+            else
+            {
+                order.Status = OrderStatusEnum.Completed;
+            }
+            var isRollback = false;
+            try
+            {
+                if (transport != null)
+                {
+                    await _unitOfWork.Transport.CreateAsync(transport);
+                    await _unitOfWork.SaveAsync();
+                    refund.TransportId = transport.TransportId;
+                }
+                await _unitOfWork.OrderRequestRefund.UpdateAsync(refund);
+                await _unitOfWork.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                isRollback = true;
+                return (false, "Cập nhật yêu cầu hoàn tiền thất bại: " + ex.Message);
+            }
+            finally
+            {
+                if (isRollback)
+                    await trans.RollbackAsync();
+                else
+                    await trans.CommitAsync();
+            }
+        }    
+        return (true, "Cập nhật yêu cầu hoàn tiền thành công!");
+    }
+
+
+
     #region Helpers
 
     private static void ValidateCreateRequest(OrderCreateRequest r)
@@ -201,9 +330,7 @@ public class OrderService : IOrderService
             TotalAmount = r.TotalAmount,
             Deposit = r.Deposit,
             OrderDate = DateTime.UtcNow,
-            Status = "Pending",
-            PaymentStatus = "Unpaid",
-            ShippingStatus = "Unprocessed",
+            Status = OrderStatusEnum.Pending,
             OrderItems = r.Items.Select(i => new OrderItem
             {
                 AccessoryId = i.AccessoryId,
@@ -224,9 +351,7 @@ public class OrderService : IOrderService
             TotalAmount = o.TotalAmount,
             Deposit = o.Deposit,
             OrderDate = o.OrderDate,
-            Status = o.Status,
-            PaymentStatus = o.PaymentStatus,
-            ShippingStatus = o.ShippingStatus,
+            Status = o.Status.ToString(),
             OrderItems = o.OrderItems.Select(i => new OrderItemSummaryResponse
             {
                 OrderItemId = i.OrderItemId,
@@ -238,6 +363,5 @@ public class OrderService : IOrderService
             }).ToList()
         };
     }
-
     #endregion
 }

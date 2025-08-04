@@ -5,6 +5,7 @@ using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -14,11 +15,13 @@ public class OrderController : ControllerBase
 {
     private readonly IAuthorizationService _auth;
     private readonly IOrderService _svc;
+    private readonly ITransportService _transportService;
 
-    public OrderController(IOrderService svc, IAuthorizationService auth)
+    public OrderController(IOrderService svc, IAuthorizationService auth, ITransportService transportService)
     {
         _svc = svc ?? throw new ArgumentNullException(nameof(svc));
         _auth = auth ?? throw new ArgumentNullException(nameof(auth));
+        _transportService = transportService;
     }
 
     /// <summary>
@@ -173,5 +176,37 @@ public class OrderController : ControllerBase
         {
             return StatusCode(500, new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Lấy danh sách đơn vận chuyển của đơn hàng theo ID đơn hàng
+    /// </summary>
+    [HttpGet("{id:int}/Transport")]
+    public async Task<IActionResult> GetTransportByOrderId(int id)
+    {
+        var transports = await _transportService.GetByOrderId(id);
+        return Ok(transports);
+    }
+
+    [HttpPost("{id:int}/Refund")]    
+    public async Task<IActionResult> RequestRefund(int id, [FromBody] CreateRefundRequest request)
+    {
+        request.OrderId = id;
+        var currentUserId = User.GetUserId();
+        var (success, message) = await _svc.RequestRefundAsync(request, currentUserId);
+        if (success)
+            return Ok(new { message });
+        return BadRequest(new { message });
+    }
+
+    [HttpPut("Refund/{id}")]
+    public async Task<IActionResult> UpdateRefundRequest(int id, [FromBody] UpdateRefundRequest request)
+    {
+        request.RefundId = id;
+        var currentUserId = User.GetUserId();
+        var (success, message) = await _svc.UpdateRequestRefundAsync(request, currentUserId);
+        if (success)
+            return Ok(new { message });
+        return BadRequest(new { message });
     }
 }

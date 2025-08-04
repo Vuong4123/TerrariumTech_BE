@@ -1,4 +1,5 @@
 ﻿using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.RequestModel.Transports;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Service.Base;
 
@@ -12,4 +13,7 @@ public interface IOrderService
     Task<bool> UpdateStatusAsync(int id, string status);
     Task<bool> DeleteAsync(int id);
     Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod);
+
+    Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId);
+    Task<(bool, string)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId);
 }

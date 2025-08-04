@@ -2,6 +2,8 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.Enums;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -19,13 +21,13 @@ public partial class Order
 
     public DateTime? OrderDate { get; set; }
 
-    public string Status { get; set; }
+    public OrderStatusEnum Status { get; set; }
 
     public string PaymentStatus { get; set; }
     
     public string TransactionId { get; set; }
 
-    public string ShippingStatus { get; set; }
+    //public string ShippingStatus { get; set; }
     //// Thêm thuộc tính PaymentMethod để lưu phương thức thanh toán
     //public string PaymentMethod { get; set; }
 
@@ -38,4 +40,7 @@ public partial class Order
     public virtual User User { get; set; }
 
     public virtual Voucher Voucher { get; set; }
+
+    public virtual ICollection<OrderTransport> Transports { get; set; } = new List<OrderTransport>();
+    public virtual ICollection<OrderRequestRefund> Refunds { get; set; } = new List<OrderRequestRefund>();
 }
