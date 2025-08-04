@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Common.ResponseModel.Order;
@@ -458,7 +459,7 @@ public class CartService : ICartService
         {
             UserId = userId,
             OrderDate = DateTime.UtcNow,
-            Status = OrderStatus.Pending,
+            Status = OrderStatusEnum.Pending,
             PaymentStatus = "Unpaid",
             ShippingStatus = "Unprocessed",
             OrderItems = new List<OrderItemResponse>(),
@@ -469,9 +470,7 @@ public class CartService : ICartService
             UserId = userId,
             TotalAmount = totalCartPrice, // Sẽ tính lại sau
             OrderDate = DateTime.UtcNow,
-            Status = OrderStatus.Pending,
-            PaymentStatus = "Unpaid",
-            ShippingStatus = "Unprocessed",
+            Status = OrderStatusEnum.Pending,
             OrderItems = new List<OrderItem>(),
         };
 

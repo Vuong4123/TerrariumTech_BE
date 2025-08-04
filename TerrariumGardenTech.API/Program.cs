@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TerrariumGardenTech.API.Authorization;
 using TerrariumGardenTech.API.Middlewares;
 using TerrariumGardenTech.Common;
@@ -90,6 +91,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<IBlogCategoryService, BlogCategoryService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ITransportService, TransportService>();
 //membership
 builder.Services.AddScoped<IMembershipPackageService, MembershipPackageService>();
 builder.Services.AddScoped<IMembershipService, MembershipService>();
@@ -236,7 +238,11 @@ builder.Services.AddAuthentication(options =>
     });
 
 // Đăng ký Controller
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 //.AddJsonOptions(options =>
 //{
 //    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;

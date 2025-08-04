@@ -37,7 +37,7 @@ public class GenericRepository<T> where T : class
         return _context.Set<T>().ToList();
     }
 
-    public IQueryable<T> GetAllV2()
+    public DbSet<T> DbSet()
     {
         return _context.Set<T>();
     }
