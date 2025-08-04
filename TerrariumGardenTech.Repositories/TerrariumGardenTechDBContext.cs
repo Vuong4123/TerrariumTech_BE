@@ -6,7 +6,9 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using TerrariumGardenTech.Common.Entity;
+
 using TerrariumGardenTech.Common.Enums;
+
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace TerrariumGardenTech.Repositories.Entity;
@@ -100,6 +102,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public DbSet<TransportLog> TransportLogs { get; set; }
     public DbSet<OrderTransport> OrderTransports { get; set; }
     public DbSet<OrderRequestRefund> OrderRequestRefunds { get; set; }
+    public virtual DbSet<Chat> Chats { get; set; }
+    public virtual DbSet<ChatMessage> ChatMessages { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
@@ -312,6 +316,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
         {
             entity.HasKey(e => e.LayoutId).HasName("PK__AISugges__023A37EFFA219D01");
 
+
             entity.ToTable("AISuggestLayout");
 
             entity.Property(e => e.LayoutId).HasColumnName("layoutId");
@@ -320,6 +325,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasColumnName("createdAt");
             entity.Property(e => e.LayoutData).HasColumnName("layoutData");
             entity.Property(e => e.UserId).HasColumnName("userId");
+
 
             entity.HasOne(d => d.User).WithMany(p => p.AisuggestLayouts)
                 .HasForeignKey(d => d.UserId)
@@ -516,14 +522,19 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
             entity.ToTable("Order");
 
-            entity.Property(e => e.OrderId).HasColumnName("orderId");
+
+            entity.Property(e => e.OrderId)
+              .HasColumnName("orderId");
+
             entity.Property(e => e.Deposit)
-                .HasDefaultValue(0.00m)
-                .HasColumnType("decimal(12, 2)")
-                .HasColumnName("deposit");
+                  .HasDefaultValue(0.00m)
+                  .HasColumnType("decimal(12, 2)")
+                  .HasColumnName("deposit");
+
             entity.Property(e => e.OrderDate)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("orderDate");
+                  .HasDefaultValueSql("(sysutcdatetime())")
+                  .HasColumnName("orderDate");
+
             entity.Property(e => e.PaymentStatus)
                 .HasMaxLength(20)
                 .HasDefaultValue("pending")
@@ -535,19 +546,25 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 )).HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.TotalAmount)
-                .HasColumnType("decimal(12, 2)")
-                .HasColumnName("totalAmount");
-            entity.Property(e => e.UserId).HasColumnName("userId");
-            entity.Property(e => e.VoucherId).HasColumnName("voucherId");
+                  .HasColumnType("decimal(12, 2)")
+                  .HasColumnName("totalAmount");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Order_User");
+            entity.Property(e => e.UserId)
+                  .HasColumnName("userId");
 
-            entity.HasOne(d => d.Voucher).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.VoucherId)
-                .HasConstraintName("FK_Order_Voucher");
+            entity.Property(e => e.VoucherId)
+                  .HasColumnName("voucherId");
+
+            entity.HasOne(d => d.User)
+                  .WithMany(p => p.Orders)
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_Order_User");
+
+            entity.HasOne(d => d.Voucher)
+                  .WithMany(p => p.Orders)
+                  .HasForeignKey(d => d.VoucherId)
+                  .HasConstraintName("FK_Order_Voucher");
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
@@ -619,9 +636,12 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("paymentMethod");
             entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("pending")
-                .HasColumnName("status");
+
+        .HasConversion<string>()               // lưu enum dưới dạng chuỗi
+        .HasMaxLength(20)
+        .HasDefaultValue(OrderStatus.Pending) // default là enum, EF sẽ convert thành "Pending"
+        .HasColumnName("status");
+
 
             entity.HasOne(d => d.Order).WithMany(p => p.Payment)
                 .HasForeignKey(d => d.OrderId)
@@ -1034,6 +1054,59 @@ public partial class TerrariumGardenTechDBContext : DbContext
                    v => (RequestRefundStatusEnum)Enum.Parse(typeof(RequestRefundStatusEnum), v)
                )).HasMaxLength(50);
         });
+        // Chat entity configuration
+        modelBuilder.Entity<Chat>(entity =>
+        {
+            entity.HasKey(e => e.ChatId);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+
+            // Configure relationships
+            entity.HasOne(d => d.User1)
+                .WithMany(p => p.ChatsAsUser1)
+                .HasForeignKey(d => d.User1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.User2)
+                .WithMany(p => p.ChatsAsUser2)
+                .HasForeignKey(d => d.User2Id)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ChatMessage entity configuration
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.MessageId);
+
+            entity.Property(e => e.Content)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.SentAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false);
+
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
+
+            // Configure relationships
+            entity.HasOne(d => d.Chat)
+                .WithMany(p => p.ChatMessages)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Sender)
+                .WithMany(p => p.SentMessages)
+                .HasForeignKey(d => d.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

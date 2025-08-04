@@ -38,16 +38,28 @@ public class PayOsService : IPayOsService
 
     public async Task<IBusinessResult> CreatePaymentLink(int orderId, string description)
     {
-        var order = await _unitOfWork.OrderRepository.GetByIdWithOrderItemsAsync(orderId);
+        var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(orderId);
         if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
         var itemDatas = new List<ItemData>();
         var amount = 0;
         foreach (var orderItem in order.OrderItems)
         {
-            itemDatas.Add(new ItemData(orderItem.TerrariumVariant.VariantName, orderItem.Quantity ?? 0,
-                (int)(orderItem.UnitPrice ?? 0)));
-            amount += (int)(orderItem.TotalPrice ?? 0);
+            // Kiểm tra và xử lý Accessory
+            if (orderItem.AccessoryId.HasValue)
+            {
+                itemDatas.Add(new ItemData(orderItem.Accessory.Name, orderItem.Quantity ?? 0,
+                    (int)(orderItem.UnitPrice ?? 0)));
+                amount += (int)(orderItem.TotalPrice ?? 0);
+            }
+
+            // Kiểm tra và xử lý TerrariumVariant
+            if (orderItem.TerrariumVariantId.HasValue)
+            {
+                itemDatas.Add(new ItemData(orderItem.TerrariumVariant.VariantName, orderItem.Quantity ?? 0,
+                    (int)(orderItem.UnitPrice ?? 0)));
+                amount += (int)(orderItem.TotalPrice ?? 0);
+            }
         }
 
         var domain =
@@ -78,18 +90,18 @@ public class PayOsService : IPayOsService
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", response.checkoutUrl);
         }
         
-        return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Success", response.checkoutUrl);
+        return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Paid", response.checkoutUrl);
     }
 
     public async Task<IBusinessResult> ProcessPaymentCallback(PaymentReturnModel returnModel)
     {
         try
         {
-            var order = await _unitOfWork.OrderRepository.GetByIdAsync(returnModel.OrderId);
+            var order = await _unitOfWork.Order.GetByIdAsync(returnModel.OrderId);
             if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
             order.PaymentStatus = returnModel.Status;
-            await _unitOfWork.OrderRepository.UpdateAsync(order);
+            await _unitOfWork.Order.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
             var orderResponse = _mapper.Map<OrderResponse>(order);
             return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, orderResponse);

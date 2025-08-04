@@ -28,7 +28,7 @@ namespace TerrariumGardenTech.Service.Service
             if ((request.UserId.HasValue && assignUser == null) || currentUser == null)
                 return (false, "Thông tin người dùng không hợp lệ!");
 
-            var order = await _unitOfWork.OrderRepository.DbSet().Include(x => x.Transports).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
+            var order = await _unitOfWork.Order.DbSet().Include(x => x.Transports).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
             if (order == null)
                 return (false, "Không tìm thấy thông tin đơn hàng!");
             if (order.Transports != null && (
@@ -149,7 +149,7 @@ namespace TerrariumGardenTech.Service.Service
             var transport = await _unitOfWork.Transport.DbSet().FirstOrDefaultAsync(x => x.TransportId == request.TransportId);
             if (transport == null)
                 return (false, "Không tìm thấy thông tin đơn vận chuyển!");
-            var order = await _unitOfWork.OrderRepository.DbSet().FirstOrDefaultAsync(x => x.OrderId == transport.OrderId);
+            var order = await _unitOfWork.Order.DbSet().FirstOrDefaultAsync(x => x.OrderId == transport.OrderId);
             if (order == null)
                 return (false, "Không tìm thấy thông tin đơn hàng!");
             if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping || transport.Status == TransportStatusEnum.LostInWarehouse || transport.Status == TransportStatusEnum.CompletedToWareHouse || transport.Status == TransportStatusEnum.FailedToWareHouse || request.Status == TransportStatusEnum.GetFromCustomerFail)
@@ -216,7 +216,7 @@ namespace TerrariumGardenTech.Service.Service
                 order.Status = OrderStatusEnum.Refunded;
             await _unitOfWork.TransportLog.CreateAsync(log);
             await _unitOfWork.Transport.UpdateAsync(transport);
-            await _unitOfWork.OrderRepository.UpdateAsync(order);
+            await _unitOfWork.Order.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
             return (true, "Cập nhật thông tin đơn vận chuyển thành công!");
         }

@@ -1,14 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Cart;
-using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Common.ResponseModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+
+using TerrariumGardenTech.Common.Enums;
+
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -25,7 +28,7 @@ public class CartService : ICartService
     {
         Console.WriteLine($"Attempting to fetch cart for user with ID {userId}");
 
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
 
         // Kiểm tra nếu giỏ hàng không tồn tại
         if (cart == null)
@@ -41,7 +44,7 @@ public class CartService : ICartService
             };
 
             // Lưu giỏ hàng mới vào cơ sở dữ liệu
-            await _unitOfWork.CartRepository.CreateAsync(cart);
+            await _unitOfWork.Cart.CreateAsync(cart);
             Console.WriteLine($"Created new cart with ID {cart.CartId} for user with ID {userId}.");
         }
         else
@@ -54,15 +57,15 @@ public class CartService : ICartService
     }
 
 
-    public async Task<CartResponse> GetCartAsync(int userId)
+    public async Task<IBusinessResult> GetCartAsync(int userId)
     {
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
         if (cart == null)
-            return null;
+            return new BusinessResult (Const.FAIL_READ_CODE,"không có giỏ hàng");
         // Lấy thông tin người dùng từ bảng User (giả sử bạn có repository User)
         var user = await _unitOfWork.User.GetByIdAsync(userId);
         if (user == null)
-            throw new InvalidOperationException($"User with ID {userId} not found.");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"User with ID {userId} not found.");
         var cartResponse = new CartResponse
         {
             CartId = cart.CartId,
@@ -149,13 +152,13 @@ public class CartService : ICartService
         cartResponse.TotalCartPrice = totalCartPrice;
         cartResponse.TotalCartQuantity = totalCartQuantity;
 
-        return cartResponse;
+        return new BusinessResult(Const.SUCCESS_READ_CODE,Const.SUCCESS_READ_MSG, cartResponse);
     }
 
 
     public async Task<Cart> GetCartByUserAsync(int userId)
     {
-        return await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        return await _unitOfWork.Cart.GetByUserIdAsync(userId);
     }
 
     public async Task<CartItemResponse> AddItemAsync(int userId, AddCartItemRequest request)
@@ -163,7 +166,7 @@ public class CartService : ICartService
         // Lấy giỏ hàng của người dùng, nếu không có thì tạo mới
         var cart = await GetOrCreateCartAsync(userId);
         // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng thông qua repository
-        var existingItem = await _unitOfWork.CartItemRepository.GetExistingItemAsync(
+        var existingItem = await _unitOfWork.CartItem.GetExistingItemAsync(
             cart.CartId,
             request.AccessoryId,
             request.TerrariumVariantId
@@ -211,7 +214,7 @@ public class CartService : ICartService
             existingItem.UnitPrice = existingItem.Quantity > 0 ? totalPrice / existingItem.Quantity : 0;
             existingItem.UpdatedAt = now;
 
-            await _unitOfWork.CartItemRepository.UpdateAsync(existingItem);
+            await _unitOfWork.CartItem.UpdateAsync(existingItem);
             cartItem = existingItem;
         }
         else
@@ -248,7 +251,7 @@ public class CartService : ICartService
                 UpdatedAt = now
             };
 
-            await _unitOfWork.CartItemRepository.CreateAsync(cartItem);
+            await _unitOfWork.CartItem.CreateAsync(cartItem);
         }
 
         // Tạo response để trả về cho client
@@ -317,20 +320,21 @@ public class CartService : ICartService
 
 
 
-    public async Task<CartItemResponse> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request)
+    public async Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request)
     {
-        var cartItem = await _unitOfWork.CartItemRepository
+        var cartItem = await _unitOfWork.CartItem
         .Include(ci => ci.Cart)
         .FirstOrDefaultAsync(ci => ci.CartItemId == cartItemId);
 
         if (cartItem == null)
-            throw new InvalidOperationException($"CartItem with ID {cartItemId} not found.");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"Cart for CartItem with ID {cartItemId} not found.");
 
         if (cartItem.Cart == null)
-            throw new InvalidOperationException($"Cart for CartItem with ID {cartItemId} not found.");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"Cart for CartItem with ID {cartItemId} not found."); 
+             
 
         if (cartItem.Cart.UserId != userId)
-            throw new UnauthorizedAccessException("You do not have permission to update this cart item.");
+            return new BusinessResult(Const.FAIL_READ_CODE, "You do not have permission to update this cart item.");
 
         var cartItemResponse = new CartItemResponse
         {
@@ -407,9 +411,9 @@ public class CartService : ICartService
         cartItemResponse.TotalCartPrice = totalCartPrice;
         cartItemResponse.TotalCartQuantity = totalCartQuantity;
 
-        await _unitOfWork.CartItemRepository.UpdateAsync(cartItem);
+        await _unitOfWork.CartItem.UpdateAsync(cartItem);
 
-        return cartItemResponse;
+        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, cartItemResponse);
     }
 
 
@@ -419,44 +423,46 @@ public class CartService : ICartService
 
     public async Task<bool> RemoveItemAsync(int userId, int itemId)
     {
-        var cartItem = await _unitOfWork.CartItemRepository.GetByIdWithCartAsync(itemId);
+        var cartItem = await _unitOfWork.CartItem.GetByIdWithCartAsync(itemId);
         if (cartItem == null || cartItem.Cart.UserId != userId)
             return false;
 
-        await _unitOfWork.CartItemRepository.RemoveAsync(cartItem);
+        await _unitOfWork.CartItem.RemoveAsync(cartItem);
         return true;
     }
 
     public async Task<bool> ClearCartAsync(int userId)
     {
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
+        var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
         if (cart == null)
             return false;
 
-        await _unitOfWork.CartRepository.ClearAsync(userId);
+        await _unitOfWork.Cart.ClearAsync(userId);
         return true;
     }
 
-    public async Task<OrderResponse> CheckoutAsync(int userId)
+    public async Task<IBusinessResult> CheckoutAsync(int userId)
     {
-        // Lấy giỏ hàng của người dùng
-        var cart = await _unitOfWork.CartRepository.GetByUserIdAsync(userId);
-        if (cart == null || !cart.CartItems.Any())
-            throw new InvalidOperationException("Giỏ hàng trống hoặc không tồn tại.");
+        try
+        {
+            // Lấy giỏ hàng của người dùng
+            var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
+            if (cart == null || !cart.CartItems.Any())
+                return new BusinessResult(Const.FAIL_READ_CODE, "Giỏ hàng trống hoặc không tồn tại.");
 
-        decimal totalCartPrice = 0;
-        int totalCartQuantity = 0;
+            decimal totalCartPrice = 0;
+            int totalCartQuantity = 0;
+
 
         // Tạo đối tượng phản hồi cho đơn hàng
         var orderResponse = new OrderResponse
         {
             UserId = userId,
             OrderDate = DateTime.UtcNow,
-            Status = OrderStatusEnum.Pending.ToString(),
+            Status = OrderStatusEnum.Pending,
             PaymentStatus = "Unpaid",
             ShippingStatus = "Unprocessed",
-            PaymentMethod = "PayOs",
-            OrderItems = new List<OrderItemSummaryResponse>(),
+            OrderItems = new List<OrderItemResponse>(),
         };
 
         var order = new Order
@@ -468,80 +474,88 @@ public class CartService : ICartService
             OrderItems = new List<OrderItem>(),
         };
 
-        // Xử lý từng mục trong giỏ hàng để chuyển thành đơn hàng
-        foreach (var cartItem in cart.CartItems)
-        {
-            decimal itemTotalPrice = 0;
-            int itemQuantity = 0;
 
-            // Xử lý Accessory nếu có
-            if (cartItem.AccessoryId.HasValue && cartItem.AccessoryQuantity.HasValue)
+            // Xử lý từng mục trong giỏ hàng để chuyển thành đơn hàng
+            foreach (var cartItem in cart.CartItems)
             {
-                var accessory = await _unitOfWork.Accessory.GetByIdAsync(cartItem.AccessoryId.Value);
-                if (accessory != null)
-                {
-                    decimal unitPrice = accessory.Price;
-                    int quantity = cartItem.AccessoryQuantity.Value;
-                    itemTotalPrice = unitPrice * quantity;
-                    itemQuantity = quantity;
+                decimal itemTotalPrice = 0;
+                int itemQuantity = 0;
 
-                    // Thêm vào danh sách OrderItem
-                    order.OrderItems.Add(new OrderItem
+                // Xử lý Accessory nếu có
+                if (cartItem.AccessoryId.HasValue && cartItem.AccessoryQuantity.HasValue)
+                {
+                    var accessory = await _unitOfWork.Accessory.GetByIdAsync(cartItem.AccessoryId.Value);
+                    if (accessory != null)
                     {
-                        AccessoryId = cartItem.AccessoryId,
-                        AccessoryQuantity = cartItem.AccessoryQuantity,
-                        Quantity = quantity,
-                        UnitPrice = unitPrice,
-                        TotalPrice = itemTotalPrice
-                    });
+                        decimal unitPrice = accessory.Price;
+                        int quantity = cartItem.AccessoryQuantity.Value;
+                        itemTotalPrice = unitPrice * quantity;
+                        itemQuantity = quantity;
+
+                        // Thêm vào danh sách OrderItem
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            AccessoryId = cartItem.AccessoryId,
+                            AccessoryQuantity = cartItem.AccessoryQuantity,
+                            Quantity = quantity,
+                            UnitPrice = unitPrice,
+                            TotalPrice = itemTotalPrice
+                        });
+                    }
                 }
+
+                // Xử lý Terrarium nếu có
+                if (cartItem.TerrariumVariantId.HasValue && cartItem.TerrariumVariantQuantity.HasValue)
+                {
+                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(cartItem.TerrariumVariantId.Value);
+                    if (variant != null)
+                    {
+                        decimal unitPrice = variant.Price;
+                        int quantity = cartItem.TerrariumVariantQuantity.Value;
+                        itemTotalPrice = unitPrice * quantity;
+                        itemQuantity = quantity;
+
+                        // Thêm vào danh sách OrderItem
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            TerrariumVariantId = cartItem.TerrariumVariantId,
+                            TerrariumVariantQuantity = cartItem.TerrariumVariantQuantity,
+                            Quantity = quantity,
+                            UnitPrice = unitPrice,
+                            TotalPrice = itemTotalPrice
+                        });
+                    }
+                }
+
+                totalCartPrice += itemTotalPrice; // Cộng vào tổng giá trị của đơn hàng
+                totalCartQuantity += itemQuantity; // Cộng vào tổng số lượng
             }
 
-            // Xử lý Terrarium nếu có
-            if (cartItem.TerrariumVariantId.HasValue && cartItem.TerrariumVariantQuantity.HasValue)
+            order.TotalAmount = totalCartPrice; // Cập nhật tổng giá trị đơn hàng
+
+            // Lưu đơn hàng vào cơ sở dữ liệu
+            await _unitOfWork.Order.CreateAsync(order);
+
+            // Lưu các mục cần xóa vào danh sách tạm
+            var cartItemsToRemove = cart.CartItems.ToList(); // ToList() để tạo một bản sao tách biệt của CartItems
+                                                             // Xóa các mục đã thanh toán từ giỏ hàng
+            foreach (var cartItem in cartItemsToRemove)
             {
-                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(cartItem.TerrariumVariantId.Value);
-                if (variant != null)
-                {
-                    decimal unitPrice = variant.Price;
-                    int quantity = cartItem.TerrariumVariantQuantity.Value;
-                    itemTotalPrice = unitPrice * quantity;
-                    itemQuantity = quantity;
-
-                    // Thêm vào danh sách OrderItem
-                    order.OrderItems.Add(new OrderItem
-                    {
-                        TerrariumVariantId = cartItem.TerrariumVariantId,
-                        TerrariumVariantQuantity = cartItem.TerrariumVariantQuantity,
-                        Quantity = quantity,
-                        UnitPrice = unitPrice,
-                        TotalPrice = itemTotalPrice
-                    });
-                }
+                await _unitOfWork.CartItem.RemoveAsync(cartItem);
             }
+            await _unitOfWork.SaveAsync();
 
-            totalCartPrice += itemTotalPrice; // Cộng vào tổng giá trị của đơn hàng
-            totalCartQuantity += itemQuantity; // Cộng vào tổng số lượng
+            // Cập nhật lại thông tin phản hồi đơn hàng
+            orderResponse.OrderId = order.OrderId;
+            orderResponse.TotalAmount = totalCartPrice;
+
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Checkout thành công", orderResponse);
         }
-
-        order.TotalAmount = totalCartPrice; // Cập nhật tổng giá trị đơn hàng
-
-        // Lưu đơn hàng vào cơ sở dữ liệu
-        await _unitOfWork.OrderRepository.CreateAsync(order);
-
-        // Lưu các mục cần xóa vào danh sách tạm
-        var cartItemsToRemove = cart.CartItems.ToList(); // ToList() để tạo một bản sao tách biệt của CartItems
-        // Xóa các mục đã thanh toán từ giỏ hàng
-        foreach (var cartItem in cartItemsToRemove)
+        catch (Exception ex)
         {
-            await _unitOfWork.CartItemRepository.RemoveAsync(cartItem);
+            // Log lỗi và throw lại exception để có thể xử lý ở ngoài
+            // Ghi log chi tiết tại đây
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
-        await _unitOfWork.SaveAsync();
-
-        // Cập nhật lại thông tin phản hồi đơn hàng
-        orderResponse.OrderId = order.OrderId;
-        orderResponse.TotalAmount = totalCartPrice;
-
-        return orderResponse;
     }
 }

@@ -25,69 +25,35 @@ public class RoleController : ControllerBase
     [HttpGet("get-all")]
     public async Task<IBusinessResult> Get()
     {
-        var result = await _roleService.GetAll();
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        var role = (result.Data as IEnumerable<Role>)?.Select(r => new RoleResponse
-        {
-            RoleId = r.RoleId,
-            RoleName = r.RoleName,
-            Description = r.Description
-        }).ToList();
-        if (role == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", role);
+        return await _roleService.GetAll();
     }
 
     // GET api/<RoleController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
-        var result = await _roleService.GetById(id);
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        // Kiểm tra kiểu dữ liệu của result.Data (đảm bảo nó là Category, không phải IEnumerable)
-        if (result.Data is Role role)
-        {
-            // Ánh xạ dữ liệu từ Category sang CategoryRequest
-            var roleResponse = new RoleResponse
-            {
-                RoleId = role.RoleId,
-                RoleName = role.RoleName,
-                Description = role.Description
-            };
-
-            // Trả về BusinessResult với dữ liệu đã ánh xạ
-            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", role);
-        }
-
-        // Trả về lỗi nếu không thể ánh xạ
-        return new BusinessResult(Const.ERROR_EXCEPTION, "Data could not be mapped.");
+        return await _roleService.GetById(id);
     }
 
 
     // POST api/<RoleController>
-    [HttpPost]
+    [HttpPost("add-blog")]
     public async Task<IBusinessResult> Post([FromBody] RoleCreateRequest roleCreateRequest)
     {
-        if (roleCreateRequest == null) return new BusinessResult(Const.ERROR_EXCEPTION, "Invalid request data.");
         return await _roleService.CreateRole(roleCreateRequest);
     }
 
     // PUT api/<RoleController>/5
-    [HttpPut("{id}")]
+    [HttpPut("update-blog/{id}")]
     public async Task<IBusinessResult> Put([FromBody] RoleUpdateRequest roleUpdateRequest)
     {
-        if (roleUpdateRequest == null || !ModelState.IsValid)
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Invalid request data.");
         return await _roleService.UpdateRole(roleUpdateRequest);
     }
 
     // DELETE api/<RoleController>/5
-    [HttpDelete("{id}")]
+    [HttpDelete("dalete-blog/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
-        var result = await _roleService.DeleteById(id);
-        if (result == null || result.Data == null) return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
-        if (result.Data is bool isDeleted)
-            return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Role deleted successfully.");
-        return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete role.");
+        return await _roleService.DeleteById(id);
     }
 }

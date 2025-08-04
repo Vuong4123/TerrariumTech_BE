@@ -1,4 +1,6 @@
-﻿using TerrariumGardenTech.Common;
+﻿using Newtonsoft.Json;
+using System.Text;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Common.ResponseModel.Accessory;
@@ -12,6 +14,22 @@ using TerrariumGardenTech.Service.Mappers;
 
 namespace TerrariumGardenTech.Service.Service;
 
+public class AITerrariumRequest
+{
+    public int EnvironmentId { get; set; }
+    public int ShapeId { get; set; }
+    public int TankMethodId { get; set; }
+}
+
+public class AITerrariumResponse
+{
+    public string TerrariumName { get; set; }
+    public string Description { get; set; }
+    public decimal MinPrice { get; set; }
+    public decimal MaxPrice { get; set; }
+    public int Stock { get; set; }
+}
+
 public class TerrariumService : ITerrariumService
 {
     private readonly UnitOfWork _unitOfWork;
@@ -19,6 +37,19 @@ public class TerrariumService : ITerrariumService
     public TerrariumService(UnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+    }
+    public async Task<AITerrariumResponse> PredictTerrariumAsync(AITerrariumRequest request)
+    {
+        var httpClient = new HttpClient();
+        var json = JsonConvert.SerializeObject(request);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await httpClient.PostAsync("http://127.0.0.1:8000/predict", content);
+        if (!response.IsSuccessStatusCode)
+            throw new Exception("Lỗi khi tự sinh ra terrarium");
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<AITerrariumResponse>(responseContent);
     }
 
     public async Task<IBusinessResult> GetAll(TerrariumGetAllRequest request)

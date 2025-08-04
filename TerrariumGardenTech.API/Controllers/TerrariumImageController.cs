@@ -26,14 +26,14 @@ public class TerrariumImageController : ControllerBase
     }
 
     // GET api/<TerrariumImageController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult?> Get(int id)
     {
         return await _terrariumImageService.GetTerrariumImageByIdAsync(id);
     }
 
     // GET api/<TerrariumImageController>/TerrariumId/5
-    [HttpGet("terrariumId/{terrariumId}")]
+    [HttpGet("get-by-terrariumId/{terrariumId}")]
     public async Task<IBusinessResult> GetByAccessoryId(int terrariumId)
     {
         return await _terrariumImageService.GetByTerrariumId(terrariumId);
@@ -47,7 +47,7 @@ public class TerrariumImageController : ControllerBase
     }
 
     // PUT api/<TerrariumImageController>/5
-    [HttpPut("update-terrariumImage-{id}")]
+    [HttpPut("update-terrariumImage/{id}")]
     public async Task<IBusinessResult> Put(int id, [FromForm] TerrariumImageUploadUpdateRequest request)
     {
         request.TerrariumImageId = id; // Set the ID for the update request
@@ -55,7 +55,7 @@ public class TerrariumImageController : ControllerBase
     }
 
     // DELETE api/<TerrariumImageController>/5
-    [HttpDelete("delete-terrariumImage-{id}")]
+    [HttpDelete("delete-terrariumImage/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _terrariumImageService.DeleteTerrariumImageAsync(id);

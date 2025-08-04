@@ -634,6 +634,85 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("Category", (string)null);
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Chat", b =>
+                {
+                    b.Property<int>("ChatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChatId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("User1Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("User2Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("ChatId");
+
+                    b.HasIndex("User1Id");
+
+                    b.HasIndex("User2Id");
+
+                    b.ToTable("Chats");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ChatMessage", b =>
+                {
+                    b.Property<int>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MessageId"));
+
+                    b.Property<int>("ChatId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("ChatId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("ChatMessages");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Feedback", b =>
                 {
                     b.Property<int>("FeedbackId")
@@ -1624,6 +1703,44 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Chat", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User1")
+                        .WithMany("ChatsAsUser1")
+                        .HasForeignKey("User1Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User2")
+                        .WithMany("ChatsAsUser2")
+                        .HasForeignKey("User2Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User1");
+
+                    b.Navigation("User2");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ChatMessage", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Chat", "Chat")
+                        .WithMany("ChatMessages")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "Sender")
+                        .WithMany("SentMessages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Feedback", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.OrderItem", "OrderItem")
@@ -1949,6 +2066,11 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Accessories");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Chat", b =>
+                {
+                    b.Navigation("ChatMessages");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Feedback", b =>
                 {
                     b.Navigation("FeedbackImages");
@@ -2015,6 +2137,10 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     b.Navigation("Blogs");
 
+                    b.Navigation("ChatsAsUser1");
+
+                    b.Navigation("ChatsAsUser2");
+
                     b.Navigation("Feedbacks");
 
                     b.Navigation("Memberships");
@@ -2026,6 +2152,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Personalizes");
 
                     b.Navigation("ReturnExchangeRequests");
+
+                    b.Navigation("SentMessages");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Voucher", b =>

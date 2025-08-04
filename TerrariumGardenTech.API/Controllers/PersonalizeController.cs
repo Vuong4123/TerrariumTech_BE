@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Personalize;
-using TerrariumGardenTech.Common.ResponseModel.Personalize;
-using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -44,14 +41,14 @@ public class PersonalizeController : ControllerBase
     }
 
     // PUT api/<PersonalizeController>/5
-    [HttpPut("update-{id}")]
+    [HttpPut("update-personlize/{id}")]
     public async Task<IBusinessResult> Put([FromBody] PersonalizeUpdateRequest personalizeUpdateRequest)
     {
         return await _personalizeService.UpdatePersonalize(personalizeUpdateRequest);
     }
 
     // DELETE api/<PersonalizeController>/5
-    [HttpDelete("delete-{id}")]
+    [HttpDelete("delete-personlize/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return  await _personalizeService.DeletePersonalizeById(id);
