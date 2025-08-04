@@ -384,6 +384,82 @@ public partial class TerrariumGardenTechDBContext : DbContext
         //        .HasConstraintName("FK_AddressDelivery_Order");
         //});
 
+        //    entity.Property(e => e.ReceiverPhone)
+        //        .HasMaxLength(250)
+        //        .HasColumnName("receiverPhone");
+
+        //    entity.Property(e => e.ReceiverAddress)
+        //        .HasMaxLength(250)
+        //        .HasColumnName("receiverAddress");
+
+        //    //entity.Property(e => e.Longitude)
+        //    //    .HasColumnType("numeric(9,6)")
+        //    //    .HasColumnName("longitude");
+
+        //    //entity.Property(e => e.Latitude)
+        //    //    .HasColumnType("numeric(9,6)")
+        //    //    .HasColumnName("latitude");
+
+        //    //entity.Property(e => e.WardId).HasColumnName("wardId");
+
+        //    entity.Property(e => e.UserId).HasColumnName("userId");
+
+        //    entity.Property(e => e.CreatedOnUtc)
+        //        .HasColumnType("datetime2")
+        //        .HasColumnName("createdOnUtc");
+
+        //    entity.Property(e => e.ModifiedOnUtc)
+        //        .HasColumnType("datetime2")
+        //        .HasColumnName("modifiedOnUtc");
+
+        //    entity.Property(e => e.IsDeleted)
+        //        .HasColumnName("isDeleted");
+
+        //    entity.HasOne(d => d.Order)
+        //        .WithMany(p => p.AddressDeliveries)
+        //        .HasForeignKey(d => d.OrderId)
+        //        .HasConstraintName("FK_AddressDelivery_Order");
+        //});
+
+        //modelBuilder.Entity<AddressDelivery>(entity =>
+        //{
+        //    entity.HasKey(e => e.AddressDeliveryId).HasName("PK__AddressD__F090623D8858B94B");
+
+        //    entity.ToTable("AddressDelivery");
+
+        //    entity.Property(e => e.AddressDeliveryId).HasColumnName("addressDeliveryId");
+        //    entity.Property(e => e.AddressLine1)
+        //        .HasMaxLength(255)
+        //        .HasColumnName("addressLine1");
+        //    entity.Property(e => e.AddressLine2)
+        //        .HasMaxLength(255)
+        //        .HasColumnName("addressLine2");
+        //    entity.Property(e => e.City)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("city");
+        //    entity.Property(e => e.Country)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("country");
+        //    entity.Property(e => e.OrderId).HasColumnName("orderId");
+        //    entity.Property(e => e.PhoneNumber)
+        //        .HasMaxLength(15)
+        //        .HasColumnName("phoneNumber");
+        //    entity.Property(e => e.PostalCode)
+        //        .HasMaxLength(20)
+        //        .HasColumnName("postalCode");
+        //    entity.Property(e => e.RecipientName)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("recipientName");
+        //    entity.Property(e => e.State)
+        //        .HasMaxLength(100)
+        //        .HasColumnName("state");
+
+        //    entity.HasOne(d => d.Order).WithMany(p => p.AddressDeliveries)
+        //        .HasForeignKey(d => d.OrderId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_AddressDelivery_Order");
+        //});
+
         modelBuilder.Entity<AisuggestLayout>(entity =>
         {
             entity.HasKey(e => e.LayoutId).HasName("PK__AISugges__023A37EFFA219D01");
@@ -628,6 +704,12 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.Property(e => e.TotalAmount)
                   .HasColumnType("decimal(12, 2)")
                   .HasColumnName("totalAmount");
+
+            entity.Property(e => e.UserId)
+                  .HasColumnName("userId");
+
+            entity.Property(e => e.VoucherId)
+                  .HasColumnName("voucherId");
 
             entity.Property(e => e.UserId)
                   .HasColumnName("userId");
