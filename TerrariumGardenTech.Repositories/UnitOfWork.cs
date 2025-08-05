@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 
 namespace TerrariumGardenTech.Repositories;
@@ -32,10 +33,12 @@ public class UnitOfWork
     private UserRepository _userRepository;
     private VoucherRepository _voucherRepository;
     private FeedbackRepository _feedbackRepository;
+    private TransportRepository _transportRepository;
+    private TransportLogRepository _transportLogRepository;
+    private OrderRequestRefundRepository _orderRequestRefundRepository;
     private ChatRepository _chatRepository;
     private ChatMessageRepository _chatMessageRepository;
     private FeedbackImageRepository _feedbackImageRepository;
-
 
     public UnitOfWork()
     {
@@ -182,6 +185,21 @@ public class UnitOfWork
     public FeedbackRepository Feedback
     {
         get => _feedbackRepository ??= new FeedbackRepository(_unitOfWorkContext);
+    }
+
+    public TransportRepository Transport
+    {
+        get => _transportRepository ??= new TransportRepository(_unitOfWorkContext);
+    }
+
+    public TransportLogRepository TransportLog
+    {
+        get => _transportLogRepository ??= new TransportLogRepository(_unitOfWorkContext);
+    }
+
+    public OrderRequestRefundRepository OrderRequestRefund
+    {
+        get => _orderRequestRefundRepository ?? new OrderRequestRefundRepository(_unitOfWorkContext);
     }
     public FeedbackImageRepository FeedbackImage
     {

@@ -18,7 +18,7 @@ public class OrderResponse
     public DateTime? OrderDate { get; set; }
 
 
-    public OrderStatus Status { get; set; } = OrderStatus.Pending;
+    public OrderStatusEnum Status { get; set; }
 
 
     public string PaymentStatus { get; set; } = string.Empty;
