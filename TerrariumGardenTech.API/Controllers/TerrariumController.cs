@@ -39,10 +39,16 @@ public class TerrariumController : ControllerBase
     }
 
 
-    [HttpGet("get-by-name/{name}")]
-    public async Task<IBusinessResult> GetByAccesname(string name)
+    //[HttpGet("get-by-name/{name}")]
+    //public async Task<IBusinessResult> GetByAccesname(string name)
+    //{
+    //    return await _terrariumService.GetByAccesname(name);
+    //}
+
+    [HttpGet("get-by-terrariumname/{name}")]
+    public async Task<IBusinessResult> GetTerrariumByName(string name)
     {
-        return await _terrariumService.GetByAccesname(name);
+        return await _terrariumService.GetTerrariumByNameAsync(name);
     }
 
     // GET api/<TerrariumController>/5
@@ -52,19 +58,19 @@ public class TerrariumController : ControllerBase
         return await _terrariumService.GetById(id);
     }
 
-    // GET: api/Terrarium/get-suggestions/{userId}
-    [HttpGet("get-suggestions/{userId}")]
-    public async Task<IBusinessResult> GetTerrariumSuggestions(int userId)
-    {
-        var result = await _terrariumService.GetTerrariumSuggestions(userId);
+    //// GET: api/Terrarium/get-suggestions/{userId}
+    //[HttpGet("get-suggestions/{userId}")]
+    //public async Task<IBusinessResult> GetTerrariumSuggestions(int userId)
+    //{
+    //    var result = await _terrariumService.GetTerrariumSuggestions(userId);
 
-        // Kiểm tra nếu kết quả hoặc dữ liệu là null
-        if (result == null || result.Data == null)
-            return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
+    //    // Kiểm tra nếu kết quả hoặc dữ liệu là null
+    //    if (result == null || result.Data == null)
+    //        return new BusinessResult(Const.ERROR_EXCEPTION, "No data found.");
 
-        // Trả về kết quả gợi ý Terrarium
-        return result;
-    }
+    //    // Trả về kết quả gợi ý Terrarium
+    //    return result;
+    //}
 
     // POST api/<TerrariumController>
     [HttpPost("add-terrarium")]
@@ -76,7 +82,7 @@ public class TerrariumController : ControllerBase
     }
 
     // PUT api/<TerrariumController>/5
-    [HttpPut("update-terrarium-{id}")]
+    [HttpPut("update-terrarium/{id}")]
     public async Task<IBusinessResult> Put(TerrariumUpdateRequest terrariumUpdate)
     {
         if (terrariumUpdate == null || !ModelState.IsValid)
@@ -85,7 +91,7 @@ public class TerrariumController : ControllerBase
     }
 
     // DELETE api/<TerrariumController>/5
-    [HttpDelete("delete-terraium-{id}")]
+    [HttpDelete("delete-terraium/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _terrariumService.DeleteById(id);

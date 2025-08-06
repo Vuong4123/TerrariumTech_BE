@@ -22,6 +22,8 @@ public class TerrariumResponse
     public decimal MaxPrice { get; set; }  // Giá cao nhất
     public int Stock { get; set; }
     public string Status { get; set; }
+    public double AverageRating { get; set; }
+    public int FeedbackCount { get; set; }
     public List<TerrariumAccessoryResponse> Accessories { get; set; } = []; // Thông tin chi tiết phụ kiện
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
