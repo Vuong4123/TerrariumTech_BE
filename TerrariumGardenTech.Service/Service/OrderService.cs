@@ -52,26 +52,63 @@ public class OrderService : IOrderService
 
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
-        //var currentUserId = _userContextService.GetCurrentUser();
+        // 1. Validate: bỏ hẳn mọi kiểm tra UnitPrice/TotalAmount
+        ValidateCreateRequest(request);
+
+        // 2. Chuẩn bị biến tính tổng tiền
+        decimal totalAmount = 0m;
+        var orderItems = new List<OrderItem>();
+
+        // 3. Duyệt từng item, load giá gốc từ DB và tính
+        foreach (var reqItem in request.Items)
+        {
+            decimal unitPrice;
+            if (reqItem.TerrariumVariantId.HasValue)
+            {
+                // CHỖ SỬA: đọc giá variant
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+                unitPrice = variant.Price;
+            }
+            else
+            {
+                // CHỖ SỬA: đọc giá accessory
+                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+                unitPrice = acc.Price;
+            }
+
+            // CHỖ SỬA: tính tổng dòng = unitPrice * quantity
+            var lineTotal = unitPrice * reqItem.Quantity;
+            totalAmount += lineTotal;
+
+            // CHỖ SỬA: khởi tạo OrderItem với giá mới
+            orderItems.Add(new OrderItem
+            {
+                AccessoryId = reqItem.AccessoryId,
+                TerrariumVariantId = reqItem.TerrariumVariantId,
+                Quantity = reqItem.Quantity,
+                UnitPrice = unitPrice,      // giá tự tính
+                TotalPrice = lineTotal      // tổng tự tính
+            });
+        }
+
+        // 4. Tạo Order, gán tổng tự tính
         var order = new Order
         {
             UserId = request.UserId,
-            TotalAmount = request.TotalAmount
-            // Map other properties
+            VoucherId = request.VoucherId,
+            Deposit = request.Deposit,
+            TotalAmount = totalAmount,   // bỏ request.TotalAmount, dùng totalAmount
+            OrderDate = DateTime.UtcNow,
+            Status = OrderStatusEnum.Pending,
+            OrderItems = orderItems
         };
 
-        try
-        {
-            await _unitOfWork.Order.CreateAsync(order);
-            await _unitOfWork.SaveAsync(); // Save changes
-            return order.OrderId;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating order");
-            throw new Exception("An error occurred while creating the order.");
-        }
+        // 5. Lưu vào DB
+        await _unitOfWork.Order.CreateAsync(order);
+        await _unitOfWork.SaveAsync();
+        return order.OrderId;
     }
+
 
 
     public async Task<bool> UpdateStatusAsync(int id, OrderStatusEnum status)
@@ -335,7 +372,6 @@ public class OrderService : IOrderService
 
     private static void ValidateCreateRequest(OrderCreateRequest r)
     {
-        
         if (r.UserId <= 0)
             throw new ArgumentException("UserId phải là số nguyên dương.", nameof(r.UserId));
 
@@ -346,40 +382,66 @@ public class OrderService : IOrderService
         {
             if (item.Quantity <= 0)
                 throw new ArgumentException("Quantity của item phải lớn hơn 0.", nameof(item.Quantity));
-            if (item.UnitPrice < 0)
-                throw new ArgumentException("UnitPrice của item không được âm.", nameof(item.UnitPrice));
             if (item.AccessoryId == null && item.TerrariumVariantId == null)
                 throw new ArgumentException("Item phải có AccessoryId hoặc TerrariumVariantId.", nameof(r.Items));
         }
-
-        var sum = r.Items.Sum(i => i.Quantity * i.UnitPrice);
-        if (r.TotalAmount != sum)
-            throw new ArgumentException($"TotalAmount phải bằng tổng giá trị items ({sum}).", nameof(r.TotalAmount));
-
-        if (r.Deposit < 0 || r.Deposit > r.TotalAmount)
-            throw new ArgumentException("Deposit phải >= 0 và <= TotalAmount.", nameof(r.Deposit));
     }
 
-    private static Order MapToEntity(OrderCreateRequest r)
+
+    // CHUYỂN thành async để gọi DB bên trong
+    private async Task<Order> MapToEntityAsync(OrderCreateRequest r)
     {
-        return new Order
+        // 1. Tạo list chứa OrderItem
+        var orderItems = new List<OrderItem>();
+        decimal totalAmount = 0m;
+
+        foreach (var reqItem in r.Items)
+        {
+            // 2. Lấy price từ database
+            decimal unitPrice;
+            if (reqItem.TerrariumVariantId.HasValue)
+            {
+                // CHỖ SỬA: lấy giá variant
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+                unitPrice = variant.Price;
+            }
+            else
+            {
+                // CHỖ SỬA: lấy giá accessory
+                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+                unitPrice = acc.Price;
+            }
+
+            // 3. Tính total của dòng
+            var lineTotal = unitPrice * reqItem.Quantity;
+            totalAmount += lineTotal;
+
+            // 4. Khởi tạo OrderItem với giá tự tính
+            orderItems.Add(new OrderItem
+            {
+                AccessoryId = reqItem.AccessoryId,
+                TerrariumVariantId = reqItem.TerrariumVariantId,
+                Quantity = reqItem.Quantity,
+                UnitPrice = unitPrice,      // giá tự fetch
+                TotalPrice = lineTotal       // tính ra
+            });
+        }
+
+        // 5. Tạo hẳn entity Order với tổng tự tính
+        var order = new Order
         {
             UserId = r.UserId,
             VoucherId = r.VoucherId,
-            TotalAmount = r.TotalAmount,
             Deposit = r.Deposit,
+            TotalAmount = totalAmount,             // gán total tự tính
             OrderDate = DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
-            OrderItems = r.Items.Select(i => new OrderItem
-            {
-                AccessoryId = i.AccessoryId,
-                TerrariumVariantId = i.TerrariumVariantId,
-                Quantity = i.Quantity,
-                UnitPrice = i.UnitPrice,
-                TotalPrice = i.Quantity * i.UnitPrice
-            }).ToList()
+            OrderItems = orderItems
         };
+
+        return order;
     }
+
 
     private static OrderResponse ToResponse(Order o)
     {

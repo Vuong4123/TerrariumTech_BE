@@ -321,6 +321,8 @@ app.UseHttpsRedirection();
 // Enable static files (for wwwroot folder)
 app.UseStaticFiles();
 
+app.UseGlobalExceptionHandler();
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

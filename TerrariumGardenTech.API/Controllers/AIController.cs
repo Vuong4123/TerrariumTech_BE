@@ -34,6 +34,8 @@ namespace TerrariumGardenTech.API.Controllers
                 TankMethodId = aiRequest.TankMethodId,
                 TerrariumName = aiResult.TerrariumName,
                 Description = aiResult.Description,
+                MaxPrice=aiResult.MaxPrice,
+                MinPrice=aiResult.MinPrice,
                 bodyHTML = $"<p>{aiResult.Description}</p>",
                 Status = "Active",
                 AccessoryNames = new List<string> { "Hình hộp chữ nhật nhỏ", "Hình hộp chữ nhật vừa", "Hình hộp chữ nhật lớn" } // Bạn có thể huấn luyện AI gợi ý thêm tên phụ kiện
