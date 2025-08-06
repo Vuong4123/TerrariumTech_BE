@@ -6,5 +6,5 @@ public class OrderItemCreateRequest
     public int? AccessoryId { get; set; }
     public int? TerrariumVariantId { get; set; }
     public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
+    //public decimal UnitPrice { get; set; }
 }
