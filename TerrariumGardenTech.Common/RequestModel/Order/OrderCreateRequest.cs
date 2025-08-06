@@ -5,7 +5,7 @@ public class OrderCreateRequest
 {
     public int UserId { get; set; }
     public int? VoucherId { get; set; }
-    public decimal TotalAmount { get; set; }
+    //public decimal TotalAmount { get; set; }
     public decimal? Deposit { get; set; }
 
     // Danh sách mặt hàng
