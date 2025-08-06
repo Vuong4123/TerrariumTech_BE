@@ -4,6 +4,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.ResponseModel.Address;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 
@@ -39,7 +40,7 @@ public class OrderService : IOrderService
         if (id <= 0)
             throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
-        var order = await _unitOfWork.Order.GetByIdAsync(id); // Gọi từ UnitOfWork
+        var order = await _unitOfWork.Order.GetOrderbyIdAsync(id); 
         if (order == null)
         {
             _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId}", id);
@@ -48,6 +49,22 @@ public class OrderService : IOrderService
 
         return ToResponse(order);
     }
+
+    public async Task<IBusinessResult> GetAllOrderByUserId(int userId)
+    {
+        // Lấy các địa chỉ theo userId từ cơ sở dữ liệu
+        var orderrrr = await _unitOfWork.Address.GetByUserIdAsync(userId);
+
+        // Kiểm tra nếu không có dữ liệu
+        if (orderrrr == null || !orderrrr.Any())
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        }
+
+        // Trả về kết quả với dữ liệu đã ánh xạ
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, orderrrr);
+    }
+
 
 
     public async Task<int> CreateAsync(OrderCreateRequest request)
