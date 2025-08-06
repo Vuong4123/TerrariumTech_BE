@@ -91,9 +91,9 @@ public class CartController : ControllerBase
 
 
 
-    [HttpPut("upadate-items/{cartItemId}")]
+    [HttpPut("update-items/{itemId}")]
     [Authorize]
-    public async Task<IActionResult> UpdateItem(int cartItemId, [FromBody] UpdateCartItemRequest request)
+    public async Task<IActionResult> UpdateItem(int itemId, [FromBody] UpdateCartItemRequest request)
     {
         var userId = User.GetUserId();
 
@@ -104,7 +104,7 @@ public class CartController : ControllerBase
             return BadRequest(new { message = "Thông tin cập nhật không hợp lệ." });
         }
 
-        var result = await _cartService.UpdateItemAsync(userId, cartItemId, request);
+        var result = await _cartService.UpdateItemAsync(userId, itemId, request);
 
         if (result == null)
             return NotFound(new { message = "Không tìm thấy item trong giỏ hàng hoặc không thuộc về người dùng." });

@@ -89,12 +89,47 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         return _dbContext.Terrariums.ToList(); // Trả về IQueryable
     }
 
-    public async Task<IEnumerable<Terrarium>> GetByNameAsync(string name)
+    //public async Task<IEnumerable<Terrarium>> GetByNameAsync(string name)
+    //{
+    //    return await _dbContext.Terrariums
+    //        .Where(a => a.TerrariumName.Contains(name)) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
+    //        .Include(t => t.TerrariumAccessory)  // Nạp dữ liệu Accessory liên quan
+    //            .ThenInclude(ta => ta.Accessory)  // Nạp dữ liệu Accessory
+    //        .Include(t => t.TerrariumImages).ToListAsync();
+    //}
+
+
+    public async Task<Dictionary<int, (double AverageRating, int FeedbackCount)>> GetTerrariumRatingStatsAsync(IEnumerable<int> terrariumIds)
     {
-        return await _dbContext.Terrariums
-            .Where(a => a.TerrariumName.Contains(name)) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
-            .Include(t => t.TerrariumAccessory)  // Nạp dữ liệu Accessory liên quan
-                .ThenInclude(ta => ta.Accessory)  // Nạp dữ liệu Accessory
-            .Include(t => t.TerrariumImages).ToListAsync();
+        var query = from v in _context.TerrariumVariants
+                    join oi in _context.OrderItems on v.TerrariumVariantId equals oi.TerrariumVariantId
+                    join fb in _context.Feedbacks on oi.OrderItemId equals fb.OrderItemId
+                    where terrariumIds.Contains(v.TerrariumId)
+                          && fb.Rating != null
+                          && !fb.IsDeleted
+                    group fb by v.TerrariumId into g
+                    select new
+                    {
+                        TerrariumId = g.Key,
+                        AverageRating = g.Average(x => x.Rating.Value),
+                        FeedbackCount = g.Count()
+                    };
+
+        var result = await query.ToListAsync();
+
+        return result.ToDictionary(
+            x => x.TerrariumId,
+            x => (x.AverageRating, x.FeedbackCount)
+        );
+    }
+
+    public async Task<List<Terrarium>> GetTerrariumByNameAsync(string terrariumName)
+    {
+        return await _context.Terrariums
+            .Include(t => t.TerrariumImages)
+            .Include(t => t.TerrariumAccessory)
+                .ThenInclude(ta => ta.Accessory)
+            .Where(t => t.TerrariumName.Contains(terrariumName))
+            .ToListAsync();
     }
 }

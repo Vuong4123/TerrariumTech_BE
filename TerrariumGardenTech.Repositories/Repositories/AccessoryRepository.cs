@@ -59,4 +59,28 @@ public class AccessoryRepository : GenericRepository<Accessory>
             .Include(t => t.AccessoryImages)
             .ToListAsync();
     }
+
+    public async Task<Dictionary<int, (double AverageRating, int FeedbackCount)>> GetAccessoryRatingStatsAsync(IEnumerable<int> accessoryIds)
+    {
+        var query = from oi in _context.OrderItems
+                    join fb in _context.Feedbacks on oi.OrderItemId equals fb.OrderItemId
+                    where oi.AccessoryId != null
+                      && accessoryIds.Contains(oi.AccessoryId.Value)   // Dùng .Value nếu AccessoryId là int?
+                      && fb.Rating != null
+                      && !fb.IsDeleted
+                    group fb by oi.AccessoryId into g
+                    select new
+                    {
+                        AccessoryId = g.Key.Value,  // .Value nếu group theo int?
+                        AverageRating = g.Average(x => x.Rating.Value),
+                        FeedbackCount = g.Count()
+                    };
+
+        var result = await query.ToListAsync();
+
+        return result.ToDictionary(
+            x => x.AccessoryId,
+            x => (x.AverageRating, x.FeedbackCount)
+        );
+    }
 }

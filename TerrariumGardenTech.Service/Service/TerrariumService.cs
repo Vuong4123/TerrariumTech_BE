@@ -54,54 +54,48 @@ public class TerrariumService : ITerrariumService
 
     public async Task<IBusinessResult> GetAll(TerrariumGetAllRequest request)
     {
-        try
-        {
-            // Gọi phương thức từ repository để nạp dữ liệu Terrarium với ảnh
-            var tuple = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
+        var tuple = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
+        var list = tuple.Item1;
+        var enumerable = list.ToList();
 
-            var terrariumList = tuple.Item1;
-            var enumerable = terrariumList.ToList();
-            
-            if (enumerable.Any())
+        if (!enumerable.Any())
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+
+        if (!request.Pagination.IsPagingEnabled)
+        {
+            var tuple_ = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
+        }
+
+        var terrariumIds = enumerable.Select(t => t.TerrariumId).ToList();
+        var ratingStats = await _unitOfWork.Terrarium.GetTerrariumRatingStatsAsync(terrariumIds);
+
+        var terrariums = enumerable.Select(t => new TerrariumDetailResponse
+        {
+            TerrariumId = t.TerrariumId,
+            EnvironmentId = t.EnvironmentId,
+            ShapeId = t.ShapeId,
+            TankMethodId = t.TankMethodId,
+            TerrariumName = t.TerrariumName,
+            Description = t.Description,
+            MinPrice = t.MinPrice,
+            MaxPrice = t.MaxPrice,
+            Stock = t.Stock,
+            Status = t.Status,
+            TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
             {
-                if (!request.Pagination.IsPagingEnabled)
-                {
-                    var tuple_ = await _unitOfWork.Terrarium.GetFilterAndPagedAsync(request);
+                TerrariumImageId = ti.TerrariumImageId,
+                TerrariumId = ti.TerrariumId,
+                ImageUrl = ti.ImageUrl ?? string.Empty
+            }).ToList(),
+            // Thêm rating
+            AverageRating = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].AverageRating : 0,
+            FeedbackCount = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].FeedbackCount : 0
+        }).ToList();
 
-                    return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
-                }
+        var tableResponse = new QueryTableResult(request, terrariums, tuple.Item2);
 
-                var terrariums = enumerable.Select(t => new TerrariumDetailResponse
-                {
-                    TerrariumId = t.TerrariumId,
-                    EnvironmentId = t.EnvironmentId,
-                    ShapeId = t.ShapeId,
-                    TankMethodId = t.TankMethodId,
-                    TerrariumName = t.TerrariumName,
-                    Description = t.Description,
-                    MinPrice = t.MinPrice,
-                    MaxPrice = t.MaxPrice,
-                    Stock = t.Stock,
-                    Status = t.Status,
-                    TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
-                    {
-                        TerrariumImageId = ti.TerrariumImageId,
-                        TerrariumId = ti.TerrariumId,
-                        ImageUrl = ti.ImageUrl ?? string.Empty
-                    }).ToList()
-                }).ToList();
-
-                var tableResponse = new QueryTableResult(request, terrariums, tuple.Item2);
-
-                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tableResponse);
-            }
-
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
-        }
-        catch (Exception ex)
-        {
-            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
-        }
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tableResponse);
     }
 
     public async Task<IBusinessResult> GetById(int id)
@@ -114,6 +108,11 @@ public class TerrariumService : ITerrariumService
             if (terrarium == null)
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
 
+            // Lấy rating & số feedback cho Terrarium này (dùng repository batch)
+            var ratingStats = await _unitOfWork.Terrarium.GetTerrariumRatingStatsAsync(new List<int> { id });
+            var avgRating = ratingStats.ContainsKey(id) ? ratingStats[id].AverageRating : 0;
+            var feedbackCount = ratingStats.ContainsKey(id) ? ratingStats[id].FeedbackCount : 0;
+
             // Ánh xạ Terrarium sang TerrariumResponse
             var terrariumResponse = new TerrariumResponse
             {
@@ -124,7 +123,7 @@ public class TerrariumService : ITerrariumService
                 TerrariumName = terrarium.TerrariumName,
                 Description = terrarium.Description,
                 MinPrice = terrarium.MinPrice,
-                MaxPrice = terrarium.MaxPrice, // Sử dụng giá thấp nhất và cao nhất
+                MaxPrice = terrarium.MaxPrice,
                 Stock = terrarium.Stock,
                 Status = terrarium.Status,
                 Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
@@ -135,17 +134,19 @@ public class TerrariumService : ITerrariumService
                     Price = a.Accessory.Price
                 }).ToList(),
                 BodyHTML = terrarium.bodyHTML,
-                CreatedAt = terrarium.CreatedAt ?? DateTime.UtcNow, // Dùng giá trị mặc định nếu CreatedAt là null
-                UpdatedAt = terrarium.UpdatedAt ?? DateTime.UtcNow, // Tương tự cho UpdatedAt
+                CreatedAt = terrarium.CreatedAt ?? DateTime.UtcNow,
+                UpdatedAt = terrarium.UpdatedAt ?? DateTime.UtcNow,
                 TerrariumImages = terrarium.TerrariumImages.Select(ti => new TerrariumImageResponse
                 {
                     TerrariumImageId = ti.TerrariumImageId,
                     TerrariumId = ti.TerrariumId,
                     ImageUrl = ti.ImageUrl
-                }).ToList()
+                }).ToList(),
+                // Bổ sung hai trường mới
+                AverageRating = avgRating,
+                FeedbackCount = feedbackCount
             };
 
-            // Trả về kết quả với dữ liệu đã ánh xạ
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", terrariumResponse);
         }
         catch (Exception ex)
@@ -245,54 +246,61 @@ public class TerrariumService : ITerrariumService
         }
     }
 
-    public async Task<IBusinessResult> GetByAccesname(string name)
-    {
-        try
-        {
-            // Tìm Accessory theo tên
-            var terrarium = await _unitOfWork.Terrarium.GetByNameAsync(name);
+    //public async Task<IBusinessResult> GetByAccesname(string name)
+    //{
+    //    try
+    //    {
+    //        // Tìm Terrarium theo tên accessory (nếu GetByNameAsync trả về List<Terrarium>)
+    //        var terrariumList = await _unitOfWork.Terrarium.GetByNameAsync(name);
 
-            if (terrarium == null)
-                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessory found with that name.");
+    //        if (terrariumList == null || !terrariumList.Any())
+    //            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessory found with that name.");
 
-            // Mapping dữ liệu từ Accessory sang response model nếu cần thiết
-            var terrariumResponse = terrarium.Select(t => new TerrariumResponse
-            {
-                TerrariumId = t.TerrariumId,
-                EnvironmentId = t.EnvironmentId,
-                ShapeId = t.ShapeId,
-                TankMethodId = t.TankMethodId,
-                TerrariumName = t.TerrariumName,
-                Description = t.Description,
-                //MinPrice = terrarium.MinPrice,
-                //MaxPrice = terrarium.MaxPrice,
-                //Stock = terrarium.Stock,
-                //Status = terrarium.Status,
-                //BodyHTML = terrarium.bodyHTML ?? string.Empty, // Dùng giá trị mặc định nếu bodyHTML là null
-                //CreatedAt = terrarium.CreatedAt ?? DateTime.UtcNow, // Dùng giá trị mặc định nếu CreatedAt là null
-                //UpdatedAt = terrarium.UpdatedAt ?? DateTime.UtcNow, // Tương tự cho UpdatedAt
-                Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
-                {
-                    AccessoryId = a.Accessory.AccessoryId,
-                    Name = a.Accessory.Name,
-                    Description = a.Accessory.Description,
-                    Price = a.Accessory.Price
-                }).ToList(),
-                TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
-                {
-                    TerrariumImageId = ti.TerrariumImageId,
-                    TerrariumId = ti.TerrariumId,
-                    ImageUrl = ti.ImageUrl ?? string.Empty // Dùng giá trị mặc định nếu ImageUrl là null
-                }).ToList()
-            }).ToList();
+    //        // Lấy tất cả TerrariumId để query rating batch
+    //        var terrariumIds = terrariumList.Select(t => t.TerrariumId).ToList();
+    //        var ratingStats = await _unitOfWork.Terrarium.GetTerrariumRatingStatsAsync(terrariumIds);
 
-            return new BusinessResult(Const.SUCCESS_READ_CODE, "Accessory found.", terrariumResponse);
-        }
-        catch (Exception ex)
-        {
-            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
-        }
-    }
+    //        // Mapping dữ liệu từ Terrarium sang response model
+    //        var terrariumResponse = terrariumList.Select(t => new TerrariumResponse
+    //        {
+    //            TerrariumId = t.TerrariumId,
+    //            EnvironmentId = t.EnvironmentId,
+    //            ShapeId = t.ShapeId,
+    //            TankMethodId = t.TankMethodId,
+    //            TerrariumName = t.TerrariumName,
+    //            Description = t.Description,
+    //            //MinPrice = t.MinPrice,
+    //            //MaxPrice = t.MaxPrice,
+    //            //Stock = t.Stock,
+    //            //Status = t.Status,
+    //            //BodyHTML = t.bodyHTML ?? string.Empty,
+    //            //CreatedAt = t.CreatedAt ?? DateTime.UtcNow,
+    //            //UpdatedAt = t.UpdatedAt ?? DateTime.UtcNow,
+    //            Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+    //            {
+    //                AccessoryId = a.Accessory.AccessoryId,
+    //                Name = a.Accessory.Name,
+    //                Description = a.Accessory.Description,
+    //                Price = a.Accessory.Price
+    //            }).ToList(),
+    //            TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
+    //            {
+    //                TerrariumImageId = ti.TerrariumImageId,
+    //                TerrariumId = ti.TerrariumId,
+    //                ImageUrl = ti.ImageUrl ?? string.Empty
+    //            }).ToList(),
+    //            // Bổ sung rating
+    //            AverageRating = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].AverageRating : 0,
+    //            FeedbackCount = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].FeedbackCount : 0
+    //        }).ToList();
+
+    //        return new BusinessResult(Const.SUCCESS_READ_CODE, "Accessory found.", terrariumResponse);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+    //    }
+    //}
 
     public async Task<IBusinessResult> GetTerrariumSuggestions(int userId)
     {
@@ -474,8 +482,57 @@ public class TerrariumService : ITerrariumService
         }
     }
 
-    public Task<IBusinessResult> GetTerrariumByNameAsync(string terrariumName)
+    public async Task<IBusinessResult> GetTerrariumByNameAsync(string terrariumName)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // Lấy danh sách Terrarium theo tên
+            var terrariumList = await _unitOfWork.Terrarium.GetTerrariumByNameAsync(terrariumName);
+
+            if (terrariumList == null || !terrariumList.Any())
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No terrarium found with that name.");
+
+            // Lấy rating trung bình và feedback count cho từng Terrarium (batch)
+            var terrariumIds = terrariumList.Select(t => t.TerrariumId).ToList();
+            var ratingStats = await _unitOfWork.Terrarium.GetTerrariumRatingStatsAsync(terrariumIds);
+
+            var terrariumResponseList = terrariumList.Select(t => new TerrariumResponse
+            {
+                TerrariumId = t.TerrariumId,
+                EnvironmentId = t.EnvironmentId,
+                ShapeId = t.ShapeId,
+                TankMethodId = t.TankMethodId,
+                TerrariumName = t.TerrariumName,
+                Description = t.Description,
+                MinPrice = t.MinPrice,
+                MaxPrice = t.MaxPrice,
+                Stock = t.Stock,
+                Status = t.Status,
+                Accessories = t.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+                {
+                    AccessoryId = a.Accessory.AccessoryId,
+                    Name = a.Accessory.Name,
+                    Description = a.Accessory.Description,
+                    Price = a.Accessory.Price
+                }).ToList(),
+                BodyHTML = t.bodyHTML,
+                CreatedAt = t.CreatedAt ?? DateTime.UtcNow,
+                UpdatedAt = t.UpdatedAt ?? DateTime.UtcNow,
+                TerrariumImages = t.TerrariumImages.Select(ti => new TerrariumImageResponse
+                {
+                    TerrariumImageId = ti.TerrariumImageId,
+                    TerrariumId = ti.TerrariumId,
+                    ImageUrl = ti.ImageUrl ?? string.Empty
+                }).ToList(),
+                AverageRating = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].AverageRating : 0,
+                FeedbackCount = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].FeedbackCount : 0
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium(s) found.", terrariumResponseList);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 }

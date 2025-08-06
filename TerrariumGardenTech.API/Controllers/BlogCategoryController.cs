@@ -30,7 +30,7 @@ public class BlogCategoryController : ControllerBase
     }
 
     // GET api/<BlogCategoryController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogCategoryService.GetById(id);
@@ -39,8 +39,7 @@ public class BlogCategoryController : ControllerBase
     // POST api/<BlogCategoryController>
     [HttpPost("add-blogCategory")]
     public async Task<IBusinessResult> Post([FromBody] BlogCategoryCreateRequest blogCategoryCreateRequest)
-    {
-        
+    {        
         return await _blogCategoryService.CreateBlogCategory(blogCategoryCreateRequest);
     }
 

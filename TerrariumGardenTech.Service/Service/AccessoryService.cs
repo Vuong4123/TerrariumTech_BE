@@ -24,104 +24,120 @@ public class AccessoryService : IAccessoryService
     // Lấy tất cả Accessory
     public async Task<IBusinessResult> GetAll(AccessoryGetAllRequest request)
     {
+        // Lấy danh sách accessory và phân trang
         var tuple = await _unitOfWork.Accessory.GetFilterAndPagedAsync(request);
 
         var list = tuple.Item1;
         var enumerable = list.ToList();
-            
-        if (enumerable.Any())
-        {
-            if (!request.Pagination.IsPagingEnabled)
-            {
-                var tuple_ = await _unitOfWork.Accessory.GetFilterAndPagedAsync(request);
 
-                return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
-            }
-            // Ánh xạ từ Accessory sang AccessoryResponse
-            var accessories = enumerable.Select(a => new AccessoryResponse
-            {
-                AccessoryId = a.AccessoryId,
-                Name = a.Name,
-                Size = a.Size,
-                Description = a.Description,
-                Price = (decimal)a.Price,
-                StockQuantity = a.StockQuantity,
-                Status = a.Status,
-                CategoryId = a.CategoryId,
-                CreatedAt = a.CreatedAt ?? DateTime.MinValue, // Default nếu CreatedAt là null
-                UpdatedAt = a.UpdatedAt ?? DateTime.MinValue, // Default nếu UpdatedAt là null
-                AccessoryImages = a.AccessoryImages.Select(ai => new AccessoryImageResponse
-                {
-                    AccessoryImageId = ai.AccessoryImageId,
-                    ImageUrl = ai.ImageUrl,
-                    AccessoryId = ai.AccessoryId
-                }).ToList()
-            }).ToList();
-            
-            var tableResponse = new QueryTableResult(request, accessories, tuple.Item2);
-            
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, tableResponse);
+        if (!enumerable.Any())
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+
+        if (!request.Pagination.IsPagingEnabled)
+        {
+            var tuple_ = await _unitOfWork.Accessory.GetFilterAndPagedAsync(request);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tuple_.Item1);
         }
 
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        // Lấy list AccessoryId
+        var accessoryIds = enumerable.Select(a => a.AccessoryId).ToList();
+
+        // Lấy rating & count cho các accessory chỉ qua 1 query
+        var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(accessoryIds);
+        // ratingStats là Dictionary<int, (double AverageRating, int FeedbackCount)>
+
+        // Map sang DTO, bổ sung rating
+        var accessories = enumerable.Select(a => new AccessoryResponse
+        {
+            AccessoryId = a.AccessoryId,
+            Name = a.Name,
+            Size = a.Size,
+            Description = a.Description,
+            Price = (decimal)a.Price,
+            StockQuantity = a.StockQuantity,
+            Status = a.Status,
+            CategoryId = a.CategoryId,
+            CreatedAt = a.CreatedAt ?? DateTime.MinValue,
+            UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,
+            AccessoryImages = a.AccessoryImages.Select(ai => new AccessoryImageResponse
+            {
+                AccessoryImageId = ai.AccessoryImageId,
+                ImageUrl = ai.ImageUrl,
+                AccessoryId = ai.AccessoryId
+            }).ToList(),
+            AverageRating = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].AverageRating : 0,
+            FeedbackCount = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].FeedbackCount : 0
+        }).ToList();
+
+        var tableResponse = new QueryTableResult(request, accessories, tuple.Item2);
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, tableResponse);
     }
 
     // Lấy Accessory theo ID
     public async Task<IBusinessResult> GetById(int id)
     {
         var accessory = await _unitOfWork.Accessory.GetAccessoryWithImagesByIdAsync(id);
-        if (accessory != null)
+        if (accessory == null)
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+
+        // Lấy rating cho 1 phụ kiện (tối ưu dùng repository đã viết)
+        var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(new List<int> { id });
+        var avgRating = ratingStats.ContainsKey(id) ? ratingStats[id].AverageRating : 0;
+        var feedbackCount = ratingStats.ContainsKey(id) ? ratingStats[id].FeedbackCount : 0;
+
+        var accessoryResponse = new AccessoryResponse
         {
-            var accessoryResponse = new AccessoryResponse
+            AccessoryId = accessory.AccessoryId,
+            Name = accessory.Name,
+            Size = accessory.Size,
+            Description = accessory.Description,
+            Price = (decimal)accessory.Price,
+            StockQuantity = accessory.StockQuantity,
+            Status = accessory.Status,
+            CategoryId = accessory.CategoryId,
+            CreatedAt = accessory.CreatedAt ?? DateTime.MinValue,
+            UpdatedAt = accessory.UpdatedAt ?? DateTime.MinValue,
+            AccessoryImages = accessory.AccessoryImages.Select(ai => new AccessoryImageResponse
             {
-                AccessoryId = accessory.AccessoryId,
-                Name = accessory.Name,
-                Size = accessory.Size,
-                Description = accessory.Description,
-                Price = (decimal)accessory.Price,
-                StockQuantity = accessory.StockQuantity,
-                Status = accessory.Status,
-                CategoryId = accessory.CategoryId,
-                CreatedAt = accessory.CreatedAt ?? DateTime.MinValue,
-                UpdatedAt = accessory.UpdatedAt ?? DateTime.MinValue,
-                AccessoryImages = accessory.AccessoryImages.Select(ai => new AccessoryImageResponse
-                {
-                    AccessoryImageId = ai.AccessoryImageId,
-                    ImageUrl = ai.ImageUrl,
-                    AccessoryId = ai.AccessoryId
-                }).ToList()
-            };
+                AccessoryImageId = ai.AccessoryImageId,
+                ImageUrl = ai.ImageUrl,
+                AccessoryId = ai.AccessoryId
+            }).ToList(),
+            AverageRating = avgRating,
+            FeedbackCount = feedbackCount
+        };
 
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryResponse);
-        }
-
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryResponse);
     }
 
     // Lọc Accessory theo CategoryId
     public async Task<IBusinessResult> FilterAccessoryAsync(int? categoryId)
     {
         var accessories = await _unitOfWork.Accessory.FilterAccessoryAsync(categoryId);
-        if (accessories != null && accessories.Any())
+        if (accessories == null || !accessories.Any())
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessories matched the given filter.");
+
+        var accessoryIds = accessories.Select(a => a.AccessoryId).ToList();
+        var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(accessoryIds);
+
+        var accessoriesResponse = accessories.Select(a => new AccessoryResponse
         {
-            var accessoriesResponse = accessories.Select(a => new AccessoryResponse
-            {
-                AccessoryId = a.AccessoryId,
-                Name = a.Name,
-                Size = a.Size,
-                Description = a.Description,
-                Price = (decimal)a.Price,
-                StockQuantity = a.StockQuantity,
-                Status = a.Status,
-                CategoryId = a.CategoryId,
-                CreatedAt = a.CreatedAt ?? DateTime.MinValue,
-                UpdatedAt = a.UpdatedAt ?? DateTime.MinValue
-            }).ToList();
+            AccessoryId = a.AccessoryId,
+            Name = a.Name,
+            Size = a.Size,
+            Description = a.Description,
+            Price = (decimal)a.Price,
+            StockQuantity = a.StockQuantity,
+            Status = a.Status,
+            CategoryId = a.CategoryId,
+            CreatedAt = a.CreatedAt ?? DateTime.MinValue,
+            UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,
+            AverageRating = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].AverageRating : 0,
+            FeedbackCount = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].FeedbackCount : 0
+        }).ToList();
 
-            return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoriesResponse);
-        }
-
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessories matched the given filter.");
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoriesResponse);
     }
 
     public async Task<IBusinessResult> Save(Accessory accessory)

@@ -37,21 +37,21 @@ public class RoleController : ControllerBase
 
 
     // POST api/<RoleController>
-    [HttpPost("add-blog")]
+    [HttpPost("add-role")]
     public async Task<IBusinessResult> Post([FromBody] RoleCreateRequest roleCreateRequest)
     {
         return await _roleService.CreateRole(roleCreateRequest);
     }
 
     // PUT api/<RoleController>/5
-    [HttpPut("update-blog/{id}")]
+    [HttpPut("update-role/{id}")]
     public async Task<IBusinessResult> Put([FromBody] RoleUpdateRequest roleUpdateRequest)
     {
         return await _roleService.UpdateRole(roleUpdateRequest);
     }
 
     // DELETE api/<RoleController>/5
-    [HttpDelete("dalete-blog/{id}")]
+    [HttpDelete("delete-role/{id}")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _roleService.DeleteById(id);
