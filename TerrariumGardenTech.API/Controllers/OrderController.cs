@@ -26,6 +26,35 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
+    /// Lấy danh sách orders của user hiện tại (quyền Order.AccessSpecific)
+    /// </summary>
+    [HttpGet("get-all-by-userid/{userid}")]
+    [Authorize]   // Chỉ kiểm tra user đã login và có ít nhất 1 role trong policy
+    public async Task<IActionResult> GetAllByUserID(int userid)
+    {
+        try
+        {
+            // 1. Kiểm tra phân quyền theo policy Order.AccessSpecific và truyền resource = userid
+            var authResult = await _auth.AuthorizeAsync(User, userid, "Order.AccessSpecific");
+            if (!authResult.Succeeded)
+                return Forbid();
+
+            // 2. Nếu được phép, gọi service trả về danh sách
+            var list = await _svc.GetByUserAsync(userid);
+            return Ok(list);
+        }
+        catch (ArgumentException ae)
+        {
+            return BadRequest(new { message = ae.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+
+    /// <summary>
     ///     Lấy danh sách tất cả đơn hàng (quyền Order.ReadAll)
     /// </summary>
     [HttpGet]
@@ -236,6 +265,7 @@ public class OrderController : ControllerBase
             return StatusCode(500, new { message = ex.Message });
         }
     }
+
 
     /// <summary>
     /// Lấy danh sách đơn vận chuyển của đơn hàng theo ID đơn hàng

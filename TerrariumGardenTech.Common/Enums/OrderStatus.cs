@@ -8,11 +8,11 @@ namespace TerrariumGardenTech.Common.Enums
 {
     public enum OrderStatus
     {
-        Pending,     // Mới tạo, chờ xử lý
-        Taking,      // Đang chuẩn bị
-        Delivering,  // Đang giao
-        Delivered,   // Đã giao thành công
-        Refund,      // Hoàn tiền
-        Cancelled    // Đã huỷ
+        Pending = 1,     // Mới tạo, chờ xử lý
+        Taking = 2,      // Đang chuẩn bị
+        Delivering = 3,  // Đang giao
+        Delivered = 4,   // Đã giao thành công
+        Refund = 5,      // Hoàn tiền
+        Cancelled = 6    // Đã huỷ
     }
 }
