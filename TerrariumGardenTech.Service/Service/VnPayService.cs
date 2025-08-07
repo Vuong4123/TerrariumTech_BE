@@ -70,8 +70,8 @@ public class VnPayService : IVnPayService
             var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneById);
             var tick = DateTime.Now.Ticks.ToString();
             var pay = new VnPayLibrary();
-            var urlCallBack =
-                $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api/Payment/vn-pay/callback";
+            var urlCallBack = "https://terarium.shop/api/Payment/vn-pay/callback";
+            //$"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api/Payment/vn-pay/callback";
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
@@ -126,7 +126,7 @@ public class VnPayService : IVnPayService
             return new BusinessResult(Const.NOT_FOUND_CODE, null);
         }
 
-        order.PaymentStatus = response.Success ? "PAID" : "FAILED";
+        order.PaymentStatus = response.Success ? "Paid" : "Falsed";
         order.TransactionId = response.TransactionId;
         await _unitOfWork.Order.UpdateAsync(order);
         if (order.Payment == null || !order.Payment.Any())
@@ -139,7 +139,7 @@ public class VnPayService : IVnPayService
             OrderId = order.OrderId,
             PaymentMethod = response.PaymentMethod,
             PaymentAmount = response.Amount / 100, // Convert from cents to the correct currency unit
-            Status = response.Success ? "PAID" : "FAILED",
+            Status = response.Success ? "Paid" : "Falsed",
             PaymentDate = response.PaymentDate ?? DateTime.UtcNow, // Use payment date if available, otherwise use current date
         });
         await _unitOfWork.SaveAsync();
