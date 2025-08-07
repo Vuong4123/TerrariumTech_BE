@@ -30,6 +30,7 @@ public class BlogService(
                 Title = b.Title,
                 Content = b.Content,
                 UrlImage = b.UrlImage ?? string.Empty,  // Đảm bảo UrlImage không null
+                IsFeatured = b.IsFeatured,
                 Status = b.Status
             }).ToList();
 
@@ -59,6 +60,7 @@ public class BlogService(
                 Content = blog.Content,
                 bodyHTML = blog.bodyHTML ?? string.Empty, // Đảm bảo bodyHTML không null
                 UrlImage = blog.UrlImage ?? string.Empty, // Đảm bảo UrlImage không null
+                IsFeatured = blog.IsFeatured,
                 Status = blog.Status
             };
 
@@ -137,6 +139,7 @@ public class BlogService(
             blog.Content = blogUpdateRequest.Content;
             blog.bodyHTML = blogUpdateRequest.bodyHTML;
             blog.BlogCategoryId = blogUpdateRequest.BlogCategoryId;
+            blog.IsFeatured = blogUpdateRequest.IsFeatured;
             blog.UpdatedAt = DateTime.UtcNow;
 
             // Lưu thay đổi
@@ -185,6 +188,7 @@ public class BlogService(
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 bodyHTML = blogCreateRequest.bodyHTML,
+                IsFeatured = blogCreateRequest.IsFeatured,
                 Status = "Active"
             };
 
