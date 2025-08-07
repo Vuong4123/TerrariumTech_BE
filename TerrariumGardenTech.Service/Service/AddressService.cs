@@ -96,12 +96,24 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
     {
         try
         {
-            var result = -1;
             var address = await _unitOfWork.Address.GetByIdAsync(addressUpdateRequest.Id);
             if (address != null)
             {
+                // Nếu cập nhật địa chỉ này thành mặc định
+                if (addressUpdateRequest.IsDefault)
+                {
+                    // Set các address khác của user về false
+                    var allUserAddresses = await _unitOfWork.Address.GetByUserIdAsync(address.UserId);
+                    foreach (var addr in allUserAddresses.Where(a => a.IsDefault && a.AddressId != address.AddressId))
+                    {
+                        addr.IsDefault = false;
+                        await _unitOfWork.Address.UpdateAsync(addr);
+                    }
+                }
+
+                // Update địa chỉ hiện tại
                 _unitOfWork.Address.Context().Entry(address).CurrentValues.SetValues(addressUpdateRequest);
-                result = await _unitOfWork.Address.UpdateAsync(address);
+                var result = await _unitOfWork.Address.UpdateAsync(address);
                 if (result > 0) return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, address);
 
                 return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
@@ -119,18 +131,31 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
     {
         try
         {
-            var GetCurrentUser = userContextService.GetCurrentUser();
+            var currentUserId = userContextService.GetCurrentUser();
+
+            // Nếu address mới là mặc định, update tất cả các address khác về false
+            if (addressCreateRequest.IsDefault)
+            {
+                var allUserAddresses = await _unitOfWork.Address.GetByUserIdAsync(currentUserId);
+                foreach (var addr in allUserAddresses.Where(a => a.IsDefault))
+                {
+                    addr.IsDefault = false;
+                    await _unitOfWork.Address.UpdateAsync(addr);
+                }
+            }
+
             var address = new Address
             {
-                UserId = GetCurrentUser,
+                UserId = currentUserId,
                 TagName = addressCreateRequest.TagName,
                 ReceiverAddress = addressCreateRequest.ReceiverAddress,
                 ReceiverName = addressCreateRequest.ReceiverName,
                 ReceiverPhone = addressCreateRequest.ReceiverPhone,
                 IsDefault = addressCreateRequest.IsDefault,
             };
+
             var result = await _unitOfWork.Address.CreateAsync(address);
-            if (address != null)
+            if (result > 0)
                 return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, address);
 
             return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
