@@ -5,6 +5,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using System.Linq;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -54,6 +55,30 @@ public class PersonalizeService(UnitOfWork _unitOfWork, IUserContextService user
         };
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", personalizeResponse);
+    }
+
+    public async Task<IBusinessResult> GetPersonalizeByUserId(int userId)
+    {
+        // Lấy danh sách personalize theo userId
+        var personalizes = await _unitOfWork.Personalize.GetByUserId(userId);
+
+        // Kiểm tra dữ liệu null hoặc rỗng
+        if (personalizes == null || !personalizes.Any())
+        {
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
+        }
+
+        // Ánh xạ list entity sang list DTO
+        var personalizeResponses = personalizes.Select(personalize => new PersonalizeResponse
+        {
+            PersonalizeId = personalize.PersonalizeId,
+            UserId = personalize.UserId,
+            ShapeId = personalize.ShapeId,
+            EnvironmentId = personalize.EnvironmentId,
+            TankMethodId = personalize.TankMethodId,
+        }).ToList();
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", personalizeResponses);
     }
 
     public async Task<IBusinessResult> SavePersonalize(Personalize personalize)

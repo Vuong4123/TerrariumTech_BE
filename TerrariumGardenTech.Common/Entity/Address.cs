@@ -18,7 +18,9 @@ public partial class Address
     public string ReceiverPhone { get; set; } // max length 250
 
     public string ReceiverAddress { get; set; } // max length 250
-
+    public string ProvinceCode { get; set; }    // Thêm
+    public string DistrictCode { get; set; }    // Thêm
+    public string WardCode { get; set; }        // Thêm
     public bool IsDefault { get; set; } // true or false
 
     public virtual User User { get; set; }

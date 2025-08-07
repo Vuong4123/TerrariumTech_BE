@@ -13,5 +13,9 @@ public class AddressResponse
     public string ReceiverPhone { get; set; } // max length 250
 
     public string ReceiverAddress { get; set; }
+
+    public string ProvinceCode { get; set; }    // Thêm
+    public string DistrictCode { get; set; }    // Thêm
+    public string WardCode { get; set; }        // Thêm
     public bool IsDefault { get; set; }
 }

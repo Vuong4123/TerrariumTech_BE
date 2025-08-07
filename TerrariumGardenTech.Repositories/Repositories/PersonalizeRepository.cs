@@ -18,4 +18,10 @@ public class PersonalizeRepository : GenericRepository<Personalize>
             .Where(p => p.UserId == userId)
             .FirstOrDefaultAsync();
     }
+    public async Task<List<Personalize>> GetByUserId(int userId)
+    {
+        return await _context.Personalizes
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+    }
 }

@@ -27,6 +27,9 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 ReceiverAddress = t.ReceiverAddress,
                 ReceiverName = t.ReceiverName,
                 ReceiverPhone = t.ReceiverPhone,
+                ProvinceCode = t.ProvinceCode,    // Thêm ánh xạ ProvinceCode
+                DistrictCode = t.DistrictCode,    // Thêm ánh xạ DistrictCode
+                WardCode = t.WardCode,            // Thêm ánh xạ WardCode
                 IsDefault = t.IsDefault
             }).ToList();
 
@@ -55,6 +58,9 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 ReceiverAddress = address.ReceiverAddress,
                 ReceiverName = address.ReceiverName,
                 ReceiverPhone = address.ReceiverPhone,
+                ProvinceCode = address.ProvinceCode,    // Thêm ánh xạ ProvinceCode
+                DistrictCode = address.DistrictCode,    // Thêm ánh xạ DistrictCode
+                WardCode = address.WardCode,            // Thêm ánh xạ WardCode
                 IsDefault = address.IsDefault
             };
 
@@ -85,6 +91,9 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
             ReceiverAddress = t.ReceiverAddress,
             ReceiverName = t.ReceiverName,
             ReceiverPhone = t.ReceiverPhone,
+            ProvinceCode = t.ProvinceCode,    // Thêm ánh xạ ProvinceCode
+            DistrictCode = t.DistrictCode,    // Thêm ánh xạ DistrictCode
+            WardCode = t.WardCode,            // Thêm ánh xạ WardCode
             IsDefault = t.IsDefault
         }).ToList();
 
@@ -151,6 +160,9 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 ReceiverAddress = addressCreateRequest.ReceiverAddress,
                 ReceiverName = addressCreateRequest.ReceiverName,
                 ReceiverPhone = addressCreateRequest.ReceiverPhone,
+                ProvinceCode = addressCreateRequest.ProvinceCode,    // Thêm ánh xạ ProvinceCode
+                DistrictCode = addressCreateRequest.DistrictCode,    // Thêm ánh xạ DistrictCode
+                WardCode = addressCreateRequest.WardCode,            // Thêm ánh xạ WardCode
                 IsDefault = addressCreateRequest.IsDefault,
             };
 

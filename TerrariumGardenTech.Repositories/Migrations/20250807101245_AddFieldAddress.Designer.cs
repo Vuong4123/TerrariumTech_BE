@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250807101245_AddFieldAddress")]
+    partial class AddFieldAddress
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -552,9 +555,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("createdAt")
                         .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<bool>("IsFeatured")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Status")
                         .ValueGeneratedOnAdd()
@@ -1450,9 +1450,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("gender");
-
-                    b.Property<bool>("IsPersonalize")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Otp")
                         .HasMaxLength(50)
