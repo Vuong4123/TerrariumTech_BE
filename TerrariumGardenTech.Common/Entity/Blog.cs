@@ -24,6 +24,7 @@ public partial class Blog
 
     public string Status { get; set; }
     public string bodyHTML { get; set; }
+    public bool IsFeatured { get; set; } 
 
     public virtual BlogCategory BlogCategory { get; set; }
 

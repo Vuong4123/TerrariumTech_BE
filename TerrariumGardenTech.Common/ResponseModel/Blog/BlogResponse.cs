@@ -10,6 +10,7 @@ public class BlogResponse
     public string UrlImage { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string bodyHTML { get; set; } = string.Empty;
+    public bool IsFeatured { get; set; } = false; // Thêm trường IsFeatured
     public string Content { get; set; } = string.Empty;
 
     public DateTime? CreatedAt { get; set; }

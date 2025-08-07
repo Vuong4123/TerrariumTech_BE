@@ -15,7 +15,7 @@ public class BlogUpdateRequest
     public DateTime? UpdatedAt { get; set; }
 
     public string? bodyHTML { get; set; }
-
+    public bool IsFeatured { get; set; }  // Thêm trường IsFeatured
     public string Status { get; set; } = string.Empty;
     [FromForm]
     public IFormFile? ImageFile { get; set; } // Thay UrlImage bằng file upload

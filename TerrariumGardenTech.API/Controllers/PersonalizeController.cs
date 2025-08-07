@@ -27,10 +27,17 @@ public class PersonalizeController : ControllerBase
 
 
     // GET api/<PersonalizeController>/5Add commentMore actions
-    [HttpGet("get-{id}")]
+    [HttpGet("get-by/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _personalizeService.GetPersonalizeById(id);
+    }
+
+    // GET api/<PersonalizeController>/5Add commentMore actions
+    [HttpGet("get-by-userId/{userId}")]
+    public async Task<IBusinessResult> GetByUserId(int userId)
+    {
+        return await _personalizeService.GetPersonalizeById(userId);
     }
 
     // POST api/<PersonalizeController>

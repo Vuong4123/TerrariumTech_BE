@@ -38,6 +38,7 @@ public partial class User
     public string FullName { get; set; }
 
     public string Otp { get; set; }
+    public bool IsPersonalize { get; set; }
 
     public DateTime? OtpExpiration { get; set; }
     public string RefreshToken { get; set; } = string.Empty;

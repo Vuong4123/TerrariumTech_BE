@@ -24,7 +24,7 @@ public class PaymentController : ControllerBase
     {
         var response = await _payOsService.ProcessPaymentCallback(request);
         if (response.Status == 200)
-            return Redirect("trang-cam-on");
+            return Redirect("https://terra-tech-garden.vercel.app/payment-success");
 
         return Redirect("trang-that-bai");
     }
@@ -41,7 +41,7 @@ public class PaymentController : ControllerBase
     {
         var response = await _vnPayService.PaymentExecute(Request.Query);
         if (response.Status == 200)
-            return Redirect("trang-cam-on");
+            return Redirect("https://terra-tech-garden.vercel.app/payment-success");
 
         return Redirect("trang-that-bai");
     }
