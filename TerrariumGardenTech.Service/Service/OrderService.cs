@@ -117,6 +117,7 @@ public class OrderService : IOrderService
             TotalAmount = totalAmount,   // bỏ request.TotalAmount, dùng totalAmount
             OrderDate = DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
+            //PaymentStatus = "Unpaid", // Mặc định là Unpaid
             OrderItems = orderItems
         };
 

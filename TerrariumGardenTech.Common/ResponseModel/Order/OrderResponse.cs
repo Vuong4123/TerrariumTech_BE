@@ -1,8 +1,6 @@
-﻿using Org.BouncyCastle.Asn1.Ocsp;
-
-using TerrariumGardenTech.Common.Enums;
-
-using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+﻿using TerrariumGardenTech.Common.Enums;
+using TerrariumGardenTech.Common.ResponseModel.Address;
+using VNPAY.NET.Models;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Order;
 
@@ -25,6 +23,7 @@ public class OrderResponse
     public string ShippingStatus { get; set; } = string.Empty;
     public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
-
+    public AddressResponse Address { get; set; }
+    public List<PaymentResponse> Payment { get; set; }
     public List<OrderItemResponse> OrderItems { get; set; } = new();
 }
