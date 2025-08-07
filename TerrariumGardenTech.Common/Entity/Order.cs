@@ -14,7 +14,7 @@ public partial class Order
     public int OrderId { get; set; }
 
     public int UserId { get; set; }
-
+    public int? AddressId { get; set; }
     public int? VoucherId { get; set; }
 
     public decimal TotalAmount { get; set; }
@@ -40,6 +40,7 @@ public partial class Order
     public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
 
     public virtual User User { get; set; }
+    public virtual Address Address { get; set; }   // Navigation property mới
 
     public virtual Voucher Voucher { get; set; }
 
