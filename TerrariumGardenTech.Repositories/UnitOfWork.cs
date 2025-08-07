@@ -175,7 +175,7 @@ public class UnitOfWork
     {
         get { return _chatMessageRepository ??= new ChatMessageRepository(_unitOfWorkContext); }
     }
-    public CartItemRepository CartItem
+    public CartItemRepository CartItems
     {
         get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
     }

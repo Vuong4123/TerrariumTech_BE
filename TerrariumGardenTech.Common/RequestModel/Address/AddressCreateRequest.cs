@@ -13,5 +13,5 @@ public class AddressCreateRequest
     public string ReceiverPhone { get; set; } // max length 250
 
     public string ReceiverAddress { get; set; }
-    public bool IsDefault { get; set; } = true; // true or false
+    public bool IsDefault { get; set; } // true or false
 }
