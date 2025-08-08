@@ -20,7 +20,6 @@ public class OrderResponse
 
 
     public string PaymentStatus { get; set; } = string.Empty;
-    public string ShippingStatus { get; set; } = string.Empty;
     public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
     public AddressResponse Address { get; set; }
