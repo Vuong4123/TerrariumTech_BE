@@ -11,6 +11,10 @@ namespace TerrariumGardenTech.API.Controllers;
 [AllowAnonymous]
 public class PaymentController : ControllerBase
 {
+    // FE domain của bạn
+    private const string FE_BASE = "https://terra-tech-garden.vercel.app";
+    private const string FE_SUCCESS_PATH = "/payment-success";
+    private const string FE_FAIL_PATH = "/payment-fail"; // nếu muốn tách trang fail
     private readonly IPayOsService _payOsService;
     private readonly IVnPayService _vnPayService;
 
@@ -23,124 +27,79 @@ public class PaymentController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet("pay-os/callback")]
-    public async Task<IActionResult> ProcessPaymentFromPayOsCallback([FromQuery] PaymentReturnModel request)
-    {
-        //var response = await _payOsService.ProcessPaymentCallback(request);
-        //if (response.Status == 200)
-        //    return Redirect("https://terra-tech-garden.vercel.app/payment-success");
-
-        //return Redirect("trang-that-bai");
-        _logger.LogInformation("PayOS callback query: {@q}",
-            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
-
-        var res = await _payOsService.ProcessPaymentCallback(request);
-
-        var feUrl = res.Status == Const.SUCCESS_UPDATE_CODE
-            ? $"https://terra-tech-garden.vercel.app/payment-success?orderId={request.OrderId}"
-            : $"https://terra-tech-garden.vercel.app/payment-fail?orderId={request.OrderId}";
-
-        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
-            <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng...</body></html>";
-        return Content(html, "text/html");
-    }
+    // ====================== PAYOS ======================
 
     [HttpPost("pay-os")]
-    public async Task<IActionResult> CreatePaymentFromPayOsLink([FromBody] PaymentCreateRequest request)
+    public async Task<IActionResult> CreatePayOsLink([FromBody] PaymentCreateRequest request)
     {
-        var msg = await _payOsService.CreatePaymentLink(request.OrderId, request.Description);
-        return Ok(msg);
+        if (!ModelState.IsValid || request.OrderId <= 0)
+            return BadRequest("Invalid order id");
+
+        var result = await _payOsService.CreatePaymentLink(request.OrderId, request.Description ?? string.Empty);
+        return Ok(result);
     }
 
-    [HttpGet("vn-pay/callback")]
-    public async Task<IActionResult> PaymentCallback()
+    [AllowAnonymous]
+    [HttpGet("pay-os/callback")]
+    public async Task<IActionResult> PayOsCallback([FromQuery] PaymentReturnModel request)
     {
-        //var response = await _vnPayService.PaymentExecute(Request.Query);
-        //if (response.Status == 200)
-        //    return Redirect("https://terra-tech-garden.vercel.app/payment-success");
+        _logger.LogInformation("PAYOS callback: {@q}",
+            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
 
-        //return Redirect("trang-that-bai");
-        _logger.LogInformation("VNPAY callback: {@q}", Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+        var result = await _payOsService.ProcessPaymentCallback(request);
 
-        var res = await _vnPayService.PaymentExecute(Request.Query);
-        // cố lấy orderId từ vnp_TxnRef nếu có
-        var orderIdStr = Request.Query["vnp_TxnRef"].ToString();
-        var feUrl = res.Status == Const.SUCCESS_UPDATE_CODE
-            ? $"https://terra-tech-garden.vercel.app/payment-success?orderId={orderIdStr}"
-            : $"https://terra-tech-garden.vercel.app/payment-success?orderId={orderIdStr}";
+        // Giữ nguyên query khi đẩy về FE (nếu PayOS có trả các tham số cần)
+        var feBase = $"{FE_BASE}{FE_SUCCESS_PATH}";
+        var qs = Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty;
+        var feUrl = feBase + qs;
 
-        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}' /></head>
-            <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng...</body></html>";
+        // (hoặc) nếu FE chỉ cần alias:
+        // var orderId = request.OrderId;
+        // var status  = result.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
+        // feUrl = $"{FE_BASE}{FE_SUCCESS_PATH}?orderId={orderId}&status={status}";
+
+        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
+<body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
         return Content(html, "text/html");
     }
 
-    [HttpPost("vn-pay")]
-    public async Task<IActionResult> CreatePaymentUrl(PaymentInformationModel model)
-    {
-        var url = await _vnPayService.CreatePaymentUrl(model, HttpContext);
+    // ====================== VNPAY ======================
 
-        return Ok(url);
+    [HttpPost("vn-pay")]
+    public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentInformationModel model)
+    {
+        if (!ModelState.IsValid || model.OrderId <= 0)
+            return BadRequest("Invalid order id");
+
+        var result = await _vnPayService.CreatePaymentUrl(model, HttpContext);
+        return Ok(result);
     }
 
+    [AllowAnonymous]
+    [HttpGet("vn-pay/callback")]
+    public async Task<IActionResult> VnPayCallback()
+    {
+        // Log toàn bộ params VNPAY trả về
+        _logger.LogInformation("VNPAY callback: {@q}",
+            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
 
-//    // -------- PAYOS --------
+        // 1) xử lý & lưu DB
+        var result = await _vnPayService.PaymentExecute(Request.Query);
 
-//    [AllowAnonymous]
-//    [HttpGet("pay-os/callback")]
-//    public async Task<IActionResult> PayOsCallback([FromQuery] PaymentReturnModel request)
-//    {
-//        _logger.LogInformation("PayOS callback: {@q}", Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+        // 2) redirect về FE, giữ nguyên toàn bộ vnp_* đúng như VNPAY trả
+        var feBase = $"{FE_BASE}{FE_SUCCESS_PATH}";
+        var qs = Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty;
+        var feUrl = feBase + qs;
 
-//        var res = await _payOsService.ProcessPaymentCallback(request);
+        // (tuỳ chọn) thêm alias cho FE:
+        // var orderId = Request.Query["vnp_TxnRef"].ToString();
+        // var amountRaw = Request.Query["vnp_Amount"].ToString();
+        // var amountVnd = int.TryParse(amountRaw, out var a) ? a / 100 : 0;
+        // var success = result.Status == Const.SUCCESS_UPDATE_CODE;
+        // feUrl += $"&orderId={orderId}&amount={amountVnd}&status={(success ? "success" : "fail")}";
 
-//        // FE redirect url
-//        var feUrl = res.Status == Const.SUCCESS_UPDATE_CODE
-//            ? $"{FE_BASE}/payment-success?orderId={request.OrderId}"
-//            : $"{FE_BASE}/payment-fail?orderId={request.OrderId}";
-
-//        // Return HTML auto redirect (fallback nếu browser chặn 3xx)
-//        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}' /></head>
-//<body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng...</body></html>";
-//        return Content(html, "text/html");
-//    }
-
-//    [HttpPost("pay-os")]
-//    public async Task<IActionResult> CreatePayOsLink([FromBody] PaymentCreateRequest request)
-//    {
-//        if (!ModelState.IsValid || request.OrderId <= 0)
-//            return BadRequest("Invalid order id");
-
-//        var msg = await _payOsService.CreatePaymentLink(request.OrderId, request.Description ?? string.Empty);
-//        return Ok(msg); // msg.Data nên là checkoutUrl
-//    }
-
-//    // -------- VNPAY --------
-
-//    [AllowAnonymous]
-//    [HttpGet("vn-pay/callback")]
-//    public async Task<IActionResult> VnPayCallback()
-//    {
-//        _logger.LogInformation("VNPAY callback: {@q}", Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
-
-//        var res = await _vnPayService.PaymentExecute(Request.Query);
-//        // cố lấy orderId từ vnp_TxnRef nếu có
-//        var orderIdStr = Request.Query["vnp_TxnRef"].ToString();
-//        var feUrl = res.Status == Const.SUCCESS_UPDATE_CODE
-//            ? $"{FE_BASE}/payment-success?orderId={orderIdStr}"
-//            : $"{FE_BASE}/payment-fail?orderId={orderIdStr}";
-
-//        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}' /></head>
-//<body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng...</body></html>";
-//        return Content(html, "text/html");
-//    }
-
-//    [HttpPost("vn-pay")]
-//    public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentInformationModel model)
-//    {
-//        if (!ModelState.IsValid || model.OrderId <= 0)
-//            return BadRequest("Invalid order id");
-
-//        var url = await _vnPayService.CreatePaymentUrl(model, HttpContext);
-//        return Ok(url); // url.Data là paymentUrl
-//    }
+        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
+<body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
+        return Content(html, "text/html");
+    }
 }
