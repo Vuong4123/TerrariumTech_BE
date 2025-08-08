@@ -4,6 +4,8 @@ namespace TerrariumGardenTech.Service.IService;
 
 public interface IUserContextService
 {
-    public int GetCurrentUser();
+    int GetCurrentUser();
     RoleStatus GetCurrentUserRole();
+    string GetCurrentUsername();           // (Tùy chọn mở rộng)
+    bool IsAuthenticated();                // (Tùy chọn)
 }
