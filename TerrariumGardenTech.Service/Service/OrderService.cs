@@ -1,14 +1,10 @@
-﻿using Google.Type;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.Address;
 using TerrariumGardenTech.Common.ResponseModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.OrderItem;
-
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
