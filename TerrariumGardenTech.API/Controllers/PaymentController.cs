@@ -54,9 +54,9 @@ public class PaymentController : ControllerBase
         var feUrl = feBase + qs;
 
         // (hoặc) nếu FE chỉ cần alias:
-        // var orderId = request.OrderId;
-        // var status  = result.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
-        // feUrl = $"{FE_BASE}{FE_SUCCESS_PATH}?orderId={orderId}&status={status}";
+        var orderId = request.OrderId;
+        var status = result.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
+        feUrl = $"{FE_BASE}{FE_SUCCESS_PATH}?orderId={orderId}&status={status}";
 
         var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
 <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
@@ -92,11 +92,11 @@ public class PaymentController : ControllerBase
         var feUrl = feBase + qs;
 
         // (tuỳ chọn) thêm alias cho FE:
-        // var orderId = Request.Query["vnp_TxnRef"].ToString();
-        // var amountRaw = Request.Query["vnp_Amount"].ToString();
-        // var amountVnd = int.TryParse(amountRaw, out var a) ? a / 100 : 0;
-        // var success = result.Status == Const.SUCCESS_UPDATE_CODE;
-        // feUrl += $"&orderId={orderId}&amount={amountVnd}&status={(success ? "success" : "fail")}";
+        var orderId = Request.Query["vnp_TxnRef"].ToString();
+        var amountRaw = Request.Query["vnp_Amount"].ToString();
+        var amountVnd = int.TryParse(amountRaw, out var a) ? a / 100 : 0;
+        var success = result.Status == Const.SUCCESS_UPDATE_CODE;
+        feUrl += $"&orderId={orderId}&amount={amountVnd}&status={(success ? "success" : "fail")}";
 
         var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
 <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
