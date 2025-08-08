@@ -68,8 +68,8 @@ public class VnPayService : IVnPayService
 
             // Khuyến nghị dùng domain public cố định
             var urlCallBack = 
-                "https://terarium.shop/api/Payment/vn-pay/callback";
-            //"https://localhost:7072/api/Payment/vn-pay/callback"; // local test
+                //"https://terarium.shop/api/Payment/vn-pay/callback";
+            "https://localhost:7072/api/Payment/vn-pay/callback"; // local test
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
