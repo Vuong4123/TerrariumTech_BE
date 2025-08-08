@@ -13,6 +13,8 @@ public class OrderResponse
 
     public decimal? Deposit { get; set; }
 
+
+    public decimal? DiscountAmount { get; set; }
     public DateTime? OrderDate { get; set; }
 
 

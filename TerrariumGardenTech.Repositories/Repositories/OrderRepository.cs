@@ -20,6 +20,7 @@ public sealed class OrderRepository : GenericRepository<Order>
     {
         return await _context.Orders
             .Include(o => o.OrderItems)
+            .Include(o => o.Payment)
             .Where(o => o.UserId == userId)
             .ToListAsync(ct);
     }
@@ -34,6 +35,19 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.Payment)
             .Include(o => o.ReturnExchangeRequests)
             .FirstOrDefaultAsync(o => o.OrderId == id);
+    }
+
+    // get all order 
+    public async Task<List<Order>> GetAllAsync2()
+    {
+        return await _context.Orders
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.TerrariumVariant)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.Payment)
+            .Include(o => o.ReturnExchangeRequests)
+            .ToListAsync();
     }
 
     public async Task<int> SaveAsync()
