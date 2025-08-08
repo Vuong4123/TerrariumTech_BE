@@ -12,5 +12,7 @@ public class TerrariumDetailResponse
     public decimal? MaxPrice { get; set; }  // Giá cao nhất
     public int Stock { get; set; }
     public string Status { get; set; }
+    public double AverageRating { get; set; }
+    public int FeedbackCount { get; set; }
     public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
 }

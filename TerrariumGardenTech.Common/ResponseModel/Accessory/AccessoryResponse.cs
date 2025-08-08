@@ -19,5 +19,7 @@ public class AccessoryResponse
     public DateTime? UpdatedAt { get; set; }
 
     public string Status { get; set; } = string.Empty;
+    public double AverageRating { get; set; }
+    public int FeedbackCount { get; set; }
     public List<AccessoryImageResponse> AccessoryImages { get; set; } = [];
 }

@@ -691,12 +691,21 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValue("pending")
                 .HasColumnName("paymentStatus");
-            entity.Property(e => e.Status).IsRequired()
-                .HasConversion(new ValueConverter<OrderStatusEnum, string>(
-                    v => v.ToString(), 
-                    v => (OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), v)
-                )).HasMaxLength(50)
-                .HasColumnName("status");
+            //entity.Property(e => e.Status).IsRequired()
+            //    .HasConversion(new ValueConverter<OrderStatusEnum, string>(
+            //        v => v.ToString(), 
+            //        v => (OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), v)
+            //    )).HasMaxLength(50)
+            //    .HasColumnName("status");
+            entity.Property(e => e.Status)
+    .IsRequired()
+    .HasConversion(new ValueConverter<OrderStatusEnum, string>(
+        v => v.ToString(),
+        v => Enum.Parse<OrderStatusEnum>(v, /*ignoreCase=*/ true)
+    ))
+    .HasMaxLength(50)
+    .HasColumnName("status");
+
             entity.Property(e => e.TotalAmount)
                   .HasColumnType("decimal(12, 2)")
                   .HasColumnName("totalAmount");

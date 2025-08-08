@@ -25,6 +25,9 @@ using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Mappers;
 using TerrariumGardenTech.Service.Service;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
 
@@ -237,12 +240,30 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+//// Đăng ký Controller
+//builder.Services.AddControllers()
+//    .AddJsonOptions(options =>
+//    {
+//        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+//    });
 // Đăng ký Controller
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // 1. Viết các enum ra JSON dưới dạng camel-case (ví dụ: "pending")
+        // 2. Khi đọc, cho phép case-insensitive và cả giá trị số (1, 2, 3…)
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(
+                JsonNamingPolicy.CamelCase,
+                allowIntegerValues: true
+            )
+        );
+
+        // (Tuỳ chọn) nếu bạn muốn tất cả các property name cũng dùng camel-case:
+        // options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
+
 //.AddJsonOptions(options =>
 //{
 //    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;

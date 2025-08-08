@@ -162,6 +162,11 @@ public class UnitOfWork
         get { return _cartRepository ??= new CartRepository(_unitOfWorkContext); }
     }
 
+    public CartItemRepository CartItem
+    {
+        get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
+    }
+
     public ChatRepository Chat
     {
         get { return _chatRepository ??= new ChatRepository(_unitOfWorkContext); }
@@ -170,7 +175,7 @@ public class UnitOfWork
     {
         get { return _chatMessageRepository ??= new ChatMessageRepository(_unitOfWorkContext); }
     }
-    public CartItemRepository CartItem
+    public CartItemRepository CartItems
     {
         get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
     }
