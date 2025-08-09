@@ -15,5 +15,9 @@ namespace TerrariumGardenTech.Common.ResponseModel.Feedback
         public DateTime? CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public IEnumerable<string>? Images { get; set; }
+
+        // NEW:
+        public int TerrariumId { get; set; }
+        public string? TerrariumName { get; set; }
     }
 }

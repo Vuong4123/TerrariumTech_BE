@@ -48,9 +48,11 @@ public class PaymentController : ControllerBase
         return Ok(result);
     }
 
+
     [AllowAnonymous]
     [HttpGet("pay-os/callback")]
     public async Task<IActionResult> PayOsCallback([FromQuery] PaymentReturnModel request)
+
     {
         _logger.LogInformation("PAYOS callback: {@q}",
             Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
@@ -91,6 +93,7 @@ public class PaymentController : ControllerBase
     }
 
 
+
     [AllowAnonymous]
     [HttpGet("vn-pay/callback")]
     public async Task<IActionResult> VnPayCallback()
@@ -118,4 +121,5 @@ public class PaymentController : ControllerBase
 <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
         return Content(html, "text/html");
     }
+
 }

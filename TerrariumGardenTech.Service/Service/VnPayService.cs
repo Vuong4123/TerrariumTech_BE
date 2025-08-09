@@ -66,10 +66,12 @@ public class VnPayService : IVnPayService
 
             var pay = new VnPayLibrary();
 
+
             // Khuyến nghị dùng domain public cố định
             var urlCallBack = 
                 //"https://terarium.shop/api/Payment/vn-pay/callback";
             "https://localhost:7072/api/Payment/vn-pay/callback"; // local test
+
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
@@ -98,6 +100,7 @@ public class VnPayService : IVnPayService
 
     public async Task<IBusinessResult> PaymentExecute(IQueryCollection collections)
     {
+
         try
         {
             var pay = new VnPayLibrary();
@@ -140,11 +143,35 @@ public class VnPayService : IVnPayService
             // Trả DTO để controller gắn vào URL redirect
             var dto = BuildDtoFromQuery(collections, orderId, resp.Success);
             return new BusinessResult(resp.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE, null, dto);
+
         }
-        catch (Exception ex)
+
+        order.PaymentStatus = response.Success ? "PAID" : "FAILED";
+        order.TransactionId = response.TransactionId;
+        await _unitOfWork.Order.UpdateAsync(order);
+        if (order.Payment == null || !order.Payment.Any())
         {
+
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+
         }
+
+        order.Payment.Add(new Payment
+        {
+            OrderId = order.OrderId,
+            PaymentMethod = response.PaymentMethod,
+            PaymentAmount = response.Amount / 100, // Convert from cents to the correct currency unit
+            Status = response.Success ? "PAID" : "FAILED",
+            PaymentDate = response.PaymentDate ?? DateTime.UtcNow, // Use payment date if available, otherwise use current date
+        });
+        await _unitOfWork.SaveAsync();
+
+        var orderResponse = _mapper.Map<OrderResponse>(order);
+        return new BusinessResult(
+            response.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+            null,
+            orderResponse
+        );
     }
 
     private static VnPayResultDto BuildDtoFromQuery(IQueryCollection q, int orderId, bool success)

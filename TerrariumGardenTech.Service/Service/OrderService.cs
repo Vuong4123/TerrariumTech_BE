@@ -317,9 +317,7 @@ public class OrderService : IOrderService
             TotalAmount = totalAmount,
             OrderDate = System.DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
-
             PaymentStatus = "Unpaid",
-
             OrderItems = orderItems
         };
 

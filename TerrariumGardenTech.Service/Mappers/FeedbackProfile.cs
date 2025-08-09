@@ -14,26 +14,31 @@ namespace TerrariumGardenTech.Service.Mappers
     {
         public FeedbackProfile()
         {
-            // Map khi tạo mới
+            // Create
             CreateMap<FeedbackCreateRequest, Feedback>()
-                .ForMember(dest => dest.CreatedAt,
-                           opt => opt.MapFrom(_ => DateTime.UtcNow))
-                .ForMember(dest => dest.UpdatedAt,
-                           opt => opt.MapFrom(_ => DateTime.UtcNow));
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
-            // Map khi update: chỉ override UpdatedAt và những field non‑null
+            // Update (chỉ map field non-null, luôn cập nhật UpdatedAt)
             CreateMap<FeedbackUpdateRequest, Feedback>()
-                .ForMember(dest => dest.UpdatedAt,
-                           opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                 .ForAllMembers(opt =>
                     opt.Condition((src, dest, srcMember) => srcMember != null)
                 );
 
-            // Map entity → DTO trả về, gom List<string> từ FeedbackImages
+            // Entity -> DTO
             CreateMap<Feedback, FeedbackResponse>()
-                .ForMember(dest => dest.Images,
-                           opt => opt.MapFrom(src => src.FeedbackImages
-                                                         .Select(i => i.ImageUrl)));
+                // Ảnh feedback
+                .ForMember(d => d.Images,
+                    opt => opt.MapFrom(s => s.FeedbackImages.Select(i => i.ImageUrl)))
+                // Terrarium info (qua OrderItem)
+                .ForMember(d => d.TerrariumId,
+                    opt => opt.MapFrom(s => s.OrderItem != null ? s.OrderItem.TerrariumVariantId : 0))
+                .ForMember(d => d.TerrariumName,
+                    opt => opt.MapFrom(s => s.OrderItem != null && s.OrderItem.TerrariumVariant != null
+                        ? s.OrderItem.TerrariumVariant.Terrarium
+                        : null));
+            // OrderItemId, Rating, Comment, CreatedAt, UpdatedAt map mặc định.
         }
     }
 }

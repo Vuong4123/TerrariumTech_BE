@@ -16,12 +16,24 @@ namespace TerrariumGardenTech.API.Controllers
 
         int UserId => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] FeedbackCreateRequest req)
         {
             var res = await _svc.CreateAsync(req, UserId);
             return CreatedAtAction(nameof(GetByOrderItem),
                                    new { orderItemId = res.OrderItemId }, res);
+        }
+
+        // Lấy feedback theo terrarium với phân trang
+        [HttpGet("terrarium/{terrariumId:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByTerrarium(int terrariumId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var (items, total) = await _svc.GetByTerrariumAsync(terrariumId, page, pageSize);
+            Response.Headers.Add("X-Total-Count", total.ToString());
+            return Ok(items);
         }
 
         [HttpGet]
