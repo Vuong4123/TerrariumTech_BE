@@ -33,10 +33,10 @@ Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
 
-FirebaseApp.Create(new AppOptions
-{
-    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
-});
+//FirebaseApp.Create(new AppOptions
+//{
+//    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
+//});
 // Thêm dịch vụ CORS
 builder.Services.AddCors(options =>
 {
@@ -116,7 +116,8 @@ builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IAccessoryImageService, AccessoryImageService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IPayOsService, PayOsService>();
-
+builder.Services.AddScoped<IWalletServices, WalletServices>();
+builder.Services.AddScoped<IMomoServices, MomoServices>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>();

@@ -104,6 +104,8 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public DbSet<OrderRequestRefund> OrderRequestRefunds { get; set; }
     public virtual DbSet<Chat> Chats { get; set; }
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
+    public DbSet<Wallet> Wallets { get; set; }
+    public DbSet<WalletTransaction> WalletTransaction { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>

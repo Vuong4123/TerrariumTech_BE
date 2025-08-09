@@ -12,11 +12,12 @@ public class PaymentController : ControllerBase
 {
     private readonly IPayOsService _payOsService;
     private readonly IVnPayService _vnPayService;
-
-    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService)
+    private readonly IMomoServices _momoServices;
+    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService,IMomoServices momoServices)
     {
         _payOsService = payOsService;
         _vnPayService = vnPayService;
+        _momoServices = momoServices;
     }
 
     [HttpGet("pay-os/callback")]
@@ -53,6 +54,13 @@ public class PaymentController : ControllerBase
 
         return Ok(url);
     }
+    [HttpPost("momo/create")]
+    public async Task<IActionResult> CreatePaymentLink([FromBody] MomoRequest request)
+    {
+        var payUrl = await _momoServices.CreateMomoPaymentUrl(request);
+        return Ok(new { PayUrl = payUrl });
+    }
+
 
 
     //    [HttpGet("vn-pay/callback")]
