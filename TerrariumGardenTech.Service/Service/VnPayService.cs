@@ -71,8 +71,7 @@ public class VnPayService : IVnPayService
             var tick = DateTime.Now.Ticks.ToString();
             var pay = new VnPayLibrary();
             var urlCallBack =
-            //"https://terarium.shop/api/Payment/vn-pay/callback";
-            $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api/Payment/vn-pay/callback";
+                $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api/Payment/vn-pay/callback";
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
@@ -107,51 +106,50 @@ public class VnPayService : IVnPayService
 
     public async Task<IBusinessResult> PaymentExecute(IQueryCollection collections)
     {
-        try
+        var pay = new VnPayLibrary();
+        var response = pay.GetFullResponseData(collections, _configuration["Vnpay:HashSecret"]);
+
+        // Kiểm tra nếu không thành công
+        if (!response.Success)
         {
-            var pay = new VnPayLibrary();
-            var response = pay.GetFullResponseData(collections, _configuration["Vnpay:HashSecret"]);
-
-            if (!response.Success)
-                return new BusinessResult(Const.FAIL_READ_CODE, "VNPAY xác thực thất bại!");
-
-            // Nên lấy OrderId từ vnp_TxnRef nếu cần
-            if (!int.TryParse(response.OrderId, out var orderId))
-                return new BusinessResult(Const.FAIL_READ_CODE, "OrderId không hợp lệ! Giá trị: " + response.OrderId);
-
-            var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
-            if (order == null)
-                return new BusinessResult(Const.NOT_FOUND_CODE, $"Không tìm thấy đơn hàng: {orderId}");
-
-            order.PaymentStatus = response.Success ? "Paid" : "Failed";
-            order.TransactionId = response.TransactionId;
-            await _unitOfWork.Order.UpdateAsync(order);
-
-            if (order.Payment == null || !order.Payment.Any())
-                order.Payment = new List<Payment>();
-
-            order.Payment.Add(new Payment
-            {
-                OrderId = order.OrderId,
-                PaymentMethod = response.PaymentMethod,
-                PaymentAmount = response.Amount / 100,
-                Status = response.Success ? "Paid" : "Failed",
-                PaymentDate = response.PaymentDate ?? DateTime.UtcNow,
-            });
-            await _unitOfWork.SaveAsync();
-
-            var orderResponse = _mapper.Map<OrderResponse>(order);
-            return new BusinessResult(
-                response.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-                null,
-                orderResponse
-            );
+            return new BusinessResult(Const.FAIL_READ_CODE, null);
         }
-        catch (Exception ex)
+
+        if (!int.TryParse(response.OrderId, out var orderId))
         {
-            Console.WriteLine("[VNPAY CALLBACK ERROR]: " + ex.ToString());
-            return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            return new BusinessResult(Const.FAIL_READ_CODE, null);
         }
+
+        var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
+        if (order == null)
+        {
+            return new BusinessResult(Const.NOT_FOUND_CODE, null);
+        }
+
+        order.PaymentStatus = response.Success ? "PAID" : "FAILED";
+        order.TransactionId = response.TransactionId;
+        await _unitOfWork.Order.UpdateAsync(order);
+        if (order.Payment == null || !order.Payment.Any())
+        {
+            order.Payment = new List<Payment>();
+        }
+
+        order.Payment.Add(new Payment
+        {
+            OrderId = order.OrderId,
+            PaymentMethod = response.PaymentMethod,
+            PaymentAmount = response.Amount / 100, // Convert from cents to the correct currency unit
+            Status = response.Success ? "PAID" : "FAILED",
+            PaymentDate = response.PaymentDate ?? DateTime.UtcNow, // Use payment date if available, otherwise use current date
+        });
+        await _unitOfWork.SaveAsync();
+
+        var orderResponse = _mapper.Map<OrderResponse>(order);
+        return new BusinessResult(
+            response.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+            null,
+            orderResponse
+        );
     }
 
 

@@ -15,5 +15,7 @@ namespace TerrariumGardenTech.Service.IService
         Task<List<FeedbackResponse>> GetByOrderItemAsync(int orderItemId);
         Task<FeedbackResponse> UpdateAsync(int id, FeedbackUpdateRequest req, int userId);
         Task<bool> DeleteAsync(int id, int userId);
+        Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetByTerrariumAsync(int terrariumId, int page, int pageSize);
+
     }
 }

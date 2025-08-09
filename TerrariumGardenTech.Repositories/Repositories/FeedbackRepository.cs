@@ -31,6 +31,26 @@ namespace TerrariumGardenTech.Repositories.Repositories
                              .Include(f => f.FeedbackImages)
                              .FirstOrDefaultAsync(f => f.FeedbackId == id);
 
+        // Lấy theo ID (không bao gồm ảnh)
+        public async Task<(List<Feedback> Items, int Total)> GetByTerrariumAsync(int terrariumId, int page, int pageSize)
+        {
+            var q = _context.Feedbacks
+                .Include(f => f.FeedbackImages)
+                .Include(f => f.OrderItem)
+                    .ThenInclude(oi => oi.TerrariumVariant) // để lấy tên nếu cần
+                .Where(f => !f.IsDeleted && f.OrderItem.TerrariumVariantId == terrariumId);
+
+            var total = await q.CountAsync();
+
+            var list = await q.OrderByDescending(f => f.CreatedAt)
+                              .Skip((page - 1) * pageSize)
+                              .Take(pageSize)
+                              .ToListAsync();
+
+            return (list, total);
+        }
+
+
         // Get all có paging
         public async Task<(List<Feedback> Items, int Total)> GetAllAsync(int page, int pageSize)
         {

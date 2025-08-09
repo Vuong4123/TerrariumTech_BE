@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
-using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Common.RequestModel.FeedbackImage;
+using TerrariumGardenTech.Common.ResponseModel.Feedback;
+using TerrariumGardenTech.Service.Base;
 
 namespace FeedbackGardenTech.Service.IService
 {
@@ -12,5 +13,6 @@ namespace FeedbackGardenTech.Service.IService
         Task<IBusinessResult?> GetFeedbackImageByIdAsync(int feedbackId);
         Task<IBusinessResult> GetByFeedbackId(int feedbackId);
         Task<IBusinessResult> GetAllFeedbackImageAsync();
+
     }
 }

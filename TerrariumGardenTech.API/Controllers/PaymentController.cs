@@ -35,7 +35,7 @@ public class PaymentController : ControllerBase
         var msg = await _payOsService.CreatePaymentLink(request.OrderId, request.Description);
         return Ok(msg);
     }
-
+    
     [HttpGet("vn-pay/callback")]
     public async Task<IActionResult> PaymentCallback()
     {
@@ -53,40 +53,4 @@ public class PaymentController : ControllerBase
 
         return Ok(url);
     }
-
-
-    //    [HttpGet("vn-pay/callback")]
-    //    public async Task<IActionResult> PaymentCallback()
-    //    {
-    //        var response = await _vnPayService.PaymentExecute(Request.Query);
-    //        if (response.Status == 200)
-    //        {
-    //            var html = @"<html>
-    //<head>
-    //    <meta http-equiv='refresh' content='0;url=https://terra-tech-garden.vercel.app/payment-success' />
-    //</head>
-    //<body>
-    //    <script>
-    //        window.location.href = 'https://terra-tech-garden.vercel.app/payment-success';
-    //    </script>
-    //    <p>Đang chuyển hướng về trang xác nhận thành công...</p>
-    //</body>
-    //</html>";
-    //            return Content(html, "text/html");
-    //        }
-
-    //        // Thanh toán thất bại
-    //        var failHtml = @"<html>
-    //<head>
-    //    <meta http-equiv='refresh' content='0;url=https://terra-tech-garden.vercel.app/payment-fail' />
-    //</head>
-    //<body>
-    //    <script>
-    //        window.location.href = 'https://terra-tech-garden.vercel.app/payment-fail';
-    //    </script>
-    //    <p>Thanh toán thất bại! Đang chuyển về trang xác nhận...</p>
-    //</body>
-    //</html>";
-    //        return Content(failHtml, "text/html");
-    //    }
 }

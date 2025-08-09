@@ -10,6 +10,6 @@ namespace TerrariumGardenTech.Common.RequestModel.Feedback
     {
         public int Rating { get; set; }
         public string? Comment { get; set; }
-        public List<string>? ImageUrls { get; set; }
+        
     }
 }
