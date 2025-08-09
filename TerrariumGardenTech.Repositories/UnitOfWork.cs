@@ -39,12 +39,20 @@ public class UnitOfWork
     private ChatRepository _chatRepository;
     private ChatMessageRepository _chatMessageRepository;
     private FeedbackImageRepository _feedbackImageRepository;
-
+    private WalletRepository _walletRepository;
+    private WalletTransactionRepository _walletTransactionRepository;
     public UnitOfWork()
     {
         _unitOfWorkContext = new TerrariumGardenTechDBContext();
     }
-
+    public WalletTransactionRepository WalletTransactionRepository
+    {
+        get { return _walletTransactionRepository ??= new WalletTransactionRepository(_unitOfWorkContext); }
+    }
+    public WalletRepository Wallet
+    {
+        get { return _walletRepository ??= new WalletRepository(_unitOfWorkContext); }
+    }
 
     public TerrariumRepository Terrarium
     {

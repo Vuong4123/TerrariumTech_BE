@@ -44,7 +44,7 @@ namespace TerrariumGardenTech.API.Controllers
                 
             };
 
-            var result = await _terrariumService.CreateTerrarium(createRequest);
+            var result = await _terrariumService.CreateTerrariumAI(createRequest);
             return result;
         }
 

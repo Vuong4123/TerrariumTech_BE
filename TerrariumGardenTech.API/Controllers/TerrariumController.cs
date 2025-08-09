@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.Service;
 
 // using TerrariumGardenTech.Service.Service;
 
@@ -52,7 +50,7 @@ public class TerrariumController : ControllerBase
     }
 
     // GET api/<TerrariumController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> GetById(int id)
     {
         return await _terrariumService.GetById(id);
@@ -74,10 +72,8 @@ public class TerrariumController : ControllerBase
 
     // POST api/<TerrariumController>
     [HttpPost("add-terrarium")]
-    public async Task<IBusinessResult> Post([FromBody] TerrariumCreateRequest terrariumCreate)
+    public async Task<IBusinessResult> Post([FromBody] TerrariumCreate terrariumCreate)
     {
-        if (terrariumCreate == null || !ModelState.IsValid)
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Invalid request data.");
         return await _terrariumService.CreateTerrarium(terrariumCreate);
     }
 
@@ -85,8 +81,6 @@ public class TerrariumController : ControllerBase
     [HttpPut("update-terrarium/{id}")]
     public async Task<IBusinessResult> Put(TerrariumUpdateRequest terrariumUpdate)
     {
-        if (terrariumUpdate == null || !ModelState.IsValid)
-            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Invalid request data.");
         return await _terrariumService.UpdateTerrarium(terrariumUpdate);
     }
 

@@ -357,7 +357,7 @@ public class TerrariumService : ITerrariumService
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
-    public async Task<IBusinessResult> CreateTerrarium(TerrariumCreateRequest terrariumCreateRequest)
+    public async Task<IBusinessResult> CreateTerrariumAI(TerrariumCreateRequest terrariumCreateRequest)
     {
         try
         {
@@ -432,6 +432,69 @@ public class TerrariumService : ITerrariumService
         }
     }
 
+    public async Task<IBusinessResult> CreateTerrarium(TerrariumCreate terrariumCreateRequest)
+    {
+        try
+        {
+            // Nếu có AccessoryNames thì mới tìm
+            List<Accessory> accessories = new();
+            if (terrariumCreateRequest.AccessoryNames != null && terrariumCreateRequest.AccessoryNames.Any())
+            {
+                accessories = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
+            }
+
+            //// Kiểm tra nếu không có variant, hãy gán giá trị mặc định cho MinPrice và MaxPrice
+            //decimal defaultPrice = 100; // Giá trị mặc định khi không có variant
+            //decimal minPrice = terrariumCreateRequest.MinPrice ?? defaultPrice;
+            //decimal maxPrice = terrariumCreateRequest.MaxPrice ?? defaultPrice;
+
+            // Tạo mới Terrarium
+            var newTerrarium = new Terrarium
+            {
+                TerrariumName = terrariumCreateRequest.TerrariumName,
+                EnvironmentId = terrariumCreateRequest.EnvironmentId,
+                ShapeId = terrariumCreateRequest.ShapeId,
+                TankMethodId = terrariumCreateRequest.TankMethodId,
+                bodyHTML = terrariumCreateRequest.bodyHTML,
+                Description = terrariumCreateRequest.Description,
+                Status = terrariumCreateRequest.Status,
+
+
+                CreatedAt = DateTime.Now
+            };
+
+            // Tạo Terrarium vào cơ sở dữ liệu
+            var result = await _unitOfWork.Terrarium.CreateAsync(newTerrarium);
+
+
+            if (result > 0)
+            {
+                // Nếu có accessories thì gán
+                if (accessories != null && accessories.Any())
+                {
+                    foreach (var accessory in accessories)
+                    {
+                        var terrariumAccessory = new TerrariumAccessory
+                        {
+                            AccessoryId = accessory.AccessoryId,
+                            TerrariumId = newTerrarium.TerrariumId
+                        };
+                        _unitOfWork.TerrariumAccessory.Context().Add(terrariumAccessory);
+                    }
+                    await _unitOfWork.TerrariumAccessory.SaveChangesAsync();
+                }
+
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, newTerrarium);
+
+            }
+
+            return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+        }        
+    }
     public async Task<IBusinessResult> DeleteById(int id)
     {
         try

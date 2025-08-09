@@ -14,7 +14,8 @@ public interface ITerrariumService
     //Task<IBusinessResult> GetByAccesname(string name);
     Task<IBusinessResult> FilterTerrariumsAsync(int? environmentId, int? shapeId, int? tankMethodId);
     Task<IBusinessResult> GetById(int id);
-    Task<IBusinessResult> CreateTerrarium(TerrariumCreateRequest terrariumCreateRequest);
+    Task<IBusinessResult> CreateTerrariumAI(TerrariumCreateRequest terrariumCreateRequest);
+    Task<IBusinessResult> CreateTerrarium(TerrariumCreate terrariumCreateRequest);
     Task<IBusinessResult> UpdateTerrarium(TerrariumUpdateRequest terrariumUpdateRequest);
     Task<IBusinessResult> Save(Terrarium terrarium);
     Task<IBusinessResult> DeleteById(int id);
