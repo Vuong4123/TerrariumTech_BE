@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +13,8 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization;
 using TerrariumGardenTech.API.Authorization;
 using TerrariumGardenTech.API.Middlewares;
@@ -25,8 +28,7 @@ using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Mappers;
 using TerrariumGardenTech.Service.Service;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using static Google.Rpc.Context.AttributeContext.Types;
 
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
@@ -38,35 +40,33 @@ var builder = WebApplication.CreateBuilder(args);
 //    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
 //});
 // Thêm dịch vụ CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpecificOrigin", policy =>
+const string CorsPolicy = "AllowFrontend";
+    builder.Services.AddCors(options =>
     {
-        // Chỉ cho phép yêu cầu từ địa chỉ cụ thể (ví dụ: frontend đang chạy trên localhost:5173)
-        policy.WithOrigins("http://localhost:5173") // Địa chỉ của frontend
-            .WithOrigins("https://terra-tech-garden.vercel.app")
-            .WithOrigins("https://localhost:7072/api/Payment/vn-pay")
-            .AllowAnyMethod() // Cho phép bất kỳ phương thức HTTP nào (GET, POST, PUT, DELETE, ...)
-            .AllowAnyHeader(); // Cho phép bất kỳ header nào trong yêu cầu
+        options.AddPolicy(CorsPolicy, policy =>
+        {
+            policy
+                .WithOrigins(
+                    "https://terra-tech-garden.vercel.app", // FE prod
+                    "http://localhost:5173"                 // FE dev
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();                       // Nếu FE gửi cookie/Authorization
+        });
     });
-
-    // Hoặc bạn có thể cho phép tất cả các nguồn:
-    // options.AddPolicy("AllowAll", policy =>
-    // {
-    //     policy.AllowAnyOrigin()
-    //           .AllowAnyMethod()
-    //           .AllowAnyHeader();
-    // });
-});
+// ---------- Core services ----------
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); cfg.AddProfile<FeedbackProfile>(); });
+builder.Services.AddAutoMapper(cfg =>
+{ 
+    cfg.AddProfile<MappingProfile>(); 
+    cfg.AddProfile<FeedbackProfile>(); 
+});
 // Thêm AutoMapper
 
 var dsads = builder.Configuration["ConnectionStrings:DefaultConnectionString"];
 
-// Lấy cấu hình JWT
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings.GetValue<string>("SecretKey");
+
 builder.Services.AddDbContext<TerrariumGardenTechDBContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnectionString");
@@ -167,15 +167,18 @@ builder.Services.AddAuthorization(opt =>
     });
 });
 
-
 // Handler DI
 builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();
+
+// Lấy cấu hình JWT
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings.GetValue<string>("SecretKey");
 
 // Cấu hình Authentication với JWT Bearer và logging
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
 })
     .AddJwtBearer(options =>
     {
@@ -335,7 +338,7 @@ app.Use(async (context, next) =>
 });
 
 // Áp dụng middleware CORS
-app.UseCors("AllowSpecificOrigin"); // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
+app.UseCors(CorsPolicy); // Hoặc "AllowAll" nếu bạn cấu hình chính sách AllowAnyOrigin
 
 app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
@@ -343,8 +346,6 @@ app.UseHttpsRedirection();
 // Enable static files (for wwwroot folder)
 app.UseStaticFiles();
 
-app.UseGlobalExceptionHandler();
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

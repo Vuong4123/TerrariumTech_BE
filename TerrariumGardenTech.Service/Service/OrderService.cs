@@ -4,10 +4,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.Address;
 using TerrariumGardenTech.Common.ResponseModel.Order;
-using TerrariumGardenTech.Common.ResponseModel.OrderItem;
-
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -19,113 +16,336 @@ public class OrderService : IOrderService
 {
     private readonly ILogger<OrderService> _logger;
     private readonly UnitOfWork _unitOfWork;
+    private readonly IUserContextService _userContextService;
+
     //private readonly IUserContextService _userContextService;
 
-    public OrderService(UnitOfWork unitOfWork,IUserContextService userContextService, ILogger<OrderService> logger)
+    public OrderService(UnitOfWork unitOfWork,IUserContextService userContextService, ILogger<OrderService> logger  )
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        //_userContextService = userContextService ?? throw new ArgumentNullException(nameof(userContextService));
+        _userContextService = userContextService ?? throw new ArgumentNullException(nameof(userContextService));
     }
 
-    public async Task<IEnumerable<OrderResponse>> GetAllAsync()
+    public async Task<IBusinessResult> GetAllAsync()
     {
-        _logger.LogInformation("Lấy danh sách tất cả đơn hàng");
-        var orders = await _unitOfWork.Order.GetAllAsync(); // Gọi từ UnitOfWork
-        return orders.Select(ToResponse);
+        var orders = await _unitOfWork.Order.GetAllAsync2();
+
+        if (orders == null || !orders.Any())
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "Không có đơn hàng nào!");
+
+        var result = new List<OrderResponse>();
+
+        foreach (var order in orders)
+        {
+            var orderResponse = new OrderResponse
+            {
+                OrderId = order.OrderId,
+                UserId = order.UserId,
+                TotalAmount = order.TotalAmount,
+                Deposit = order.Deposit,
+                OrderDate = order.OrderDate,
+                Status = order.Status,
+                PaymentStatus = order.PaymentStatus ?? string.Empty,
+                //ShippingStatus = order.ShippingStatus ?? string.Empty,
+                TransactionId = order.TransactionId,
+                //PaymentMethod = order.PaymentMethod ?? string.Empty,
+                OrderItems = new List<OrderItemResponse>()
+            };
+
+            foreach (var item in order.OrderItems)
+            {
+                orderResponse.OrderItems.Add(new OrderItemResponse
+                {
+                    OrderItemId = item.OrderItemId,
+                    AccessoryId = item.AccessoryId,
+                    TerrariumVariantId = item.TerrariumVariantId,
+                    AccessoryQuantity = item.AccessoryQuantity,
+                    TerrariumVariantQuantity = item.TerrariumVariantQuantity,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    TotalPrice = item.TotalPrice
+                });
+            }
+
+            result.Add(orderResponse);
+        }
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng thành công", result);
     }
 
-    public async Task<OrderResponse?> GetByIdAsync(int id)
-    {
-        if (id <= 0)
-            throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
-        var order = await _unitOfWork.Order.GetOrderbyIdAsync(id); 
+    public async Task<IBusinessResult> GetByIdAsync(int orderId)
+    {
+        if (orderId <= 0)
+            return new BusinessResult(Const.BAD_REQUEST_CODE, "OrderId phải là số nguyên dương!");
+
+        var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
         if (order == null)
+            return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy đơn hàng!");
+
+        var orderResponse = new OrderResponse
         {
-            _logger.LogWarning("Không tìm thấy đơn hàng với ID {OrderId}", id);
-            return null;
-        }
+            OrderId = order.OrderId,
+            UserId = order.UserId,
+            TotalAmount = order.TotalAmount,
+            Deposit = order.Deposit,
+            OrderDate = order.OrderDate,
+            Status = order.Status,
+            PaymentStatus = order.PaymentStatus ?? string.Empty,
+            //ShippingStatus = order.ShippingStatus ?? string.Empty,
+            TransactionId = order.TransactionId,
+            //PaymentMethod = order.PaymentMethod ?? string.Empty,
+            OrderItems = new List<OrderItemResponse>()
+        };
 
-        return ToResponse(order);
-    }
-
-    public async Task<IBusinessResult> GetAllOrderByUserId(int userId)
-    {
-        // Lấy các địa chỉ theo userId từ cơ sở dữ liệu
-        var orderrrr = await _unitOfWork.Address.GetByUserIdAsync(userId);
-
-        // Kiểm tra nếu không có dữ liệu
-        if (orderrrr == null || !orderrrr.Any())
+        foreach (var item in order.OrderItems)
         {
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
-        }
-
-        // Trả về kết quả với dữ liệu đã ánh xạ
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, orderrrr);
-    }
-
-
-
-    public async Task<int> CreateAsync(OrderCreateRequest request)
-    {
-        // 1. Validate: bỏ hẳn mọi kiểm tra UnitPrice/TotalAmount
-        ValidateCreateRequest(request);
-
-        // 2. Chuẩn bị biến tính tổng tiền
-        decimal totalAmount = 0m;
-        var orderItems = new List<OrderItem>();
-
-        // 3. Duyệt từng item, load giá gốc từ DB và tính
-        foreach (var reqItem in request.Items)
-        {
-            decimal unitPrice;
-            if (reqItem.TerrariumVariantId.HasValue)
+            orderResponse.OrderItems.Add(new OrderItemResponse
             {
-                // CHỖ SỬA: đọc giá variant
-                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
-                unitPrice = variant.Price;
-            }
-            else
-            {
-                // CHỖ SỬA: đọc giá accessory
-                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
-                unitPrice = acc.Price;
-            }
-
-            // CHỖ SỬA: tính tổng dòng = unitPrice * quantity
-            var lineTotal = unitPrice * reqItem.Quantity;
-            totalAmount += lineTotal;
-
-            // CHỖ SỬA: khởi tạo OrderItem với giá mới
-            orderItems.Add(new OrderItem
-            {
-                AccessoryId = reqItem.AccessoryId,
-                TerrariumVariantId = reqItem.TerrariumVariantId,
-                Quantity = reqItem.Quantity,
-                UnitPrice = unitPrice,      // giá tự tính
-                TotalPrice = lineTotal      // tổng tự tính
+                OrderItemId = item.OrderItemId,
+                AccessoryId = item.AccessoryId,
+                TerrariumVariantId = item.TerrariumVariantId,
+                AccessoryQuantity = item.AccessoryQuantity,
+                TerrariumVariantQuantity = item.TerrariumVariantQuantity,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                TotalPrice = item.TotalPrice
             });
         }
 
-        // 4. Tạo Order, gán tổng tự tính
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy đơn hàng thành công", orderResponse);
+    }
+
+
+    public async Task<IBusinessResult> GetAllOrderByUserId(int userId)
+    {
+        var orders = await _unitOfWork.Order.FindByUserAsync(userId);
+
+        if (orders == null || !orders.Any())
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "User chưa có đơn hàng nào!");
+
+        var result = new List<OrderResponse>();
+
+        foreach (var order in orders)
+        {
+            var orderResponse = new OrderResponse
+            {
+                OrderId = order.OrderId,
+                UserId = order.UserId,
+                TotalAmount = order.TotalAmount,
+                Deposit = order.Deposit,
+                OrderDate = order.OrderDate,
+                Status = order.Status,
+                PaymentStatus = order.PaymentStatus ?? string.Empty,
+                //ShippingStatus = order.ShippingStatus ?? string.Empty,
+                TransactionId = order.TransactionId,
+                //PaymentMethod = order.PaymentMethod ?? string.Empty,
+                OrderItems = new List<OrderItemResponse>()
+            };
+
+            foreach (var item in order.OrderItems)
+            {
+                orderResponse.OrderItems.Add(new OrderItemResponse
+                {
+                    OrderItemId = item.OrderItemId,
+                    AccessoryId = item.AccessoryId,
+                    TerrariumVariantId = item.TerrariumVariantId,
+                    AccessoryQuantity = item.AccessoryQuantity,
+                    TerrariumVariantQuantity = item.TerrariumVariantQuantity,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    TotalPrice = item.TotalPrice
+                });
+            }
+
+            result.Add(orderResponse);
+        }
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng thành công", result);
+    }
+
+
+
+
+    //public async Task<int> CreateAsync(OrderCreateRequest request)
+    //{
+    //    // 1. Validate: bỏ hẳn mọi kiểm tra UnitPrice/TotalAmount
+    //    ValidateCreateRequest(request);
+
+    //    // 2. Chuẩn bị biến tính tổng tiền
+    //    decimal totalAmount = 0m;
+    //    var orderItems = new List<OrderItem>();
+
+    //    // 3. Duyệt từng item, load giá gốc từ DB và tính
+    //    foreach (var reqItem in request.Items)
+    //    {
+    //        decimal unitPrice;
+    //        if (reqItem.TerrariumVariantId.HasValue)
+    //        {
+    //            // CHỖ SỬA: đọc giá variant
+    //            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+    //            unitPrice = variant.Price;
+    //        }
+    //        else
+    //        {
+    //            // CHỖ SỬA: đọc giá accessory
+    //            var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+    //            unitPrice = acc.Price;
+    //        }
+
+    //        // CHỖ SỬA: tính tổng dòng = unitPrice * quantity
+    //        var lineTotal = unitPrice * reqItem.Quantity;
+    //        totalAmount += lineTotal;
+
+    //        // CHỖ SỬA: khởi tạo OrderItem với giá mới
+    //        orderItems.Add(new OrderItem
+    //        {
+    //            AccessoryId = reqItem.AccessoryId,
+    //            TerrariumVariantId = reqItem.TerrariumVariantId,
+    //            TerrariumVariantQuantity = reqItem.TerrariumVariantQuantity ?? 0,
+    //            AccessoryQuantity = reqItem.AccessoryQuantity ?? 0,
+    //            Quantity = reqItem.Quantity,
+    //            UnitPrice = unitPrice,      // giá tự tính
+    //            TotalPrice = lineTotal      // tổng tự tính
+    //        });
+    //    }
+
+    //    // 4. Tạo Order, gán tổng tự tính
+    //    var order = new Order
+    //    {
+    //        UserId = request.UserId,
+    //        VoucherId = request.VoucherId,
+    //        Deposit = request.Deposit,
+    //        TotalAmount = totalAmount,   // bỏ request.TotalAmount, dùng totalAmount
+    //        OrderDate = DateTime.UtcNow,
+    //        //PaymentStatus = OrderStatusEnum.Pending.ToString(),
+    //        //ShippingStatus = string.IsNullOrEmpty(request.ShippingStatus) ? TransportStatusEnum.InWarehouse.ToString() : request.ShippingStatus,
+    //        //PaymentMethod = request.PaymentMethod,
+    //        Status = OrderStatusEnum.Pending,
+    //        PaymentStatus = "Unpaid", // Mặc định là Unpaid
+    //        OrderItems = orderItems
+    //    };
+
+    //    // 5. Lưu vào DB
+    //    await _unitOfWork.Order.CreateAsync(order);
+    //    await _unitOfWork.SaveAsync();
+    //    return order.OrderId;
+    //}
+
+    public async Task<int> CreateAsync(OrderCreateRequest request)
+    {
+        ValidateCreateRequest(request);
+
+        int userId = _userContextService.GetCurrentUser();
+
+        decimal totalAmount = 0m;
+        var orderItems = new List<OrderItem>();
+
+        Voucher voucher = null;
+        decimal discountAmount = 0;
+
+        if (request.VoucherId != null && request.VoucherId != 0)
+        {
+            int voucherId = request.VoucherId ?? 0;
+            voucher = _unitOfWork.Voucher.GetById(voucherId);
+
+            if (voucher != null)
+            {
+                bool isValidVoucher = voucher.Status == VoucherStatus.Active.ToString() &&
+                 voucher.ValidFrom <= System.DateTime.Now &&
+                 voucher.ValidTo >= System.DateTime.Now;
+
+                if (isValidVoucher)
+                {
+                    discountAmount = voucher.DiscountAmount ?? 0;
+                }
+            }
+        }
+
+        foreach (var reqItem in request.Items)
+        {
+            // Nếu có Accessory
+            if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
+            {
+                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+                int accessoryQty = reqItem.AccessoryQuantity ?? 0;
+                decimal accessoryUnitPrice = acc.Price;
+                decimal accessoryLineTotal = accessoryUnitPrice * accessoryQty;
+                totalAmount += accessoryLineTotal;
+
+                orderItems.Add(new OrderItem
+                {
+                    AccessoryId = reqItem.AccessoryId,
+                    TerrariumVariantId = null,
+                    AccessoryQuantity = accessoryQty,
+                    TerrariumVariantQuantity = 0,
+                    Quantity = accessoryQty,
+                    UnitPrice = accessoryUnitPrice,
+                    TotalPrice = accessoryLineTotal
+                });
+            }
+
+            // Nếu có TerrariumVariant
+            if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+                int terrariumQty = reqItem.TerrariumVariantQuantity ?? 0;
+                decimal variantUnitPrice = variant.Price;
+                decimal variantLineTotal = variantUnitPrice * terrariumQty;
+                totalAmount += variantLineTotal;
+
+                orderItems.Add(new OrderItem
+                {
+                    AccessoryId = null,
+                    TerrariumVariantId = reqItem.TerrariumVariantId,
+                    AccessoryQuantity = 0,
+                    TerrariumVariantQuantity = terrariumQty,
+                    Quantity = terrariumQty,
+                    UnitPrice = variantUnitPrice,
+                    TotalPrice = variantLineTotal
+                });
+            }
+        }
+
+        totalAmount = totalAmount - discountAmount;
         var order = new Order
         {
-            UserId = request.UserId,
+            UserId = userId,
             VoucherId = request.VoucherId,
             Deposit = request.Deposit,
-            TotalAmount = totalAmount,   // bỏ request.TotalAmount, dùng totalAmount
-            OrderDate = DateTime.UtcNow,
+            TotalAmount = totalAmount,
+            OrderDate = System.DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
-            //PaymentStatus = "Unpaid", // Mặc định là Unpaid
+
+            PaymentStatus = "Unpaid",
+
             OrderItems = orderItems
         };
 
-        // 5. Lưu vào DB
-        await _unitOfWork.Order.CreateAsync(order);
-        await _unitOfWork.SaveAsync();
-        return order.OrderId;
+        try
+        {
+            await _unitOfWork.Order.CreateAsync(order);
+            await _unitOfWork.SaveAsync();
+            return order.OrderId;
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.Message;
+            if (ex.InnerException != null)
+                msg += " | INNER: " + ex.InnerException.Message;
+
+            // Log vào hệ thống để debug (nếu có _logger)
+            _logger?.LogError(ex, $"Order creation failed: {msg}");
+
+            // Có thể trả về hoặc throw để FE/debug nhìn thấy lỗi thật
+            throw new Exception("Order create error: " + msg, ex);
+        }
     }
+
+
+
+
 
 
 
@@ -176,7 +396,9 @@ public class OrderService : IOrderService
 
         // OrderRepository đã có sẵn phương thức FindByUserAsync
         var orders = await _unitOfWork.Order.FindByUserAsync(userId);
-        return orders.Select(ToResponse);
+
+        // Specify the type arguments explicitly to resolve CS0411
+        return orders.Select(order => ToResponse(order, _unitOfWork));
     }
 
 
@@ -242,7 +464,7 @@ public class OrderService : IOrderService
             PaymentMethod = paymentMethod.Trim(),
             PaymentAmount = due,
 
-            PaymentDate = DateTime.UtcNow
+            PaymentDate = System.DateTime.UtcNow
         };
 
         try
@@ -283,7 +505,7 @@ public class OrderService : IOrderService
             OrderId = order.OrderId,
             Reason = request.Reason,
             Status = RequestRefundStatusEnum.Waiting,
-            RequestDate = DateTime.Today            
+            RequestDate = System.DateTime.Today            
         };
         order.Status = OrderStatusEnum.RequestRefund;
         await _unitOfWork.OrderRequestRefund.CreateAsync(refundRequest);
@@ -335,7 +557,7 @@ public class OrderService : IOrderService
                 Note = request.Note,
                 IsRefund = true,
                 UserId = assignUser?.UserId,
-                CreatedDate = DateTime.Now,
+                CreatedDate = System.DateTime.Now,
                 CreatedBy = currentUser.Username
             };
         }
@@ -344,7 +566,7 @@ public class OrderService : IOrderService
             refund.Status = request.Status;
             refund.ReasonModified = request.Reason;
             refund.UserModified = currentUserId;
-            refund.LastModifiedDate = DateTime.Now;
+            refund.LastModifiedDate = System.DateTime.Now;
             refund.IsPoint = request.IsPoint;
             if (refund.Status == RequestRefundStatusEnum.Approved)
             {
@@ -388,71 +610,94 @@ public class OrderService : IOrderService
 
     #region Helpers
 
+    //private static void ValidateCreateRequest(OrderCreateRequest r)
+    //{
+    //    if (r.UserId <= 0)
+    //        throw new ArgumentException("UserId phải là số nguyên dương.", nameof(r.UserId));
+
+    //    if (r.Items == null || !r.Items.Any())
+    //        throw new ArgumentException("Phải có ít nhất một item trong đơn hàng.", nameof(r.Items));
+
+    //    foreach (var item in r.Items)
+    //    {
+    //        if (item.Quantity <= 0)
+    //            throw new ArgumentException("Quantity của item phải lớn hơn 0.", nameof(item.Quantity));
+    //        if (item.AccessoryId == null && item.TerrariumVariantId == null)
+    //            throw new ArgumentException("Item phải có AccessoryId hoặc TerrariumVariantId.", nameof(r.Items));
+    //    }
+    //}
     private static void ValidateCreateRequest(OrderCreateRequest r)
     {
-        if (r.UserId <= 0)
-            throw new ArgumentException("UserId phải là số nguyên dương.", nameof(r.UserId));
-
+        // KHÔNG cần check UserId
         if (r.Items == null || !r.Items.Any())
             throw new ArgumentException("Phải có ít nhất một item trong đơn hàng.", nameof(r.Items));
 
         foreach (var item in r.Items)
         {
-            if (item.Quantity <= 0)
-                throw new ArgumentException("Quantity của item phải lớn hơn 0.", nameof(item.Quantity));
-            if (item.AccessoryId == null && item.TerrariumVariantId == null)
-                throw new ArgumentException("Item phải có AccessoryId hoặc TerrariumVariantId.", nameof(r.Items));
+            // KHÔNG cần check Quantity
+            if ((item.AccessoryId == null && item.TerrariumVariantId == null)
+                || ((item.AccessoryQuantity ?? 0) <= 0 && (item.TerrariumVariantQuantity ?? 0) <= 0))
+                throw new ArgumentException("Item phải có AccessoryId hoặc TerrariumVariantId và quantity > 0.", nameof(r.Items));
         }
     }
 
 
+
     // CHUYỂN thành async để gọi DB bên trong
-    private async Task<Order> MapToEntityAsync(OrderCreateRequest r)
+    private async Task<Order> MapToEntityAsync(OrderCreateRequest r, int userId)
     {
-        // 1. Tạo list chứa OrderItem
         var orderItems = new List<OrderItem>();
         decimal totalAmount = 0m;
 
         foreach (var reqItem in r.Items)
         {
-            // 2. Lấy price từ database
-            decimal unitPrice;
-            if (reqItem.TerrariumVariantId.HasValue)
+            if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
             {
-                // CHỖ SỬA: lấy giá variant
-                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
-                unitPrice = variant.Price;
-            }
-            else
-            {
-                // CHỖ SỬA: lấy giá accessory
                 var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
-                unitPrice = acc.Price;
+                int qty = reqItem.AccessoryQuantity ?? 0;
+                decimal unitPrice = acc.Price;
+                var lineTotal = unitPrice * qty;
+                totalAmount += lineTotal;
+
+                orderItems.Add(new OrderItem
+                {
+                    AccessoryId = reqItem.AccessoryId,
+                    TerrariumVariantId = null,
+                    AccessoryQuantity = qty,
+                    TerrariumVariantQuantity = 0,
+                    Quantity = qty,
+                    UnitPrice = unitPrice,
+                    TotalPrice = lineTotal
+                });
             }
-
-            // 3. Tính total của dòng
-            var lineTotal = unitPrice * reqItem.Quantity;
-            totalAmount += lineTotal;
-
-            // 4. Khởi tạo OrderItem với giá tự tính
-            orderItems.Add(new OrderItem
+            if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
             {
-                AccessoryId = reqItem.AccessoryId,
-                TerrariumVariantId = reqItem.TerrariumVariantId,
-                Quantity = reqItem.Quantity,
-                UnitPrice = unitPrice,      // giá tự fetch
-                TotalPrice = lineTotal       // tính ra
-            });
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+                int qty = reqItem.TerrariumVariantQuantity ?? 0;
+                decimal unitPrice = variant.Price;
+                var lineTotal = unitPrice * qty;
+                totalAmount += lineTotal;
+
+                orderItems.Add(new OrderItem
+                {
+                    AccessoryId = null,
+                    TerrariumVariantId = reqItem.TerrariumVariantId,
+                    AccessoryQuantity = 0,
+                    TerrariumVariantQuantity = qty,
+                    Quantity = qty,
+                    UnitPrice = unitPrice,
+                    TotalPrice = lineTotal
+                });
+            }
         }
 
-        // 5. Tạo hẳn entity Order với tổng tự tính
         var order = new Order
         {
-            UserId = r.UserId,
+            UserId = userId, // Truyền từ controller hoặc context
             VoucherId = r.VoucherId,
             Deposit = r.Deposit,
-            TotalAmount = totalAmount,             // gán total tự tính
-            OrderDate = DateTime.UtcNow,
+            TotalAmount = totalAmount,
+            OrderDate = System.DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
             OrderItems = orderItems
         };
@@ -461,8 +706,19 @@ public class OrderService : IOrderService
     }
 
 
-    private static OrderResponse ToResponse(Order o)
+
+    private static OrderResponse ToResponse(Order o, UnitOfWork unitOfWork)
     {
+        decimal discountAmount = 0;
+        if (o.VoucherId != null && o.VoucherId > 0)
+        {
+            var voucher = unitOfWork.Voucher.GetByIdAsync(o.VoucherId.Value).Result;
+            if (voucher != null)
+            {
+                discountAmount = voucher.DiscountAmount ?? 0;
+            }
+        }
+
         return new OrderResponse
         {
             OrderId = o.OrderId,
@@ -471,6 +727,10 @@ public class OrderService : IOrderService
             Deposit = o.Deposit,
             OrderDate = o.OrderDate,
             Status = o.Status,
+            PaymentStatus = o.PaymentStatus,
+            DiscountAmount = discountAmount,
+            TransactionId = o.TransactionId,
+            PaymentMethod = o.Payment != null && o.Payment.Count > 0 ? o.Payment.First().PaymentMethod : "",
             OrderItems = o.OrderItems.Select(i => new OrderItemResponse
             {
                 OrderItemId = i.OrderItemId,
@@ -478,7 +738,9 @@ public class OrderService : IOrderService
                 TerrariumVariantId = i.TerrariumVariantId,
                 Quantity = i.Quantity ?? 0,
                 UnitPrice = i.UnitPrice ?? 0,
-                TotalPrice = i.TotalPrice ?? 0
+                TotalPrice = i.TotalPrice ?? 0,
+                AccessoryQuantity = i.AccessoryQuantity ?? 0,
+                TerrariumVariantQuantity = i.TerrariumVariantQuantity ?? 0
             }).ToList()
         };
     }

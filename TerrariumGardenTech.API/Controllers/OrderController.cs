@@ -128,17 +128,13 @@ public class OrderController : ControllerBase
         }
     }
 
-    /// <summary>
-    ///     Tạo mới đơn hàng
-    /// </summary>
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> Create([FromBody] OrderCreateRequest req)
     {
         try
         {
-            req.UserId = User.GetUserId();
-            var id = await _svc.CreateAsync(req);
+            var id = await _svc.CreateAsync(req);  // CHỈ TRUYỀN 1 THAM SỐ!
             return CreatedAtAction(nameof(Get), new { id }, new { orderId = id });
         }
         catch (ArgumentException ae)
@@ -154,6 +150,8 @@ public class OrderController : ControllerBase
             return StatusCode(500, new { message = ex.Message });
         }
     }
+
+
 
 
     /// <summary>

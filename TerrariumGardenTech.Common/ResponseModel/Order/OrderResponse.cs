@@ -13,6 +13,8 @@ public class OrderResponse
 
     public decimal? Deposit { get; set; }
 
+
+    public decimal? DiscountAmount { get; set; }
     public DateTime? OrderDate { get; set; }
 
 
@@ -20,7 +22,6 @@ public class OrderResponse
 
 
     public string PaymentStatus { get; set; } = string.Empty;
-    public string ShippingStatus { get; set; } = string.Empty;
     public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
     public AddressResponse Address { get; set; }

@@ -19,7 +19,9 @@ public class MappingProfile : Profile
     {
         CreateMap<Order, OrderResponse>().ReverseMap();
         CreateMap<OrderItem, OrderItemResponse>()
-        .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity ?? 0));
+        .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity ?? 0))
+        .ForMember(dest => dest.AccessoryQuantity, opt => opt.MapFrom(src => src.AccessoryQuantity ?? 0))
+        .ForMember(dest => dest.TerrariumVariantQuantity, opt => opt.MapFrom(src => src.TerrariumVariantQuantity ?? 0));
         CreateMap<Payment, PaymentResponse>();
         CreateMap<Address, AddressResponse>();
     }

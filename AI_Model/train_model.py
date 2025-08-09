@@ -5,8 +5,6 @@ import pickle
 
 # Load dữ liệu
 df = pd.read_csv('terrarium_data.csv')
-
-# Tạo X và y (ở đây ta dự đoán MinPrice, MaxPrice, Stock)
 X = df[['EnvironmentId', 'ShapeId', 'TankMethodId']]
 y = df[['MinPrice', 'MaxPrice', 'Stock']]
 

@@ -33,15 +33,18 @@ namespace TerrariumGardenTech.API.Controllers
                 ShapeId = aiRequest.ShapeId,
                 TankMethodId = aiRequest.TankMethodId,
                 TerrariumName = aiResult.TerrariumName,
-                Description = aiResult.Description,
-                MaxPrice=aiResult.MaxPrice,
                 MinPrice=aiResult.MinPrice,
+                MaxPrice=aiResult.MaxPrice,
+                Stock=aiResult.Stock,
+                Description = aiResult.Description,
                 bodyHTML = $"<p>{aiResult.Description}</p>",
                 Status = "Active",
-                AccessoryNames = new List<string> { "Hình hộp chữ nhật nhỏ", "Hình hộp chữ nhật vừa", "Hình hộp chữ nhật lớn" } // Bạn có thể huấn luyện AI gợi ý thêm tên phụ kiện
+                AccessoryNames = new List<string> { "Hình hộp chữ nhật nhỏ", "Hình hộp chữ nhật vừa", "Hình hộp chữ nhật lớn" }, 
+                TerrariumImages= aiResult.TerrariumImages                 
+                
             };
 
-            var result = await _terrariumService.CreateTerrarium(createRequest);
+            var result = await _terrariumService.CreateTerrariumAI(createRequest);
             return result;
         }
 

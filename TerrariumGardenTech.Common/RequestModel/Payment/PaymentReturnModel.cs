@@ -4,6 +4,7 @@ public class PaymentReturnModel
 {
     public int OrderId { get; set; }
     public PaymentReturnModelStatus StatusReturn { get; set; }
+    public string? TransactionId { get; set; }
     public string? Status { get; set; }
 }
 

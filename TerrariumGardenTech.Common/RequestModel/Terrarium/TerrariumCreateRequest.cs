@@ -1,5 +1,10 @@
 ﻿namespace TerrariumGardenTech.Common.RequestModel.Terrarium;
 
+public class TerrariumImageRequest
+{
+    public string ImageUrl { get; set; }
+}
+
 public class TerrariumCreateRequest
 {
     public int EnvironmentId { get; set; }
@@ -7,6 +12,8 @@ public class TerrariumCreateRequest
     public int TankMethodId { get; set; }
     public List<string> AccessoryNames { get; set; } = [];
     public string TerrariumName { get; set; } = default!;
+    public List<string> TerrariumImages { get; set; }
+    public int Stock { get; set; }
     public decimal MinPrice { get; set; }
     public decimal MaxPrice { get; set; }
     public string Description { get; set; } = string.Empty;
