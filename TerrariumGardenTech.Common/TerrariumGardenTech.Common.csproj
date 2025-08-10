@@ -13,6 +13,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.7" />
         <PackageReference Include="OpenAI" Version="2.2.0" />
         <PackageReference Include="payOS" Version="1.0.9" />
+        <PackageReference Include="QRCoder" Version="1.6.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
         <PackageReference Include="VNPAY.NET" Version="8.5.0" />

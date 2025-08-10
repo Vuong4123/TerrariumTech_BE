@@ -19,11 +19,12 @@ public class PaymentController : ControllerBase
     private readonly IVnPayService _vnPayService;
 
     private readonly IMomoServices _momoServices;
-    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService,IMomoServices momoServices)
+    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService, IMomoServices momoServices)
     {
         _payOsService = payOsService;
         _vnPayService = vnPayService;
         _momoServices = momoServices;
+    }
 
 
     private readonly ILogger<PaymentController> _logger;

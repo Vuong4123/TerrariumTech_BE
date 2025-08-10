@@ -5,6 +5,7 @@ using Net.payOS.Types;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Config;
 using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
@@ -104,74 +105,48 @@ public class VnPayService : IVnPayService
         try
         {
             var pay = new VnPayLibrary();
-            var resp = pay.GetFullResponseData(collections, _configuration["Vnpay:HashSecret"]);
-            if (!resp.Success)
+            var response = pay.GetFullResponseData(collections, _configuration["Vnpay:HashSecret"]);
+
+            if (!response.Success)
                 return new BusinessResult(Const.FAIL_READ_CODE, "VNPAY xác thực thất bại!");
 
-            if (!int.TryParse(resp.OrderId, out var orderId))
-                return new BusinessResult(Const.FAIL_READ_CODE, "OrderId không hợp lệ! Giá trị: " + resp.OrderId);
+            // Nên lấy OrderId từ vnp_TxnRef nếu cần
+            if (!int.TryParse(response.OrderId, out var orderId))
+                return new BusinessResult(Const.FAIL_READ_CODE, "OrderId không hợp lệ! Giá trị: " + response.OrderId);
 
             var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
             if (order == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, $"Không tìm thấy đơn hàng: {orderId}");
 
-            // Idempotent: nếu callback cũ
-            if (!string.IsNullOrEmpty(resp.TransactionId) &&
-                string.Equals(order.TransactionId, resp.TransactionId, StringComparison.OrdinalIgnoreCase))
-            {
-                var dtoAlready = BuildDtoFromQuery(collections, orderId, resp.Success);
-                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Callback already processed", dtoAlready);
-            }
-
-            // Cập nhật đơn + ghi payment
-            order.PaymentStatus = resp.Success ? "Paid" : "Failed";
-            order.TransactionId = resp.TransactionId;
+            order.PaymentStatus = response.Success ? "Paid" : "Failed";
+            order.TransactionId = response.TransactionId;
             await _unitOfWork.Order.UpdateAsync(order);
 
-            if (order.Payment == null) order.Payment = new List<Payment>();
+            if (order.Payment == null || !order.Payment.Any())
+                order.Payment = new List<Payment>();
+
             order.Payment.Add(new Payment
             {
                 OrderId = order.OrderId,
-                PaymentMethod = resp.PaymentMethod,
-                PaymentAmount = resp.Amount / 100,             // VND
-                Status = resp.Success ? "Paid" : "Failed",
-                PaymentDate = resp.PaymentDate ?? DateTime.UtcNow,
+                PaymentMethod = response.PaymentMethod,
+                PaymentAmount = response.Amount / 100,
+                Status = response.Success ? "Paid" : "Failed",
+                PaymentDate = response.PaymentDate ?? DateTime.UtcNow,
             });
-
             await _unitOfWork.SaveAsync();
 
-            // Trả DTO để controller gắn vào URL redirect
-            var dto = BuildDtoFromQuery(collections, orderId, resp.Success);
-            return new BusinessResult(resp.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE, null, dto);
-
+            var orderResponse = _mapper.Map<OrderResponse>(order);
+            return new BusinessResult(
+                response.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+                null,
+                orderResponse
+            );
         }
-
-        order.PaymentStatus = response.Success ? "PAID" : "FAILED";
-        order.TransactionId = response.TransactionId;
-        await _unitOfWork.Order.UpdateAsync(order);
-        if (order.Payment == null || !order.Payment.Any())
+        catch (Exception ex)
         {
-
+            Console.WriteLine("[VNPAY CALLBACK ERROR]: " + ex.ToString());
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
-
         }
-
-        order.Payment.Add(new Payment
-        {
-            OrderId = order.OrderId,
-            PaymentMethod = response.PaymentMethod,
-            PaymentAmount = response.Amount / 100, // Convert from cents to the correct currency unit
-            Status = response.Success ? "PAID" : "FAILED",
-            PaymentDate = response.PaymentDate ?? DateTime.UtcNow, // Use payment date if available, otherwise use current date
-        });
-        await _unitOfWork.SaveAsync();
-
-        var orderResponse = _mapper.Map<OrderResponse>(order);
-        return new BusinessResult(
-            response.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-            null,
-            orderResponse
-        );
     }
 
     private static VnPayResultDto BuildDtoFromQuery(IQueryCollection q, int orderId, bool success)
