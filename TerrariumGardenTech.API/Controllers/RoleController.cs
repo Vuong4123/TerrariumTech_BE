@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Role;
 using TerrariumGardenTech.Common.ResponseModel.Role;
@@ -23,6 +24,7 @@ public class RoleController : ControllerBase
 
     // GET: api/<RoleController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _roleService.GetAll();
@@ -30,6 +32,7 @@ public class RoleController : ControllerBase
 
     // GET api/<RoleController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _roleService.GetById(id);
@@ -38,6 +41,7 @@ public class RoleController : ControllerBase
 
     // POST api/<RoleController>
     [HttpPost("add-role")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromBody] RoleCreateRequest roleCreateRequest)
     {
         return await _roleService.CreateRole(roleCreateRequest);
@@ -45,6 +49,7 @@ public class RoleController : ControllerBase
 
     // PUT api/<RoleController>/5
     [HttpPut("update-role/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromBody] RoleUpdateRequest roleUpdateRequest)
     {
         return await _roleService.UpdateRole(roleUpdateRequest);
@@ -52,6 +57,7 @@ public class RoleController : ControllerBase
 
     // DELETE api/<RoleController>/5
     [HttpDelete("delete-role/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _roleService.DeleteById(id);

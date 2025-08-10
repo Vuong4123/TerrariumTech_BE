@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.TerrariumImage;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -20,6 +21,7 @@ public class TerrariumImageController : ControllerBase
 
     // GET: api/<TerrariumImageController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _terrariumImageService.GetAllTerrariumImageAsync();
@@ -27,6 +29,7 @@ public class TerrariumImageController : ControllerBase
 
     // GET api/<TerrariumImageController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult?> Get(int id)
     {
         return await _terrariumImageService.GetTerrariumImageByIdAsync(id);
@@ -34,6 +37,7 @@ public class TerrariumImageController : ControllerBase
 
     // GET api/<TerrariumImageController>/TerrariumId/5
     [HttpGet("get-by-terrariumId/{terrariumId}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetByAccessoryId(int terrariumId)
     {
         return await _terrariumImageService.GetByTerrariumId(terrariumId);
@@ -41,6 +45,7 @@ public class TerrariumImageController : ControllerBase
 
     // POST api/<TerrariumImageController>
     [HttpPost("upload")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromForm] TerrariumImageUploadRequest request)
     {
         return await _terrariumImageService.CreateTerrariumImageAsync(request.ImageFile, request.TerrariumId);
@@ -48,6 +53,7 @@ public class TerrariumImageController : ControllerBase
 
     // PUT api/<TerrariumImageController>/5
     [HttpPut("update-terrariumImage/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put(int id, [FromForm] TerrariumImageUploadUpdateRequest request)
     {
         request.TerrariumImageId = id; // Set the ID for the update request
@@ -56,6 +62,7 @@ public class TerrariumImageController : ControllerBase
 
     // DELETE api/<TerrariumImageController>/5
     [HttpDelete("delete-terrariumImage/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _terrariumImageService.DeleteTerrariumImageAsync(id);

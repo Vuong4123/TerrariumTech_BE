@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.AccessoryImage;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -13,6 +14,8 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 {
     // GET: api/<AccessoryImageController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
+
     public async Task<IBusinessResult> Get()
     {
         return await _accessoryImageService.GetAll();
@@ -20,6 +23,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // GET api/<AccessoryImageController>/5
     [HttpGet("get-by/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _accessoryImageService.GetById(id);
@@ -28,6 +32,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // GET api/<AccessoryImageController>/accessoryId/5
     [HttpGet("get-accessoryId/{accessoryId}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
     {
         return await _accessoryImageService.GetByAccessoryId(accessoryId);
@@ -36,6 +41,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // POST api/<AccessoryImageController>
     [HttpPost("add-accessoryimage")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Post([FromForm] AccessoryImageUploadRequest request)
     {
         return await _accessoryImageService.CreateAccessoryImage(request.ImageFile, request.AccessoryId);
@@ -43,6 +49,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // PUT api/<AccessoryImageController>/5
     [HttpPut("update-accessoryimage/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Put(int id, [FromForm] AccessoryImageUploadUpdateRequest request)
     {
         request.AccessoryImageId = id; // Set the ID for the update request
@@ -51,6 +58,7 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // DELETE api/<AccessoryImageController>/5
     [HttpDelete("delete-accessoryimage/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _accessoryImageService.DeleteById(id);

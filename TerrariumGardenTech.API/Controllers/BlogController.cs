@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Blog;
 using TerrariumGardenTech.Common.ResponseModel.Blog;
@@ -24,6 +25,7 @@ public class BlogController : ControllerBase
 
     // GET: api/<BlogController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get()
     {
         return await _blogService.GetAll();
@@ -31,6 +33,7 @@ public class BlogController : ControllerBase
 
     // GET api/<BlogController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogService.GetById(id);
@@ -38,6 +41,7 @@ public class BlogController : ControllerBase
 
     // POST api/<BlogController>
     [HttpPost("add-blog")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromForm] BlogCreateRequest blogCreateRequest)
     {
         return await _blogService.CreateBlog(blogCreateRequest);
@@ -45,6 +49,7 @@ public class BlogController : ControllerBase
 
     // PUT api/<BlogController>/5
     [HttpPut("update-blog/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put(int id, [FromForm] BlogUpdateRequest request)
     {
         request.BlogId = id;
@@ -53,6 +58,7 @@ public class BlogController : ControllerBase
 
     // DELETE api/<BlogController>/5
     [HttpDelete("delete-blog/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _blogService.DeleteById(id);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Address;
 using TerrariumGardenTech.Common.ResponseModel.Address;
@@ -23,6 +24,7 @@ public class AddressController : ControllerBase
 
     // GET: api/<AddressController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _addressService.GetAllAddresses();
@@ -30,12 +32,14 @@ public class AddressController : ControllerBase
 
     // GET api/<AddressController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _addressService.GetAddressById(id);
     }
 
-    [HttpGet("get-by-user-id/{userId}")]
+    [HttpGet("getall-by-user-id/{userId}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> GetByUserId(int userId)
     {
         return await _addressService.GetAddressesByUserId(userId);
@@ -43,6 +47,7 @@ public class AddressController : ControllerBase
 
     // POST api/<AddressController>
     [HttpPost("add-address")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Post([FromBody] AddressCreateRequest addressCreateRequest)
     {
         return await _addressService.CreateAddress(addressCreateRequest);
@@ -50,6 +55,7 @@ public class AddressController : ControllerBase
 
     // PUT api/<AddressController>/5
     [HttpPut("uodate-adrress/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Put([FromBody] AddressUpdateRequest addressUpdateRequest)
     {
         return await _addressService.UpdateAddress(addressUpdateRequest);
@@ -57,6 +63,7 @@ public class AddressController : ControllerBase
 
     // DELETE api/<AddressController>/5
     [HttpDelete("delete-address/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _addressService.DeleteAddressById(id);

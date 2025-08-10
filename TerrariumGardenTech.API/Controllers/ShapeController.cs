@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
@@ -21,6 +22,7 @@ public class ShapeController : ControllerBase
 
     // GET: api/<RoleController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _shapeService.GetAllShapesAsync();
@@ -28,6 +30,7 @@ public class ShapeController : ControllerBase
 
     // GET api/<RoleController>/5
     [HttpGet("get-{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _shapeService.GetShapeByIdAsync(id);
@@ -36,6 +39,7 @@ public class ShapeController : ControllerBase
 
     // POST api/<RoleController>
     [HttpPost("add-shape")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromBody] ShapeCreateRequest shapeCreateRequest)
     {
         return await _shapeService.CreateShapeAsync(shapeCreateRequest);
@@ -43,6 +47,7 @@ public class ShapeController : ControllerBase
 
     // PUT api/<RoleController>/5
     [HttpPut("update-shape-{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromBody] ShapeUpdateRequest shapeUpdateRequest)
     {
         return await _shapeService.UpdateShapeAsync(shapeUpdateRequest);
@@ -50,6 +55,7 @@ public class ShapeController : ControllerBase
 
     // DELETE api/<RoleController>/5
     [HttpDelete("delete-shape-{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _shapeService.DeleteShapeAsync(id);   
