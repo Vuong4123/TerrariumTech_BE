@@ -77,7 +77,7 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 // Đăng ký Repository và UnitOfWork
 builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped<UnitOfWork>();
-
+builder.Services.AddHttpClient();
 /*---------------- Repositorys ----------------*/
 builder.Services.AddScoped<OrderRepository>();
 builder.Services.AddScoped<OrderItemRepository>();

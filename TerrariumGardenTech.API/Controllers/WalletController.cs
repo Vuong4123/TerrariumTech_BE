@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.API.Controllers
@@ -18,14 +19,16 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpPost("deposit")]
         public async Task<IActionResult> Deposit(int userId, decimal amount, string method)
         {
-            var result = await _walletService.DepositAsync(userId, amount, method);
+            var currentUserId = User.GetUserId();
+            var result = await _walletService.DepositAsync(currentUserId, amount, method);
             return Ok(result);
         }
 
         [HttpPost("pay")]
         public async Task<IActionResult> Pay(int userId, decimal amount, int orderId)
         {
-            var result = await _walletService.PayAsync(userId, amount, orderId);
+            var currentUserId = User.GetUserId();
+            var result = await _walletService.PayAsync(currentUserId, amount, orderId);
             return Ok(result);
         }
 
@@ -39,7 +42,8 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpGet("balance")]
         public async Task<IActionResult> GetBalance(int userId)
         {
-            var balance = await _walletService.GetBalanceAsync(userId);
+            var currentUserId = User.GetUserId();
+            var balance = await _walletService.GetBalanceAsync(currentUserId);
             return Ok(balance);
         }
     }
