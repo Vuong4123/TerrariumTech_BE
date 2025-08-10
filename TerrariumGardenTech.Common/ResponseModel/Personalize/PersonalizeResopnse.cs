@@ -7,4 +7,5 @@ public class PersonalizeResponse
     public int EnvironmentId { get; set; }
     public int TankMethodId { get; set; }
     public int ShapeId { get; set; }
+    public bool IsPersonalize { get; set; }
 }

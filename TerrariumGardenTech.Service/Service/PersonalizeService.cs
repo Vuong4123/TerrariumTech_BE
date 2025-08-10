@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Common;
+﻿// TerrariumGardenTech.Service.Service/PersonalizeService.cs
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Personalize;
 using TerrariumGardenTech.Common.ResponseModel.Personalize;
 using TerrariumGardenTech.Repositories;
@@ -7,165 +8,168 @@ using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using System.Linq;
 
-namespace TerrariumGardenTech.Service.Service;
-
-public class PersonalizeService(UnitOfWork _unitOfWork, IUserContextService userContextService) : IPersonalizeService
+namespace TerrariumGardenTech.Service.Service
 {
-    public async Task<IBusinessResult> GetAllPersonalize()
+    public class PersonalizeService(UnitOfWork _unitOfWork, IUserContextService userContextService) : IPersonalizeService
     {
-        var personalizes = await _unitOfWork.Personalize.GetAllAsync();
-
-        // Kiểm tra dữ liệu null hoặc empty
-        if (personalizes == null || !personalizes.Any())
+        public async Task<IBusinessResult> GetAllPersonalize()
         {
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
-        }
+            var personalizes = await _unitOfWork.Personalize.GetAllAsync();
 
-        // Ánh xạ dữ liệu
-        var response = personalizes.Select(p => new PersonalizeResponse
-        {
-            PersonalizeId = p.PersonalizeId,
-            UserId = p.UserId,
-            ShapeId = p.ShapeId,
-            EnvironmentId = p.EnvironmentId,
-            TankMethodId = p.TankMethodId,
-        }).ToList();
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", response);
-    }
-
-    public async Task<IBusinessResult> GetPersonalizeById(int id)
-    {
-        var personalize = await _unitOfWork.Personalize.GetByIdAsync(id);
-
-        // Kiểm tra dữ liệu null, trả về BusinessResult
-        if (personalize == null)
-        {
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
-        }
-
-        // Ánh xạ từ entity sang DTO (response object)
-        var personalizeResponse = new PersonalizeResponse
-        {
-            PersonalizeId = personalize.PersonalizeId,
-            UserId = personalize.UserId,
-            ShapeId = personalize.ShapeId,
-            EnvironmentId = personalize.EnvironmentId,
-            TankMethodId = personalize.TankMethodId,
-        };
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", personalizeResponse);
-    }
-
-    public async Task<IBusinessResult> GetPersonalizeByUserId(int userId)
-    {
-        // Lấy danh sách personalize theo userId
-        var personalizes = await _unitOfWork.Personalize.GetByUserId(userId);
-
-        // Kiểm tra dữ liệu null hoặc rỗng
-        if (personalizes == null || !personalizes.Any())
-        {
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
-        }
-
-        // Ánh xạ list entity sang list DTO
-        var personalizeResponses = personalizes.Select(personalize => new PersonalizeResponse
-        {
-            PersonalizeId = personalize.PersonalizeId,
-            UserId = personalize.UserId,
-            ShapeId = personalize.ShapeId,
-            EnvironmentId = personalize.EnvironmentId,
-            TankMethodId = personalize.TankMethodId,
-        }).ToList();
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", personalizeResponses);
-    }
-
-    public async Task<IBusinessResult> SavePersonalize(Personalize personalize)
-    {
-        try
-        {
-            var result = -1;
-            var personalizeEntity = _unitOfWork.Personalize.GetByIdAsync(personalize.PersonalizeId);
-            if (personalizeEntity != null)
+            if (personalizes == null || !personalizes.Any())
             {
-                result = await _unitOfWork.Personalize.UpdateAsync(personalize);
-                if (result > 0)
-                    return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, personalize);
-
-                return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                // Không có data ⇒ tất nhiên không suy được isPersonalize theo user
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.", new { isPersonalize = false, data = Array.Empty<PersonalizeResponse>() });
             }
 
-            // Create new terrarium if it does not exist
-            result = await _unitOfWork.Personalize.CreateAsync(personalize);
-            if (result > 0) return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, personalize);
-
-            return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
-        }
-        catch (Exception ex)
-        {
-            return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
-        }
-    }
-
-    public async Task<IBusinessResult> CreatePersonalize(PersonalizeCreateRequest personalizeCreateRequest)
-    {
-        try
-        {
-            var GetCurrentUser = userContextService.GetCurrentUser();
-            var personalize = new Personalize
+            var response = personalizes.Select(p => new PersonalizeResponse
             {
-                UserId = GetCurrentUser,
-                ShapeId = personalizeCreateRequest.ShapeId,
-                EnvironmentId = personalizeCreateRequest.EnvironmentId,
-                TankMethodId = personalizeCreateRequest.TankMethodId,
+                PersonalizeId = p.PersonalizeId,
+                UserId = p.UserId,
+                ShapeId = p.ShapeId,
+                EnvironmentId = p.EnvironmentId,
+                TankMethodId = p.TankMethodId,
+                // Có record thì field này hợp lý là true ở cấp record
+                IsPersonalize = true
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", new { isPersonalize = true, data = response });
+        }
+
+        public async Task<IBusinessResult> GetPersonalizeById(int id)
+        {
+            var personalize = await _unitOfWork.Personalize.GetByIdAsync(id);
+
+            if (personalize == null)
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.", new { isPersonalize = false });
+            }
+
+            var personalizeResponse = new PersonalizeResponse
+            {
+                PersonalizeId = personalize.PersonalizeId,
+                UserId = personalize.UserId,
+                ShapeId = personalize.ShapeId,
+                EnvironmentId = personalize.EnvironmentId,
+                TankMethodId = personalize.TankMethodId,
+                IsPersonalize = true
             };
-            var result = await _unitOfWork.Personalize.CreateAsync(personalize);
-            if (result > 0) return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, result);
 
-            return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", new { isPersonalize = true, data = personalizeResponse });
         }
-        catch (Exception ex)
-        {
-            return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
-        }
-    }
 
-    public async Task<IBusinessResult> UpdatePersonalize(PersonalizeUpdateRequest personalizeUpdateRequest)
-    {
-        try
+        // NEW: Chuẩn hóa trả về isPersonalize cho user
+        public async Task<IBusinessResult> GetPersonalizeByUserId(int userId)
         {
-            var result = -1;
-            var personalize = await _unitOfWork.Personalize.GetByIdAsync(personalizeUpdateRequest.PersonalizeId);
+            var personalizes = await _unitOfWork.Personalize.GetByUserId(userId); // repo đã có:contentReference[oaicite:4]{index=4}
+
+            var hasAny = personalizes != null && personalizes.Any();
+            if (!hasAny)
+            {
+                return new BusinessResult(Const.SUCCESS_READ_CODE, "No data found.", new { isPersonalize = false, data = Array.Empty<PersonalizeResponse>() });
+            }
+
+            var personalizeResponses = personalizes.Select(p => new PersonalizeResponse
+            {
+                PersonalizeId = p.PersonalizeId,
+                UserId = p.UserId,
+                ShapeId = p.ShapeId,
+                EnvironmentId = p.EnvironmentId,
+                TankMethodId = p.TankMethodId,
+                IsPersonalize = true
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", new { isPersonalize = true, data = personalizeResponses });
+        }
+
+        public async Task<IBusinessResult> SavePersonalize(Personalize personalize)
+        {
+            try
+            {
+                var result = -1;
+                var personalizeEntity = _unitOfWork.Personalize.GetByIdAsync(personalize.PersonalizeId);
+                if (personalizeEntity != null)
+                {
+                    result = await _unitOfWork.Personalize.UpdateAsync(personalize);
+                    if (result > 0)
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, new { isPersonalize = true, data = personalize });
+
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                }
+
+                result = await _unitOfWork.Personalize.CreateAsync(personalize);
+                if (result > 0)
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, new { isPersonalize = true, data = personalize });
+
+                return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+
+        public async Task<IBusinessResult> CreatePersonalize(PersonalizeCreateRequest personalizeCreateRequest)
+        {
+            try
+            {
+                var currentUserId = userContextService.GetCurrentUser();
+                var personalize = new Personalize
+                {
+                    UserId = currentUserId,
+                    ShapeId = personalizeCreateRequest.ShapeId,
+                    EnvironmentId = personalizeCreateRequest.EnvironmentId,
+                    TankMethodId = personalizeCreateRequest.TankMethodId,
+                };
+
+                var result = await _unitOfWork.Personalize.CreateAsync(personalize);
+                if (result > 0)
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, new { isPersonalize = true, data = result });
+
+                return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+
+        public async Task<IBusinessResult> UpdatePersonalize(PersonalizeUpdateRequest personalizeUpdateRequest)
+        {
+            try
+            {
+                var result = -1;
+                var personalize = await _unitOfWork.Personalize.GetByIdAsync(personalizeUpdateRequest.PersonalizeId);
+                if (personalize != null)
+                {
+                    _unitOfWork.Personalize.Context().Entry(personalize).CurrentValues.SetValues(personalizeUpdateRequest);
+                    result = await _unitOfWork.Personalize.UpdateAsync(personalize);
+                    if (result > 0)
+                        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, new { isPersonalize = true, data = personalize });
+
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                }
+
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG, new { isPersonalize = false });
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
+            }
+        }
+
+        public async Task<IBusinessResult> DeletePersonalizeById(int id)
+        {
+            var personalize = await _unitOfWork.Personalize.GetByIdAsync(id);
             if (personalize != null)
             {
-                _unitOfWork.Personalize.Context().Entry(personalize).CurrentValues.SetValues(personalizeUpdateRequest);
-                result = await _unitOfWork.Personalize.UpdateAsync(personalize);
-                if (result > 0)
-                    return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, personalize);
+                var result = await _unitOfWork.Personalize.RemoveAsync(personalize);
+                if (result) return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG, new { isPersonalize = false });
 
-                return new BusinessResult(Const.FAIL_UPDATE_CODE, Const.FAIL_UPDATE_MSG);
+                return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
             }
 
-            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG, new { isPersonalize = false });
         }
-        catch (Exception ex)
-        {
-            return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
-        }
-    }
-
-    public async Task<IBusinessResult> DeletePersonalizeById(int id)
-    {
-        var personalize = await _unitOfWork.Personalize.GetByIdAsync(id);
-        if (personalize != null)
-        {
-            var result = await _unitOfWork.Personalize.RemoveAsync(personalize);
-            if (result) return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
-
-            return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
-        }
-
-        return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
     }
 }

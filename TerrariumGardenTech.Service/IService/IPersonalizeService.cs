@@ -12,4 +12,5 @@ public interface IPersonalizeService
     Task<IBusinessResult> UpdatePersonalize(PersonalizeUpdateRequest personalizeUpdateRequest);
     Task<IBusinessResult> SavePersonalize(Personalize personalize);
     Task<IBusinessResult> DeletePersonalizeById(int id);
+    Task<IBusinessResult> GetPersonalizeByUserId(int userId);
 }
