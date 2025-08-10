@@ -30,6 +30,8 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 ProvinceCode = t.ProvinceCode,    // Thêm ánh xạ ProvinceCode
                 DistrictCode = t.DistrictCode,    // Thêm ánh xạ DistrictCode
                 WardCode = t.WardCode,            // Thêm ánh xạ WardCode
+                Latitude = t.Latitude,
+                Longitude = t.Longitude,
                 IsDefault = t.IsDefault
             }).ToList();
 
@@ -61,6 +63,8 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 ProvinceCode = address.ProvinceCode,    // Thêm ánh xạ ProvinceCode
                 DistrictCode = address.DistrictCode,    // Thêm ánh xạ DistrictCode
                 WardCode = address.WardCode,            // Thêm ánh xạ WardCode
+                Latitude = address.Latitude,
+                Longitude = address.Longitude,
                 IsDefault = address.IsDefault
             };
 
@@ -94,6 +98,8 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
             ProvinceCode = t.ProvinceCode,    // Thêm ánh xạ ProvinceCode
             DistrictCode = t.DistrictCode,    // Thêm ánh xạ DistrictCode
             WardCode = t.WardCode,            // Thêm ánh xạ WardCode
+            Latitude = t.Latitude,
+            Longitude = t.Longitude,
             IsDefault = t.IsDefault
         }).ToList();
 
@@ -163,6 +169,8 @@ public class AddressService(UnitOfWork _unitOfWork, IUserContextService userCont
                 ProvinceCode = addressCreateRequest.ProvinceCode,    // Thêm ánh xạ ProvinceCode
                 DistrictCode = addressCreateRequest.DistrictCode,    // Thêm ánh xạ DistrictCode
                 WardCode = addressCreateRequest.WardCode,            // Thêm ánh xạ WardCode
+                Latitude = addressCreateRequest.Latitude,
+                Longitude = addressCreateRequest.Longitude,
                 IsDefault = addressCreateRequest.IsDefault,
             };
 
