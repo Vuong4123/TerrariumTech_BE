@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.Environment;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -20,6 +21,7 @@ public class EnvironmentController : ControllerBase
 
     // GET: api/<EnvironmentController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _environmentService.GetAllEnvironmentsAsync();
@@ -27,6 +29,7 @@ public class EnvironmentController : ControllerBase
 
     // GET api/<EnvironmentController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _environmentService.GetEnvironmentByIdAsync(id);
@@ -34,6 +37,7 @@ public class EnvironmentController : ControllerBase
 
     // POST api/<EnvironmentController>
     [HttpPost("add-environment")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromBody] EnvironmentCreateRequest environmentCreateRequest)
     {
         return await _environmentService.CreateEnvironmentAsync(environmentCreateRequest);
@@ -41,6 +45,7 @@ public class EnvironmentController : ControllerBase
 
     // PUT api/<EnvironmentController>/5
     [HttpPut("update-environment/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromBody] EnvironmentUpdateRequest environmentUpdateRequest)
     {
         return await _environmentService.UpdateEnvironmentAsync(environmentUpdateRequest);
@@ -48,6 +53,7 @@ public class EnvironmentController : ControllerBase
 
     // DELETE api/<EnvironmentController>/5
     [HttpDelete("delete-environment/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _environmentService.DeleteEnvironmentAsync(id);

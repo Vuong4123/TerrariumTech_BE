@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Service.Base;
@@ -22,18 +23,22 @@ public class AccessoryController : ControllerBase
 
     // GET: api/<AccessoryController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
+
     public async Task<IBusinessResult> Get([FromQuery] AccessoryGetAllRequest request)
     {
         return await _accessoryService.GetAll(request);
     }
 
     [HttpGet("get-by-name/{name}")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> GetByAccesname(string name)
     {
         return await _accessoryService.GetByAccesname(name);
     }
 
     [HttpGet("filter")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> FilterByCategory([FromQuery] int categoryId)
     {
         return await _accessoryService.FilterAccessoryAsync(categoryId);
@@ -41,6 +46,7 @@ public class AccessoryController : ControllerBase
 
     // GET api/<AccessoryController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _accessoryService.GetById(id);
@@ -48,6 +54,7 @@ public class AccessoryController : ControllerBase
 
     // POST api/<AccessoryController>
     [HttpPost("add-accessory")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post(AccessoryCreateRequest accessoryCreateRequest)
     {
         return await _accessoryService.CreateAccessory(accessoryCreateRequest);
@@ -55,6 +62,7 @@ public class AccessoryController : ControllerBase
 
     // PUT api/<AccessoryController>/5
     [HttpPut("update-accessory/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put(AccessoryUpdateRequest accessoryUpdateRequest)
     {
         return await _accessoryService.UpdateAccessory(accessoryUpdateRequest);
@@ -62,6 +70,7 @@ public class AccessoryController : ControllerBase
 
     // DELETE api/<AccessoryController>/5
     [HttpDelete("delete-accessory/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _accessoryService.DeleteById(id);

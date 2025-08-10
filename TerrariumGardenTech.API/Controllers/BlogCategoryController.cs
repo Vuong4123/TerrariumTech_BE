@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.BlogCategory;
 using TerrariumGardenTech.Common.ResponseModel.BlogCategory;
@@ -24,6 +25,8 @@ public class BlogCategoryController : ControllerBase
 
     // GET: api/<BlogCategoryController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
+
     public async Task<IBusinessResult> Get()
     {
         return await _blogCategoryService.GetAllBlogCategory();
@@ -31,6 +34,7 @@ public class BlogCategoryController : ControllerBase
 
     // GET api/<BlogCategoryController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogCategoryService.GetById(id);
@@ -38,6 +42,7 @@ public class BlogCategoryController : ControllerBase
 
     // POST api/<BlogCategoryController>
     [HttpPost("add-blogCategory")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromBody] BlogCategoryCreateRequest blogCategoryCreateRequest)
     {        
         return await _blogCategoryService.CreateBlogCategory(blogCategoryCreateRequest);
@@ -45,6 +50,7 @@ public class BlogCategoryController : ControllerBase
 
     // PUT api/<BlogCategoryController>/5
     [HttpPut("update-blogCategory/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromBody] BlogCategoryUpdateRequest blogCategoryUpdateRequest)
     {
         return await _blogCategoryService.UpdateBlogCategory(blogCategoryUpdateRequest);
@@ -52,6 +58,7 @@ public class BlogCategoryController : ControllerBase
 
     // DELETE api/<BlogCategoryController>/5
     [HttpDelete("delete-blogCategory/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _blogCategoryService.DeleteById(id);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.TerrariumVariant;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -21,6 +22,7 @@ public class TerrariumVariantController : ControllerBase
 
     // GET: api/<TerrariumVariantController>
     [HttpGet("get-all-terrariumVariant")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get()
     {
         return await _terrariumVariantService.GetAllTerrariumVariantAsync();
@@ -28,6 +30,7 @@ public class TerrariumVariantController : ControllerBase
 
     // GET api/<TerrariumVariantController>/5
     [HttpGet("get-terrariumVariant/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _terrariumVariantService.GetTerrariumVariantByIdAsync(id);
@@ -35,6 +38,7 @@ public class TerrariumVariantController : ControllerBase
 
     // GET api/<TerrariumVariantController>/5
     [HttpGet("get-VariantByTerrarium/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetByTerrariumId(int id)
     {
         return await _terrariumVariantService.GetAllVariantByTerrariumIdAsync(id);
@@ -42,6 +46,7 @@ public class TerrariumVariantController : ControllerBase
 
     // POST api/<TerrariumVariantController>
     [HttpPost("create-terrariumVariant")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromForm] TerrariumVariantCreateRequest terrariumVariantCreateRequest)
     {
         return await _terrariumVariantService.CreateTerrariumVariantAsync(terrariumVariantCreateRequest);
@@ -49,6 +54,7 @@ public class TerrariumVariantController : ControllerBase
 
     // PUT api/<TerrariumVariantController>/5
     [HttpPut("update-terrariumVariant/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromForm] TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
     {
         return await _terrariumVariantService.UpdateTerrariumVariantAsync(terrariumVariantUpdateRequest);
@@ -56,6 +62,7 @@ public class TerrariumVariantController : ControllerBase
 
     // DELETE api/<TerrariumVariantController>/5
     [HttpDelete("delete-terrariumVariant/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _terrariumVariantService.DeleteTerrariumVariantAsync(id);

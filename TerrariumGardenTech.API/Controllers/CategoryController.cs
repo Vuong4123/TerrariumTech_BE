@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Category;
 using TerrariumGardenTech.Common.ResponseModel.Category;
@@ -23,6 +24,7 @@ public class CategoryController : ControllerBase
 
     // GET: api/<CategoryController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _categoryService.GetAll();
@@ -30,6 +32,7 @@ public class CategoryController : ControllerBase
 
     // GET api/<CategoryController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _categoryService.GetById(id);
@@ -37,6 +40,7 @@ public class CategoryController : ControllerBase
 
     // POST api/<CategoryController>
     [HttpPost("add-category")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post(CategoryCreateRequest categoryRequest)
     {
         return await _categoryService.CreateCategory(categoryRequest);
@@ -44,6 +48,7 @@ public class CategoryController : ControllerBase
 
     // PUT api/<CategoryController>/5
     [HttpPut("update-category/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put(CategoryUpdateRequest categoryRequest)
     {
        return await _categoryService.UpdateCategory(categoryRequest);
@@ -51,6 +56,7 @@ public class CategoryController : ControllerBase
 
     // DELETE api/<CategoryController>/5
     [HttpDelete("delete-category/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _categoryService.DeleteById(id);

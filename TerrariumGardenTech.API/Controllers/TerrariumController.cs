@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -24,6 +25,7 @@ public class TerrariumController : ControllerBase
 
     // GET: api/<TerrariumController>
     [HttpGet("get-all")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get([FromQuery] TerrariumGetAllRequest request)
     {
         return await _terrariumService.GetAll(request);
@@ -44,6 +46,7 @@ public class TerrariumController : ControllerBase
     //}
 
     [HttpGet("get-by-terrariumname/{name}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetTerrariumByName(string name)
     {
         return await _terrariumService.GetTerrariumByNameAsync(name);
@@ -51,6 +54,7 @@ public class TerrariumController : ControllerBase
 
     // GET api/<TerrariumController>/5
     [HttpGet("get/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetById(int id)
     {
         return await _terrariumService.GetById(id);
@@ -72,6 +76,7 @@ public class TerrariumController : ControllerBase
 
     // POST api/<TerrariumController>
     [HttpPost("add-terrarium")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Post([FromBody] TerrariumCreate terrariumCreate)
     {
         return await _terrariumService.CreateTerrarium(terrariumCreate);
@@ -79,6 +84,7 @@ public class TerrariumController : ControllerBase
 
     // PUT api/<TerrariumController>/5
     [HttpPut("update-terrarium/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put(TerrariumUpdateRequest terrariumUpdate)
     {
         return await _terrariumService.UpdateTerrarium(terrariumUpdate);
@@ -86,6 +92,7 @@ public class TerrariumController : ControllerBase
 
     // DELETE api/<TerrariumController>/5
     [HttpDelete("delete-terraium/{id}")]
+    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
         return await _terrariumService.DeleteById(id);
