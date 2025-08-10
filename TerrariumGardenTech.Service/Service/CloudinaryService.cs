@@ -62,29 +62,87 @@ public class CloudinaryService : ICloudinaryService
     // Xoá ảnh trên Cloudinary
     public async Task<IBusinessResult> DeleteImageAsync(string imageUrl)
     {
-        if (string.IsNullOrEmpty(imageUrl))
+        if (string.IsNullOrWhiteSpace(imageUrl))
             return new BusinessResult(Const.FAIL_DELETE_CODE, "Image URL is invalid.");
 
         try
         {
-            // Phân tích URL để lấy publicId chính xác
-            var uri = new Uri(imageUrl);
-            var segments = uri.AbsolutePath.Split('/');
-            var folder = segments[^2]; // lấy 'blog_images'
-            var fileName = Path.GetFileNameWithoutExtension(segments[^1]); // lấy 'abc123'
-            var publicId = $"{folder}/{fileName}"; // publicId = blog_images/abc123
+            if (!TryExtractPublicIdFromUrl(imageUrl, out var publicId))
+                return new BusinessResult(Const.FAIL_DELETE_CODE, "Cannot parse Cloudinary publicId from URL.");
 
-            var deleteParams = new DeletionParams(publicId);
-            var deleteResult = await _cloudinary.DestroyAsync(deleteParams);
+            var deletion = new DeletionParams(publicId)
+            {
+                // Nếu bạn cần xoá video/raw, có thể set:
+                // ResourceType = ResourceType.Video / ResourceType.Raw
+                // Mặc định sẽ là Image
+            };
 
-            if (deleteResult.Result == "ok") // hoặc check StatusCode nếu cần
+            var result = await _cloudinary.DestroyAsync(deletion);
+
+            if (result.Result == "ok")
                 return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
 
-            return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete image from Cloudinary.");
+            return new BusinessResult(Const.FAIL_DELETE_CODE, result.Error?.Message ?? "Failed to delete image.");
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
+
+    private static bool TryExtractPublicIdFromUrl(string url, out string publicId)
+    {
+        publicId = null!;
+        if (string.IsNullOrWhiteSpace(url)) return false;
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+
+        // Ví dụ path:
+        // /image/upload/v1700000000/terrarium/users/123/avatar.jpg
+        // /image/upload/w_300,h_300,c_fill/v1700000000/terrarium/users/123/avatar.webp
+        // /video/upload/v1700000000/folder/my-video.mp4
+        // /raw/upload/v1700000000/folder/data.json
+
+        var path = uri.AbsolutePath.TrimStart('/');
+
+        // Tìm đoạn sau "/upload/"
+        var marker = "/upload/";
+        var idx = path.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return false;
+
+        var afterUpload = path[(idx + marker.Length)..]; // có thể bắt đầu bằng "w_...," (transform) hoặc "v123..." hoặc folder
+
+        // Bỏ segment transformation nếu có (nó luôn là 1 segment ngay sau /upload/ và có dấu ',')
+        var firstSlash = afterUpload.IndexOf('/');
+        if (firstSlash > 0)
+        {
+            var firstSegment = afterUpload[..firstSlash];
+            if (firstSegment.Contains(',')) // có transformation
+            {
+                afterUpload = afterUpload[(firstSlash + 1)..];
+            }
+        }
+
+        // Bỏ version nếu có (v + số) – VD: v1700000000
+        if (afterUpload.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+        {
+            var slash = afterUpload.IndexOf('/');
+            if (slash > 0 && afterUpload.AsSpan(1, slash - 1).ToString().All(char.IsDigit))
+            {
+                afterUpload = afterUpload[(slash + 1)..];
+            }
+        }
+
+        // afterUpload bây giờ là "terrarium/users/123/avatar.jpg"
+        // Bỏ phần mở rộng
+        var fileName = Path.GetFileName(afterUpload);
+        var noExt = Path.GetFileNameWithoutExtension(fileName);
+        var dir = Path.GetDirectoryName(afterUpload)?.Replace('\\', '/');
+
+        publicId = string.IsNullOrEmpty(dir) ? noExt : $"{dir}/{noExt}";
+        return !string.IsNullOrWhiteSpace(publicId);
+    }
+
+
+
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
@@ -82,5 +83,24 @@ public class AccessoryRepository : GenericRepository<Accessory>
             x => x.AccessoryId,
             x => (x.AverageRating, x.FeedbackCount)
         );
+    }
+
+    public async Task<Dictionary<int, int>> GetAccessoryPurchaseCountsAsync(IEnumerable<int> accessoryIds)
+    {
+        var idList = accessoryIds.ToList(); // đảm bảo List<int> để dùng Contains ổn định
+
+        var dict = await _context.OrderItems
+            .Where(oi => oi.AccessoryId.HasValue && idList.Contains(oi.AccessoryId.Value))
+            .Where(oi => oi.Order.Status == OrderStatusEnum.Completed) // chỉ tính đơn đã hoàn tất
+            .GroupBy(oi => oi.AccessoryId!.Value)
+            .Select(g => new
+            {
+                AccessoryId = g.Key,
+                // Ưu tiên AccessoryQuantity, nếu null thì dùng Quantity, nếu null nữa thì 0
+                Total = g.Sum(x => (x.AccessoryQuantity ?? x.Quantity ?? 0))
+            })
+            .ToDictionaryAsync(x => x.AccessoryId, x => x.Total);
+
+        return dict;
     }
 }

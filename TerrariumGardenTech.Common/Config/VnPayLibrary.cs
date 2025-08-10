@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using TerrariumGardenTech.Common.ResponseModel;
 
 
 using System;
@@ -10,6 +9,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using TerrariumGardenTech.Common.ResponseModel.Payment;
 
 namespace TerrariumGardenTech.Common.Config;
 

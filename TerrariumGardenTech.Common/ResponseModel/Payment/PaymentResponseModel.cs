@@ -1,4 +1,4 @@
-﻿namespace TerrariumGardenTech.Common.ResponseModel;
+﻿namespace TerrariumGardenTech.Common.ResponseModel.Payment;
 
 // TerrariumGardenTech.Service.Configs.PaymentResponseModel (hoặc namespace tương ứng)
 public class PaymentResponseModel

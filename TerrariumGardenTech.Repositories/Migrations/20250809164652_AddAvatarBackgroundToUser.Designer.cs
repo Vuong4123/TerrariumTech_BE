@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250809164652_AddAvatarBackgroundToUser")]
+    partial class AddAvatarBackgroundToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -359,60 +362,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("TransportLog", (string)null);
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Wallet", b =>
-                {
-                    b.Property<int>("WalletId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WalletId"));
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("WalletType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("WalletId");
-
-                    b.ToTable("Wallets");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.WalletTransaction", b =>
-                {
-                    b.Property<int>("TransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransactionId"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("WalletId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TransactionId");
-
-                    b.HasIndex("WalletId");
-
-                    b.ToTable("WalletTransaction");
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Accessory", b =>
                 {
                     b.Property<int>("AccessoryId")
@@ -514,12 +463,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Latitude")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Longitude")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ProvinceCode")
                         .HasColumnType("nvarchar(max)");
@@ -1723,15 +1666,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Transport");
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.WalletTransaction", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Common.Entity.Wallet", null)
-                        .WithMany("Transactions")
-                        .HasForeignKey("WalletId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Accessory", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.Category", "Category")
@@ -2143,11 +2077,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TankMethod", b =>
                 {
                     b.Navigation("Terrarium");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Wallet", b =>
-                {
-                    b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Accessory", b =>
