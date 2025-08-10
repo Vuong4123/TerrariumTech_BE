@@ -6,20 +6,22 @@ namespace TerrariumGardenTech.Common.RequestModel.Voucher;
 public class UpdateVoucherRequest
 {
     [Required] public int VoucherId { get; set; }
+    [Required, StringLength(50)] public string Code { get; set; }
+    [Required, StringLength(100)] public string Description { get; set; }
 
-    [Required]
-    [StringLength(50, ErrorMessage = "Mã voucher không được dài quá 50 ký tự.")]
-    public string Code { get; set; }
+    public decimal? DiscountAmount { get; set; }
+    public decimal? DiscountPercent { get; set; }
 
-    [Required]
-    [StringLength(100, ErrorMessage = "Mô tả voucher không được dài quá 100 ký tự.")]
-    public string Description { get; set; }
+    public DateTime? ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
 
-    [Required] public decimal DiscountAmount { get; set; }
+    [Required] public VoucherStatus Status { get; set; }
 
-    [Required] public DateTime ValidFrom { get; set; }
+    // --- Bổ sung theo yêu cầu ---
+    public bool IsPersonal { get; set; } = false;
+    public string? TargetUserId { get; set; }
 
-    [Required] public DateTime ValidTo { get; set; }
-
-    [Required] public VoucherStatus Status { get; set; } // Sử dụng VoucherStatus enum thay vì chuỗi
+    [Range(0, int.MaxValue)] public int TotalUsage { get; set; } = 0;
+    [Range(0, int.MaxValue)] public int RemainingUsage { get; set; } = 0;  // cho phép chỉnh tay khi update
+    public int? PerUserUsageLimit { get; set; }
 }

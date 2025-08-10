@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Voucher;
 using TerrariumGardenTech.Common.ResponseModel.Voucher;
@@ -9,101 +11,193 @@ namespace TerrariumGardenTech.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // bắt buộc đăng nhập cho toàn bộ controller
 public class VoucherController : ControllerBase
 {
     private readonly IVoucherService _voucherService;
+    public VoucherController(IVoucherService voucherService) => _voucherService = voucherService;
 
-    public VoucherController(IVoucherService voucherService)
+    private string? CurrentUserId =>
+        User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        ?? User.FindFirst("sub")?.Value
+        ?? User.FindFirst("uid")?.Value;
+
+    private bool IsAdminOrManager =>
+        User.IsInRole("Admin") || User.IsInRole("Manager");
+
+    // ========= GET ALL =========
+    // Admin/Manager xem toàn bộ; user thường cũng có thể xem (tuỳ business).
+    // Nếu bạn muốn chỉ admin/manager được xem toàn bộ, thêm [Authorize(Roles="Admin,Manager")]
+    [HttpGet]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        _voucherService = voucherService;
+        var list = await _voucherService.GetAllAsync(ct);
+        var resp = list.Select(v => new VoucherResponse
+        {
+            VoucherId = v.VoucherId,
+            Code = v.Code,
+            Description = v.Description,
+            DiscountAmount = v.DiscountAmount,
+            DiscountPercent = v.DiscountPercent,
+            ValidFrom = v.ValidFrom,
+            ValidTo = v.ValidTo,
+            Status = Enum.TryParse<VoucherStatus>(v.Status, true, out var st) ? st : VoucherStatus.Inactive,
+            IsPersonal = v.IsPersonal,
+            TargetUserId = v.TargetUserId,
+            TotalUsage = v.TotalUsage,
+            RemainingUsage = v.RemainingUsage,
+            PerUserUsageLimit = v.PerUserUsageLimit
+        });
+        return Ok(resp);
     }
 
-    // Kiểm tra Voucher có hợp lệ không
-    [HttpGet("validate/{code}")]
-    public async Task<IActionResult> ValidateVoucher(string code)
-    {
-        var isValid = await _voucherService.IsVoucherValidAsync(code);
-        if (isValid)
-            return Ok("Voucher is valid.");
-        return BadRequest("Voucher is not valid.");
-    }
-
-    // Lấy Voucher theo mã code
+    // ========= GET BY CODE =========
     [HttpGet("get-by-code/{code}")]
-    public async Task<IActionResult> GetVoucherByCode(string code)
+    public async Task<IActionResult> GetVoucherByCode(string code, CancellationToken ct)
     {
-        var voucher = await _voucherService.GetVoucherByCodeAsync(code);
-        if (voucher == null)
-            return NotFound();
+        var v = await _voucherService.GetByCodeAsync(code, ct);
+        if (v == null) return NotFound();
 
-        // Chuyển đổi các kiểu dữ liệu một cách rõ ràng
-        var response = new VoucherResponse
+        // Nếu là voucher cá nhân, chỉ chủ sở hữu, Admin/Manager mới được xem chi tiết
+        if (v.IsPersonal && !IsAdminOrManager)
         {
-            VoucherId = voucher.VoucherId,
-            Code = voucher.Code,
-            Description = voucher.Description,
-            DiscountAmount = voucher.DiscountAmount ?? 0m, // Xử lý nullable
-            ValidFrom = voucher.ValidFrom ?? DateTime.MinValue, // Xử lý nullable
-            ValidTo = voucher.ValidTo ?? DateTime.MinValue, // Xử lý nullable
-            Status = Enum.TryParse<VoucherStatus>(voucher.Status, out var status)
-                ? status
-                : VoucherStatus.Inactive // Chuyển đổi string sang enum
-        };
+            if (string.IsNullOrWhiteSpace(CurrentUserId) || !string.Equals(v.TargetUserId, CurrentUserId, StringComparison.OrdinalIgnoreCase))
+                return Forbid();
+        }
 
-        return Ok(response);
+        var resp = new VoucherResponse
+        {
+            VoucherId = v.VoucherId,
+            Code = v.Code,
+            Description = v.Description,
+            DiscountAmount = v.DiscountAmount,
+            DiscountPercent = v.DiscountPercent,
+            ValidFrom = v.ValidFrom,
+            ValidTo = v.ValidTo,
+            Status = Enum.TryParse<VoucherStatus>(v.Status, true, out var st) ? st : VoucherStatus.Inactive,
+            IsPersonal = v.IsPersonal,
+            TargetUserId = v.TargetUserId,
+            TotalUsage = v.TotalUsage,
+            RemainingUsage = v.RemainingUsage,
+            PerUserUsageLimit = v.PerUserUsageLimit
+        };
+        return Ok(resp);
     }
 
-    // Thêm Voucher
+    // ========= CREATE =========
     [HttpPost]
-    public async Task<IActionResult> AddVoucher([FromBody] CreateVoucherRequest request)
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> AddVoucher([FromBody] CreateVoucherRequest req, CancellationToken ct)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var voucher = new Voucher
+        var v = new Voucher
         {
-            Code = request.Code,
-            Description = request.Description,
-            DiscountAmount = request.DiscountAmount,
-            ValidFrom = request.ValidFrom,
-            ValidTo = request.ValidTo,
-            Status = request.Status.ToString()
+            Code = req.Code,
+            Description = req.Description,
+            DiscountAmount = req.DiscountAmount,
+            DiscountPercent = req.DiscountPercent,
+            ValidFrom = req.ValidFrom,
+            ValidTo = req.ValidTo,
+            Status = req.Status.ToString(),
+
+            IsPersonal = req.IsPersonal,
+            TargetUserId = req.TargetUserId,
+            TotalUsage = req.TotalUsage,
+            RemainingUsage = req.TotalUsage,
+            PerUserUsageLimit = req.PerUserUsageLimit
         };
 
-        await _voucherService.AddVoucherAsync(voucher);
-        return CreatedAtAction(nameof(GetVoucherByCode), new { code = voucher.Code }, voucher);
+        var created = await _voucherService.CreateAsync(v, ct);
+        return CreatedAtAction(nameof(GetVoucherByCode), new { code = created.Code }, created);
     }
 
-    // Cập nhật Voucher
+    // ========= UPDATE =========
     [HttpPut("update-voucher/{id}")]
-    public async Task<IActionResult> UpdateVoucher(int id, [FromBody] UpdateVoucherRequest request)
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> UpdateVoucher(int id, [FromBody] UpdateVoucherRequest req, CancellationToken ct)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (id != req.VoucherId) return BadRequest("Voucher ID mismatch.");
 
-        if (id != request.VoucherId)
-            return BadRequest("Voucher ID mismatch.");
-
-        var voucher = new Voucher
+        var v = new Voucher
         {
-            VoucherId = request.VoucherId,
-            Code = request.Code,
-            Description = request.Description,
-            DiscountAmount = request.DiscountAmount,
-            ValidFrom = request.ValidFrom,
-            ValidTo = request.ValidTo,
-            Status = request.Status.ToString()
+            VoucherId = req.VoucherId,
+            Code = req.Code,
+            Description = req.Description,
+            DiscountAmount = req.DiscountAmount,
+            DiscountPercent = req.DiscountPercent,
+            ValidFrom = req.ValidFrom,
+            ValidTo = req.ValidTo,
+            Status = req.Status.ToString(),
+
+            IsPersonal = req.IsPersonal,
+            TargetUserId = req.TargetUserId,
+            TotalUsage = req.TotalUsage,
+            RemainingUsage = req.RemainingUsage,
+            PerUserUsageLimit = req.PerUserUsageLimit
         };
 
-        await _voucherService.UpdateVoucherAsync(voucher);
+        await _voucherService.UpdateAsync(v, ct);
         return NoContent();
     }
 
-    // Xóa Voucher
+    // ========= DELETE =========
     [HttpDelete("delete-voucher/{id}")]
-    public async Task<IActionResult> DeleteVoucher(int id)
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> DeleteVoucher(int id, CancellationToken ct)
     {
-        await _voucherService.DeleteVoucherAsync(id);
+        await _voucherService.DeleteAsync(id, ct);
         return NoContent();
+    }
+
+    // ========= VALIDATE =========
+    // Nếu voucher là personal thì bắt buộc user hiện tại phải là chủ sở hữu (hoặc admin/manager)
+    [HttpGet("validate/{code}")]
+    public async Task<IActionResult> ValidateVoucher(string code, CancellationToken ct)
+    {
+        var v = await _voucherService.GetByCodeAsync(code, ct);
+        if (v == null) return BadRequest(new { valid = false, reason = "Voucher không tồn tại." });
+
+        var now = DateTime.UtcNow.Date;
+        var active = Enum.TryParse<VoucherStatus>(v.Status, true, out var st) && st == VoucherStatus.Active
+                     && (v.ValidFrom == null || v.ValidFrom <= now)
+                     && (v.ValidTo == null || v.ValidTo >= now)
+                     && v.RemainingUsage > 0;
+
+        if (!active) return BadRequest(new { valid = false, reason = "Voucher không còn hiệu lực." });
+
+        if (v.IsPersonal && !IsAdminOrManager)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUserId) || !string.Equals(v.TargetUserId, CurrentUserId, StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { valid = false, reason = "Voucher cá nhân, không thuộc về bạn." });
+        }
+
+        return Ok(new { valid = true });
+    }
+
+    // ========= CONSUME =========
+    // Chỉ cho phép: chủ sở hữu (nếu personal) hoặc Admin/Manager
+    public record ConsumeRequest(string? UserId);
+
+    [HttpPost("{code}/consume")]
+    public async Task<IActionResult> Consume(string code, [FromBody] ConsumeRequest body, CancellationToken ct)
+    {
+        var v = await _voucherService.GetByCodeAsync(code, ct);
+        if (v == null) return BadRequest(new { success = false, message = "Voucher không tồn tại." });
+
+        var callerUserId = CurrentUserId;
+        if (string.IsNullOrWhiteSpace(callerUserId))
+            return Unauthorized(new { success = false, message = "Bạn chưa đăng nhập." });
+
+        // Nếu là voucher cá nhân: chỉ đúng chủ sở hữu hoặc admin/manager mới được consume
+        if (v.IsPersonal && !IsAdminOrManager && !string.Equals(v.TargetUserId, callerUserId, StringComparison.OrdinalIgnoreCase))
+            return Forbid();
+
+        // Không cho phép “mạo danh” userId trong body; dùng id của người gọi
+        var userIdToConsume = callerUserId;
+
+        var (ok, message, remaining, userUsed) = await _voucherService.ConsumeAsync(code, userIdToConsume!, ct);
+        return Ok(new { success = ok, message, remainingUsage = remaining, userUsedCount = userUsed });
     }
 }

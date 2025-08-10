@@ -4,9 +4,12 @@ namespace TerrariumGardenTech.Service.IService;
 
 public interface IVoucherService
 {
-    Task<bool> IsVoucherValidAsync(string code);
-    Task<Voucher> GetVoucherByCodeAsync(string code);
-    Task AddVoucherAsync(Voucher voucher);
-    Task UpdateVoucherAsync(Voucher voucher);
-    Task DeleteVoucherAsync(int voucherId);
+    Task<List<Voucher>> GetAllAsync(CancellationToken ct = default);
+    Task<Voucher?> GetByCodeAsync(string code, CancellationToken ct = default);
+    Task<Voucher> CreateAsync(Voucher v, CancellationToken ct = default);
+    Task UpdateAsync(Voucher v, CancellationToken ct = default);
+    Task DeleteAsync(int voucherId, CancellationToken ct = default);
+
+    Task<(bool ok, string reason, Voucher? voucher, int userUsed)> CanUseAsync(string code, string userId, CancellationToken ct = default);
+    Task<(bool ok, string message, int remaining, int userUsed)> ConsumeAsync(string code, string userId, CancellationToken ct = default);
 }

@@ -43,30 +43,28 @@ public class MembershipPackageController : ControllerBase
     }
 
     // Create a new Membership for a user
+
     [HttpPost("create")]
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IBusinessResult> CreateMembership([FromBody] CreateMembershipForUserRequest request)
     {
+        if (!ModelState.IsValid)
+            return new BusinessResult(Const.BAD_REQUEST_CODE, "Dữ liệu không hợp lệ", ModelState);
+
         try
         {
-            // Kiểm tra xem package có tồn tại không
+            // 1) Kiểm tra package
             var package = await _service.GetByIdAsync(request.PackageId);
             if (package == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, "Gói membership không tồn tại", null);
 
-            // Tạo membership cho người dùng
-            var membershipId =
-                await _membershipService.CreateMembershipForUserAsync(request.UserId, request.PackageId,
-                    request.StartDate);
+            // 2) Tạo membership cho user (logic chặn trùng Active nên đặt trong service)
+            var membershipId = await _membershipService.CreateMembershipForUserAsync(
+                request.UserId, request.PackageId, request.StartDate);
 
-            var response = new
-            {
-                membershipId,
-                message = "Tạo membership cho người dùng thành công",
-                statusCode = 200
-            };
-
-            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership cho người dùng thành công", response);
+            // 3) Trả về gọn: id
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership cho người dùng thành công",
+                new { membershipId });
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -77,6 +75,7 @@ public class MembershipPackageController : ControllerBase
             return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message, null);
         }
     }
+
 
     // Update a MembershipPackage by ID
     [HttpPut("{id}")]
