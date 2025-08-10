@@ -353,7 +353,7 @@ public class OrderService : IOrderService
             throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
 
         // Optional: kiểm tra giá trị enum có hợp lệ hay không
-        if (!Enum.IsDefined(typeof(OrderStatus), status))
+        if (!Enum.IsDefined(typeof(OrderStatusEnum), status))
             throw new ArgumentException("Status không hợp lệ.", nameof(status));
 
         var order = await _unitOfWork.Order.GetByIdAsync(id);
