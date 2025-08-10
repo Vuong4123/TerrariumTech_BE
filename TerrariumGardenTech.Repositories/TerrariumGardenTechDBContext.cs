@@ -644,7 +644,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
         //        .OnDelete(DeleteBehavior.ClientSetNull)
         //        .HasConstraintName("FK_Membership_User");
         //});
-
+        modelBuilder.Entity<Wallet>().HasKey(w => w.WalletId);
+        modelBuilder.Entity<WalletTransaction>()
+  .HasKey(w => w.TransactionId);
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__4BA5CEA92CE3E468");
