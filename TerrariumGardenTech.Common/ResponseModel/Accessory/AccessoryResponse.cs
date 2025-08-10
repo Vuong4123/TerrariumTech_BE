@@ -21,5 +21,7 @@ public class AccessoryResponse
     public string Status { get; set; } = string.Empty;
     public double AverageRating { get; set; }
     public int FeedbackCount { get; set; }
+    // ✅ mới
+    public int PurchaseCount { get; set; }
     public List<AccessoryImageResponse> AccessoryImages { get; set; } = [];
 }

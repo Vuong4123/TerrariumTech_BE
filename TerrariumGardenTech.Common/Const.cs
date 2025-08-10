@@ -38,7 +38,7 @@ public class Const
 
     #region Upload Code
 
-    public static int SUCCESS_UPLOAD_CODE = 200;
+    public static int SUCCESS_UPLOAD_CODE = 1;
     public static string SUCCESS_UPLOAD_MSG = "Upload success";
 
     public static int FAIL_UPLOAD_CODE = -1;

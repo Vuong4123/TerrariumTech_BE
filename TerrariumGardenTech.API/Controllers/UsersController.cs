@@ -1,8 +1,10 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Auth;
+using TerrariumGardenTech.Common.RequestModel.Voucher;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Service;
@@ -162,4 +164,6 @@ public class UsersController : ControllerBase
     {
         return Ok(new { message = "Dữ liệu dành cho Staff, Manager hoặc Admin." });
     }
+
+
 }

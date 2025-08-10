@@ -2,10 +2,8 @@
 using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Common.ResponseModel.Accessory;
 using TerrariumGardenTech.Common.ResponseModel.Base;
-using TerrariumGardenTech.Common.ResponseModel.Terrarium;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
-using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -45,7 +43,8 @@ public class AccessoryService : IAccessoryService
         // Lấy rating & count cho các accessory chỉ qua 1 query
         var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(accessoryIds);
         // ratingStats là Dictionary<int, (double AverageRating, int FeedbackCount)>
-
+        // ✅ Thêm: purchase counts (tổng quantity đã bán)
+        var purchaseCounts = await _unitOfWork.Accessory.GetAccessoryPurchaseCountsAsync(accessoryIds);
         // Map sang DTO, bổ sung rating
         var accessories = enumerable.Select(a => new AccessoryResponse
         {
@@ -66,7 +65,8 @@ public class AccessoryService : IAccessoryService
                 AccessoryId = ai.AccessoryId
             }).ToList(),
             AverageRating = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].AverageRating : 0,
-            FeedbackCount = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].FeedbackCount : 0
+            FeedbackCount = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].FeedbackCount : 0,
+            PurchaseCount = purchaseCounts.ContainsKey(a.AccessoryId) ? purchaseCounts[a.AccessoryId] : 0
         }).ToList();
 
         var tableResponse = new QueryTableResult(request, accessories, tuple.Item2);
@@ -81,10 +81,14 @@ public class AccessoryService : IAccessoryService
         if (accessory == null)
             return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
 
-        // Lấy rating cho 1 phụ kiện (tối ưu dùng repository đã viết)
+        // Rating
         var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(new List<int> { id });
         var avgRating = ratingStats.ContainsKey(id) ? ratingStats[id].AverageRating : 0;
         var feedbackCount = ratingStats.ContainsKey(id) ? ratingStats[id].FeedbackCount : 0;
+
+        // ✅ Lượt mua
+        var purchaseStats = await _unitOfWork.Accessory.GetAccessoryPurchaseCountsAsync(new List<int> { id });
+        var purchaseCount = purchaseStats.TryGetValue(id, out var pc) ? pc : 0;
 
         var accessoryResponse = new AccessoryResponse
         {
@@ -105,7 +109,9 @@ public class AccessoryService : IAccessoryService
                 AccessoryId = ai.AccessoryId
             }).ToList(),
             AverageRating = avgRating,
-            FeedbackCount = feedbackCount
+            FeedbackCount = feedbackCount,
+            // ✅ gắn lượt mua
+            PurchaseCount = purchaseCount
         };
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryResponse);
@@ -119,7 +125,11 @@ public class AccessoryService : IAccessoryService
             return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessories matched the given filter.");
 
         var accessoryIds = accessories.Select(a => a.AccessoryId).ToList();
+
+        // Rating
         var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(accessoryIds);
+        // ✅ Lượt mua cho cả list (1 query)
+        var purchaseStats = await _unitOfWork.Accessory.GetAccessoryPurchaseCountsAsync(accessoryIds);
 
         var accessoriesResponse = accessories.Select(a => new AccessoryResponse
         {
@@ -133,8 +143,12 @@ public class AccessoryService : IAccessoryService
             CategoryId = a.CategoryId,
             CreatedAt = a.CreatedAt ?? DateTime.MinValue,
             UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,
-            AverageRating = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].AverageRating : 0,
-            FeedbackCount = ratingStats.ContainsKey(a.AccessoryId) ? ratingStats[a.AccessoryId].FeedbackCount : 0
+
+            AverageRating = ratingStats.TryGetValue(a.AccessoryId, out var r) ? r.AverageRating : 0,
+            FeedbackCount = ratingStats.TryGetValue(a.AccessoryId, out var r2) ? r2.FeedbackCount : 0,
+
+            // ✅ gắn lượt mua
+            PurchaseCount = purchaseStats.TryGetValue(a.AccessoryId, out var pc) ? pc : 0
         }).ToList();
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoriesResponse);

@@ -34,13 +34,13 @@ public class AccessoryController : ControllerBase
     }
 
     [HttpGet("filter")]
-    public async Task<IBusinessResult> FilterTerrariums([FromQuery] int categoryId)
+    public async Task<IBusinessResult> FilterByCategory([FromQuery] int categoryId)
     {
         return await _accessoryService.FilterAccessoryAsync(categoryId);
     }
 
     // GET api/<AccessoryController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _accessoryService.GetById(id);
@@ -50,8 +50,6 @@ public class AccessoryController : ControllerBase
     [HttpPost("add-accessory")]
     public async Task<IBusinessResult> Post(AccessoryCreateRequest accessoryCreateRequest)
     {
-        if (accessoryCreateRequest == null || !ModelState.IsValid)
-            return new BusinessResult(Const.FAIL_CREATE_CODE, "Invalid request data.");
         return await _accessoryService.CreateAccessory(accessoryCreateRequest);
     }
 
@@ -59,8 +57,6 @@ public class AccessoryController : ControllerBase
     [HttpPut("update-accessory/{id}")]
     public async Task<IBusinessResult> Put(AccessoryUpdateRequest accessoryUpdateRequest)
     {
-        if (accessoryUpdateRequest == null || !ModelState.IsValid)
-            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Invalid request data.");
         return await _accessoryService.UpdateAccessory(accessoryUpdateRequest);
     }
 

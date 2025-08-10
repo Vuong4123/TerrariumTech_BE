@@ -1,22 +1,25 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using Google.Apis.Auth.OAuth2;
+﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Services;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Auth;
+using TerrariumGardenTech.Common.RequestModel.Voucher;
+using TerrariumGardenTech.Common.ResponseModel.User;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -30,63 +33,20 @@ public class UserService : IUserService
     private readonly ILogger<UserService> _logger;
     private readonly SmtpSettings _smtpSettings;
     private readonly UnitOfWork _unitOfWork;
+    private readonly ICloudinaryService _cloudinary;
 
 
     public UserService(UnitOfWork unitOfWork, IConfiguration configuration, IOptions<SmtpSettings> smtpOptions,
-        ILogger<UserService> logger)
+        ILogger<UserService> logger, ICloudinaryService cloudinary)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _smtpSettings = smtpOptions.Value;
         _logger = logger;
+        _cloudinary = cloudinary;
     }
 
 
-    //public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
-    //{
-    //    try
-    //    {
-    //        var existingUser = await _unitOfWork.User.FindOneAsync(u => u.Username == userRequest.Username || u.Email == userRequest.Email, false);
-    //        if (existingUser != null)
-    //            return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
-
-    //        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userRequest.PasswordHash);
-
-    //        var newUser = new User
-    //        {
-    //            Username = userRequest.Username,
-    //            PasswordHash = hashedPassword,
-    //            Email = userRequest.Email,
-    //            FullName = userRequest.FullName,
-    //            PhoneNumber = userRequest.PhoneNumber,
-    //            DateOfBirth = userRequest.DateOfBirth,
-    //            Gender = userRequest.Gender,
-    //            CreatedAt = DateTime.UtcNow,
-    //            Status = "Active",
-    //            RoleId = 1  // Mặc định role User
-    //        };
-
-    //        // Tạo OTP và gửi email
-    //        var otp = GenerateOtp();
-    //        await SendOtpEmailAsync(userRequest.Email, otp);
-
-    //        // Lưu OTP vào cơ sở dữ liệu
-    //        newUser.Otp = otp;
-    //        newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(10);  // OTP hết hạn trong 10 phút
-    //        await _unitOfWork.User.CreateAsync(newUser);
-    //        if (string.IsNullOrEmpty(userRequest.Username) || string.IsNullOrEmpty(userRequest.PasswordHash) || string.IsNullOrEmpty(userRequest.Email))
-    //        {
-    //            return (Const.FAIL_CREATE_CODE, "Dữ liệu không hợp lệ");
-    //        }
-
-    //        return (Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Lỗi khi tạo tài khoản");
-    //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
-    //    }
-    //}
 
     public async Task<(int, string)> RegisterUserAsync(UserRegisterRequest userRequest)
     {
@@ -132,35 +92,7 @@ public class UserService : IUserService
         }
     }
 
-    //public async Task<(int, string)> VerifyOtpAsync(string email, string otp)
-    //{
-    //    try
-    //    {
-    //        var user = await _unitOfWork.User.FindOneAsync(u => u.Email == email, false);
-    //        if (user == null)
-    //        {
-    //            return (Const.FAIL_READ_CODE, "Email không tồn tại");
-    //        }
 
-    //        // Kiểm tra OTP và thời gian hết hạn
-    //        if (user.Otp == null || user.Otp != otp)
-    //        {
-    //            return (Const.FAIL_READ_CODE, "Mã OTP không đúng");
-    //        }
-
-    //        if (user.OtpExpiration == null || user.OtpExpiration < DateTime.UtcNow)
-    //        {
-    //            return (Const.FAIL_READ_CODE, "Mã OTP đã hết hạn");
-    //        }
-    //        user.Status = "Active";  // Kích hoạt tài khoản sau khi xác thực OTP
-    //        return (Const.SUCCESS_CREATE_CODE, "OTP xác thực thành công");
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Lỗi khi xác thực OTP");
-    //        return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
-    //    }
-    //}
     public async Task<(int, string)> VerifyOtpAsync(string email, string otp)
     {
         try

@@ -5,16 +5,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization;
 using TerrariumGardenTech.API.Authorization;
 using TerrariumGardenTech.API.Middlewares;
@@ -28,7 +23,6 @@ using TerrariumGardenTech.Service.Filters;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Service.Mappers;
 using TerrariumGardenTech.Service.Service;
-using static Google.Rpc.Context.AttributeContext.Types;
 
 
 Env.Load(); // Tải biến môi trường từ file .env nếu có
@@ -121,6 +115,7 @@ builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 // Đăng ký SignalR cho real-time chat
 builder.Services.AddSignalR();

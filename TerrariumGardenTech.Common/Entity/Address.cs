@@ -21,6 +21,9 @@ public partial class Address
     public string ProvinceCode { get; set; }    // Thêm
     public string DistrictCode { get; set; }    // Thêm
     public string WardCode { get; set; }        // Thêm
+    // ✅ Toạ độ dạng string
+    public string Latitude { get; set; }   // Vĩ độ
+    public string Longitude { get; set; }  // Kinh độ
     public bool IsDefault { get; set; } // true or false
 
     public virtual User User { get; set; }
