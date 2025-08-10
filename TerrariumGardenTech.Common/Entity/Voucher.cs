@@ -23,5 +23,13 @@ public partial class Voucher
 
     public string Status { get; set; }
 
+    public int TotalUsage { get; set; }         // Tổng lượt cấp phát
+    public int RemainingUsage { get; set; }     // Lượt còn lại
+    public bool IsPersonal { get; set; }        // Voucher cá nhân?
+    public string? TargetUserId { get; set; }   // User đích (nếu cá nhân)
+    public int? PerUserUsageLimit { get; set; } // Giới hạn mỗi user
+
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<VoucherUsage> VoucherUsages { get; set; } = new List<VoucherUsage>();
 }

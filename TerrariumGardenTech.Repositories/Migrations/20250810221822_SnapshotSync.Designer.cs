@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,13 +12,15 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250810221822_SnapshotSync")]
+    partial class SnapshotSync
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -1652,23 +1655,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("Voucher", (string)null);
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.VoucherUsage", b =>
-                {
-                    b.Property<int>("VoucherId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<int>("UsedCount")
-                        .HasColumnType("int");
-
-                    b.HasKey("VoucherId", "UserId");
-
-                    b.ToTable("VoucherUsage");
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Cart", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
@@ -2147,17 +2133,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.VoucherUsage", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Voucher", "Voucher")
-                        .WithMany("VoucherUsages")
-                        .HasForeignKey("VoucherId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Voucher");
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Cart", b =>
                 {
                     b.Navigation("CartItems");
@@ -2305,8 +2280,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Voucher", b =>
                 {
                     b.Navigation("Orders");
-
-                    b.Navigation("VoucherUsages");
                 });
 #pragma warning restore 612, 618
         }

@@ -162,6 +162,20 @@ builder.Services.AddAuthorization(opt =>
     });
 });
 
+builder.Services.AddAuthorization(opt =>
+{
+    // policies cũ cho Order (giữ nguyên) ...
+
+    // Voucher – chỉ Admin/Manager được CRUD
+    opt.AddPolicy("Voucher.Manage",
+        p => p.RequireRole("Admin", "Manager"));
+
+    // Voucher – ai đăng nhập cũng có thể xem/validate/consume
+    opt.AddPolicy("Voucher.Read",
+        p => p.RequireRole("User", "Staff", "Manager", "Admin", "Shipper"));
+});
+
+
 // Handler DI
 builder.Services.AddScoped<IAuthorizationHandler, OrderAccessHandler>();
 

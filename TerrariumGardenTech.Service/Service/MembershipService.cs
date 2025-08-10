@@ -27,7 +27,7 @@ public class MembershipService : IMembershipService
 
         // Kiểm tra nếu người dùng đã có membership active
         var activeMemberships = await _unitOfWork.MemberShip.FindAsync(m =>
-            m.UserId == currentUserId && m.Status == MembershipStatus.Active.ToString());
+            m.UserId == currentUserId && m.StatusEnum == MembershipStatus.Active);
 
         if (activeMemberships.Any())
             throw new ArgumentException("Bạn đã có gói membership đang hoạt động.");
