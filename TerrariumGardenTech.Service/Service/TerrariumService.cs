@@ -1,5 +1,8 @@
 ﻿using Newtonsoft.Json;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
@@ -35,6 +38,9 @@ public class AITerrariumResponse
 public class TerrariumService : ITerrariumService
 {
     private readonly UnitOfWork _unitOfWork;
+    private static readonly HttpClient _httpClient = new HttpClient();
+    private readonly string _geminiApiKey = "AIzaSyCxt7zx-cUzvkuroP1uaSp_m0SkoFU_j4A";
+    private const string GeminiModel = "gemini-1.5-flash-latest";
     private readonly ICloudinaryService _cloudinaryService;
 
     public TerrariumService(UnitOfWork unitOfWork,ICloudinaryService cloudinaryService)
@@ -44,16 +50,196 @@ public class TerrariumService : ITerrariumService
     }
     public async Task<AITerrariumResponse> PredictTerrariumAsync(AITerrariumRequest request)
     {
-        var httpClient = new HttpClient();
-        var json = JsonConvert.SerializeObject(request);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        try
+        {
+            var environment = await _unitOfWork.Environment.GetByIdAsync(request.EnvironmentId);
+            var shape = await _unitOfWork.Shape.GetByIdAsync(request.ShapeId);
+            var tankMethod = await _unitOfWork.TankMethod.GetByIdAsync(request.TankMethodId);
 
-        var response = await httpClient.PostAsync("http://127.0.0.1:8000/predict", content);
+            if (environment == null || shape == null || tankMethod == null)
+                throw new ArgumentException("Invalid environment, shape, or tank method ID");
+
+            var prompt = BuildPrompt(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+            var aiText = await CallGeminiAsync(prompt);
+
+            if (string.IsNullOrWhiteSpace(aiText))
+                return GenerateFallbackTerrarium(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+
+            var terrarium = ParseTerrariumJson(aiText, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+            return terrarium ?? GenerateFallbackTerrarium(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in PredictTerrariumAsync: {ex.Message}");
+            return GenerateFallbackTerrarium(request);
+        }
+    }
+
+    private string BuildPrompt(AITerrariumRequest req, string environment, string shape, string method)
+    {
+        return $@"Generate a creative terrarium design based on these specifications:
+            - Environment: {environment} (ID: {req.EnvironmentId})
+            - Shape: {shape} (ID: {req.ShapeId})
+            - Tank Method: {method} (ID: {req.TankMethodId})
+
+            Create a JSON response with:
+            1. terrariumName: Creative Vietnamese name
+            2. description: Detailed Vietnamese description (50-100 words)
+            3. minPrice: 100000-300000 VND
+            4. maxPrice: 300000-900000 VND
+            5. stock: 5-50
+            6. imageKeywords: Array of 5 specific English search terms that would find perfect images for this terrarium (e.g. ['desert succulent terrarium', 'glass geometric planter'])";
+    }
+
+    private AITerrariumResponse ParseTerrariumJson(string aiText, string environment, string shape, string method)
+    {
+        try
+        {
+            var match = Regex.Match(aiText, @"\{(?:[^{}]|(?<o>\{)|(?<-o>\}))+(?(o)(?!))\}", RegexOptions.Singleline);
+            string json = match.Success ? match.Value : aiText;
+
+            dynamic data = JsonConvert.DeserializeObject(json);
+
+            // Extract search keywords for image search
+            List<string> imageKeywords = data.imageKeywords?.ToObject<List<string>>();
+            if (imageKeywords == null || !imageKeywords.Any())
+            {
+                imageKeywords = new List<string>
+            {
+                $"terrarium {environment.ToLower()}",
+                $"{shape.ToLower()} planter",
+                $"miniature {environment.ToLower()} garden",
+                "terrarium plants",
+                $"{environment.ToLower()} {shape.ToLower()} plants"
+            };
+            }
+
+            // Generate dynamic image URLs using the keywords
+            var imageUrls = GetDynamicImageUrls(imageKeywords);
+
+            return new AITerrariumResponse
+            {
+                TerrariumName = data.terrariumName ?? $"{environment} {shape}",
+                Description = data.description ?? $"Terrarium {environment} với hình dạng {shape}, phương pháp {method}.",
+                MinPrice = (decimal?)data.minPrice ?? 150000m,
+                MaxPrice = (decimal?)data.maxPrice ?? 450000m,
+                Stock = (int?)data.stock ?? 10,
+                ImageUrl = imageUrls.FirstOrDefault(),
+                TerrariumImages = imageUrls
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing AI JSON: {ex.Message}");
+            return null;
+        }
+    }
+
+    private List<string> GetDynamicImageUrls(List<string> keywords)
+    {
+        var results = new List<string>();
+        var random = new Random();
+
+        int numImages = random.Next(3, 6);
+        var selectedKeywords = keywords.OrderBy(x => random.Next()).Take(numImages).ToList();
+
+        foreach (var keyword in selectedKeywords)
+        {
+            var encodedKeyword = Uri.EscapeDataString(keyword);
+
+            int provider = random.Next(4);
+            string imageUrl;
+
+            switch (provider)
+            {
+                case 0:
+                    imageUrl = $"https://source.unsplash.com/featured/600x400/?{encodedKeyword}&sig={Guid.NewGuid().ToString().Substring(0, 8)}";
+                    break;
+
+                case 1:
+                    imageUrl = $"https://pixabay.com/api/no_key_required_for_this_endpoint/?q={encodedKeyword}&image_type=photo&orientation=horizontal&per_page=3";
+                    break;
+
+                case 2:
+                    imageUrl = $"https://images.pexels.com/photos/search?query={encodedKeyword}&per_page=1&orientation=landscape";
+                    break;
+
+                default:
+                    imageUrl = $"https://source.unsplash.com/random/600x400/?{encodedKeyword}&sig={Guid.NewGuid().ToString().Substring(0, 8)}";
+                    break;
+            }
+
+            results.Add(imageUrl);
+        }
+
+        return results;
+    }
+
+    private AITerrariumResponse GenerateFallbackTerrarium(AITerrariumRequest request, string env = null, string shape = null, string method = null)
+    {
+        env ??= $"Môi trường {request.EnvironmentId}";
+        shape ??= $"Hình dạng {request.ShapeId}";
+        method ??= $"Phương pháp {request.TankMethodId}";
+
+        var rnd = new Random();
+        var terrariumName = $"Bể {shape.ToLower()} {env.ToLower()}";
+        var description = $"Tiểu cảnh {shape.ToLower()} mang phong cách {env.ToLower()}, được thiết kế theo phương pháp {method.ToLower()}.";
+
+        decimal minPrice = rnd.Next(100, 301) * 1000;
+        decimal maxPrice = rnd.Next(300, 901) * 1000;
+
+        // Create dynamic search terms based on environment and shape
+        var searchTerms = new List<string>
+    {
+        $"terrarium {env.ToLower()}",
+        $"{shape.ToLower()} planter",
+        "glass terrarium",
+        "miniature garden",
+        "succulent arrangement"
+    };
+
+        // Get dynamic images using the search terms
+        var imageUrls = GetDynamicImageUrls(searchTerms);
+
+        return new AITerrariumResponse
+        {
+            TerrariumName = terrariumName,
+            Description = description,
+            MinPrice = minPrice,
+            MaxPrice = maxPrice,
+            Stock = rnd.Next(5, 51),
+            ImageUrl = imageUrls.FirstOrDefault(),
+            TerrariumImages = imageUrls
+        };
+    }
+
+
+    private async Task<string> CallGeminiAsync(string prompt)
+    {
+        var requestPayload = new
+        {
+            contents = new[]
+            {
+                new { parts = new[] { new { text = prompt } } }
+            },
+            generationConfig = new { temperature = 0.7, maxOutputTokens = 1024, topP = 0.95, topK = 40 }
+        };
+
+        var jsonRequest = JsonConvert.SerializeObject(requestPayload);
+        var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{GeminiModel}:generateContent?key={_geminiApiKey}";
+        var response = await _httpClient.PostAsync(url, content);
+
         if (!response.IsSuccessStatusCode)
-            throw new Exception("Lỗi khi tự sinh ra terrarium");
+        {
+            Console.WriteLine($"Gemini API error: {response.StatusCode}");
+            return null;
+        }
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AITerrariumResponse>(responseContent);
+        dynamic apiResponse = JsonConvert.DeserializeObject(responseContent);
+        return apiResponse?.candidates?[0]?.content?.parts?[0]?.text;
     }
 
     public async Task<IBusinessResult> GetAll(TerrariumGetAllRequest request)

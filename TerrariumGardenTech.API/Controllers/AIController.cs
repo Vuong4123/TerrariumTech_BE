@@ -23,7 +23,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPost("auto-generate")]
-        public async Task<IBusinessResult> AutoGenerate([FromBody] AITerrariumRequest aiRequest)
+        public async Task<TerrariumCreateRequest> AutoGenerate([FromBody] AITerrariumRequest aiRequest)
         {
             var aiResult = await _terrariumService.PredictTerrariumAsync(aiRequest);
 
@@ -43,9 +43,9 @@ namespace TerrariumGardenTech.API.Controllers
                 TerrariumImages= aiResult.TerrariumImages                 
                 
             };
-
-            var result = await _terrariumService.CreateTerrariumAI(createRequest);
-            return result;
+            return createRequest;
+            //var result = await _terrariumService.CreateTerrariumAI(createRequest);
+            //return result;
         }
 
 

@@ -46,7 +46,41 @@ public class MembershipPackageController : ControllerBase
 
     [HttpPost("create")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IBusinessResult> CreateMembership([FromBody] CreateMembershipForUserRequest request)
+    public async Task<IBusinessResult> CreateMembership([FromBody] CreateMembershipPackageRequest request)
+    {
+        if (!ModelState.IsValid)
+            return new BusinessResult(Const.BAD_REQUEST_CODE, "Dữ liệu không hợp lệ", ModelState);
+
+        try
+        {
+            var package = new Common.Entity.MembershipPackage
+            {
+                Type = request.Type,
+                DurationDays = request.DurationDays,
+                Price = request.Price,
+                Description = request.Description,
+                IsActive = request.IsActive
+            };
+
+            var membershipId = await _service.CreateAsync(package);
+
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership package thành công",
+                new { membershipId });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return new BusinessResult(Const.UNAUTHORIZED_CODE, ex.Message, null);
+        }
+        catch (ArgumentException ex)
+        {
+            return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message, null);
+        }
+    }
+    // Create a new Membership for a user
+
+    [HttpPost("createmembershipforuser")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IBusinessResult> CreateMembershipForUser([FromBody] CreateMembershipForUserRequest request)
     {
         if (!ModelState.IsValid)
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Dữ liệu không hợp lệ", ModelState);

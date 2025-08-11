@@ -17,12 +17,14 @@ public class OrderController : ControllerBase
     private readonly IAuthorizationService _auth;
     private readonly IOrderService _svc;
     private readonly ITransportService _transportService;
+    private readonly IAddressService _addressService;
 
-    public OrderController(IOrderService svc, IAuthorizationService auth, ITransportService transportService)
+    public OrderController(IOrderService svc, IAuthorizationService auth, ITransportService transportService, IAddressService addressService)
     {
         _svc = svc ?? throw new ArgumentNullException(nameof(svc));
         _auth = auth ?? throw new ArgumentNullException(nameof(auth));
         _transportService = transportService;
+        _addressService = addressService;
     }
 
     /// <summary>
@@ -135,6 +137,9 @@ public class OrderController : ControllerBase
         try
         {
             var id = await _svc.CreateAsync(req);  // CHỈ TRUYỀN 1 THAM SỐ!
+            var addressExist = _addressService.GetAddressById(req.AddressId);
+            if (addressExist == null)
+                return BadRequest(new { message = "Địa chỉ không tồn tại." });
             return CreatedAtAction(nameof(Get), new { id }, new { orderId = id });
         }
         catch (ArgumentException ae)
