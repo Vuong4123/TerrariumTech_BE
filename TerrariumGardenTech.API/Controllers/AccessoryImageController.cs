@@ -14,7 +14,6 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 {
     // GET: api/<AccessoryImageController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
 
     public async Task<IBusinessResult> Get()
     {
