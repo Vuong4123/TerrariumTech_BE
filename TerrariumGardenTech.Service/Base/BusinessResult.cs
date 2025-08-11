@@ -15,6 +15,11 @@ public class BusinessResult : IBusinessResult
         Message = "Action fail";
     }
 
+    public BusinessResult(bool status, string message, object? data = null) : this(status ? 1 : 0, message)
+    {
+        Data = data;
+    }
+
     public BusinessResult(int status, string message)
     {
         Status = status;

@@ -3,6 +3,7 @@ using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Transports;
 using TerrariumGardenTech.Repositories;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.Service.Service
@@ -18,7 +19,26 @@ namespace TerrariumGardenTech.Service.Service
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task<(bool, string)> CreateTransport(CreateTransportModel request, int currentUserId)
+        public async Task<(int, IEnumerable<OrderTransport>)> Paging(int? orderId, int? shipperId, TransportStatusEnum? status, bool? isRefund, int pageIndex = 1, int pageSize = 10)
+        {
+            var query = _unitOfWork.Transport.DbSet().AsNoTracking();
+            if (orderId.HasValue)
+                query = query.Where(x => x.OrderId == orderId.Value);
+            if (shipperId.HasValue)
+                query = query.Where(x => x.UserId == shipperId.Value);
+            if (status.HasValue)
+                query = query.Where(x => x.Status == status.Value);
+            if (isRefund.HasValue)
+                query = query.Where(x => x.IsRefund == isRefund.Value);
+            var total = await query.CountAsync();
+            var datas = await query.OrderByDescending(x => x.CreatedDate)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToArrayAsync();
+            return (total, datas);
+        }
+
+        public async Task<IBusinessResult> CreateTransport(CreateTransportModel request, int currentUserId)
         {
             var users = await _unitOfWork.User.DbSet().AsNoTracking()
                 .Where(x => x.UserId == request.UserId || x.UserId == currentUserId)
@@ -26,15 +46,15 @@ namespace TerrariumGardenTech.Service.Service
             var assignUser = users.FirstOrDefault(x => x.UserId == request.UserId);
             var currentUser = users.FirstOrDefault(x => x.UserId == currentUserId);
             if ((request.UserId.HasValue && assignUser == null) || currentUser == null)
-                return (false, "Thông tin người dùng không hợp lệ!");
+                return new BusinessResult(false, "Thông tin người dùng không hợp lệ!");
 
             var order = await _unitOfWork.Order.DbSet().Include(x => x.Transports).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
             if (order == null)
-                return (false, "Không tìm thấy thông tin đơn hàng!");
+                return new BusinessResult(false, "Không tìm thấy thông tin đơn hàng!");
             if (order.Transports != null && (
                 (order.Status == OrderStatusEnum.Processing && order.Transports.Any(x => x.Status == TransportStatusEnum.Shipping || x.Status == TransportStatusEnum.Completed)) ||
                 (order.Status == OrderStatusEnum.Refuning && order.Transports.Any(x => x.Status == TransportStatusEnum.InCustomer))))
-                return (false, "Đơn hàng này đang có đơn vận chuyển, không thể tạo thêm");
+                return new BusinessResult(false, "Đơn hàng này đang có đơn vận chuyển, không thể tạo thêm");
             var verifyStatus = order.Status switch
             {
                 OrderStatusEnum.Cancle => "Đơn hàng đã bị hủy, không thể thực hiện tạo đơn vận chuyển!",
@@ -47,11 +67,11 @@ namespace TerrariumGardenTech.Service.Service
                 _ => string.Empty
             };
             if (order.Status == OrderStatusEnum.Shipping && request.IsRefund)
-                return (false, "Không thể tạo đơn hoàn tiền cho đơn hàng chưa giao!");
+                return new BusinessResult(false, "Không thể tạo đơn hoàn tiền cho đơn hàng chưa giao!");
             if (order.Status == OrderStatusEnum.Refuning && !request.IsRefund)
-                return (false, "Không thể tạo đơn giao tới khách hàng cho đơn hàng hoàn tiền!");
+                return new BusinessResult(false, "Không thể tạo đơn giao tới khách hàng cho đơn hàng hoàn tiền!");
             if (!string.IsNullOrEmpty(verifyStatus))
-                return (false, verifyStatus);
+                return new BusinessResult(false, verifyStatus);
 
             OrderRequestRefund? refun = null;
             if (request.IsRefund)
@@ -59,7 +79,7 @@ namespace TerrariumGardenTech.Service.Service
                 refun = await _unitOfWork.OrderRequestRefund.DbSet()
                     .FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.Status == RequestRefundStatusEnum.Approved);
                 if (refun == null)
-                    return (false, "Không tìm thấy thông tin yêu cầu hoàn tiền cho đơn hàng này!");
+                    return new BusinessResult(false, "Không tìm thấy thông tin yêu cầu hoàn tiền cho đơn hàng này!");
             }
 
             using (var trans = await _unitOfWork.Transport.BeginTransactionAsync())
@@ -88,11 +108,14 @@ namespace TerrariumGardenTech.Service.Service
                         await _unitOfWork.OrderRequestRefund.UpdateAsync(refun);
                     }
                     await _unitOfWork.SaveAsync();
+                    transport.Order = null;
+                    transport.TransportLogs = null;
+                    return new BusinessResult(true, "Tạo đơn vận chuyển thành công!", transport);
                 }
                 catch (Exception)
                 {
                     isRollback = true;
-                    return (true, "Tạo đơn vận chuyển thất bại!");
+                    return new BusinessResult(false, "Tạo đơn vận chuyển thất bại!");
                 }
                 finally { 
                     if (isRollback)
@@ -101,25 +124,29 @@ namespace TerrariumGardenTech.Service.Service
                         await trans.CommitAsync();
                 }
             }
-            return (true, "Tạo đơn vận chuyển thành công!");
         }
 
-        public async Task<(bool, string)> DeleteTransport(int transportId)
+        public async Task<IBusinessResult> DeleteTransport(int transportId)
         {
             var transport = await _unitOfWork.Transport.DbSet().FirstOrDefaultAsync(x => x.TransportId == transportId);
             if (transport == null)
-                return (false, "Không tìm thấy thông tin đơn vận chuyển!");
+                return new BusinessResult(false, "Không tìm thấy thông tin đơn vận chuyển!");
             if (transport.Status != TransportStatusEnum.InWarehouse)
-                return (false, "Không thể xóa đơn vận chuyển đã được giao hoặc đang vận chuyển!");
+                return new BusinessResult(false, "Không thể xóa đơn vận chuyển đã được giao hoặc đang vận chuyển!");
 
             var logs = await _unitOfWork.TransportLog.DbSet()
                 .Where(x => x.OrderTransportId == transportId)
                 .ToListAsync();
-
+            var order = await _unitOfWork.Order.DbSet().FirstOrDefaultAsync(x => x.OrderId == transport.OrderId);
             await Task.WhenAll(logs.Select(_unitOfWork.TransportLog.RemoveAsync));
+            if (order != null)
+            {
+                order.Status = transport.IsRefund ? OrderStatusEnum.Refunded : OrderStatusEnum.Processing;
+                await _unitOfWork.Order.UpdateAsync(order);
+            }    
             await _unitOfWork.Transport.RemoveAsync(transport);
             await _unitOfWork.SaveAsync();
-            return (true, "Xóa đơn vận chuyển thành công!");
+            return new BusinessResult(true, "Xóa đơn vận chuyển thành công!");
         }
 
         public async Task<OrderTransport> GetById(int transportId)
@@ -144,37 +171,37 @@ namespace TerrariumGardenTech.Service.Service
             });
         }
 
-        public async Task<(bool, string)> UpdateTransport(UpdateTransportModel request, int currentUserId)
+        public async Task<IBusinessResult> UpdateTransport(UpdateTransportModel request, int currentUserId)
         {
             var transport = await _unitOfWork.Transport.DbSet().FirstOrDefaultAsync(x => x.TransportId == request.TransportId);
             if (transport == null)
-                return (false, "Không tìm thấy thông tin đơn vận chuyển!");
+                return new BusinessResult(false, "Không tìm thấy thông tin đơn vận chuyển!");
             var order = await _unitOfWork.Order.DbSet().FirstOrDefaultAsync(x => x.OrderId == transport.OrderId);
             if (order == null)
-                return (false, "Không tìm thấy thông tin đơn hàng!");
+                return new BusinessResult(false, "Không tìm thấy thông tin đơn hàng!");
             if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping || transport.Status == TransportStatusEnum.LostInWarehouse || transport.Status == TransportStatusEnum.CompletedToWareHouse || transport.Status == TransportStatusEnum.FailedToWareHouse || request.Status == TransportStatusEnum.GetFromCustomerFail)
-                return (false, "Không thể cập nhật trạng thái đơn vận chuyển!");
+                return new BusinessResult(false, "Không thể cập nhật trạng thái đơn vận chuyển!");
 
             if ((request.Status == TransportStatusEnum.Shipping || request.Status == TransportStatusEnum.Completed || request.Status == TransportStatusEnum.ShippingToWareHouse || request.Status == TransportStatusEnum.CompletedToWareHouse) && request.Image == null)
-                return (false, "Cần có hình ảnh checkin khi chuyển sang trạng thái này!");
+                return new BusinessResult(false, "Cần có hình ảnh checkin khi chuyển sang trạng thái này!");
             if (request.Image != null)
             {
                 var allowExtension = new[] { ".png", ".jpg", ".jpeg", ".webp" };
                 var extension = Path.GetExtension(request.Image.FileName);
                 if (!allowExtension.Contains(extension))
-                    return (false, "Chỉ được chọn hình ảnh checkin!");
+                    return new BusinessResult(false, "Chỉ được chọn hình ảnh checkin!");
             }
             if ((request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.FailedToWareHouse || request.Status == TransportStatusEnum.LostShipping || request.Status == TransportStatusEnum.LostInWarehouse || request.Status == TransportStatusEnum.GetFromCustomerFail) && string.IsNullOrEmpty(request.Reason))
-                return (false, "Vui lòng nhập lý do chuyển trạng thái!");
+                return new BusinessResult(false, "Vui lòng nhập lý do chuyển trạng thái!");
 
             if (transport.Status != request.Status && 
               (transport.Status == TransportStatusEnum.InWarehouse && request.Status != TransportStatusEnum.LostInWarehouse && request.Status != TransportStatusEnum.Shipping) ||
               (transport.Status == TransportStatusEnum.Shipping && request.Status != TransportStatusEnum.LostShipping && request.Status != TransportStatusEnum.Completed && request.Status != TransportStatusEnum.Failed) ||
               (transport.Status == TransportStatusEnum.InCustomer && request.Status != TransportStatusEnum.GetFromCustomerFail && request.Status != TransportStatusEnum.ShippingToWareHouse) ||
               (transport.Status == TransportStatusEnum.ShippingToWareHouse && request.Status != TransportStatusEnum.CompletedToWareHouse && request.Status != TransportStatusEnum.FailedToWareHouse))
-                return (false, "Trạng thái cập nhập không chính xác");
+                return new BusinessResult(false, "Trạng thái cập nhập không chính xác");
             if ((request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.GetFromCustomerFail) && !request.ContactFailNumber.HasValue)
-                return (false, "Vui lòng nhập số lượt đã liên hệ thất bại tới khách hàng!");
+                return new BusinessResult(false, "Vui lòng nhập số lượt đã liên hệ thất bại tới khách hàng!");
 
             var users = await _unitOfWork.User.DbSet().AsNoTracking()
                 .Where(x => x.UserId == request.AssignToUserId || x.UserId == currentUserId)
@@ -182,7 +209,7 @@ namespace TerrariumGardenTech.Service.Service
             var assignUser = users.FirstOrDefault(x => x.UserId == request.AssignToUserId);
             var currentUser = users.FirstOrDefault(x => x.UserId == currentUserId);
             if ((request.AssignToUserId.HasValue && assignUser == null) || currentUser == null)
-                return (false, "Thông tin người dùng không hợp lệ!");
+                return new BusinessResult(false, "Thông tin người dùng không hợp lệ!");
 
             var uploadResult = await _cloudinaryService.UploadImageAsync(request.Image, "Transport_checkin");
             var log = new TransportLog
@@ -218,7 +245,9 @@ namespace TerrariumGardenTech.Service.Service
             await _unitOfWork.Transport.UpdateAsync(transport);
             await _unitOfWork.Order.UpdateAsync(order);
             await _unitOfWork.SaveAsync();
-            return (true, "Cập nhật thông tin đơn vận chuyển thành công!");
+            transport.Order = null;
+            transport.TransportLogs = null;
+            return new BusinessResult(true, "Cập nhật thông tin đơn vận chuyển thành công!", transport);
         }
     }
 }

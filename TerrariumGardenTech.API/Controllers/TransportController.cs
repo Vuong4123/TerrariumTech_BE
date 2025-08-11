@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata;
 using TerrariumGardenTech.API.Extensions;
+using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Transports;
 using TerrariumGardenTech.Service.IService;
 
@@ -16,6 +19,17 @@ public class TransportController : ControllerBase
     public TransportController(ITransportService transportService)
     {
         _transportService = transportService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] int? orderId = null, [FromQuery] int? shipperId = null, [FromQuery] TransportStatusEnum? status = null, bool? isRefund = null, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+    {
+        var (total, datas) = await _transportService.Paging(orderId, shipperId, status, isRefund, pageIndex, pageSize);
+        return Ok(new
+        {
+            Total = total,
+            Data = datas
+        });
     }
 
     /// <summary>
@@ -39,10 +53,10 @@ public class TransportController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateTransportModel request)
     {
         var currentUserId = User.GetUserId();
-        var (success, message) = await _transportService.CreateTransport(request, currentUserId);
-        if (!success)
-            return BadRequest(message);
-        return Ok(message);
+        var response = await _transportService.CreateTransport(request, currentUserId);
+        if (response.Status == Const.SUCCESS_READ_CODE)
+            return BadRequest(response);
+        return Ok(response);
     }
 
     /// <summary>
@@ -53,18 +67,18 @@ public class TransportController : ControllerBase
     {
         var currentUserId = User.GetUserId();
         request.TransportId = transportId;
-        var (success, message) = await _transportService.UpdateTransport(request, currentUserId);
-        if (!success)
-            return BadRequest(message);
-        return Ok(message);
+        var response = await _transportService.UpdateTransport(request, currentUserId);
+        if (response.Status == Const.SUCCESS_READ_CODE)
+            return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpDelete("{transportId:int}")]
     public async Task<IActionResult> Remove(int transportId)
     {
-        var (success, message) = await _transportService.DeleteTransport(transportId);
-        if (!success)
-            return BadRequest(message);
-        return Ok(message);
+        var response = await _transportService.DeleteTransport(transportId);
+        if (response.Status == Const.SUCCESS_READ_CODE)
+            return BadRequest(response);
+        return Ok(response);
     }
 }
