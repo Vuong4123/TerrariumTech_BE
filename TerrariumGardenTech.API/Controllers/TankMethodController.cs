@@ -21,7 +21,7 @@ public class TankMethodController : ControllerBase
 
     // GET: api/<TankMethodController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
+    //[Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _tankMethodService.GetAllTankMethodAsync();
@@ -29,7 +29,6 @@ public class TankMethodController : ControllerBase
 
     // GET api/<TankMethodController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _tankMethodService.GetTankMethodByIdAsync(id);

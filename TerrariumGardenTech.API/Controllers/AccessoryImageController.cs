@@ -22,7 +22,6 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // GET api/<AccessoryImageController>/5
     [HttpGet("get-by/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _accessoryImageService.GetById(id);
@@ -31,7 +30,6 @@ public class AccessoryImageController(IAccessoryImageService _accessoryImageServ
 
     // GET api/<AccessoryImageController>/accessoryId/5
     [HttpGet("get-accessoryId/{accessoryId}")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> GetByAccessoryId(int accessoryId)
     {
         return await _accessoryImageService.GetByAccessoryId(accessoryId);
