@@ -115,47 +115,58 @@ public class ShapeService : IShapeService
 
     public async Task<IBusinessResult> DeleteShapeAsync(int shapeId)
     {
-        //Kiem tra ton tai cua Shape
+        // 1) Kiểm tra shape tồn tại
         var shape = await _unitOfWork.Shape.GetByIdAsync(shapeId);
-        if (shape == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
-        // Lấy tất cả Terrarium liên quan đến TankMethod
-        var terrariums = await _unitOfWork.Terrarium.GetAllByEnvironmentIdAsync(shapeId);
-        if (terrariums != null && terrariums.Any())
-            using (var transaction = await _unitOfWork.Environment.BeginTransactionAsync())
+        if (shape == null)
+            return new BusinessResult(Const.FAIL_READ_CODE, "Shape không tồn tại.");
+
+        // 2) Lấy terrarium theo ShapeId (đúng repo)
+        var terrariums = await _unitOfWork.Terrarium.GetAllByShapeIdAsync(shapeId);
+
+        await using var tx = await _unitOfWork.Shape.BeginTransactionAsync();
+        try
+        {
+            // 3) Nếu có terrarium liên quan, xoá hết quan hệ trước
+            if (terrariums != null && terrariums.Any())
             {
-                try
+                foreach (var t in terrariums)
                 {
-                    // Xóa các Terrarium liên quan
-                    foreach (var terrarium in terrariums)
-                    {
-                        // Xóa tất cả các bản ghi liên quan đến Terrarium (TerrariumImage, TerrariumVariant, ...)
-                        await _unitOfWork.TerrariumImage.RemoveRangeAsync(terrarium.TerrariumImages);
-                        await _unitOfWork.TerrariumVariant.RemoveRangeAsync(terrarium.TerrariumVariants.ToList());
+                    if (t.TerrariumImages is not null && t.TerrariumImages.Count > 0)
+                        await _unitOfWork.TerrariumImage.RemoveRangeAsync(t.TerrariumImages.ToList());
 
-                        // Xóa Terrarium
-                        await _unitOfWork.Terrarium.RemoveAsync(terrarium);
-                    }
+                    if (t.TerrariumVariants is not null && t.TerrariumVariants.Count > 0)
+                        await _unitOfWork.TerrariumVariant.RemoveRangeAsync(t.TerrariumVariants.ToList());
 
-                    // Sau khi xóa tất cả Terrarium, xóa Environment
-                    var result = await _unitOfWork.Shape.RemoveAsync(shape);
-                    if (result)
-                    {
-                        await transaction.CommitAsync();
-                        return new BusinessResult(Const.SUCCESS_DELETE_CODE,
-                            "Tank method and related terrariums deleted successfully.");
-                    }
+                    // Nếu có bảng nối TerrariumAccessory thì xoá luôn (nếu bạn dùng)
+                    // var tas = _unitOfWork.TerrariumAccessory.Context().Where(x => x.TerrariumId == t.TerrariumId).ToList();
+                    // if (tas.Count > 0) _unitOfWork.TerrariumAccessory.Context().RemoveRange(tas);
 
-                    await transaction.RollbackAsync();
-                    return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete tank method.");
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+                    await _unitOfWork.Terrarium.RemoveAsync(t);
                 }
             }
 
-        return new BusinessResult(Const.FAIL_READ_CODE, "No related terrariums found.");
+            // 4) Xoá chính Shape
+            var removed = await _unitOfWork.Shape.RemoveAsync(shape);
+            if (!removed)
+            {
+                await tx.RollbackAsync();
+                return new BusinessResult(Const.FAIL_DELETE_CODE, "Xoá shape thất bại.");
+            }
+
+            await _unitOfWork.SaveAsync();
+            await tx.CommitAsync();
+
+            var msg = (terrariums != null && terrariums.Any())
+                ? "Đã xoá shape và toàn bộ terrarium liên quan."
+                : "Đã xoá shape (không có terrarium liên quan).";
+
+            return new BusinessResult(Const.SUCCESS_DELETE_CODE, msg);
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 
     // else

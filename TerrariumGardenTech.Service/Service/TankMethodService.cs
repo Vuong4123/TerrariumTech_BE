@@ -76,46 +76,58 @@ public class TankMethodService : ITankMethodService
     public async Task<IBusinessResult> DeleteTankMethodAsync(int Id)
     {
         var tankMethod = await _unitOfWork.TankMethod.GetByIdAsync(Id);
-        if (tankMethod == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+        if (tankMethod == null)
+            return new BusinessResult(Const.FAIL_READ_CODE, "Tank method không tồn tại.");
 
-        // Lấy tất cả Terrarium liên quan đến TankMethod
+        // Lấy các terrarium (kèm include cần thiết trong repo, nếu có)
         var terrariums = await _unitOfWork.Terrarium.GetAllByTankMethodIdAsync(Id);
-        if (terrariums != null && terrariums.Any())
-            using (var transaction = await _unitOfWork.TankMethod.BeginTransactionAsync())
+
+        // Dùng transaction cho cả 2 nhánh, để an toàn
+        await using var tx = await _unitOfWork.TankMethod.BeginTransactionAsync();
+        try
+        {
+            if (terrariums != null && terrariums.Any())
             {
-                try
+                foreach (var t in terrariums)
                 {
-                    // Xóa các Terrarium liên quan
-                    foreach (var terrarium in terrariums)
-                    {
-                        // Xóa tất cả các bản ghi liên quan đến Terrarium (TerrariumImage, TerrariumVariant, ...)
-                        await _unitOfWork.TerrariumImage.RemoveRangeAsync(terrarium.TerrariumImages);
-                        await _unitOfWork.TerrariumVariant.RemoveRangeAsync(terrarium.TerrariumVariants.ToList());
+                    // Xoá các thực thể liên quan nếu có (tuỳ schema dự án)
+                    if (t.TerrariumImages is not null && t.TerrariumImages.Count > 0)
+                        await _unitOfWork.TerrariumImage.RemoveRangeAsync(t.TerrariumImages.ToList());
 
-                        // Xóa Terrarium
-                        await _unitOfWork.Terrarium.RemoveAsync(terrarium);
-                    }
+                    if (t.TerrariumVariants is not null && t.TerrariumVariants.Count > 0)
+                        await _unitOfWork.TerrariumVariant.RemoveRangeAsync(t.TerrariumVariants.ToList());
 
-                    // Sau khi xóa tất cả Terrarium, xóa TankMethod
-                    var result = await _unitOfWork.TankMethod.RemoveAsync(tankMethod);
-                    if (result)
-                    {
-                        await transaction.CommitAsync();
-                        return new BusinessResult(Const.SUCCESS_DELETE_CODE,
-                            "Tank method and related terrariums deleted successfully.");
-                    }
+                    // Nếu có bảng nối TerrariumAccessory, thêm đoạn xoá dưới đây:
+                    // var ta = _unitOfWork.TerrariumAccessory.Context()
+                    //          .Where(x => x.TerrariumId == t.TerrariumId).ToList();
+                    // if (ta.Count > 0) _unitOfWork.TerrariumAccessory.Context().RemoveRange(ta);
 
-                    await transaction.RollbackAsync();
-                    return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete tank method.");
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+                    await _unitOfWork.Terrarium.RemoveAsync(t);
                 }
             }
 
-        return new BusinessResult(Const.FAIL_READ_CODE, "No related terrariums found.");
+            // Xoá TankMethod (kể cả khi không có terrarium liên quan)
+            var removed = await _unitOfWork.TankMethod.RemoveAsync(tankMethod);
+            if (!removed)
+            {
+                await tx.RollbackAsync();
+                return new BusinessResult(Const.FAIL_DELETE_CODE, "Xoá tank method thất bại.");
+            }
+
+            await _unitOfWork.SaveAsync();
+            await tx.CommitAsync();
+
+            var msg = (terrariums != null && terrariums.Any())
+                ? "Đã xoá tank method và toàn bộ terrarium liên quan."
+                : "Đã xoá tank method (không có terrarium liên quan).";
+
+            return new BusinessResult(Const.SUCCESS_DELETE_CODE, msg);
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 
     //private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)
