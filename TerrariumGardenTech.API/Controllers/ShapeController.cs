@@ -46,7 +46,7 @@ public class ShapeController : ControllerBase
     }
 
     // PUT api/<RoleController>/5
-    [HttpPut("update-shape-{id}")]
+    [HttpPut("update-shape/{id}")]
     [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromBody] ShapeUpdateRequest shapeUpdateRequest)
     {
@@ -54,7 +54,7 @@ public class ShapeController : ControllerBase
     }
 
     // DELETE api/<RoleController>/5
-    [HttpDelete("delete-shape-{id}")]
+    [HttpDelete("delete-shape/{id}")]
     [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {
