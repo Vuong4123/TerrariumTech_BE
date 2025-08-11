@@ -107,12 +107,12 @@ public class OrderController : ControllerBase
     ///     Lấy chi tiết đơn hàng theo ID
     /// </summary>
     [HttpGet("getbyuserid/{id:int}")]
-    
+
     public async Task<IActionResult> GetByUserdId(int userId)
     {
         try
         {
-            
+
 
             var order = await _svc.GetByUserAsync(userId);
             if (order is null)
@@ -137,7 +137,9 @@ public class OrderController : ControllerBase
         try
         {
             var id = await _svc.CreateAsync(req);  // CHỈ TRUYỀN 1 THAM SỐ!
-            var addressExist = _addressService.GetAddressById(req.AddressId);
+            var addressExist = req.AddressId.HasValue
+    ? await _addressService.GetAddressById(req.AddressId.Value)
+    : null;
             if (addressExist == null)
                 return BadRequest(new { message = "Địa chỉ không tồn tại." });
             return CreatedAtAction(nameof(Get), new { id }, new { orderId = id });
@@ -280,7 +282,7 @@ public class OrderController : ControllerBase
         return Ok(transports);
     }
 
-    [HttpPost("{id:int}/Refund")]    
+    [HttpPost("{id:int}/Refund")]
     public async Task<IActionResult> RequestRefund(int id, [FromBody] CreateRefundRequest request)
     {
         request.OrderId = id;
