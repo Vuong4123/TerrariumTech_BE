@@ -22,7 +22,6 @@ public class TerrariumVariantController : ControllerBase
 
     // GET: api/<TerrariumVariantController>
     [HttpGet("get-all-terrariumVariant")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get()
     {
         return await _terrariumVariantService.GetAllTerrariumVariantAsync();
@@ -30,7 +29,6 @@ public class TerrariumVariantController : ControllerBase
 
     // GET api/<TerrariumVariantController>/5
     [HttpGet("get-terrariumVariant/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _terrariumVariantService.GetTerrariumVariantByIdAsync(id);
@@ -38,7 +36,6 @@ public class TerrariumVariantController : ControllerBase
 
     // GET api/<TerrariumVariantController>/5
     [HttpGet("get-VariantByTerrarium/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetByTerrariumId(int id)
     {
         return await _terrariumVariantService.GetAllVariantByTerrariumIdAsync(id);

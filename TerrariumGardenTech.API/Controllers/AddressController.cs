@@ -24,7 +24,6 @@ public class AddressController : ControllerBase
 
     // GET: api/<AddressController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _addressService.GetAllAddresses();
@@ -32,7 +31,6 @@ public class AddressController : ControllerBase
 
     // GET api/<AddressController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _addressService.GetAddressById(id);

@@ -11,6 +11,8 @@ public class OrderResponse
 {
     public int OrderId { get; set; }
     public int UserId { get; set; }
+
+    public int? AddressId { get; set; }
     public decimal TotalAmount { get; set; }
 
     public decimal? Deposit { get; set; }

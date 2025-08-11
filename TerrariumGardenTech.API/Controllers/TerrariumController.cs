@@ -25,7 +25,6 @@ public class TerrariumController : ControllerBase
 
     // GET: api/<TerrariumController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get([FromQuery] TerrariumGetAllRequest request)
     {
         return await _terrariumService.GetAll(request);
@@ -46,7 +45,6 @@ public class TerrariumController : ControllerBase
     //}
 
     [HttpGet("get-by-terrariumname/{name}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetTerrariumByName(string name)
     {
         return await _terrariumService.GetTerrariumByNameAsync(name);
@@ -54,7 +52,6 @@ public class TerrariumController : ControllerBase
 
     // GET api/<TerrariumController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> GetById(int id)
     {
         return await _terrariumService.GetById(id);

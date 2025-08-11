@@ -22,7 +22,7 @@ public class ShapeController : ControllerBase
 
     // GET: api/<RoleController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
+    //[Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _shapeService.GetAllShapesAsync();
@@ -30,7 +30,6 @@ public class ShapeController : ControllerBase
 
     // GET api/<RoleController>/5
     [HttpGet("get-{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _shapeService.GetShapeByIdAsync(id);
@@ -46,7 +45,7 @@ public class ShapeController : ControllerBase
     }
 
     // PUT api/<RoleController>/5
-    [HttpPut("update-shape-{id}")]
+    [HttpPut("update-shape/{id}")]
     [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Put([FromBody] ShapeUpdateRequest shapeUpdateRequest)
     {
@@ -54,7 +53,7 @@ public class ShapeController : ControllerBase
     }
 
     // DELETE api/<RoleController>/5
-    [HttpDelete("delete-shape-{id}")]
+    [HttpDelete("delete-shape/{id}")]
     [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Delete(int id)
     {

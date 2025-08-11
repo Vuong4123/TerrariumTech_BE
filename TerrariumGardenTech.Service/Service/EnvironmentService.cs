@@ -68,48 +68,59 @@ public class EnvironmentService(UnitOfWork _unitOfWork) : IEnvironmentService
 
     public async Task<IBusinessResult> DeleteEnvironmentAsync(int environmentId)
     {
-        // Kiểm tra sự tồn tại của Environment
+        // 1) Kiểm tra Environment tồn tại
         var environment = await _unitOfWork.Environment.GetByIdAsync(environmentId);
-        if (environment == null) return new BusinessResult(Const.FAIL_READ_CODE, Const.FAIL_READ_MSG);
+        if (environment == null)
+            return new BusinessResult(Const.FAIL_READ_CODE, "Environment không tồn tại.");
 
-        // Lấy tất cả Terrarium liên quan đến TankMethod
+        // 2) Lấy terrarium theo EnvironmentId
         var terrariums = await _unitOfWork.Terrarium.GetAllByEnvironmentIdAsync(environmentId);
-        if (terrariums != null && terrariums.Any())
-            using (var transaction = await _unitOfWork.Environment.BeginTransactionAsync())
+
+        await using var tx = await _unitOfWork.Environment.BeginTransactionAsync();
+        try
+        {
+            // 3) Nếu có terrarium liên quan, xoá các thực thể phụ trước rồi xoá terrarium
+            if (terrariums != null && terrariums.Any())
             {
-                try
+                foreach (var t in terrariums)
                 {
-                    // Xóa các Terrarium liên quan
-                    foreach (var terrarium in terrariums)
-                    {
-                        // Xóa tất cả các bản ghi liên quan đến Terrarium (TerrariumImage, TerrariumVariant, ...)
-                        await _unitOfWork.TerrariumImage.RemoveRangeAsync(terrarium.TerrariumImages);
-                        await _unitOfWork.TerrariumVariant.RemoveRangeAsync(terrarium.TerrariumVariants.ToList());
+                    if (t.TerrariumImages is not null && t.TerrariumImages.Count > 0)
+                        await _unitOfWork.TerrariumImage.RemoveRangeAsync(t.TerrariumImages.ToList());
 
-                        // Xóa Terrarium
-                        await _unitOfWork.Terrarium.RemoveAsync(terrarium);
-                    }
+                    if (t.TerrariumVariants is not null && t.TerrariumVariants.Count > 0)
+                        await _unitOfWork.TerrariumVariant.RemoveRangeAsync(t.TerrariumVariants.ToList());
 
-                    // Sau khi xóa tất cả Terrarium, xóa Environment
-                    var result = await _unitOfWork.Environment.RemoveAsync(environment);
-                    if (result)
-                    {
-                        await transaction.CommitAsync();
-                        return new BusinessResult(Const.SUCCESS_DELETE_CODE,
-                            "Tank method and related terrariums deleted successfully.");
-                    }
+                    // Nếu có bảng nối TerrariumAccessory thì xoá luôn (nếu dự án bạn dùng):
+                    // var tas = _unitOfWork.TerrariumAccessory.Context()
+                    //     .Where(x => x.TerrariumId == t.TerrariumId).ToList();
+                    // if (tas.Count > 0) _unitOfWork.TerrariumAccessory.Context().RemoveRange(tas);
 
-                    await transaction.RollbackAsync();
-                    return new BusinessResult(Const.FAIL_DELETE_CODE, "Failed to delete tank method.");
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+                    await _unitOfWork.Terrarium.RemoveAsync(t);
                 }
             }
 
-        return new BusinessResult(Const.FAIL_READ_CODE, "No related terrariums found.");
+            // 4) Xoá chính Environment
+            var removed = await _unitOfWork.Environment.RemoveAsync(environment);
+            if (!removed)
+            {
+                await tx.RollbackAsync();
+                return new BusinessResult(Const.FAIL_DELETE_CODE, "Xoá environment thất bại.");
+            }
+
+            await _unitOfWork.SaveAsync();
+            await tx.CommitAsync();
+
+            var msg = (terrariums != null && terrariums.Any())
+                ? "Đã xoá environment và toàn bộ terrarium liên quan."
+                : "Đã xoá environment (không có terrarium liên quan).";
+
+            return new BusinessResult(Const.SUCCESS_DELETE_CODE, msg);
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 
     //private async Task DeleteRelatedTerrariumAsync(Terrarium terrarium)

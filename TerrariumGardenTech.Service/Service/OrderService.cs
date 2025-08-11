@@ -42,6 +42,7 @@ public class OrderService : IOrderService
             {
                 OrderId = order.OrderId,
                 UserId = order.UserId,
+                AddressId = order.AddressId,
                 TotalAmount = order.TotalAmount,
                 Deposit = order.Deposit,
                 OrderDate = order.OrderDate,
@@ -88,6 +89,7 @@ public class OrderService : IOrderService
         {
             OrderId = order.OrderId,
             UserId = order.UserId,
+            AddressId = order.AddressId,
             TotalAmount = order.TotalAmount,
             Deposit = order.Deposit,
             OrderDate = order.OrderDate,
@@ -133,6 +135,7 @@ public class OrderService : IOrderService
             {
                 OrderId = order.OrderId,
                 UserId = order.UserId,
+                AddressId = order.AddressId,
                 TotalAmount = order.TotalAmount,
                 Deposit = order.Deposit,
                 OrderDate = order.OrderDate,
@@ -313,6 +316,7 @@ public class OrderService : IOrderService
         {
             UserId = userId,
             VoucherId = request.VoucherId,
+            AddressId = request.AddressId,
             Deposit = request.Deposit,
             TotalAmount = totalAmount,
             OrderDate = System.DateTime.UtcNow,
@@ -462,7 +466,6 @@ public class OrderService : IOrderService
             OrderId = order.OrderId,
             PaymentMethod = paymentMethod.Trim(),
             PaymentAmount = due,
-
             PaymentDate = System.DateTime.UtcNow
         };
 

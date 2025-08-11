@@ -17,25 +17,16 @@ public class PaymentController : ControllerBase
     private const string FE_FAIL_PATH = "/payment-fail"; // nếu muốn tách trang fail
     private readonly IPayOsService _payOsService;
     private readonly IVnPayService _vnPayService;
-
     private readonly IMomoServices _momoServices;
-    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService, IMomoServices momoServices)
+    private readonly ILogger<PaymentController> _logger;
+    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService, IMomoServices momoServices, ILogger<PaymentController> logger)
     {
         _payOsService = payOsService;
         _vnPayService = vnPayService;
         _momoServices = momoServices;
-    }
-
-
-    private readonly ILogger<PaymentController> _logger;
-
-    public PaymentController(IPayOsService payOsService, IVnPayService vnPayService, ILogger<PaymentController> logger)
-    {
-        _payOsService = payOsService;
-        _vnPayService = vnPayService;
         _logger = logger;
-
     }
+
 
     // ====================== PAYOS ======================
 

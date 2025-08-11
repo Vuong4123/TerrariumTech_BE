@@ -21,7 +21,6 @@ public class TerrariumImageController : ControllerBase
 
     // GET: api/<TerrariumImageController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _terrariumImageService.GetAllTerrariumImageAsync();
@@ -29,7 +28,6 @@ public class TerrariumImageController : ControllerBase
 
     // GET api/<TerrariumImageController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult?> Get(int id)
     {
         return await _terrariumImageService.GetTerrariumImageByIdAsync(id);

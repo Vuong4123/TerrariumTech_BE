@@ -25,7 +25,6 @@ public class BlogController : ControllerBase
 
     // GET: api/<BlogController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get()
     {
         return await _blogService.GetAll();
