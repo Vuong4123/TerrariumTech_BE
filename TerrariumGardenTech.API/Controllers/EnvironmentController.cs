@@ -21,7 +21,7 @@ public class EnvironmentController : ControllerBase
 
     // GET: api/<EnvironmentController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
+    //[Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _environmentService.GetAllEnvironmentsAsync();
@@ -29,7 +29,6 @@ public class EnvironmentController : ControllerBase
 
     // GET api/<EnvironmentController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _environmentService.GetEnvironmentByIdAsync(id);

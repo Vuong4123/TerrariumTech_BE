@@ -22,7 +22,7 @@ public class ShapeController : ControllerBase
 
     // GET: api/<RoleController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
+    //[Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _shapeService.GetAllShapesAsync();
@@ -30,7 +30,6 @@ public class ShapeController : ControllerBase
 
     // GET api/<RoleController>/5
     [HttpGet("get-{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _shapeService.GetShapeByIdAsync(id);
