@@ -78,4 +78,8 @@ public class Const
     public static string NOT_FOUND_MSG = "Không tìm thấy dữ liệu";
 
     #endregion
+
+    #region Validation Codes
+    public static int FAIL_VALIDATE_CODE = -1;
+    #endregion
 }

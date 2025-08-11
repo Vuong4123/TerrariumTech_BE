@@ -41,6 +41,7 @@ public class UnitOfWork
     private FeedbackImageRepository _feedbackImageRepository;
     private WalletRepository _walletRepository;
     private WalletTransactionRepository _walletTransactionRepository;
+    private FavoriteRepository _favoriteRepository;
     public UnitOfWork()
     {
         _unitOfWorkContext = new TerrariumGardenTechDBContext();
@@ -215,5 +216,9 @@ public class UnitOfWork
     public FeedbackImageRepository FeedbackImage
     {
         get => _feedbackImageRepository ??= new FeedbackImageRepository(_unitOfWorkContext);
+    }
+    public FavoriteRepository Favorite
+    {
+        get => _favoriteRepository ??= new FavoriteRepository(_unitOfWorkContext);
     }
 }
