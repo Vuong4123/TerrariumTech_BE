@@ -322,7 +322,8 @@ public class OrderService : IOrderService
             OrderDate = System.DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
             PaymentStatus = "Unpaid",
-            OrderItems = orderItems
+            OrderItems = orderItems,
+            AddressId = request.AddressId
         };
 
         try
