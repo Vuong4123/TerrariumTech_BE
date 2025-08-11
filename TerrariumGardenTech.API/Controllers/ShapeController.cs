@@ -29,7 +29,7 @@ public class ShapeController : ControllerBase
     }
 
     // GET api/<RoleController>/5
-    [HttpGet("get-{id}")]
+    [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _shapeService.GetShapeByIdAsync(id);
