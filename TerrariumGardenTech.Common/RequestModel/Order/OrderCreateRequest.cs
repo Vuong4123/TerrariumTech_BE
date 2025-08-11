@@ -20,5 +20,7 @@ public class OrderCreateRequest
 {
     public int? VoucherId { get; set; }
     public decimal? Deposit { get; set; }
+
+    public int? AddressId { get; set; }
     public List<OrderItemCreateRequest> Items { get; set; } = new();
 }
