@@ -23,7 +23,6 @@ public class AccessoryController : ControllerBase
 
     // GET: api/<AccessoryController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
 
     public async Task<IBusinessResult> Get([FromQuery] AccessoryGetAllRequest request)
     {

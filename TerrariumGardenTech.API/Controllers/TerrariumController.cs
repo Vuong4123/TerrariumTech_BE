@@ -25,7 +25,6 @@ public class TerrariumController : ControllerBase
 
     // GET: api/<TerrariumController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get([FromQuery] TerrariumGetAllRequest request)
     {
         return await _terrariumService.GetAll(request);

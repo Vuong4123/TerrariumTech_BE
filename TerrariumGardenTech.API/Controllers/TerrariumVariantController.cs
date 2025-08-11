@@ -22,7 +22,6 @@ public class TerrariumVariantController : ControllerBase
 
     // GET: api/<TerrariumVariantController>
     [HttpGet("get-all-terrariumVariant")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get()
     {
         return await _terrariumVariantService.GetAllTerrariumVariantAsync();
