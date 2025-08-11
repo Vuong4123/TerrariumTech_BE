@@ -37,9 +37,9 @@ public class AccessoryController : ControllerBase
         return await _accessoryService.GetByAccesname(name);
     }
 
-    [HttpGet("filter")]
+    [HttpGet("filter-by-category/{categoryId}")]
     [Authorize(Roles = "Admin,Staff,Manager,User")]
-    public async Task<IBusinessResult> FilterByCategory([FromQuery] int categoryId)
+    public async Task<IBusinessResult> FilterByCategory( int categoryId)
     {
         return await _accessoryService.FilterAccessoryAsync(categoryId);
     }
