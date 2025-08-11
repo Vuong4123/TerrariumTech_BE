@@ -6,7 +6,7 @@ public class PaymentInformationModel
     public string OrderType { get; set; }
     public string OrderDescription { get; set; }
     public string Name { get; set; }
-    public decimal Price { get; set; }
+    //public decimal Price { get; set; }
 }
 public class PaymentResponseModel
 {
