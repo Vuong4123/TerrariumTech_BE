@@ -323,7 +323,7 @@ public class OrderService : IOrderService
             Status = OrderStatusEnum.Pending,
             PaymentStatus = "Unpaid",
             OrderItems = orderItems,
-            AddressId = request.AddressId
+            
         };
 
         try
