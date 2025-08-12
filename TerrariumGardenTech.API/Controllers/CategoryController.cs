@@ -24,7 +24,6 @@ public class CategoryController : ControllerBase
 
     // GET: api/<CategoryController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get()
     {
         return await _categoryService.GetAll();
@@ -32,7 +31,6 @@ public class CategoryController : ControllerBase
 
     // GET api/<CategoryController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _categoryService.GetById(id);
