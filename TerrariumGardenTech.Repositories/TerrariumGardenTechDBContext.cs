@@ -106,6 +106,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
     public DbSet<WalletTransaction> WalletTransaction { get; set; }
+    public DbSet<Favorite> Favorites { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>

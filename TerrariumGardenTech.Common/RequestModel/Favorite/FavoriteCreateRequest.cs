@@ -1,0 +1,14 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TerrariumGardenTech.Common.RequestModel.Favorite
+{
+    public class FavoriteCreateRequest
+    {
+        public int? AccessoryId { get; set; }
+        public int? TerrariumId { get; set; }
+    }
+}
