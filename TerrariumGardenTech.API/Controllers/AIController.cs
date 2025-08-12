@@ -39,7 +39,7 @@ namespace TerrariumGardenTech.API.Controllers
                 Description = aiResult.Description,
                 bodyHTML = $"<p>{aiResult.Description}</p>",
                 Status = "Active",
-                AccessoryNames = new List<string> { "Hình hộp chữ nhật nhỏ", "Hình hộp chữ nhật vừa", "Hình hộp chữ nhật lớn" }, 
+                AccessoryNames = aiResult.Accessories, 
                 TerrariumImages= aiResult.TerrariumImages                 
                 
             };
