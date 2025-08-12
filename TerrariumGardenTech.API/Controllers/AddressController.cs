@@ -52,7 +52,7 @@ public class AddressController : ControllerBase
     }
 
     // PUT api/<AddressController>/5
-    [HttpPut("uodate-adrress/{id}")]
+    [HttpPut("update-adrress/{id}")]
     [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Put([FromBody] AddressUpdateRequest addressUpdateRequest)
     {

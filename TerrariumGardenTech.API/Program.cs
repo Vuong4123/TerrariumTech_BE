@@ -29,10 +29,10 @@ Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
 
-//FirebaseApp.Create(new AppOptions
-//{
-//    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
-//});
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
+});
 // Thêm dịch vụ CORS
 const string CorsPolicy = "AllowFrontend";
     builder.Services.AddCors(options =>

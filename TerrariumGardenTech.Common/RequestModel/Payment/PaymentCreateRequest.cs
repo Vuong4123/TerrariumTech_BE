@@ -4,4 +4,5 @@ public class PaymentCreateRequest
 {
     public int OrderId { get; set; }
     public string Description { get; set; }
+    public bool PayAll { get; set; } = false;
 }

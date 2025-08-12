@@ -32,6 +32,7 @@ namespace TerrariumGardenTech.Common.ResponseModel.Cart
         public int UserId { get; set; }
         public string User { get; set; } // Tên người dùng hoặc email
         public List<CartItemResponse> CartItems { get; set; }
+        public int TotalCartItem { get; set; }
         public int TotalCartQuantity { get; set; }
         public decimal TotalCartPrice { get; set; }
         public DateTime CreatedAt { get; set; }
