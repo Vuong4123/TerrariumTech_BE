@@ -5,6 +5,6 @@ namespace TerrariumGardenTech.Service.IService;
 
 public interface IPayOsService
 {
-    Task<IBusinessResult> CreatePaymentLink(int orderId, string description);
+    Task<IBusinessResult> CreatePaymentLink(int orderId, string description, bool payAll = false);
     Task<IBusinessResult> ProcessPaymentCallback(PaymentReturnModel returnModel);
 }

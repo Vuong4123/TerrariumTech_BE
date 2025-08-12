@@ -28,7 +28,7 @@ public class ShapeController : ControllerBase
         return await _shapeService.GetAllShapesAsync();
     }
 
-    // GET api/<RoleController>/5
+    // GET api/<ShapeController>/5
     [HttpGet("get/{id}")]
     public async Task<IBusinessResult> Get(int id)
     {

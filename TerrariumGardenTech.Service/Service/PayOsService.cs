@@ -37,68 +37,14 @@ public class PayOsService : IPayOsService
         _mapper = mapper;
     }
 
-    //public async Task<IBusinessResult> CreatePaymentLink(int orderId, string description)
-    //{
-    //    var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(orderId);
-    //    if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
-
-    //    var itemDatas = new List<ItemData>();
-    //    var amount = 0;
-    //    foreach (var orderItem in order.OrderItems)
-    //    {
-    //        // Kiểm tra và xử lý Accessory
-    //        if (orderItem.AccessoryId.HasValue)
-    //        {
-    //            itemDatas.Add(new ItemData(orderItem.Accessory.Name, orderItem.Quantity ?? 0,
-    //                (int)(orderItem.UnitPrice ?? 0)));
-    //            amount += (int)(orderItem.TotalPrice ?? 0);
-    //        }
-
-    //        // Kiểm tra và xử lý TerrariumVariant
-    //        if (orderItem.TerrariumVariantId.HasValue)
-    //        {
-    //            itemDatas.Add(new ItemData(orderItem.TerrariumVariant.VariantName, orderItem.Quantity ?? 0,
-    //                (int)(orderItem.UnitPrice ?? 0)));
-    //            amount += (int)(orderItem.TotalPrice ?? 0);
-    //        }
-    //    }
-
-    //    var domain =
-    //        $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}/api";
-    //    var successReturnUrl =
-    //        $"{domain}/Payment/pay-os/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Success}";
-    //    var failReturnUrl = $"{domain}/Payment/pay-os/callback?orderId={orderId}&statusReturn={PaymentReturnModelStatus.Fail}";
-    //    var orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-
-    //    var signatureData =
-    //        $"amount={order.TotalAmount}&cancelUrl={failReturnUrl}&description={description}&orderCode={orderCode}&returnUrl={successReturnUrl}";
-    //    var signature = CreateHmacSha256(signatureData, _config["PayOS:ChecksumKey"]);
-
-    //    var paymentLinkRequest = new PaymentData(
-    //        orderCode,
-    //        amount,
-    //        description,
-    //        itemDatas,
-    //        returnUrl: successReturnUrl,
-    //        cancelUrl: failReturnUrl,
-    //        expiredAt: (int)DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds(),
-    //        signature: signature
-    //    );
-    //    var response = await _payOS.createPaymentLink(paymentLinkRequest);
-
-    //    if (string.IsNullOrEmpty(response.checkoutUrl))
-    //    {
-    //        return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", response.checkoutUrl);
-    //    }
-
-    //    return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Paid", response.checkoutUrl);
-    //}
-    public async Task<IBusinessResult> CreatePaymentLink(int orderId, string description)
+    
+    public async Task<IBusinessResult> CreatePaymentLink(int orderId, string description, bool payAll = false)
     {
         var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(orderId);
-        if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
+        if (order == null)
+            return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
-        // Tính amount từ DB, ưu tiên TotalAmount nếu đã chuẩn
+        // 1) Tính tổng tiền từ DB
         var amountDecimal = order.TotalAmount;
         if (amountDecimal <= 0 && (order.OrderItems?.Any() ?? false))
             amountDecimal = order.OrderItems.Sum(i => i.TotalPrice ?? 0);
@@ -106,10 +52,14 @@ public class PayOsService : IPayOsService
         if (amountDecimal <= 0)
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Invalid order amount.");
 
-        // VND integer
+        // 2) Áp dụng giảm giá nếu thanh toán toàn bộ
+        if (payAll)
+            amountDecimal = amountDecimal * 0.9m; // giảm 10%
+
+        // 3) Làm tròn về số nguyên VND
         var amount = (int)Math.Round(amountDecimal, 0, MidpointRounding.AwayFromZero);
 
-        // Build item data (an toàn null)
+        // 4) Build item data
         var itemDatas = new List<ItemData>();
         foreach (var oi in order.OrderItems ?? Enumerable.Empty<OrderItem>())
         {
@@ -129,23 +79,22 @@ public class PayOsService : IPayOsService
             }
         }
 
-        // Nên dùng domain cố định để PayOS gọi được ở prod
+        // 5) URL callback & orderCode
         var backendBase = "https://terarium.shop/api";
         var successReturnUrl = $"{backendBase}/Payment/pay-os/callback?orderId={orderId}&status=success";
         var failReturnUrl = $"{backendBase}/Payment/pay-os/callback?orderId={orderId}&status=fail";
-
-        // orderCode unique & có thể suy ra orderId
         var orderCode = 100000 + orderId;
 
-        // CHỮ KÝ: dùng đúng 'amount' bạn sẽ gửi
+        // 6) Chữ ký: phải dùng đúng amount sau giảm
         var signatureData =
             $"amount={amount}&cancelUrl={failReturnUrl}&description={description}&orderCode={orderCode}&returnUrl={successReturnUrl}";
         var signature = CreateHmacSha256(signatureData, _config["PayOS:ChecksumKey"]);
 
+        // 7) Tạo request
         var paymentLinkRequest = new PaymentData(
             orderCode: orderCode,
             amount: amount,
-            description: description,
+            description: payAll ? $"{description} (Full Payment -10%)" : description,
             items: itemDatas,
             returnUrl: successReturnUrl,
             cancelUrl: failReturnUrl,
@@ -153,47 +102,96 @@ public class PayOsService : IPayOsService
             signature: signature
         );
 
+        // 8) Gọi PayOS API
         var response = await _payOS.createPaymentLink(paymentLinkRequest);
         if (string.IsNullOrEmpty(response.checkoutUrl))
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", response.checkoutUrl);
 
         return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Success", response.checkoutUrl);
     }
-    public async Task<IBusinessResult> ProcessPaymentCallback(PaymentReturnModel returnModel)
+    public async Task<IBusinessResult> ProcessPaymentCallback(PaymentReturnModel request)
     {
         try
         {
-            // Lấy orderId từ query (bạn đã đưa vào returnUrl ở bước tạo link)
-            var order = await _unitOfWork.Order.GetByIdAsync(returnModel.OrderId);
-            if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
+            // Ưu tiên OrderId, fallback từ OrderCode (nếu bạn dùng 100000 + orderId)
+            var orderId = request.OrderId > 0
+                ? request.OrderId
+                : (request.OrderCode.HasValue ? (int)(request.OrderCode.Value - 100000) : 0);
 
-            // Map status PayOS -> status nội bộ
-            var isSuccess = string.Equals(returnModel.Status, "success", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(returnModel.Status, "PAID", StringComparison.OrdinalIgnoreCase);
+            if (orderId <= 0)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Invalid order id");
 
-            order.PaymentStatus = isSuccess ? "Paid" : "Failed";
-            order.TransactionId = returnModel.TransactionId; // nếu PayOS callback có trả
+            var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
+            if (order == null)
+                return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
+
+            // ===== TÍNH SỐ TIỀN =====
+            decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+
+            var baseAmount = order.TotalAmount > 0
+                ? order.TotalAmount
+                : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
+
+            baseAmount = RoundVnd(baseAmount);
+
+            var fullAfter10 = RoundVnd(baseAmount * 0.9m); // thanh toán toàn bộ -10%
+
+            var paid = RoundVnd((decimal)request.Amount);  // PayOS trả VND nguyên
+
+            // Xác định có phải payAll không
+            var isPayAll = (paid == fullAfter10);
+
+            // expected cho lần thanh toán này
+            var expected = isPayAll
+                ? fullAfter10
+                : RoundVnd(order.Deposit ?? baseAmount);
+
+            if (paid != expected)
+                return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
+
+            // Thành công khi StatusReturn = Success hoặc Code = "00"
+            bool success = request.StatusReturn == PaymentReturnModelStatus.Success
+                        || string.Equals(request.Code, "00", StringComparison.OrdinalIgnoreCase);
+
+            // ===== CẬP NHẬT ĐƠN =====
+            order.PaymentStatus = success ? "Paid" : "Failed";
+            order.TransactionId = request.TransactionId;
+
+            // Chỉ lưu DiscountAmount khi payAll thành công
+            if (success && isPayAll)
+            {
+                order.DiscountAmount = baseAmount - fullAfter10; // đúng 10% đã giảm
+            }
+
             await _unitOfWork.Order.UpdateAsync(order);
-            if (order.Payment == null) order.Payment = new List<Payment>();
+
+            // Thêm bản ghi Payment
+            if (order.Payment == null)
+                order.Payment = new List<Payment>();
+
             order.Payment.Add(new Payment
             {
                 OrderId = order.OrderId,
-                PaymentMethod = "payOS",
-                PaymentAmount = order.TotalAmount - (order.Deposit ?? 0),
-                Status = isSuccess ? "Paid" : "Failed",
+                PaymentMethod = "PAYOS",
+                PaymentAmount = paid,
+                Status = success ? "Paid" : "Failed",
                 PaymentDate = DateTime.UtcNow
             });
 
             await _unitOfWork.SaveAsync();
-            var orderResponse = _mapper.Map<OrderResponse>(order);
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, Const.SUCCESS_UPDATE_MSG, orderResponse);
+
+            return new BusinessResult(
+                success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+                success ? "Payment success" : "Payment failed"
+            );
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            return new BusinessResult(Const.ERROR_EXCEPTION, e.Message);
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
 
+    #region Helper methods
     private static string CreateHmacSha256(string data, string? key)
     {
         using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key)))
@@ -202,4 +200,23 @@ public class PayOsService : IPayOsService
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
     }
+
+    private static decimal RoundVnd(decimal v)
+        => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+
+    private static decimal ComputeExpectedPayable(Order order)
+    {
+        decimal gross = order.TotalAmount > 0
+            ? order.TotalAmount
+            : (order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
+
+        decimal discount = order.DiscountAmount ?? 0;
+        decimal basePay = order.Deposit ?? gross;
+
+        var expected = basePay - discount;
+        if (expected < 0) expected = 0;
+        return RoundVnd(expected);
+    }
+
+    #endregion
 }
