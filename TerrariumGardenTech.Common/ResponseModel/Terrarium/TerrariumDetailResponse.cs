@@ -14,5 +14,7 @@ public class TerrariumDetailResponse
     public string Status { get; set; }
     public double AverageRating { get; set; }
     public int FeedbackCount { get; set; }
+    // ✅ Thêm mới
+    public int PurchaseCount { get; set; }
     public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
 }

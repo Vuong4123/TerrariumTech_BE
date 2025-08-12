@@ -24,6 +24,7 @@ public class TerrariumResponse
     public string Status { get; set; }
     public double AverageRating { get; set; }
     public int FeedbackCount { get; set; }
+    public int PurchaseCount { get; set; }
     public List<TerrariumAccessoryResponse> Accessories { get; set; } = []; // Thông tin chi tiết phụ kiện
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

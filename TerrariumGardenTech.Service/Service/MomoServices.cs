@@ -125,35 +125,37 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
+                var accessKey = _config["Momo:AccessKey"];   // BẮT BUỘC có trong raw
                 var secretKey = _config["Momo:SecretKey"];
 
-                // 1) Build map (KHÔNG gồm signature) đúng thứ tự key asc theo tài liệu
-                var map = new SortedDictionary<string, string>(StringComparer.Ordinal)
-                {
-                    ["amount"] = query["amount"],
-                    ["extraData"] = query["extraData"],
-                    ["message"] = query["message"],
-                    ["orderId"] = query["orderId"],      // "{orderId}_{ticks}"
-                    ["orderInfo"] = query["orderInfo"],
-                    ["orderType"] = query["orderType"],
-                    ["partnerCode"] = query["partnerCode"],
-                    ["payType"] = query["payType"],
-                    ["requestId"] = query["requestId"],
-                    ["responseTime"] = query["responseTime"],
-                    ["resultCode"] = query["resultCode"],
-                    ["transId"] = query["transId"]
-                };
+                string Get(string k) => query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
 
-                // 2) Verify chữ ký
-                string raw = string.Join("&", map.Select(kv => $"{kv.Key}={kv.Value}"));
-                string calcSig = CreateSignature(secretKey, raw);                 // HMACSHA256 hex lower
-                string signature = query["signature"].ToString();
+                // MoMo yêu cầu thứ tự CỐ ĐỊNH (không dùng SortedDictionary)
+                var raw = string.Join("&", new[]
+                {
+                    $"accessKey={accessKey}",
+                    $"amount={Get("amount")}",
+                    $"extraData={Get("extraData")}",
+                    $"message={Get("message")}",
+                    $"orderId={Get("orderId")}",
+                    $"orderInfo={Get("orderInfo")}",
+                    $"orderType={Get("orderType")}",       // có thể rỗng
+                    $"partnerCode={Get("partnerCode")}",
+                    $"payType={Get("payType")}",           // có thể rỗng
+                    $"requestId={Get("requestId")}",
+                    $"responseTime={Get("responseTime")}", // có thể rỗng
+                    $"resultCode={Get("resultCode")}",
+                    $"transId={Get("transId")}"
+                });
+
+                var calcSig = CreateSignature(secretKey, raw); // HMACSHA256 UTF8 -> hex lowercase
+                var signature = Get("signature");
 
                 if (!string.Equals(calcSig, signature, StringComparison.OrdinalIgnoreCase))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
 
-                // 3) Lấy orderId nội bộ
-                var orderIdRaw = map["orderId"];
+                // ---- từ đây trở xuống giữ logic của bạn ----
+                var orderIdRaw = Get("orderId");
                 var idStr = orderIdRaw?.Split('_').FirstOrDefault();
                 if (!int.TryParse(idStr, out var orderId))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid orderId");
@@ -161,7 +163,6 @@ namespace TerrariumGardenTech.Service.Service
                 var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
                 if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
 
-                // 4) TÍNH TOÁN SỐ TIỀN
                 decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
 
                 var baseAmount = order.TotalAmount > 0
@@ -169,36 +170,25 @@ namespace TerrariumGardenTech.Service.Service
                     : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
 
                 baseAmount = RoundVnd(baseAmount);
-                var fullAfter10 = RoundVnd(baseAmount * 0.9m);   // payAll -10%
+                var fullAfter10 = RoundVnd(baseAmount * 0.9m);
 
-                if (!long.TryParse(map["amount"], out var amt))
+                if (!long.TryParse(Get("amount"), out var amt))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
 
-                var paid = RoundVnd(amt);                        // MoMo trả VND (không *100)
+                var paid = RoundVnd(amt);
                 var isPayAll = (paid == fullAfter10);
-
-                // expected cho lần thanh toán này
-                var expected = isPayAll
-                    ? fullAfter10
-                    : RoundVnd(order.Deposit ?? baseAmount);
+                var expected = isPayAll ? fullAfter10 : RoundVnd(order.Deposit ?? baseAmount);
 
                 if (paid != expected)
                     return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
 
-                // 5) Cập nhật đơn & ghi payment
-                var success = map["resultCode"] == "0";
+                var success = Get("resultCode") == "0";
                 order.PaymentStatus = success ? "Paid" : "Failed";
-                order.TransactionId = map["transId"];
-
-                // Chỉ set DiscountAmount khi payAll thành công
-                if (success && isPayAll)
-                {
-                    order.DiscountAmount = baseAmount - fullAfter10;   // đúng 10% đã giảm
-                }
+                order.TransactionId = Get("transId");
+                if (success && isPayAll) order.DiscountAmount = baseAmount - fullAfter10;
 
                 await _unitOfWork.Order.UpdateAsync(order);
-
-                if (order.Payment == null) order.Payment = new List<Payment>();
+                order.Payment ??= new List<Payment>();
                 order.Payment.Add(new Payment
                 {
                     OrderId = order.OrderId,
@@ -207,7 +197,6 @@ namespace TerrariumGardenTech.Service.Service
                     Status = success ? "Paid" : "Failed",
                     PaymentDate = DateTime.UtcNow
                 });
-
                 await _unitOfWork.SaveAsync();
 
                 return new BusinessResult(
