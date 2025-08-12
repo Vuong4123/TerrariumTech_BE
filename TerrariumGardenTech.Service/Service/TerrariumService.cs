@@ -22,6 +22,7 @@ public class AITerrariumRequest
     public int EnvironmentId { get; set; }
     public int ShapeId { get; set; }
     public int TankMethodId { get; set; }
+    public int AccessoryId { get; set; }
 }
 
 public class AITerrariumResponse
@@ -33,6 +34,7 @@ public class AITerrariumResponse
     public int Stock { get; set; }
     public string ImageUrl { get; set; }
     public List<string> TerrariumImages { get; set; }
+    public List<string> Accessories { get; set; }
 }
 
 public class TerrariumService : ITerrariumService
@@ -48,6 +50,7 @@ public class TerrariumService : ITerrariumService
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _cloudinaryService = cloudinaryService ?? throw new ArgumentNullException(nameof(cloudinaryService));
     }
+
     public async Task<AITerrariumResponse> PredictTerrariumAsync(AITerrariumRequest request)
     {
         try
@@ -55,43 +58,77 @@ public class TerrariumService : ITerrariumService
             var environment = await _unitOfWork.Environment.GetByIdAsync(request.EnvironmentId);
             var shape = await _unitOfWork.Shape.GetByIdAsync(request.ShapeId);
             var tankMethod = await _unitOfWork.TankMethod.GetByIdAsync(request.TankMethodId);
+            var accessory = await _unitOfWork.Accessory.GetByIdAsync(request.AccessoryId);
 
             if (environment == null || shape == null || tankMethod == null)
                 throw new ArgumentException("Invalid environment, shape, or tank method ID");
 
-            var prompt = BuildPrompt(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+            var prompt = BuildPrompt(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription, accessory?.Name ?? "decoration");
             var aiText = await CallGeminiAsync(prompt);
 
             if (string.IsNullOrWhiteSpace(aiText))
-                return GenerateFallbackTerrarium(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+                return await GenerateFallbackTerrarium(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription, accessory?.Name ?? "decoration");
 
-            var terrarium = ParseTerrariumJson(aiText, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
-            return terrarium ?? GenerateFallbackTerrarium(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription);
+            var terrarium = await ParseTerrariumJson(aiText, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription, accessory?.Name ?? "decoration");
+            return terrarium ?? await GenerateFallbackTerrarium(request, environment.EnvironmentName, shape.ShapeName, tankMethod.TankMethodDescription, accessory?.Name ?? "decoration");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error in PredictTerrariumAsync: {ex.Message}");
-            return GenerateFallbackTerrarium(request);
+            return await GenerateFallbackTerrarium(request);
         }
     }
 
-    private string BuildPrompt(AITerrariumRequest req, string environment, string shape, string method)
+    private string BuildPrompt(AITerrariumRequest req, string environment, string shape, string method, string accessory)
     {
-        return $@"Generate a creative terrarium design based on these specifications:
-            - Environment: {environment} (ID: {req.EnvironmentId})
-            - Shape: {shape} (ID: {req.ShapeId})
-            - Tank Method: {method} (ID: {req.TankMethodId})
+        return $@"You are a terrarium design expert with access to current internet data. Create a detailed terrarium design and find REAL existing image URLs.
 
-            Create a JSON response with:
-            1. terrariumName: Creative Vietnamese name
-            2. description: Detailed Vietnamese description (50-100 words)
-            3. minPrice: 100000-300000 VND
-            4. maxPrice: 300000-900000 VND
-            5. stock: 5-50
-            6. imageKeywords: Array of 5 specific English search terms that would find perfect images for this terrarium (e.g. ['desert succulent terrarium', 'glass geometric planter'])";
+        SPECIFICATIONS:
+        - Environment: {environment}
+        - Container Shape: {shape} 
+        - Tank Method: {method}
+        - Accessory: {accessory}
+
+        TASK: Generate a JSON response with REAL image URLs found on the internet.
+
+        {{
+            ""terrariumName"": ""Creative Vietnamese name"",
+            ""description"": ""Detailed Vietnamese description (50-100 words)"",
+            ""minPrice"": [100000-300000],
+            ""maxPrice"": [300000-900000], 
+            ""stock"": [5-50],
+            ""realImageUrls"": [
+                ""actual_url_1_you_found"",
+                ""actual_url_2_you_found"",
+                ""actual_url_3_you_found"",
+                ""actual_url_4_you_found""
+            ],
+            ""accessories"": [
+                {{
+                    ""name"": ""accessory name"",
+                    ""description"": ""description"",
+                    ""price"": [10000-50000]
+                }}
+            ]
+        }}
+
+        CRITICAL INSTRUCTIONS FOR FINDING REAL IMAGE URLS:
+        1. Search for actual terrarium images on the internet
+        2. Find images that match: {environment} environment + {shape} shape + {accessory}
+        3. Provide DIRECT URLs to actual image files (.jpg, .png, .webp)
+        4. DO NOT use template URLs like source.unsplash.com/SIZE or placeholder services
+        5. Find images from real photography websites, blogs, online stores
+        6. Each URL must be a complete, working link to an actual image
+        7. Verify the URLs point to real terrarium images
+
+        EXAMPLES of what I want (these are examples of format, find your own real URLs):
+        - ""https://images.unsplash.com/photo-1234567890123/real-terrarium-image.jpg""
+        - ""https://cdn.pixabay.com/photo/2019/05/14/real-glass-terrarium.jpg""
+        - ""https://example-plant-store.com/images/terrarium-collection-1.png""
+
+        Find and return 4 REAL, WORKING image URLs that show actual terrariums matching the specifications.";
     }
-
-    private AITerrariumResponse ParseTerrariumJson(string aiText, string environment, string shape, string method)
+    private async Task<AITerrariumResponse> ParseTerrariumJson(string aiText, string environment, string shape, string method, string accessory)
     {
         try
         {
@@ -100,32 +137,32 @@ public class TerrariumService : ITerrariumService
 
             dynamic data = JsonConvert.DeserializeObject(json);
 
-            // Extract search keywords for image search
-            List<string> imageKeywords = data.imageKeywords?.ToObject<List<string>>();
-            if (imageKeywords == null || !imageKeywords.Any())
+            // Lấy real image URLs từ AI
+            List<string> realImageUrls = data.realImageUrls?.ToObject<List<string>>() ?? new List<string>();
+
+            // Validate các URL thực tế
+            var validatedUrls = await ValidateRealImageUrls(realImageUrls);
+
+            // Nếu AI không tìm được ảnh thực tế, fallback sang search API
+            if (!validatedUrls.Any())
             {
-                imageKeywords = new List<string>
-            {
-                $"terrarium {environment.ToLower()}",
-                $"{shape.ToLower()} planter",
-                $"miniature {environment.ToLower()} garden",
-                "terrarium plants",
-                $"{environment.ToLower()} {shape.ToLower()} plants"
-            };
+                Console.WriteLine("AI couldn't find real URLs, searching with API...");
+                validatedUrls = await SearchRealImagesAsBackup(environment, shape, accessory);
             }
 
-            // Generate dynamic image URLs using the keywords
-            var imageUrls = GetDynamicImageUrls(imageKeywords);
+            // Parse accessories
+            var accessories = ParseAccessories(data, accessory);
 
             return new AITerrariumResponse
             {
-                TerrariumName = data.terrariumName ?? $"{environment} {shape}",
-                Description = data.description ?? $"Terrarium {environment} với hình dạng {shape}, phương pháp {method}.",
+                TerrariumName = data.terrariumName ?? $"{environment} {shape} {accessory}",
+                Description = data.description ?? $"Terrarium {environment} với hình dạng {shape}, phương pháp {method}, phụ kiện {accessory}.",
                 MinPrice = (decimal?)data.minPrice ?? 150000m,
                 MaxPrice = (decimal?)data.maxPrice ?? 450000m,
                 Stock = (int?)data.stock ?? 10,
-                ImageUrl = imageUrls.FirstOrDefault(),
-                TerrariumImages = imageUrls
+                ImageUrl = validatedUrls.FirstOrDefault(),
+                TerrariumImages = validatedUrls,
+                Accessories = accessories
             };
         }
         catch (Exception ex)
@@ -134,72 +171,257 @@ public class TerrariumService : ITerrariumService
             return null;
         }
     }
-
-    private List<string> GetDynamicImageUrls(List<string> keywords)
+    private bool IsImageContentType(string contentType)
     {
-        var results = new List<string>();
-        var random = new Random();
+        if (string.IsNullOrEmpty(contentType))
+            return false;
 
-        int numImages = random.Next(3, 6);
-        var selectedKeywords = keywords.OrderBy(x => random.Next()).Take(numImages).ToList();
-
-        foreach (var keyword in selectedKeywords)
-        {
-            var encodedKeyword = Uri.EscapeDataString(keyword);
-
-            int provider = random.Next(4);
-            string imageUrl;
-
-            switch (provider)
-            {
-                case 0:
-                    imageUrl = $"https://source.unsplash.com/featured/600x400/?{encodedKeyword}&sig={Guid.NewGuid().ToString().Substring(0, 8)}";
-                    break;
-
-                case 1:
-                    imageUrl = $"https://pixabay.com/api/no_key_required_for_this_endpoint/?q={encodedKeyword}&image_type=photo&orientation=horizontal&per_page=3";
-                    break;
-
-                case 2:
-                    imageUrl = $"https://images.pexels.com/photos/search?query={encodedKeyword}&per_page=1&orientation=landscape";
-                    break;
-
-                default:
-                    imageUrl = $"https://source.unsplash.com/random/600x400/?{encodedKeyword}&sig={Guid.NewGuid().ToString().Substring(0, 8)}";
-                    break;
-            }
-
-            results.Add(imageUrl);
-        }
-
-        return results;
+        var imageTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif" };
+        return imageTypes.Any(type => contentType.ToLower().Contains(type));
     }
 
-    private AITerrariumResponse GenerateFallbackTerrarium(AITerrariumRequest request, string env = null, string shape = null, string method = null)
+    private List<string> ParseAccessories(dynamic data, string defaultAccessory)
+    {
+        var accessories = new List<string>();
+
+        if (data.accessories != null)
+        {
+            foreach (var acc in data.accessories)
+            {
+                accessories.Add(acc.name ?? defaultAccessory);
+            }
+        }
+        else
+        {
+            accessories.Add(defaultAccessory);
+        }
+
+        return accessories;
+    }
+    private async Task<List<string>> ValidateRealImageUrls(List<string> urls)
+    {
+        var validUrls = new List<string>();
+
+        foreach (var url in urls.Take(6))
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(url) || IsTemplateUrl(url))
+                {
+                    Console.WriteLine($"Skipping template/invalid URL: {url}");
+                    continue;
+                }
+
+                // Test HEAD request để check URL
+                using var headResponse = await _httpClient.SendAsync(
+                    new HttpRequestMessage(HttpMethod.Head, url),
+                    HttpCompletionOption.ResponseHeadersRead);
+
+                if (headResponse.IsSuccessStatusCode &&
+                    IsImageContentType(headResponse.Content.Headers.ContentType?.MediaType))
+                {
+                    validUrls.Add(url);
+                    Console.WriteLine($"Valid image URL found: {url}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"URL validation failed for {url}: {ex.Message}");
+            }
+
+            if (validUrls.Count >= 4) break;
+        }
+
+        return validUrls;
+    }
+
+    private bool IsTemplateUrl(string url)
+    {
+        // Loại bỏ các URL template không mong muốn
+        var templatePatterns = new[]
+        {
+        "source.unsplash.com",
+        "via.placeholder.com",
+        "picsum.photos",
+        "lorem.space",
+        "dummyimage.com"
+    };
+
+        return templatePatterns.Any(pattern => url.ToLower().Contains(pattern));
+    }
+
+    private async Task<List<string>> SearchRealImagesAsBackup(string environment, string shape, string accessory)
+    {
+        var realUrls = new List<string>();
+
+        try
+        {
+            var query = $"terrarium {environment} {shape} {accessory} glass container plants";
+
+            // Option 1: Unsplash Search API
+            var unsplashUrls = await SearchUnsplashAPI(query);
+            realUrls.AddRange(unsplashUrls);
+
+            // Option 2: Pexels Search API
+            if (realUrls.Count < 4)
+            {
+                var pexelsUrls = await SearchPexelsAPI(query);
+                realUrls.AddRange(pexelsUrls);
+            }
+
+            // Option 3: Pixabay Search API
+            if (realUrls.Count < 4)
+            {
+                var pixabayUrls = await SearchPixabayAPI(query);
+                realUrls.AddRange(pixabayUrls);
+            }
+
+            // Nếu vẫn không đủ ảnh, dùng curated URLs
+            if (realUrls.Count < 4)
+            {
+                var curatedUrls = GetCuratedTerrariumUrls();
+                realUrls.AddRange(curatedUrls.Take(4 - realUrls.Count));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Backup search failed: {ex.Message}");
+            // Fallback cuối cùng
+            realUrls = GetCuratedTerrariumUrls();
+        }
+
+        return realUrls.Take(4).ToList();
+    }
+    private async Task<List<string>> SearchPexelsAPI(string query)
+    {
+        var urls = new List<string>();
+
+        try
+        {
+            var apiUrl = $"https://api.pexels.com/v1/search?query={Uri.EscapeDataString(query)}&per_page=4&orientation=landscape";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.Add("Authorization", "YOUR_PEXELS_API_KEY"); // Thay YOUR_PEXELS_API_KEY
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                dynamic data = JsonConvert.DeserializeObject(content);
+
+                if (data.photos != null)
+                {
+                    foreach (var photo in data.photos)
+                    {
+                        string imageUrl = photo.src.large ?? photo.src.medium;
+                        if (!string.IsNullOrEmpty(imageUrl))
+                        {
+                            urls.Add(imageUrl);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Pexels API failed: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Pexels API error: {ex.Message}");
+        }
+
+        return urls;
+    }
+    private async Task<List<string>> SearchUnsplashAPI(string query)
+    {
+        var urls = new List<string>();
+
+        try
+        {
+            var apiUrl = $"https://api.unsplash.com/search/photos?query={Uri.EscapeDataString(query)}&per_page=4&orientation=landscape";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.Add("Authorization", "Client-ID YOUR_UNSPLASH_ACCESS_KEY");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                dynamic data = JsonConvert.DeserializeObject(content);
+
+                foreach (var result in data.results)
+                {
+                    urls.Add((string)result.urls.regular);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unsplash API error: {ex.Message}");
+        }
+
+        return urls;
+    }
+
+    private async Task<List<string>> SearchPixabayAPI(string query)
+    {
+        var urls = new List<string>();
+
+        try
+        {
+            var apiUrl = $"https://pixabay.com/api/?key=YOUR_PIXABAY_API_KEY&q={Uri.EscapeDataString(query)}&image_type=photo&orientation=horizontal&per_page=4";
+
+            var response = await _httpClient.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                dynamic data = JsonConvert.DeserializeObject(content);
+
+                foreach (var hit in data.hits)
+                {
+                    urls.Add((string)hit.largeImageURL);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Pixabay API error: {ex.Message}");
+        }
+
+        return urls;
+    }
+
+    private async Task<AITerrariumResponse> GenerateFallbackTerrarium(
+        AITerrariumRequest request,
+        string env = null,
+        string shape = null,
+        string method = null,
+        string accessory = null)
     {
         env ??= $"Môi trường {request.EnvironmentId}";
         shape ??= $"Hình dạng {request.ShapeId}";
         method ??= $"Phương pháp {request.TankMethodId}";
+        accessory ??= $"Phụ kiện {request.AccessoryId}";
 
         var rnd = new Random();
-        var terrariumName = $"Bể {shape.ToLower()} {env.ToLower()}";
-        var description = $"Tiểu cảnh {shape.ToLower()} mang phong cách {env.ToLower()}, được thiết kế theo phương pháp {method.ToLower()}.";
+        var terrariumName = $"Bể {shape.ToLower()} {env.ToLower()} {accessory.ToLower()}";
+        var description = $"Tiểu cảnh {shape.ToLower()} phong cách {env.ToLower()}, theo phương pháp {method.ToLower()}, kết hợp phụ kiện {accessory.ToLower()}.";
 
         decimal minPrice = rnd.Next(100, 301) * 1000;
         decimal maxPrice = rnd.Next(300, 901) * 1000;
 
-        // Create dynamic search terms based on environment and shape
-        var searchTerms = new List<string>
-    {
-        $"terrarium {env.ToLower()}",
-        $"{shape.ToLower()} planter",
-        "glass terrarium",
-        "miniature garden",
-        "succulent arrangement"
-    };
+        // Tìm ảnh thực tế
+        var imageUrls = await SearchRealImagesAsBackup(env, shape, accessory);
 
-        // Get dynamic images using the search terms
-        var imageUrls = GetDynamicImageUrls(searchTerms);
+        // Nếu không có ảnh thì dùng ảnh curated
+        if (!imageUrls.Any())
+        {
+            imageUrls = GetCuratedTerrariumUrls();
+        }
+
+        // Chỉ là list string
+        var accessories = new List<string> { accessory };
 
         return new AITerrariumResponse
         {
@@ -209,10 +431,54 @@ public class TerrariumService : ITerrariumService
             MaxPrice = maxPrice,
             Stock = rnd.Next(5, 51),
             ImageUrl = imageUrls.FirstOrDefault(),
-            TerrariumImages = imageUrls
+            TerrariumImages = imageUrls,
+            Accessories = accessories
         };
     }
+    private List<string> GetCuratedTerrariumUrls()
+    {
+        // Danh sách URLs ảnh terrarium thực tế đã được kiểm tra
+        return new List<string>
+    {
+        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1485955900006-10f4d324d411?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1509587584298-0f3b3a3a1797?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+    };
+    }
 
+    private List<string> GetDynamicImageUrls(List<string> keywords)
+    {
+        var results = new List<string>();
+        var random = new Random();
+
+        var enhancedKeywords = new List<string>();
+
+        foreach (var keyword in keywords.Take(3)) // Lấy 3 keywords tốt nhất
+        {
+            // Thêm từ khóa gốc
+            enhancedKeywords.Add(keyword);
+
+            // Thêm từ khóa kết hợp với "terrarium"
+            if (!keyword.ToLower().Contains("terrarium"))
+            {
+                enhancedKeywords.Add($"terrarium {keyword}");
+            }
+
+            enhancedKeywords.Add($"{keyword} plants glass container");
+        }
+
+        foreach (var keyword in enhancedKeywords.Take(4)) // Lấy 4 ảnh
+        {
+            var encodedKeyword = Uri.EscapeDataString(keyword);
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            var imageUrl = $"https://source.unsplash.com/600x400/?{encodedKeyword}&sig={timestamp}&fm=jpg&fit=crop";
+            results.Add(imageUrl);
+        }
+
+        return results;
+    }
 
     private async Task<string> CallGeminiAsync(string prompt)
     {
