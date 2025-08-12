@@ -54,7 +54,11 @@ public class PayOsService : IPayOsService
 
         // 2) Áp dụng giảm giá nếu thanh toán toàn bộ
         if (payAll)
-            amountDecimal = amountDecimal * 0.9m; // giảm 10%
+        {
+            var discount = Math.Round(amountDecimal * 0.1m, 0, MidpointRounding.AwayFromZero);
+            order.DiscountAmount = discount; // ✅ lưu vào DB để callback đọc
+            amountDecimal -= discount;
+        }
 
         // 3) Làm tròn về số nguyên VND
         var amount = (int)Math.Round(amountDecimal, 0, MidpointRounding.AwayFromZero);
@@ -63,34 +67,28 @@ public class PayOsService : IPayOsService
         var itemDatas = new List<ItemData>();
         foreach (var oi in order.OrderItems ?? Enumerable.Empty<OrderItem>())
         {
-            if (oi.AccessoryId.HasValue)
-            {
-                var name = oi.Accessory?.Name ?? "Accessory";
-                var unit = (int)Math.Round(oi.UnitPrice ?? 0, 0, MidpointRounding.AwayFromZero);
-                var qty = oi.Quantity ?? 0;
-                itemDatas.Add(new ItemData(name, qty, unit));
-            }
-            if (oi.TerrariumVariantId.HasValue)
-            {
-                var name = oi.TerrariumVariant?.VariantName ?? "Terrarium";
-                var unit = (int)Math.Round(oi.UnitPrice ?? 0, 0, MidpointRounding.AwayFromZero);
-                var qty = oi.Quantity ?? 0;
-                itemDatas.Add(new ItemData(name, qty, unit));
-            }
+            var name = oi.AccessoryId.HasValue ? (oi.Accessory?.Name ?? "Accessory") :
+                       oi.TerrariumVariantId.HasValue ? (oi.TerrariumVariant?.VariantName ?? "Terrarium") :
+                       "Item";
+            var unit = (int)Math.Round(oi.UnitPrice ?? 0, 0, MidpointRounding.AwayFromZero);
+            var qty = oi.Quantity ?? 0;
+            itemDatas.Add(new ItemData(name, qty, unit));
         }
 
-        // 5) URL callback & orderCode
+        // 5) Link callback CỨNG
         var backendBase = "https://terarium.shop/api";
-        var successReturnUrl = $"{backendBase}/Payment/pay-os/callback?orderId={orderId}&status=success";
-        var failReturnUrl = $"{backendBase}/Payment/pay-os/callback?orderId={orderId}&status=fail";
+        var successReturnUrl = $"{backendBase}/Payment/pay-os/callback"; // không có orderId, status
+        var failReturnUrl = $"{backendBase}/Payment/pay-os/callback";
+
+        // 6) orderCode (chứa orderId ẩn)
         var orderCode = 100000 + orderId;
 
-        // 6) Chữ ký: phải dùng đúng amount sau giảm
+        // 7) Chữ ký
         var signatureData =
             $"amount={amount}&cancelUrl={failReturnUrl}&description={description}&orderCode={orderCode}&returnUrl={successReturnUrl}";
         var signature = CreateHmacSha256(signatureData, _config["PayOS:ChecksumKey"]);
 
-        // 7) Tạo request
+        // 8) Request data
         var paymentLinkRequest = new PaymentData(
             orderCode: orderCode,
             amount: amount,
@@ -102,10 +100,14 @@ public class PayOsService : IPayOsService
             signature: signature
         );
 
-        // 8) Gọi PayOS API
+        // 9) Gọi PayOS API
         var response = await _payOS.createPaymentLink(paymentLinkRequest);
         if (string.IsNullOrEmpty(response.checkoutUrl))
             return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", response.checkoutUrl);
+
+        // Lưu lại discount nếu có
+        await _unitOfWork.Order.UpdateAsync(order);
+        await _unitOfWork.SaveAsync();
 
         return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Success", response.checkoutUrl);
     }
