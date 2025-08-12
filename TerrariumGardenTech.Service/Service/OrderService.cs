@@ -52,6 +52,7 @@ public class OrderService : IOrderService
                 TransactionId = order.TransactionId,
                 //PaymentMethod = order.PaymentMethod ?? string.Empty,
                 OrderItems = new List<OrderItemResponse>()
+                
             };
 
             foreach (var item in order.OrderItems)
