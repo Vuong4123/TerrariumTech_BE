@@ -94,4 +94,38 @@ public class TerrariumController : ControllerBase
     {
         return await _terrariumService.DeleteById(id);
     }
+
+    /// <summary>Top N sản phẩm nổi bật (bán nhiều nhất all-time). Mặc định N=3</summary>
+    [HttpGet("featured")]
+    public async Task<IActionResult> Featured([FromQuery] int top = 3)
+    {
+        var rs = await _terrariumService.GetTopBestSellersAllTimeAsync(top);
+        return StatusCode(rs.Status, rs);
+    }
+
+    /// <summary>Top N bán chạy trong X ngày (mặc định 7 ngày, top=3)</summary>
+    [HttpGet("best-sellers")]
+    public async Task<IActionResult> BestSellers(
+        [FromQuery] int days = 7,
+        [FromQuery] int top = 3)
+    {
+        var rs = await _terrariumService.GetTopBestSellersLastDaysAsync(days, top);
+        return StatusCode(rs.Status, rs);
+    }
+
+    /// <summary>Top N được đánh giá cao nhất. Mặc định N=3</summary>
+    [HttpGet("top-rated")]
+    public async Task<IActionResult> TopRated([FromQuery] int top = 3)
+    {
+        var rs = await _terrariumService.GetTopRatedAsync(top);
+        return StatusCode(rs.Status, rs);
+    }
+
+    /// <summary>N sản phẩm mới nhất. Mặc định N=12</summary>
+    [HttpGet("newest")]
+    public async Task<IActionResult> Newest([FromQuery] int top = 12)
+    {
+        var rs = await _terrariumService.GetNewestAsync(top);
+        return StatusCode(rs.Status, rs);
+    }
 }

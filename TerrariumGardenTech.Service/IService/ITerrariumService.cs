@@ -21,4 +21,9 @@ public interface ITerrariumService
     Task<IBusinessResult> DeleteById(int id);
     Task<IBusinessResult> GetTerrariumByNameAsync(string terrariumName);
     Task<AITerrariumResponse> PredictTerrariumAsync(AITerrariumRequest request);
+
+    Task<IBusinessResult> GetTopBestSellersAllTimeAsync(int topN);
+    Task<IBusinessResult> GetTopBestSellersLastDaysAsync(int days, int topN);
+    Task<IBusinessResult> GetTopRatedAsync(int topN);
+    Task<IBusinessResult> GetNewestAsync(int topN);
 }
