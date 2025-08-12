@@ -32,7 +32,7 @@ public class VnPayService : IVnPayService
 
     public async Task<IBusinessResult> CreatePaymentUrl(PaymentInformationModel model, HttpContext context)
     {
-        
+
         try
         {
             var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(model.OrderId);
@@ -41,51 +41,43 @@ public class VnPayService : IVnPayService
             if (order.OrderItems == null || !order.OrderItems.Any())
                 return new BusinessResult(Const.NOT_FOUND_CODE, "No items found in order.");
 
-            // Prefer tổng đơn đã tính sẵn; fallback tính từ chi tiết
-            decimal amountDec = order.TotalAmount;
-            if (amountDec <= 0)
-                amountDec = order.OrderItems.Sum(i => i.TotalPrice ?? 0);
+            // 1) Tính tổng gốc
+            decimal baseAmount = order.TotalAmount > 0
+                ? order.TotalAmount
+                : order.OrderItems.Sum(i => i.TotalPrice ?? 0);
 
-            if (amountDec <= 0)
+            if (baseAmount <= 0)
                 return new BusinessResult(Const.BAD_REQUEST_CODE, "Invalid order amount.");
 
-            // VNPAY yêu cầu vnp_Amount = VND * 100 (đơn vị tối thiểu)
-            var amountVnd = (int)Math.Round(amountDec, 0, MidpointRounding.AwayFromZero);
+            // 2) Tính số tiền phải trả
+            //    - Trả toàn bộ => giảm 10%
+            //    - Không => lấy cọc (nếu có) hoặc tổng gốc
+            decimal payable = model.PayAll
+                ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
+                : (order.Deposit ?? baseAmount);
 
-            // (Optional) Liệt kê items cho OrderInfo / debug
-            var itemDatas = new List<ItemData>();
-            foreach (var oi in order.OrderItems)
-            {
-                if (oi.AccessoryId.HasValue)
-                    itemDatas.Add(new ItemData(oi.Accessory?.Name ?? "Accessory", oi.Quantity ?? 0, (int)Math.Round(oi.UnitPrice ?? 0)));
-                if (oi.TerrariumVariantId.HasValue)
-                    itemDatas.Add(new ItemData(oi.TerrariumVariant?.VariantName ?? "Terrarium", oi.Quantity ?? 0, (int)Math.Round(oi.UnitPrice ?? 0)));
-            }
-
-            var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-            var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneById);
+            var amountVnd = (int)payable;                  // VND
+            var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+                TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
             var pay = new VnPayLibrary();
 
-
-            // Khuyến nghị dùng domain public cố định
-            var urlCallBack = 
-                //"https://terarium.shop/api/Payment/vn-pay/callback";
-            "https://localhost:7072/api/Payment/vn-pay/callback"; // local test
-
+            var urlCallBack = "https://localhost:7072/api/Payment/vn-pay/callback";
+            //"http://terarium.shop/api/Payment/vn-pay/callback";
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
             pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
             pay.AddRequestData("vnp_TmnCode", _configuration["Vnpay:TmnCode"]);
-            pay.AddRequestData("vnp_Amount", (amountVnd * 100).ToString()); // VNPAY = VND*100
+            pay.AddRequestData("vnp_Amount", (amountVnd * 100).ToString()); // ✅ VNPAY = VND*100
             pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
             pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
             pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
-            pay.AddRequestData("vnp_OrderInfo", $"{model.Name} {model.OrderDescription} {amountVnd}đ");
+            pay.AddRequestData("vnp_OrderInfo",
+                $"{model.Name} {model.OrderDescription} {(model.PayAll ? "(Full -10%)" : "(Partial/Deposit)")}");
             pay.AddRequestData("vnp_OrderType", model.OrderType);
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
-            pay.AddRequestData("vnp_TxnRef", model.OrderId.ToString()); // dùng vnp_TxnRef = orderId
+            pay.AddRequestData("vnp_TxnRef", model.OrderId.ToString());
 
             var paymentUrl = pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
             if (string.IsNullOrEmpty(paymentUrl))
@@ -106,49 +98,79 @@ public class VnPayService : IVnPayService
         {
             var pay = new VnPayLibrary();
             var response = pay.GetFullResponseData(collections, _configuration["Vnpay:HashSecret"]);
-
             if (!response.Success)
                 return new BusinessResult(Const.FAIL_READ_CODE, "VNPAY xác thực thất bại!");
 
-            // Nên lấy OrderId từ vnp_TxnRef nếu cần
+            // vnp_TxnRef = OrderId
             if (!int.TryParse(response.OrderId, out var orderId))
-                return new BusinessResult(Const.FAIL_READ_CODE, "OrderId không hợp lệ! Giá trị: " + response.OrderId);
+                return new BusinessResult(Const.FAIL_READ_CODE, "OrderId không hợp lệ!");
 
             var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
             if (order == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, $"Không tìm thấy đơn hàng: {orderId}");
 
-            order.PaymentStatus = response.Success ? "Paid" : "Failed";
+            // ===== Tính số tiền =====
+            decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+
+            var baseAmount = order.TotalAmount > 0
+                ? order.TotalAmount
+                : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
+
+            baseAmount = RoundVnd(baseAmount);
+            var fullAfter10 = RoundVnd(baseAmount * 0.9m);          // payAll -10%
+
+            var amountMinor = response.Amount ?? 0m;                 // vnp_Amount = VND * 100
+            var paid = RoundVnd(amountMinor / 100m);                 // về VND nguyên
+
+            // Xác định có phải payAll không
+            var isPayAll = (paid == fullAfter10);
+
+            // expected cho lần thanh toán này
+            var expected = isPayAll
+                ? fullAfter10
+                : RoundVnd(order.Deposit ?? baseAmount);
+
+            if (paid != expected)
+                return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
+
+            // ===== Cập nhật đơn =====
+            var success = response.Success;
+            order.PaymentStatus = success ? "Paid" : "Failed";
             order.TransactionId = response.TransactionId;
+
+            // Chỉ lưu DiscountAmount khi payAll thành công
+            if (success && isPayAll)
+            {
+                order.DiscountAmount = baseAmount - fullAfter10;     // đúng 10% đã giảm
+            }
+
             await _unitOfWork.Order.UpdateAsync(order);
 
-            if (order.Payment == null || !order.Payment.Any())
-                order.Payment = new List<Payment>();
-
+            if (order.Payment == null) order.Payment = new List<Payment>();
             order.Payment.Add(new Payment
             {
                 OrderId = order.OrderId,
-                PaymentMethod = response.PaymentMethod,
-                PaymentAmount = response.Amount / 100,
-                Status = response.Success ? "Paid" : "Failed",
+                PaymentMethod = string.IsNullOrWhiteSpace(response.PaymentMethod) ? "VNPAY" : response.PaymentMethod,
+                PaymentAmount = paid,
+                Status = success ? "Paid" : "Failed",
                 PaymentDate = response.PaymentDate ?? DateTime.UtcNow,
             });
+
             await _unitOfWork.SaveAsync();
 
-            var orderResponse = _mapper.Map<OrderResponse>(order);
             return new BusinessResult(
-                response.Success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-                null,
-                orderResponse
+                success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+                success ? "Payment success" : "Payment failed"
             );
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[VNPAY CALLBACK ERROR]: " + ex.ToString());
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
         }
     }
 
+
+    #region Helper Methods
     private static VnPayResultDto BuildDtoFromQuery(IQueryCollection q, int orderId, bool success)
     {
         // các key chuẩn của VNPAY
@@ -174,6 +196,25 @@ public class VnPayService : IVnPayService
             ResponseCode = respCode
         };
     }
+
+    private static decimal RoundVnd(decimal v)
+        => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+
+    private static decimal ComputeExpectedPayable(Order order)
+    {
+        decimal gross = order.TotalAmount > 0
+            ? order.TotalAmount
+            : (order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
+
+        decimal discount = order.DiscountAmount ?? 0;
+        decimal basePay = order.Deposit ?? gross;
+
+        var expected = basePay - discount;
+        if (expected < 0) expected = 0;
+        return RoundVnd(expected);
+    }
+
+    #endregion
 
 
 }

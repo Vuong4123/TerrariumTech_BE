@@ -18,7 +18,7 @@ public partial class Order
     public int? VoucherId { get; set; }
 
     public decimal TotalAmount { get; set; }
-
+    public decimal? DiscountAmount { get; set; }
     public decimal? Deposit { get; set; }
 
     public DateTime? OrderDate { get; set; }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.API.Controllers;
@@ -36,7 +37,11 @@ public class PaymentController : ControllerBase
         if (!ModelState.IsValid || request.OrderId <= 0)
             return BadRequest("Invalid order id");
 
-        var result = await _payOsService.CreatePaymentLink(request.OrderId, request.Description ?? string.Empty);
+        var result = await _payOsService.CreatePaymentLink(
+            request.OrderId,
+            request.Description ?? string.Empty,
+            request.PayAll                       // ✅ truyền cờ xuống service
+        );
         return Ok(result);
     }
 
@@ -62,7 +67,7 @@ public class PaymentController : ControllerBase
         feUrl = $"{FE_BASE}{FE_SUCCESS_PATH}?orderId={orderId}&status={status}";
 
         var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
-<body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
+        <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
         return Content(html, "text/html");
     }
 
@@ -75,13 +80,7 @@ public class PaymentController : ControllerBase
             return BadRequest("Invalid order id");
 
         var result = await _vnPayService.CreatePaymentUrl(model, HttpContext);
-        return Ok(result);
-    }
-    [HttpPost("momo/create")]
-    public async Task<IActionResult> CreatePaymentLink([FromBody] MomoRequest request)
-    {
-        var payUrl = await _momoServices.CreateMomoPaymentUrl(request);
-        return Ok(new { PayUrl = payUrl });
+        return StatusCode(result.Status, result);
     }
 
 
@@ -110,8 +109,56 @@ public class PaymentController : ControllerBase
         feUrl += $"&orderId={orderId}&amount={amountVnd}&status={(success ? "success" : "fail")}";
 
         var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
-<body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
+        <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
         return Content(html, "text/html");
+    }
+
+
+    // Tạo link thanh toán MoMo (trả URL + QR base64)
+    [HttpPost("momo/create")]
+    public async Task<IActionResult> CreateMomoLink([FromBody] MomoRequest request)
+    {
+        if (!ModelState.IsValid || request.OrderId <= 0)
+            return BadRequest("Invalid order id");
+
+        var rsp = await _momoServices.CreateMomoPaymentUrl(request);
+        return Ok(rsp); // ✅ MomoQrResponse không có Status
+    }
+
+    // MoMo redirect về (return URL)
+    [HttpGet("momo/callback")]
+    public async Task<IActionResult> MomoCallback()
+    {
+        _logger.LogInformation("MOMO return: {@q}",
+            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+
+        var rs = await _momoServices.MomoReturnExecute(Request.Query);
+
+        var status = rs.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
+        var orderIdRaw = Request.Query["orderId"].ToString(); // "{id}_{ticks}"
+        var internalId = orderIdRaw?.Split('_').FirstOrDefault();
+
+        var feUrl = $"{FE_BASE}{(status == "success" ? FE_SUCCESS_PATH : FE_FAIL_PATH)}" +
+                    $"?orderId={internalId}&status={status}";
+
+        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
+        <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
+        return Content(html, "text/html");
+    }
+
+    // MoMo IPN (server-to-server)
+    [HttpPost("momo/ipn")]
+    public async Task<IActionResult> MomoIpn([FromBody] MomoIpnModel body)
+    {
+        _logger.LogInformation("MOMO IPN: {@body}", body);
+
+        var rs = await _momoServices.MomoIpnExecute(body);
+
+        // MoMo yêu cầu trả JSON với resultCode/message
+        if (rs.Status == Const.SUCCESS_UPDATE_CODE)
+            return Ok(new { resultCode = 0, message = "success" });
+
+        return Ok(new { resultCode = 5, message = "fail" });
     }
 
 }

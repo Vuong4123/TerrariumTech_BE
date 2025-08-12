@@ -8,8 +8,9 @@ namespace TerrariumGardenTech.Common.RequestModel.Payment
 {
     public class MomoRequest
     {
-        public int ?OrderId { get; set; }
+        public int OrderId { get; set; }
         public string OrderInfo { get; set; }
         public int Amount { get; set; }
+        public bool PayAll { get; set; } = false;
     }
 }
