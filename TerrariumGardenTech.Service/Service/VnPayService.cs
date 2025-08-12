@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Net.payOS.Types;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Config;
 using TerrariumGardenTech.Common.RequestModel.Payment;
-using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
@@ -62,7 +60,8 @@ public class VnPayService : IVnPayService
 
             var pay = new VnPayLibrary();
 
-            var urlCallBack = "https://localhost:7072/api/Payment/vn-pay/callback";
+            var urlCallBack = 
+                "https://localhost:7072/api/Payment/vn-pay/callback";
             //"http://terarium.shop/api/Payment/vn-pay/callback";
 
             pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
@@ -74,7 +73,7 @@ public class VnPayService : IVnPayService
             pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
             pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
             pay.AddRequestData("vnp_OrderInfo",
-                $"{model.Name} {model.OrderDescription} {(model.PayAll ? "(Full -10%)" : "(Partial/Deposit)")}");
+                $"{model.Name} {model.OrderDescription} {(model.PayAll ? "(Full)" : "(Partial/Deposit)")}");
             pay.AddRequestData("vnp_OrderType", model.OrderType);
             pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
             pay.AddRequestData("vnp_TxnRef", model.OrderId.ToString());
@@ -150,7 +149,7 @@ public class VnPayService : IVnPayService
             order.Payment.Add(new Payment
             {
                 OrderId = order.OrderId,
-                PaymentMethod = string.IsNullOrWhiteSpace(response.PaymentMethod) ? "VNPAY" : response.PaymentMethod,
+                PaymentMethod =  "VNPAY" ,
                 PaymentAmount = paid,
                 Status = success ? "Paid" : "Failed",
                 PaymentDate = response.PaymentDate ?? DateTime.UtcNow,

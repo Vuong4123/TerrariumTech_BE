@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Web;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
@@ -113,7 +114,6 @@ public class PaymentController : ControllerBase
         return Content(html, "text/html");
     }
 
-
     // Tạo link thanh toán MoMo (trả URL + QR base64)
     [HttpPost("momo/create")]
     public async Task<IActionResult> CreateMomoLink([FromBody] MomoRequest request)
@@ -121,44 +121,76 @@ public class PaymentController : ControllerBase
         if (!ModelState.IsValid || request.OrderId <= 0)
             return BadRequest("Invalid order id");
 
+        // ĐẢM BẢO trong service CreateMomoPaymentUrl bạn set đúng:
+        // ReturnUrl = https://terarium.shop/api/Payment/momo/callback
+        // IpnUrl    = https://terarium.shop/api/Payment/momo/ipn
         var rsp = await _momoServices.CreateMomoPaymentUrl(request);
-        return Ok(rsp); // ✅ MomoQrResponse không có Status
+        return Ok(rsp);
     }
 
-    // MoMo redirect về (return URL)
+    // MoMo redirect về (ReturnUrl) — chỉ điều hướng UI
     [HttpGet("momo/callback")]
     public async Task<IActionResult> MomoCallback()
     {
-        _logger.LogInformation("MOMO return: {@q}",
-            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+        string Get(string k) => Request.Query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
 
-        var rs = await _momoServices.MomoReturnExecute(Request.Query);
+        var resultCode = Get("resultCode");
+        var isSuccess = resultCode == "0";
+        var orderIdRaw = Get("orderId");                  // "{orderId}_{ticks}"
+        var internalId = (orderIdRaw ?? "").Split('_').FirstOrDefault() ?? orderIdRaw;
 
-        var status = rs.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
-        var orderIdRaw = Request.Query["orderId"].ToString(); // "{id}_{ticks}"
-        var internalId = orderIdRaw?.Split('_').FirstOrDefault();
+        // Gọi service để log/khớp nhẹ, nhưng đừng quyết định UI theo DB ở đây
+        try { await _momoServices.MomoReturnExecute(Request.Query); }
+        catch (Exception ex) { _logger.LogWarning(ex, "ReturnExecute warn"); }
 
-        var feUrl = $"{FE_BASE}{(status == "success" ? FE_SUCCESS_PATH : FE_FAIL_PATH)}" +
-                    $"?orderId={internalId}&status={status}";
+        // Các field MoMo V2 thường có trên return
+        var amount = Get("amount");       // VND, KHÔNG *100
+        var transId = Get("transId");
+        var payType = Get("payType");      // ATM|QR|NAPAS|CREDIT...
+        var bankCode = Get("bankCode");     // có thể rỗng
+        var responseTime = Get("responseTime");
+        var message = Get("message");
+        var orderInfo = Get("orderInfo");
 
-        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
-        <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
-        return Content(html, "text/html");
+        // TUYỆT ĐỐI không đính kèm chữ ký
+        // var signature = Get("signature");  // ❌ KHÔNG gửi về FE
+
+        var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
+        var feUrl =
+            $"{baseUrl}?orderId={Uri.EscapeDataString(internalId ?? "")}" +
+            $"&status={(isSuccess ? "success" : "fail")}" +
+            $"&amount={Uri.EscapeDataString(amount)}" +
+            $"&transId={Uri.EscapeDataString(transId)}" +
+            $"&payType={Uri.EscapeDataString(payType)}" +
+            $"&bank={Uri.EscapeDataString(bankCode)}" +
+            $"&message={Uri.EscapeDataString(message)}" +
+            $"&orderInfo={Uri.EscapeDataString(orderInfo)}" +
+            $"&resultCode={Uri.EscapeDataString(resultCode)}" +
+            $"&responseTime={Uri.EscapeDataString(responseTime)}";
+
+        return Content(BuildRedirectHtml(feUrl), "text/html");
     }
 
-    // MoMo IPN (server-to-server)
+    // MoMo IPN (server-to-server) — xác thực & cập nhật đơn hàng
     [HttpPost("momo/ipn")]
     public async Task<IActionResult> MomoIpn([FromBody] MomoIpnModel body)
     {
         _logger.LogInformation("MOMO IPN: {@body}", body);
 
+        // Lưu ý: Ở đây bạn PHẢI verify chữ ký HMAC đúng theo spec MoMo v2 trong service.
         var rs = await _momoServices.MomoIpnExecute(body);
 
-        // MoMo yêu cầu trả JSON với resultCode/message
+        // MoMo mong nhận 200 OK với body JSON có resultCode/message
+        // 0 = success; khác 0 = fail
         if (rs.Status == Const.SUCCESS_UPDATE_CODE)
             return Ok(new { resultCode = 0, message = "success" });
 
         return Ok(new { resultCode = 5, message = "fail" });
     }
+
+    // helper render HTML redirect thân thiện
+    private static string BuildRedirectHtml(string url) =>
+        $@"<html><head><meta http-equiv='refresh' content='0;url={url}'/></head>
+<body><script>window.location.replace('{url}');</script>Đang chuyển hướng…</body></html>";
 
 }
