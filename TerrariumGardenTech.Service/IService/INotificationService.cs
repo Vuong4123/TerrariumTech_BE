@@ -12,4 +12,8 @@ public interface INotificationService
     Task<IBusinessResult> GetNotificationByUserIdAsync(int userId);
     Task<IBusinessResult> MarkNotificationAsReadAsync(int id);
     Task<IBusinessResult> DeleteNotificationAsync(int id);
+
+    Task<IBusinessResult> CreateWebNotificationAsync(WebNotificationCreateRequest request);
+    Task<IBusinessResult> BroadcastNotificationAsync(BroadcastNotificationRequest request);
+    Task<IBusinessResult> GetNotificationsByUserIdAsync(int userId, int page = 1, int pageSize = 20);
 }

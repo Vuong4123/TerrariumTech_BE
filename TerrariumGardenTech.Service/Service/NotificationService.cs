@@ -179,4 +179,152 @@ public class NotificationService : INotificationService
             return new BusinessResult(Const.SUCCESS_DELETE_CODE, Const.SUCCESS_DELETE_MSG);
         return new BusinessResult(Const.FAIL_DELETE_CODE, Const.FAIL_DELETE_MSG);
     }
+
+    #region web notification
+    public async Task<IBusinessResult> CreateWebNotificationAsync(WebNotificationCreateRequest request)
+    {
+        try
+        {
+            if (request.BroadcastToAll)
+            {
+                // Gửi cho tất cả user
+                var allUsers = await _unitOfWork.User.GetAllAsync();
+                var notifications = new List<Notification>();
+
+                foreach (var user in allUsers)
+                {
+                    var notification = new Notification
+                    {
+                        UserId = user.UserId,
+                        Title = request.Title,
+                        Message = request.Description,
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    notifications.Add(notification);
+                }
+
+                await _unitOfWork.Notification.CreateRangeAsync(notifications);
+                await _unitOfWork.SaveAsync();
+
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE,
+                    $"Broadcast notification sent to {notifications.Count} users",
+                    notifications.Count);
+            }
+            else
+            {
+                // Gửi cho user cụ thể
+                var user = await _unitOfWork.User.GetByIdAsync(request.UserId);
+                if (user == null)
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, "User not found.");
+
+                var notification = new Notification
+                {
+                    UserId = request.UserId,
+                    Title = request.Title,
+                    Message = request.Description,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = await _unitOfWork.Notification.CreateAsync(notification);
+                await _unitOfWork.SaveAsync();
+
+                if (result > 0)
+                    return new BusinessResult(Const.SUCCESS_CREATE_CODE,
+                        "Web notification created successfully", notification);
+
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Failed to create notification");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating web notification");
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
+
+    public async Task<IBusinessResult> BroadcastNotificationAsync(BroadcastNotificationRequest request)
+    {
+        try
+        {
+            List<User> targetUsers;
+
+            if (request.UserIds != null && request.UserIds.Any())
+            {
+                // Gửi cho danh sách user cụ thể
+                targetUsers = await _unitOfWork.User.FindAsync(u => request.UserIds.Contains(u.UserId));
+            }
+            else
+            {
+                // Gửi cho tất cả user
+                targetUsers = await _unitOfWork.User.GetAllAsync();
+            }
+
+            if (!targetUsers.Any())
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "No target users found");
+
+            var notifications = targetUsers.Select(user => new Notification
+            {
+                UserId = user.UserId,
+                Title = request.Title,
+                Message = request.Description,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+
+            await _unitOfWork.Notification.CreateRangeAsync(notifications);
+            await _unitOfWork.SaveAsync();
+
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE,
+                $"Broadcast notification sent to {notifications.Count} users",
+                notifications.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting notification");
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
+
+    public async Task<IBusinessResult> GetNotificationsByUserIdAsync(int userId, int page = 1, int pageSize = 20)
+    {
+        try
+        {
+            var notifications = await _unitOfWork.Notification
+                .FindAsync(n => n.UserId == userId);
+
+            var totalCount = notifications.Count();
+            var pagedNotifications = notifications
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(n => new NotificationResponse
+                {
+                    NotificationId = n.NotificationId,
+                    UserId = n.UserId,
+                    Title = n.Title,
+                    Message = n.Message,
+                    IsRead = n.IsRead,
+                    CreatedAt = n.CreatedAt
+                }).ToList();
+
+            var result = new
+            {
+                Notifications = pagedNotifications,
+                TotalCount = totalCount,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Get notifications successfully", result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notifications by user ID");
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
+    #endregion
 }
