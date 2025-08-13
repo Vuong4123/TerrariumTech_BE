@@ -4,7 +4,9 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.RequestModel.Pagination;
 using TerrariumGardenTech.Common.ResponseModel.Order;
+using TerrariumGardenTech.Common.ResponseModel.Pagination;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -52,6 +54,7 @@ public class OrderService : IOrderService
                 TransactionId = order.TransactionId,
                 //PaymentMethod = order.PaymentMethod ?? string.Empty,
                 OrderItems = new List<OrderItemResponse>()
+                
             };
 
             foreach (var item in order.OrderItems)
@@ -611,8 +614,167 @@ public class OrderService : IOrderService
         return (true, "Cập nhật yêu cầu hoàn tiền thành công!");
     }
 
+    public async Task<IBusinessResult> GetAllWithPaginationAsync(PaginationRequest request)
+    {
+        try
+        {
+            var page = request.ValidPage;
+            var pageSize = request.ValidPageSize;
+
+            var (orders, totalCount) = await _unitOfWork.Order.GetAllWithPaginationAsync(page, pageSize);
+
+            if (!orders.Any())
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "Không có đơn hàng nào!",
+                    new PaginationResponse<OrderResponse>
+                    {
+                        Items = new List<OrderResponse>(),
+                        CurrentPage = page,
+                        PageSize = pageSize,
+                        TotalItems = 0,
+                        TotalPages = 0
+                    });
+            }
+
+            var result = new List<OrderResponse>();
+
+            foreach (var order in orders)
+            {
+                var orderResponse = new OrderResponse
+                {
+                    OrderId = order.OrderId,
+                    UserId = order.UserId,
+                    AddressId = order.AddressId,
+                    TotalAmount = order.TotalAmount,
+                    Deposit = order.Deposit,
+                    OrderDate = order.OrderDate,
+                    Status = order.Status,
+                    PaymentStatus = order.PaymentStatus ?? string.Empty,
+                    TransactionId = order.TransactionId,
+                    OrderItems = new List<OrderItemResponse>()
+                };
+
+                foreach (var item in order.OrderItems ?? Enumerable.Empty<OrderItem>())
+                {
+                    orderResponse.OrderItems.Add(new OrderItemResponse
+                    {
+                        OrderItemId = item.OrderItemId,
+                        AccessoryId = item.AccessoryId,
+                        TerrariumVariantId = item.TerrariumVariantId,
+                        AccessoryQuantity = item.AccessoryQuantity,
+                        TerrariumVariantQuantity = item.TerrariumVariantQuantity,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalPrice = item.TotalPrice
+                    });
+                }
+
+                result.Add(orderResponse);
+            }
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var paginationResponse = new PaginationResponse<OrderResponse>
+            {
+                Items = result,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = totalCount,
+                TotalPages = totalPages
+            };
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng thành công", paginationResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting orders with pagination");
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
+
+    public async Task<IBusinessResult> GetByUserWithPaginationAsync(int userId, PaginationRequest request)
+    {
+        try
+        {
+            if (userId <= 0)
+                return new BusinessResult(Const.BAD_REQUEST_CODE, "UserId phải là số nguyên dương!");
+
+            var page = request.ValidPage;
+            var pageSize = request.ValidPageSize;
+
+            var (orders, totalCount) = await _unitOfWork.Order.GetByUserWithPaginationAsync(userId, page, pageSize);
+
+            if (!orders.Any())
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "User chưa có đơn hàng nào!",
+                    new PaginationResponse<OrderResponse>
+                    {
+                        Items = new List<OrderResponse>(),
+                        CurrentPage = page,
+                        PageSize = pageSize,
+                        TotalItems = 0,
+                        TotalPages = 0
+                    });
+            }
+
+            var result = new List<OrderResponse>();
+
+            foreach (var order in orders)
+            {
+                var orderResponse = new OrderResponse
+                {
+                    OrderId = order.OrderId,
+                    UserId = order.UserId,
+                    AddressId = order.AddressId,
+                    TotalAmount = order.TotalAmount,
+                    Deposit = order.Deposit,
+                    OrderDate = order.OrderDate,
+                    Status = order.Status,
+                    PaymentStatus = order.PaymentStatus ?? string.Empty,
+                    TransactionId = order.TransactionId,
+                    OrderItems = new List<OrderItemResponse>()
+                };
+
+                foreach (var item in order.OrderItems ?? Enumerable.Empty<OrderItem>())
+                {
+                    orderResponse.OrderItems.Add(new OrderItemResponse
+                    {
+                        OrderItemId = item.OrderItemId,
+                        AccessoryId = item.AccessoryId,
+                        TerrariumVariantId = item.TerrariumVariantId,
+                        AccessoryQuantity = item.AccessoryQuantity,
+                        TerrariumVariantQuantity = item.TerrariumVariantQuantity,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalPrice = item.TotalPrice
+                    });
+                }
+
+                result.Add(orderResponse);
+            }
+
     
    
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var paginationResponse = new PaginationResponse<OrderResponse>
+            {
+                Items = result,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalItems = totalCount,
+                TotalPages = totalPages
+            };
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng theo user thành công", paginationResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting orders by user with pagination");
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
 
     #region Helpers
 

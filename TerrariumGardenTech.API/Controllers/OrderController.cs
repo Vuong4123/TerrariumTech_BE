@@ -5,8 +5,8 @@ using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.RequestModel.Pagination;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -303,4 +303,76 @@ public class OrderController : ControllerBase
             return Ok(new { message });
         return BadRequest(new { message });
     }
+
+    // TerrariumGardenTech.API/Controllers/OrderController.cs - Thêm methods mới
+
+    /// <summary>
+    /// Lấy danh sách tất cả đơn hàng với phân trang (quyền Order.ReadAll)
+    /// </summary>
+    [HttpGet("paginated")]
+    [Authorize(Policy = "Order.ReadAll")]
+    public async Task<IActionResult> GetAllPaginated([FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var result = await _svc.GetAllWithPaginationAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách đơn hàng của user với phân trang
+    /// </summary>
+    [HttpGet("user/{userId:int}/paginated")]
+    [Authorize]
+    public async Task<IActionResult> GetByUserPaginated(int userId, [FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var currentUserId = User.GetUserId();
+
+            // Nếu không phải chủ đơn, phải có quyền Order.ReadAll mới xem được đơn của người khác
+            if (currentUserId != userId)
+            {
+                var authResult = await _auth.AuthorizeAsync(User, null, "Order.ReadAll");
+                if (!authResult.Succeeded)
+                    return Forbid();
+            }
+
+            var result = await _svc.GetByUserWithPaginationAsync(userId, request);
+            return Ok(result);
+        }
+        catch (ArgumentException ae)
+        {
+            return BadRequest(new { message = ae.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách đơn hàng của user hiện tại với phân trang
+    /// </summary>
+    [HttpGet("my-orders/paginated")]
+    [Authorize]
+    public async Task<IActionResult> GetMyOrdersPaginated([FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var currentUserId = User.GetUserId();
+            var result = await _svc.GetByUserWithPaginationAsync(currentUserId, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
 }

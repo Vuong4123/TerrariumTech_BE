@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.MemberShip;
+using TerrariumGardenTech.Common.RequestModel.MemberShipPackage;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -42,8 +43,7 @@ public class MembershipPackageController : ControllerBase
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy thông tin gói membership thành công", pkg);
     }
 
-    // Create a new Membership for a user
-
+    // Create a new MembershipPackage
     [HttpPost("create")]
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IBusinessResult> CreateMembership([FromBody] CreateMembershipPackageRequest request)
@@ -76,8 +76,8 @@ public class MembershipPackageController : ControllerBase
             return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message, null);
         }
     }
-    // Create a new Membership for a user
 
+    // Create a new Membership for a user
     [HttpPost("createmembershipforuser")]
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IBusinessResult> CreateMembershipForUser([FromBody] CreateMembershipForUserRequest request)
@@ -92,7 +92,7 @@ public class MembershipPackageController : ControllerBase
             if (package == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, "Gói membership không tồn tại", null);
 
-            // 2) Tạo membership cho user (logic chặn trùng Active nên đặt trong service)
+            // 2) Tạo membership cho user
             var membershipId = await _membershipService.CreateMembershipForUserAsync(
                 request.UserId, request.PackageId, request.StartDate);
 
@@ -110,13 +110,11 @@ public class MembershipPackageController : ControllerBase
         }
     }
 
-
     // Update a MembershipPackage by ID
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IBusinessResult> Update(int id, [FromBody] UpdateMembershipRequest req)
+    public async Task<IBusinessResult> Update(int id, [FromBody] UpdateMembershipPackageRequest req)
     {
-        // Kiểm tra xem ID trong URL có khớp với ID trong body request không
         if (id != req.PackageId)
             return new BusinessResult(Const.BAD_REQUEST_CODE, "Sai ID", null);
 
@@ -124,10 +122,17 @@ public class MembershipPackageController : ControllerBase
         if (packageToUpdate == null)
             return new BusinessResult(Const.NOT_FOUND_CODE, "Gói membership không tồn tại", null);
 
-        // Cập nhật thông tin gói
-        packageToUpdate.Description = req.Description;
-        packageToUpdate.Price = req.Price;
-        packageToUpdate.DurationDays = req.DurationDays;
+        // Partial update: chỉ gán khi có dữ liệu
+        if (!string.IsNullOrWhiteSpace(req.Type))
+            packageToUpdate.Type = req.Type!;
+        if (req.Description != null)
+            packageToUpdate.Description = req.Description;
+        if (req.Price.HasValue)
+            packageToUpdate.Price = req.Price.Value;
+        if (req.DurationDays.HasValue)
+            packageToUpdate.DurationDays = req.DurationDays.Value;
+        if (req.IsActive.HasValue)
+            packageToUpdate.IsActive = req.IsActive.Value;
 
         var result = await _service.UpdateAsync(packageToUpdate);
 
