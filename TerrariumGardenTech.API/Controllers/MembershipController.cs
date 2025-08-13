@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.MemberShip;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
@@ -34,7 +35,11 @@ public class MembershipController : ControllerBase
                 await _membershipPackageService.GetByIdAsync(request.PackageId); // Dùng _membershipPackageService
             if (package == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, "Gói membership không tồn tại.");
-
+            var activeMembership = _membershipService.IsMembershipExpired(new Membership() { UserId = request.UserId});
+            if (!activeMembership)
+            {
+                return new BusinessResult(Const.BAD_REQUEST_CODE, "Không thể đăng ký gói mới vì gói hiện tại chưa hết hạn.");
+            }
             // Tạo membership cho người dùng
             var membershipId =
                 await _membershipService.CreateMembershipForUserAsync(request.UserId, request.PackageId,

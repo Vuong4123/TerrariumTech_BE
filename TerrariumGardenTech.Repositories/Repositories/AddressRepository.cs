@@ -18,4 +18,14 @@ public class AddressRepository : GenericRepository<Address>
             .Where(a => a.UserId == userId) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
             .ToListAsync();
     }
+
+    public async Task<Address?> GetDefaultByUserIdAsync(int userId)
+    {
+        // Ưu tiên IsDefault = true; nếu không có, lấy địa chỉ mới nhất của user
+        return await _dbContext.Addresses
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.IsDefault)       // true trước
+            //.ThenByDescending(a => a.UpdatedAt ?? a.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
 }
