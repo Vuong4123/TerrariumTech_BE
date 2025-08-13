@@ -248,23 +248,26 @@ public class OrderService : IOrderService
         decimal totalAmount = 0m;
         var orderItems = new List<OrderItem>();
 
-        Voucher voucher = null;
+
+        int? safeVoucherId = null;
         decimal discountAmount = 0;
 
-        if (request.VoucherId != null && request.VoucherId != 0)
+        // Only look up when VoucherId has a positive value
+        if (request.VoucherId.HasValue && request.VoucherId.Value > 0)
         {
-            int voucherId = request.VoucherId ?? 0;
-            voucher = _unitOfWork.Voucher.GetById(voucherId);
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
 
             if (voucher != null)
             {
-                bool isValidVoucher = voucher.Status == VoucherStatus.Active.ToString() &&
-                 voucher.ValidFrom <= System.DateTime.Now &&
-                 voucher.ValidTo >= System.DateTime.Now;
+                bool isValidVoucher =
+                    voucher.Status == VoucherStatus.Active.ToString() &&
+                    voucher.ValidFrom <= DateTime.UtcNow &&
+                    voucher.ValidTo >= DateTime.UtcNow;
 
                 if (isValidVoucher)
                 {
-                    discountAmount = voucher.DiscountAmount ?? 0;
+                    safeVoucherId = voucher.VoucherId;      // <-- only set when truly valid
+                    discountAmount = voucher.DiscountAmount ?? 0m;
                 }
             }
         }
@@ -318,7 +321,7 @@ public class OrderService : IOrderService
         var order = new Order
         {
             UserId = userId,
-            VoucherId = request.VoucherId,
+            VoucherId = safeVoucherId,
             AddressId = request.AddressId,
             Deposit = request.Deposit,
             TotalAmount = totalAmount,
@@ -749,6 +752,9 @@ public class OrderService : IOrderService
 
                 result.Add(orderResponse);
             }
+
+    
+   
 
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
