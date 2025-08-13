@@ -243,30 +243,28 @@ public class OrderService : IOrderService
     {
         ValidateCreateRequest(request);
 
-        int userId = _userContextService.GetCurrentUser();
+        if (request.VoucherId == 0) request.VoucherId = null;
 
+        int userId = _userContextService.GetCurrentUser();
         decimal totalAmount = 0m;
         var orderItems = new List<OrderItem>();
 
-
         int? safeVoucherId = null;
-        decimal discountAmount = 0;
+        decimal discountAmount = 0m;
 
-        // Only look up when VoucherId has a positive value
         if (request.VoucherId.HasValue && request.VoucherId.Value > 0)
         {
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
-
             if (voucher != null)
             {
-                bool isValidVoucher =
+                bool isValid =
                     voucher.Status == VoucherStatus.Active.ToString() &&
                     voucher.ValidFrom <= DateTime.UtcNow &&
                     voucher.ValidTo >= DateTime.UtcNow;
 
-                if (isValidVoucher)
+                if (isValid)
                 {
-                    safeVoucherId = voucher.VoucherId;      // <-- only set when truly valid
+                    safeVoucherId = voucher.VoucherId;
                     discountAmount = voucher.DiscountAmount ?? 0m;
                 }
             }
@@ -274,80 +272,73 @@ public class OrderService : IOrderService
 
         foreach (var reqItem in request.Items)
         {
-            // Nếu có Accessory
             if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
             {
                 var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
-                int accessoryQty = reqItem.AccessoryQuantity ?? 0;
-                decimal accessoryUnitPrice = acc.Price;
-                decimal accessoryLineTotal = accessoryUnitPrice * accessoryQty;
-                totalAmount += accessoryLineTotal;
+                int qty = reqItem.AccessoryQuantity ?? 0;
+                decimal unit = acc.Price;
+                decimal line = unit * qty;
+                totalAmount += line;
 
                 orderItems.Add(new OrderItem
                 {
                     AccessoryId = reqItem.AccessoryId,
                     TerrariumVariantId = null,
-                    AccessoryQuantity = accessoryQty,
+                    AccessoryQuantity = qty,
                     TerrariumVariantQuantity = 0,
-                    Quantity = accessoryQty,
-                    UnitPrice = accessoryUnitPrice,
-                    TotalPrice = accessoryLineTotal
+                    Quantity = qty,
+                    UnitPrice = unit,
+                    TotalPrice = line
                 });
             }
 
-            // Nếu có TerrariumVariant
             if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
             {
                 var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
-                int terrariumQty = reqItem.TerrariumVariantQuantity ?? 0;
-                decimal variantUnitPrice = variant.Price;
-                decimal variantLineTotal = variantUnitPrice * terrariumQty;
-                totalAmount += variantLineTotal;
+                int qty = reqItem.TerrariumVariantQuantity ?? 0;
+                decimal unit = variant.Price;
+                decimal line = unit * qty;
+                totalAmount += line;
 
                 orderItems.Add(new OrderItem
                 {
                     AccessoryId = null,
                     TerrariumVariantId = reqItem.TerrariumVariantId,
                     AccessoryQuantity = 0,
-                    TerrariumVariantQuantity = terrariumQty,
-                    Quantity = terrariumQty,
-                    UnitPrice = variantUnitPrice,
-                    TotalPrice = variantLineTotal
+                    TerrariumVariantQuantity = qty,
+                    Quantity = qty,
+                    UnitPrice = unit,
+                    TotalPrice = line
                 });
             }
         }
 
-        totalAmount = totalAmount - discountAmount;
+        totalAmount -= discountAmount;
+        if (totalAmount < 0) totalAmount = 0; // tránh âm
+
         var order = new Order
         {
             UserId = userId,
-            VoucherId = safeVoucherId,
+            VoucherId = safeVoucherId,     // chỉ set khi hợp lệ
             AddressId = request.AddressId,
             Deposit = request.Deposit,
             TotalAmount = totalAmount,
-            OrderDate = System.DateTime.UtcNow,
+            OrderDate = DateTime.UtcNow,
             Status = OrderStatusEnum.Pending,
             PaymentStatus = "Unpaid",
             OrderItems = orderItems,
-            
         };
 
         try
         {
             await _unitOfWork.Order.CreateAsync(order);
-            await _unitOfWork.SaveAsync();
+            //await _unitOfWork.SaveAsync();            // <-- cần commit để lấy ID
             return order.OrderId;
         }
         catch (Exception ex)
         {
-            var msg = ex.Message;
-            if (ex.InnerException != null)
-                msg += " | INNER: " + ex.InnerException.Message;
-
-            // Log vào hệ thống để debug (nếu có _logger)
+            var msg = ex.Message + (ex.InnerException != null ? " | INNER: " + ex.InnerException.Message : "");
             _logger?.LogError(ex, $"Order creation failed: {msg}");
-
-            // Có thể trả về hoặc throw để FE/debug nhìn thấy lỗi thật
             throw new Exception("Order create error: " + msg, ex);
         }
     }
