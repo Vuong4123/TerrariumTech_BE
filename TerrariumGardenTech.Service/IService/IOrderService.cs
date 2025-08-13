@@ -1,6 +1,6 @@
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
-using TerrariumGardenTech.Common.RequestModel.Transports;
+using TerrariumGardenTech.Common.RequestModel.Pagination;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Service.Base;
 
@@ -20,4 +20,7 @@ public interface IOrderService
 
     Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId);
     Task<(bool, string)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId);
+
+    Task<IBusinessResult> GetAllWithPaginationAsync(PaginationRequest request);
+    Task<IBusinessResult> GetByUserWithPaginationAsync(int userId, PaginationRequest request);
 }

@@ -72,5 +72,46 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Where(a => a.UserId == userId) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
             .ToListAsync();
     }
+    public async Task<(IEnumerable<Order> orders, int totalCount)> GetAllWithPaginationAsync(int page, int pageSize)
+    {
+        var query = _context.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.TerrariumVariant)
+            .Include(o => o.User)
+            .Include(o => o.Address)
+            .OrderByDescending(o => o.OrderDate);
 
+        var totalCount = await query.CountAsync();
+
+        var orders = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (orders, totalCount);
+    }
+
+    public async Task<(IEnumerable<Order> orders, int totalCount)> GetByUserWithPaginationAsync(int userId, int page, int pageSize)
+    {
+        var query = _context.Orders
+            .Where(o => o.UserId == userId)
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.TerrariumVariant)
+            .Include(o => o.User)
+            .Include(o => o.Address)
+            .OrderByDescending(o => o.OrderDate);
+
+        var totalCount = await query.CountAsync();
+
+        var orders = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (orders, totalCount);
+    }
 }

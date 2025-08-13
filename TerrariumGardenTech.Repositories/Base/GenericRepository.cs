@@ -1,6 +1,7 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Org.BouncyCastle.Asn1;
+using System.Linq.Expressions;
 using TerrariumGardenTech.Common.RequestModel.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -181,5 +182,14 @@ public class GenericRepository<T> where T : class
             query = query.Include(includeProperty);
         }
         return query;
+    }
+    public async Task CreateRangeAsync(IEnumerable<T> entities)
+    {
+        await _context.AddRangeAsync(entities);
+    }
+
+    public async Task<int> SaveAsync()
+    {
+        return await _context.SaveChangesAsync();
     }
 }
