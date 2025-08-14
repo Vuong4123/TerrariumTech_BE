@@ -125,6 +125,7 @@ public class UserService : IUserService
         {
             var user = await _unitOfWork.User.Context().Users
                 .Include(u => u.Role)
+                .Include(m => m.Memberships)
                 .FirstOrDefaultAsync(u => u.Username == username);
 
             if (user == null)
@@ -142,7 +143,7 @@ public class UserService : IUserService
             var issuer = jwtSettings.GetValue<string>("Issuer");
             var audience = jwtSettings.GetValue<string>("Audience");
             var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
-
+            var isMembership = user.Memberships.Any(m => m.Status.Equals(CommonData.AccountStatus.Active) && m.EndDate > DateTime.UtcNow);
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
@@ -153,6 +154,8 @@ public class UserService : IUserService
                 new Claim("fullName", user.FullName ?? ""),
                 new Claim("phoneNumber", user.PhoneNumber ?? ""),
                 new Claim("gender", user.Gender ?? ""),
+                new Claim("isMembership", isMembership.ToString()),
+                new Claim("isPersonalize", user.IsPersonalize.ToString()),
                 new Claim("status", user.Status ?? AccountStatus.Active.ToString()) // Sử dụng enum AccountStatus.Active
             };
 
