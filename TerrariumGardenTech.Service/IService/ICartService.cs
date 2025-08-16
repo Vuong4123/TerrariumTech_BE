@@ -13,7 +13,7 @@ public interface ICartService
     Task<IBusinessResult> GetCartAsync(int userId);
     Task<Cart> GetOrCreateCartAsync(int userId);
     Task<Cart> GetCartByUserAsync(int userId);
-    Task<CartItemResponse> AddItemAsync(int userId, AddCartItemRequest req);
+    Task<CartBundleResponse> AddItemAsync(int userId, AddCartItemRequest request);
 
     // Cập nhật phương thức UpdateItemAsync để hỗ trợ 4 tham số
     Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request);
