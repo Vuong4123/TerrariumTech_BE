@@ -54,7 +54,7 @@ public class CartController : ControllerBase
             return BadRequest(new { message = "Danh sách sản phẩm không được để trống." });
         }
 
-        var responses = new List<CartItemResponse>();
+        var responses = new List<CartBundleResponse>();
 
         foreach (var request in requests)
         {
