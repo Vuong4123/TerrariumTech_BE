@@ -205,32 +205,32 @@ public class TerrariumRepository : GenericRepository<Terrarium>
     }
 
     // C) Top rated (avg rating cao nhất) – có thể lọc minFeedback để loại spam
-    public async Task<List<int>> GetTopRatedTerrariumIdsAsync(int topN, int minFeedback = 0)
+    public async Task<List<int>> GetTopRatedTerrariumIdsAsync(int topN)
     {
-        var q = _context.Feedbacks
-        .Where(fb => fb.Rating.HasValue
-                     && fb.OrderItemId != null
-                     && fb.OrderItem.TerrariumVariantId != null)
-        .Select(fb => new
-        {
-            TerrariumId = (int?)fb.OrderItem!.TerrariumVariant!.TerrariumId, // int?
-            Rating = fb.Rating!.Value
-        })
-        .Where(x => x.TerrariumId.HasValue)
-        .GroupBy(x => x.TerrariumId!.Value) // <-- Chỉ dùng .Value sau HasValue
-        .Select(g => new
-        {
-            TerrariumId = g.Key,
-            Cnt = g.Count(),
-            Avg = g.Average(x => x.Rating)
-        })
-        .Where(x => x.Cnt >= minFeedback)
-        .OrderByDescending(x => x.Avg)
-        .ThenByDescending(x => x.Cnt)
-        .Take(topN)
-        .Select(x => x.TerrariumId);
+        if (topN <= 0) return new List<int>();
 
-        return await q.ToListAsync();
+        var query = _context.Feedbacks
+            .Where(fb => fb.Rating.HasValue
+                         && fb.OrderItem != null
+                         && fb.OrderItem.TerrariumVariant != null
+                         && fb.OrderItem.TerrariumVariant.TerrariumId != null)
+            .Select(fb => new
+            {
+                TerrariumId = (int)fb.OrderItem!.TerrariumVariant!.TerrariumId!, // ✅ ép kiểu
+                Rating = (double)fb.Rating!.Value
+            })
+            .GroupBy(x => x.TerrariumId)
+            .Select(g => new
+            {
+                TerrariumId = g.Key,
+                AvgRating = g.Average(x => x.Rating)
+            })
+            .OrderByDescending(x => x.AvgRating)
+            .ThenBy(x => x.TerrariumId) // tie-break cho kết quả ổn định
+            .Take(topN)
+            .Select(x => x.TerrariumId);
+
+        return await query.ToListAsync();
     }
 
     // D) Newest
@@ -265,27 +265,7 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         return data.ToDictionary(x => x.TerrariumId, x => (x.Avg, x.Cnt));
     }
 
-    // F) Batch: purchase counts
-    //public async Task<Dictionary<int, int>> GetTerrariumPurchaseCountsAsync(List<int> terrariumIds)
-    //{
-    //    var q =
-    //        from oi in _context.OrderItems
-    //        where oi.TerrariumVariantId != null
-    //           && terrariumIds.Contains(oi.TerrariumVariant.TerrariumId)
-    //           && oi.Order != null
-    //           && oi.Order.PaymentStatus == "Paid"
-    //        group oi by oi.TerrariumVariant.TerrariumId into g
-    //        select new
-    //        {
-    //            TerrariumId = g.Key,
-    //            Cnt = g.Sum(x => (x.TerrariumVariantQuantity ?? x.Quantity ?? 0))
-    //        };
-
-    //    var data = await q.ToListAsync();
-    //    return data.ToDictionary(x => x.TerrariumId, x => x.Cnt);
-    //}
-
-    // G) Lấy entity theo ids (kèm ảnh cho thumbnail)
+    
     public async Task<List<Terrarium>> GetListByIdsAsync(List<int> terrariumIds)
     {
         return await _context.Terrariums
@@ -293,4 +273,10 @@ public class TerrariumRepository : GenericRepository<Terrarium>
             .Where(t => terrariumIds.Contains(t.TerrariumId))
             .ToListAsync();
     }
+
+    public Task<Terrarium?> GetByIdWithVariantsAsync(int terrariumId) =>
+    _context.Terrariums
+        .Include(t => t.TerrariumVariants)
+        .Include(t => t.TerrariumImages)
+        .SingleOrDefaultAsync(t => t.TerrariumId == terrariumId);
 }

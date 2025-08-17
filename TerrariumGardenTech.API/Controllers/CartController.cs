@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Combo;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -331,4 +332,51 @@ namespace TerrariumGardenTech.API.Controllers
             }
         }
     }
+
+    [HttpPost("checkout/selected")]
+    public async Task<IActionResult> CheckoutSelected([FromBody] CheckoutSelectedRequest req)
+    {
+        var userId =  User.GetUserId(); // Lấy userId từ JWT token
+        
+        var rs = await _cartService.CheckoutSelectedAsync(userId, req);
+        return StatusCode(rs.Status, rs);
+    }
+    /// <summary>
+    /// Lấy giỏ hàng đã HYDRATE (đủ ảnh/option như giao diện).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetCartV2()
+    {
+        try
+        {
+            var userId = User.GetUserId();
+            var result = await _cartService.GetCartAsyncV2(userId); // bản bạn vừa sửa
+            return StatusCode(result.Status, result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new BusinessResult(Const.ERROR_EXCEPTION, ex.Message));
+        }
+    }
+    /// <summary>
+    /// Cập nhật 1 dòng trong giỏ hàng theo kiểu ATOMIC (đổi variant/đổi terrarium/đổi số lượng) – 1 call duy nhất.
+    /// </summary>
+    [HttpPatch("items/{cartItemId:int}")]
+    public async Task<IActionResult> PatchLine([FromRoute] int cartItemId, [FromBody] PatchCartLineRequest body)
+    {
+        try
+        {
+            var userId = User.GetUserId();
+            var result = await _cartService.PatchLineAsync(userId, cartItemId, body); // bạn đã có hàm này trong service
+            return StatusCode(result.Status, result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new BusinessResult(Const.ERROR_EXCEPTION, ex.Message));
+        }
+    }
+
+    
+    
+
 }
