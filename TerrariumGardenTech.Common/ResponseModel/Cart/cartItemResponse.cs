@@ -5,13 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common.ResponseModel.Combo;
 
-    public class CartItemDetail
-    {
-        public string ProductName { get; set; } = default!;
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
-        public decimal TotalPrice { get; set; }
-    }
+    //public class CartItemDetail
+    //{
+    //    public string ProductName { get; set; } = default!;
+    //    public int Quantity { get; set; }
+    //    public decimal Price { get; set; }
+    //    public decimal TotalPrice { get; set; }
+    //}
 
     public class CartItemResponse
     {
@@ -127,4 +127,4 @@ using TerrariumGardenTech.Common.ResponseModel.Combo;
     }
 
 
-}
+
