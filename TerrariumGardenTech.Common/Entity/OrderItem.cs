@@ -2,6 +2,7 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using TerrariumGardenTech.Common.Entity;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -23,6 +24,12 @@ public partial class OrderItem
     public decimal? UnitPrice { get; set; }
 
     public decimal? TotalPrice { get; set; }
+    public int? ComboId { get; set; }
+    public string ItemType { get; set; } = "Single";
+    public string? ComboSnapshot { get; set; } // JSON snapshot
+
+    // Navigation Properties
+    public virtual Combo? Combo { get; set; }
 
     public virtual Accessory Accessory { get; set; }
 

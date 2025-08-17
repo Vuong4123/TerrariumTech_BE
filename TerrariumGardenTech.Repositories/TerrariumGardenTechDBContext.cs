@@ -107,6 +107,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public DbSet<Wallet> Wallets { get; set; }
     public DbSet<WalletTransaction> WalletTransaction { get; set; }
     public DbSet<Favorite> Favorites { get; set; }
+    public DbSet<ComboCategory> ComboCategory { get; set; }
+    public DbSet<Combo> Combo { get; set; }
+    public DbSet<ComboItem> ComboItem { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
