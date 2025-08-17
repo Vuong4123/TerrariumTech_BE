@@ -6,7 +6,7 @@ namespace TerrariumGardenTech.Common.Entity;
 
 /// <summary>
 /// Entity lưu trữ sản phẩm trong giỏ hàng
-/// Hỗ trợ cả sản phẩm đơn lẻ và bundle
+/// Hỗ trợ cả sản phẩm đơn lẻ, bundle và combo
 /// </summary>
 public class CartItem
 {
@@ -18,12 +18,16 @@ public class CartItem
 
     // === THÔNG TIN SẢN PHẨM ===
     public int? AccessoryId { get; set; }
-    public Accessory Accessory { get; set; }
+    public Accessory? Accessory { get; set; }
     public int? AccessoryQuantity { get; set; }
 
     public int? TerrariumVariantId { get; set; }
-    public TerrariumVariant TerrariumVariant { get; set; }
+    public TerrariumVariant? TerrariumVariant { get; set; }
     public int? TerrariumVariantQuantity { get; set; }
+
+    // === COMBO SUPPORT ===
+    public int? ComboId { get; set; }
+    public Combo? Combo { get; set; }
 
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
@@ -54,6 +58,7 @@ public class CartItem
     /// - "SINGLE": Sản phẩm mua riêng lẻ
     /// - "MAIN_ITEM": Bể thủy sinh chính (có thể có phụ kiện kèm theo)
     /// - "BUNDLE_ACCESSORY": Phụ kiện thuộc combo với bể
+    /// - "COMBO": Combo được tạo sẵn
     /// </summary>
     public string ItemType { get; set; } = CommonData.CartItemType.SINGLE;
 

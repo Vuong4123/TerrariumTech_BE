@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Common.ResponseModel.Combo;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Cart
 {
@@ -10,22 +11,39 @@ namespace TerrariumGardenTech.Common.ResponseModel.Cart
     {
         public int CartItemId { get; set; }
         public int CartId { get; set; }
+
+        // Single product fields
         public int? AccessoryId { get; set; }
         public int? TerrariumVariantId { get; set; }
-        public List<CartItemDetail> Item { get; set; } // Danh sách các item (Accessory hoặc TerrariumVariant)
+
+        // Combo fields
+        public int? ComboId { get; set; }
+        public string? ComboName { get; set; }
+        public decimal? ComboPrice { get; set; }
+        public decimal? ComboOriginalPrice { get; set; }
+        public decimal? ComboDiscountPercent { get; set; }
+        public List<ComboItemResponse>? ComboItems { get; set; }
+
+        public List<CartItemDetail> Item { get; set; } = new();
         public int TotalCartQuantity { get; set; }
         public decimal TotalCartPrice { get; set; }
+        public string ItemType { get; set; } = string.Empty;
+        public bool IsInStock { get; set; } = true;
+        public int MaxQuantity { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
+
     public class CartItemDetail
     {
-        public string ProductName { get; set; } // Tên phụ kiện hoặc Terrarium
-        public int Quantity { get; set; } // Số lượng
-        public decimal Price { get; set; } // Giá
-        public decimal TotalPrice { get; set; } // Tổng giá trị
+        public string ProductName { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ProductType { get; set; } // "Terrarium", "Accessory", "Combo"
     }
-
     /// <summary>
     /// Response cho một bundle (bể + phụ kiện kèm theo)
     /// </summary>

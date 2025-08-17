@@ -42,6 +42,10 @@ public class UnitOfWork
     private WalletRepository _walletRepository;
     private WalletTransactionRepository _walletTransactionRepository;
     private FavoriteRepository _favoriteRepository;
+    private ComboRepository _comboRepository;
+    private ComboCategoryRepository _comboCategoryRepository;
+    private ComboItemRepository _comboItemRepository;
+
     public UnitOfWork()
     {
         _unitOfWorkContext = new TerrariumGardenTechDBContext();
@@ -220,5 +224,17 @@ public class UnitOfWork
     public FavoriteRepository Favorite
     {
         get => _favoriteRepository ??= new FavoriteRepository(_unitOfWorkContext);
+    }
+    public ComboRepository Combo
+    {
+        get => _comboRepository ??= new ComboRepository(_unitOfWorkContext);
+    }
+    public ComboCategoryRepository ComboCategory
+    {
+        get => _comboCategoryRepository ??= new ComboCategoryRepository(_unitOfWorkContext);
+    }
+    public ComboItemRepository ComboItem
+    {
+        get => _comboItemRepository ??= new ComboItemRepository(_unitOfWorkContext);
     }
 }

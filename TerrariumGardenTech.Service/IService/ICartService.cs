@@ -1,24 +1,34 @@
 ﻿using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
-using TerrariumGardenTech.Common.RequestModel.Order;
+using TerrariumGardenTech.Common.RequestModel.Combo;
 using TerrariumGardenTech.Common.ResponseModel.Cart;
-using TerrariumGardenTech.Common.ResponseModel.Order;
-using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 
-namespace TerrariumGardenTech.Service.IService;
-
-public interface ICartService
+namespace TerrariumGardenTech.Service.IService
 {
-    Task<IBusinessResult> GetCartAsync(int userId);
-    Task<Cart> GetOrCreateCartAsync(int userId);
-    Task<Cart> GetCartByUserAsync(int userId);
-    Task<CartBundleResponse> AddItemAsync(int userId, AddCartItemRequest request);
+    public interface ICartService
+    {
+        // Basic cart operations
+        Task<IBusinessResult> GetCartAsync(int userId);
+        Task<Cart> GetOrCreateCartAsync(int userId);
+        Task<Cart> GetCartByUserAsync(int userId);
+        Task<IBusinessResult> ClearCartAsync(int userId);
 
-    // Cập nhật phương thức UpdateItemAsync để hỗ trợ 4 tham số
-    Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request);
+        // Single items and bundle operations
+        Task<IBusinessResult> AddItemAsync(int userId, AddCartItemRequest request);
+        Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request);
+        Task<IBusinessResult> RemoveFromCartAsync(int userId, int cartId);
 
-    Task<bool> RemoveItemAsync(int userId, int itemId);
-    Task<bool> ClearCartAsync(int userId);
-    Task<IBusinessResult> CheckoutAsync(int userId);
+        // Combo operations
+        Task<IBusinessResult> AddComboToCartAsync(int userId, AddComboToCartRequest request);
+        Task<IBusinessResult> UpdateComboQuantityAsync(int userId, int cartId, int quantity);
+
+        // Checkout
+        Task<IBusinessResult> CheckoutAsync(int userId);
+
+        // Utility methods
+        Task<IBusinessResult> GetCartSummaryAsync(int userId);
+        Task<IBusinessResult> ValidateCartAsync(int userId);
+
+    }
 }
