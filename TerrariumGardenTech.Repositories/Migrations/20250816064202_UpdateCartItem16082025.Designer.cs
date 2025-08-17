@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250816064202_UpdateCartItem16082025")]
+    partial class UpdateCartItem16082025
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,15 +33,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartId"));
 
-                    b.Property<int?>("ComboId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("ItemType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -47,8 +43,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("CartId");
-
-                    b.HasIndex("ComboId");
 
                     b.HasIndex("UserId");
 
@@ -70,9 +64,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ComboId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -109,137 +100,11 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.HasIndex("ComboId");
-
                     b.HasIndex("ParentCartItemId");
 
                     b.HasIndex("TerrariumVariantId");
 
                     b.ToTable("CartItems");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Combo", b =>
-                {
-                    b.Property<int>("ComboId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ComboId"));
-
-                    b.Property<int>("ComboCategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("ComboPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("DiscountPercent")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsFeatured")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("OriginalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("SoldQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ComboId");
-
-                    b.HasIndex("ComboCategoryId");
-
-                    b.ToTable("Combo");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.ComboCategory", b =>
-                {
-                    b.Property<int>("ComboCategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ComboCategoryId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ComboCategoryId");
-
-                    b.ToTable("ComboCategory");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.ComboItem", b =>
-                {
-                    b.Property<int>("ComboItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ComboItemId"));
-
-                    b.Property<int?>("AccessoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ComboId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TerrariumVariantId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("ComboItemId");
-
-                    b.HasIndex("AccessoryId");
-
-                    b.HasIndex("ComboId");
-
-                    b.HasIndex("TerrariumVariantId");
-
-                    b.ToTable("ComboItem");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.EnvironmentTerrarium", b =>
@@ -1233,15 +1098,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<int?>("AccessoryQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ComboId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ComboSnapshot")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ItemType")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("OrderId")
                         .HasColumnType("int")
                         .HasColumnName("orderId");
@@ -1269,8 +1125,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasName("PK__OrderIte__3724BD5293DBCE99");
 
                     b.HasIndex("AccessoryId");
-
-                    b.HasIndex("ComboId");
 
                     b.HasIndex("OrderId");
 
@@ -1863,17 +1717,11 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Cart", b =>
                 {
-                    b.HasOne("TerrariumGardenTech.Common.Entity.Combo", "Combo")
-                        .WithMany("Carts")
-                        .HasForeignKey("ComboId");
-
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Combo");
 
                     b.Navigation("User");
                 });
@@ -1890,10 +1738,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TerrariumGardenTech.Common.Entity.Combo", "Combo")
-                        .WithMany()
-                        .HasForeignKey("ComboId");
-
                     b.HasOne("TerrariumGardenTech.Common.Entity.CartItem", "ParentCartItem")
                         .WithMany("ChildItems")
                         .HasForeignKey("ParentCartItemId");
@@ -1906,43 +1750,7 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     b.Navigation("Cart");
 
-                    b.Navigation("Combo");
-
                     b.Navigation("ParentCartItem");
-
-                    b.Navigation("TerrariumVariant");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Combo", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Common.Entity.ComboCategory", "ComboCategory")
-                        .WithMany("Combos")
-                        .HasForeignKey("ComboCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ComboCategory");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.ComboItem", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Accessory", "Accessory")
-                        .WithMany()
-                        .HasForeignKey("AccessoryId");
-
-                    b.HasOne("TerrariumGardenTech.Common.Entity.Combo", "Combo")
-                        .WithMany("ComboItems")
-                        .HasForeignKey("ComboId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.TerrariumVariant", "TerrariumVariant")
-                        .WithMany()
-                        .HasForeignKey("TerrariumVariantId");
-
-                    b.Navigation("Accessory");
-
-                    b.Navigation("Combo");
 
                     b.Navigation("TerrariumVariant");
                 });
@@ -2234,10 +2042,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasForeignKey("AccessoryId")
                         .HasConstraintName("FK_OrderItem_Accessory");
 
-                    b.HasOne("TerrariumGardenTech.Common.Entity.Combo", "Combo")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("ComboId");
-
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
                         .WithMany("OrderItems")
                         .HasForeignKey("OrderId")
@@ -2250,8 +2054,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasConstraintName("FK_OrderItem_TerrariumVariant");
 
                     b.Navigation("Accessory");
-
-                    b.Navigation("Combo");
 
                     b.Navigation("Order");
 
@@ -2439,20 +2241,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.CartItem", b =>
                 {
                     b.Navigation("ChildItems");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Combo", b =>
-                {
-                    b.Navigation("Carts");
-
-                    b.Navigation("ComboItems");
-
-                    b.Navigation("OrderItems");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.ComboCategory", b =>
-                {
-                    b.Navigation("Combos");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.EnvironmentTerrarium", b =>

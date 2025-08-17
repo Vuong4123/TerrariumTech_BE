@@ -1,28 +1,66 @@
 ﻿using System.Text.Json.Serialization;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Common.Entity;
 
+/// <summary>
+/// Entity lưu trữ sản phẩm trong giỏ hàng
+/// Hỗ trợ cả sản phẩm đơn lẻ, bundle và combo
+/// </summary>
 public class CartItem
 {
-    public int CartItemId { get; set; } // Khóa chính
-    public int CartId { get; set; } // Khóa ngoại đến Cart
+    public int CartItemId { get; set; }
+    public int CartId { get; set; }
 
-    [JsonIgnore] // Không tuần tự hóa thuộc tính này để tránh chu trình
+    [JsonIgnore]
     public Cart Cart { get; set; }
 
-    // Khóa ngoại đến sản phẩm (Accessory hoặc TerrariumVariant)
+    // === THÔNG TIN SẢN PHẨM ===
     public int? AccessoryId { get; set; }
-    public Accessory Accessory { get; set; }
+    public Accessory? Accessory { get; set; }
     public int? AccessoryQuantity { get; set; }
-    public int? TerrariumVariantQuantity { get; set; }
 
     public int? TerrariumVariantId { get; set; }
-    public TerrariumVariant TerrariumVariant { get; set; }
+    public TerrariumVariant? TerrariumVariant { get; set; }
+    public int? TerrariumVariantQuantity { get; set; }
 
-    public int Quantity { get; set; } // Số lượng sản phẩm trong giỏ
-    public decimal UnitPrice { get; set; } // Giá sản phẩm tại thời điểm thêm vào giỏ
-    public decimal TotalPrice { get; set; } // Tính tổng tiền của sản phẩm trong giỏ
+    // === COMBO SUPPORT ===
+    public int? ComboId { get; set; }
+    public Combo? Combo { get; set; }
+
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal TotalPrice { get; set; }
+
+    // === BUNDLE MANAGEMENT ===
+    /// <summary>
+    /// ID của item cha (bể thủy sinh chính)
+    /// - null: là sản phẩm độc lập hoặc sản phẩm chính
+    /// - có giá trị: là phụ kiện thuộc bundle của item cha
+    /// </summary>
+    public int? ParentCartItemId { get; set; }
+
+    /// <summary>
+    /// Navigation property đến item cha
+    /// </summary>
+    [JsonIgnore]
+    public CartItem? ParentCartItem { get; set; }
+
+    /// <summary>
+    /// Danh sách phụ kiện con (nếu item này là bể chính)
+    /// </summary>
+    [JsonIgnore]
+    public ICollection<CartItem> ChildItems { get; set; } = new List<CartItem>();
+
+    /// <summary>
+    /// Loại sản phẩm:
+    /// - "SINGLE": Sản phẩm mua riêng lẻ
+    /// - "MAIN_ITEM": Bể thủy sinh chính (có thể có phụ kiện kèm theo)
+    /// - "BUNDLE_ACCESSORY": Phụ kiện thuộc combo với bể
+    /// - "COMBO": Combo được tạo sẵn
+    /// </summary>
+    public string ItemType { get; set; } = CommonData.CartItemType.SINGLE;
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

@@ -2,6 +2,7 @@
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Repositories;
 
@@ -38,6 +39,14 @@ public class CartItemRepository : GenericRepository<CartItem>
             ci.CartId == cartId &&
             ci.AccessoryId == accessoryId &&
             ci.TerrariumVariantId == terrariumVariantId);
+    }
+    public async Task<List<CartItem>> GetBundleAccessoriesByParentIdAsync(int parentCartItemId)
+    {
+        return await _context.CartItems
+            .Include(ci => ci.Accessory)
+            .Where(ci => ci.ParentCartItemId == parentCartItemId &&
+                       ci.ItemType == CartItemType.BUNDLE_ACCESSORY)
+            .ToListAsync();
     }
 
     //public Task<CartItem?> GetByIdAsync(int id) =>
