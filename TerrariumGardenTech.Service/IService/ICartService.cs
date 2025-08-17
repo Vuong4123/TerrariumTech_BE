@@ -21,4 +21,7 @@ public interface ICartService
     Task<bool> RemoveItemAsync(int userId, int itemId);
     Task<bool> ClearCartAsync(int userId);
     Task<IBusinessResult> CheckoutAsync(int userId);
+    Task<IBusinessResult> CheckoutSelectedAsync(int userId, CheckoutSelectedRequest req);
+    Task<IBusinessResult> GetCartAsyncV2(int userId);
+    Task<IBusinessResult> PatchLineAsync(int userId, int cartItemId, PatchCartLineRequest req);
 }

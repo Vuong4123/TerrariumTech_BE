@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
@@ -7,6 +8,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
 {
     public class CartRepository : GenericRepository<Cart>
     {
+        private IDbContextTransaction? _currentTx;
         public CartRepository(TerrariumGardenTechDBContext context) : base(context)
         {
         }
@@ -23,6 +25,51 @@ namespace TerrariumGardenTech.Repositories.Repositories
                 .FirstOrDefaultAsync(c => c.UserId == userId);  // Lấy giỏ hàng đầu tiên có userId khớp
         }
 
+        public async Task<Cart?> GetHydratedByUserIdAsync(int userId, bool track = false)
+        {
+            var q = _context.Carts.AsQueryable().AsSplitQuery();
+            if (!track) q = q.AsNoTracking();
+
+            return await q.Where(c => c.UserId == userId)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Accessory)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.TerrariumVariant)
+                        .ThenInclude(v => v.Terrarium)
+                            .ThenInclude(t => t.TerrariumVariants)   // ← variants
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.TerrariumVariant)
+                        .ThenInclude(v => v.Terrarium)
+                            .ThenInclude(t => t.TerrariumImages)     // ← images
+                .SingleOrDefaultAsync();
+        }
+
+        // option theo CartId (đôi khi hữu ích khi Patch xong muốn reload cả giỏ)
+        public async Task<Cart?> GetHydratedByCartIdAsync(int cartId, bool track = false)
+        {
+            var q = _context.Carts.AsQueryable();
+            q = q.AsSplitQuery();
+            if (!track) q = q.AsNoTracking();
+
+            return await q
+                .Where(c => c.CartId == cartId)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Accessory)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.TerrariumVariant)
+                        .ThenInclude(v => v.Terrarium)
+                            .ThenInclude(t => t.TerrariumVariants)
+                .SingleOrDefaultAsync();
+        }
+        // ✅ dùng để trả về 1 line đầy đủ sau PATCH
+        public Task<CartItem?> GetHydratedByIdAsync(int id) =>
+            _context.CartItems
+                .Include(ci => ci.Accessory)
+                .Include(ci => ci.TerrariumVariant)
+                    .ThenInclude(v => v.Terrarium)
+                        .ThenInclude(t => t.TerrariumVariants)
+                .Include(ci => ci.Cart)
+                .SingleOrDefaultAsync(ci => ci.CartItemId == id);
 
         // Giữ nguyên phương thức ClearAsync
         public async Task<bool> ClearAsync(int userId)
@@ -38,6 +85,12 @@ namespace TerrariumGardenTech.Repositories.Repositories
 
             return false;
         }
+
+        public Task CommitTransactionAsync(CancellationToken ct = default)
+        => _currentTx?.CommitAsync(ct) ?? Task.CompletedTask;
+
+        public Task RollbackTransactionAsync(CancellationToken ct = default)
+            => _currentTx?.RollbackAsync(ct) ?? Task.CompletedTask;
     }
 
 }
