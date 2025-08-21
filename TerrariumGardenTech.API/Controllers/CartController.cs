@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Combo;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controllers
 {
@@ -330,5 +331,20 @@ namespace TerrariumGardenTech.API.Controllers
                 return StatusCode(500, new { message = "Lỗi server khi checkout" });
             }
         }
+
+
+        //[HttpPost("checkout/selected")]
+        //public async Task<IActionResult> CheckoutSelected([FromBody] CheckoutSelectedRequest req)
+        //{
+        //    var userId =  User.GetUserId(); // Lấy userId từ JWT token
+
+        //    var rs = await _cartService.CheckoutSelectedAsync(userId, req);
+        //    return StatusCode(rs.Status, rs);
+        //}
+
     }
 }
+    
+    
+
+

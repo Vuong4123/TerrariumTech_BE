@@ -965,7 +965,7 @@ public class TerrariumService : ITerrariumService
 
     public async Task<IBusinessResult> GetTopRatedAsync(int topN)
     {
-        var topIds = await _unitOfWork.Terrarium.GetTopRatedTerrariumIdsAsync(topN, minFeedback: 1);
+        var topIds = await _unitOfWork.Terrarium.GetTopRatedTerrariumIdsAsync(topN);
         return await BuildCardListByTerrariumIds(topIds);
     }
 

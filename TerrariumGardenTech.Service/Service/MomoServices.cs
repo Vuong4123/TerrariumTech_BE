@@ -164,7 +164,7 @@ namespace TerrariumGardenTech.Service.Service
                 if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
 
                 decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
-
+                   
                 var baseAmount = order.TotalAmount > 0
                     ? order.TotalAmount
                     : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
@@ -185,7 +185,11 @@ namespace TerrariumGardenTech.Service.Service
                 var success = Get("resultCode") == "0";
                 order.PaymentStatus = success ? "Paid" : "Failed";
                 order.TransactionId = Get("transId");
-                if (success && isPayAll) order.DiscountAmount = baseAmount - fullAfter10;
+                // *** CÁCH 3: Chỉ áp dụng discount khi thanh toán đủ (isPayAll) ***
+                if (success && isPayAll)
+                {
+                    order.DiscountAmount = RoundVnd(baseAmount * 0.1m); // luôn đúng 10% và làm tròn VND
+                }
 
                 await _unitOfWork.Order.UpdateAsync(order);
                 order.Payment ??= new List<Payment>();

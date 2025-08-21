@@ -1,7 +1,6 @@
 ﻿using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Cart;
 using TerrariumGardenTech.Common.RequestModel.Combo;
-using TerrariumGardenTech.Common.ResponseModel.Cart;
 using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService
