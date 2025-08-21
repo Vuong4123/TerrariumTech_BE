@@ -1,4 +1,7 @@
-﻿using TerrariumGardenTech.Common.RequestModel.Terrarium;
+﻿using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.RequestModel.TerraniumLayout;
+using TerrariumGardenTech.Common.RequestModel.Terrarium;
+using TerrariumGardenTech.Common.ResponseModel.TerrariumLayout;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.Service;
@@ -26,4 +29,12 @@ public interface ITerrariumService
     Task<IBusinessResult> GetTopBestSellersLastDaysAsync(int days, int topN);
     Task<IBusinessResult> GetTopRatedAsync(int topN);
     Task<IBusinessResult> GetNewestAsync(int topN);
+
+    Task<TerrariumLayout> CreateAsync(CreateLayoutRequest request);
+    Task<bool> UpdateAsync(int id, UpdateLayoutRequest request);
+    Task<TerrariumLayoutDetailDto?> GetByIdAsync(int id);
+    Task<List<TerrariumLayoutDto>> GetAllAsync();
+    Task<List<TerrariumLayoutDto>> GetByUserIdAsync(int userId);
+    Task<List<TerrariumLayoutDto>> GetPendingAsync();
+    Task<TerrariumLayout> ReviewAsync(int id, int managerId, string status, decimal? price, string? notes);
 }

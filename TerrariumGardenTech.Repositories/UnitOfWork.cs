@@ -45,6 +45,7 @@ public class UnitOfWork
     private ComboRepository _comboRepository;
     private ComboCategoryRepository _comboCategoryRepository;
     private ComboItemRepository _comboItemRepository;
+    private TerrariumLayoutRepository _terrariumLayoutRepository;
 
     public UnitOfWork()
     {
@@ -236,5 +237,9 @@ public class UnitOfWork
     public ComboItemRepository ComboItem
     {
         get => _comboItemRepository ??= new ComboItemRepository(_unitOfWorkContext);
+    }
+    public TerrariumLayoutRepository TerrariumLayout
+    {
+        get => _terrariumLayoutRepository ??= new TerrariumLayoutRepository(_unitOfWorkContext);
     }
 }

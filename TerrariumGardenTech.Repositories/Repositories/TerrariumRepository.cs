@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Repositories;
 
@@ -293,4 +295,6 @@ public class TerrariumRepository : GenericRepository<Terrarium>
             .Where(t => terrariumIds.Contains(t.TerrariumId))
             .ToListAsync();
     }
+
+
 }
