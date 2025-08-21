@@ -25,6 +25,8 @@ namespace TerrariumGardenTech.Service.IService
 
         // Checkout
         Task<IBusinessResult> CheckoutAsync(int userId);
+        Task<IBusinessResult> CheckoutItemAsync(int userId, int cartItemId);
+        Task<IBusinessResult> CheckoutMultipleItemsAsync(int userId, List<int> cartItemIds);
 
         // Utility methods
         Task<IBusinessResult> GetCartSummaryAsync(int userId);
