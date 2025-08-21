@@ -17,6 +17,7 @@ using TerrariumGardenTech.Common.ResponseModel.Combo;
     {
         public int CartItemId { get; set; }
         public int CartId { get; set; }
+        public int TerrariumId { get; set; }
 
         // Single product fields
         public int? AccessoryId { get; set; }

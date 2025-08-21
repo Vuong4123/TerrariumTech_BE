@@ -12,7 +12,7 @@ public class CartItem
 {
     public int CartItemId { get; set; }
     public int CartId { get; set; }
-
+    public int TerrariumId { get; set; }
     [JsonIgnore]
     public Cart Cart { get; set; }
 

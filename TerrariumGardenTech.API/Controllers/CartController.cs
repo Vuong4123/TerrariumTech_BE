@@ -103,7 +103,7 @@ namespace TerrariumGardenTech.API.Controllers
         /// </summary>
         [HttpPost("add-items/multiple")]
         [Authorize]
-        public async Task<IActionResult> AddMultipleItems([FromBody] List<AddCartItemRequest> requests)
+        public async Task<IActionResult> AddMultipleItems([FromBody] List<AddCartItemMultipleRequest> requests)
         {
             try
             {
@@ -119,17 +119,10 @@ namespace TerrariumGardenTech.API.Controllers
 
                 foreach (var request in requests)
                 {
-                    // Validate request
-                    if ((request.AccessoryQuantity is null && request.VariantQuantity is null) ||
-                        (request.AccessoryQuantity <= 0 && request.VariantQuantity <= 0))
-                    {
-                        errors.Add("Sản phẩm phải có số lượng lớn hơn 0");
-                        continue;
-                    }
 
                     try
                     {
-                        var result = await _cartService.AddItemAsync(userId, request);
+                        var result = await _cartService.AddMultipleItemAsync(userId, request);
 
                         if (result.Status == Const.SUCCESS_CREATE_CODE)
                         {

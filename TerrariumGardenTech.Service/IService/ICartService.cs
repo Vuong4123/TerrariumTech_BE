@@ -15,6 +15,7 @@ namespace TerrariumGardenTech.Service.IService
 
         // Single items and bundle operations
         Task<IBusinessResult> AddItemAsync(int userId, AddCartItemRequest request);
+        Task<IBusinessResult> AddMultipleItemAsync(int userId, AddCartItemMultipleRequest request);
         Task<IBusinessResult> UpdateItemAsync(int userId, int cartItemId, UpdateCartItemRequest request);
         Task<IBusinessResult> RemoveFromCartAsync(int userId, int cartId);
 
