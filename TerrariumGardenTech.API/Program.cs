@@ -118,6 +118,8 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IComboService, ComboService>();
+builder.Services.AddScoped<IComboCategoryService, ComboCategoryService>();
 
 // Đăng ký SignalR cho real-time chat
 builder.Services.AddSignalR();
