@@ -14,4 +14,11 @@ public static class CommonData
         public const string BUNDLE_ACCESSORY = "BUNDLE_ACCESSORY"; // Phụ kiện combo
         public const string COMBO = "COMBO"; // Phụ kiện combo
     }
+    public struct LayoutStatus
+    {
+        public const string Pending = "Pending"; // Chờ duyệt
+        public const string Approved = "Approved";
+        public const string Rejected = "Rejected";
+        public const string Ordered = "Ordered";
+    }
 }

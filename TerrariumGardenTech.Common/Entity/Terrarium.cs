@@ -29,7 +29,8 @@ public partial class Terrarium
     // Thêm các trường MinPrice và MaxPrice
     public decimal MinPrice { get; set; }  // Giá thấp nhất
     public decimal MaxPrice { get; set; }  // Giá cao nhất
- 
+    public bool GeneratedByAI { get; set; } = false; // Trạng thái tạo bởi AI
+
     public virtual ICollection<TerrariumAccessory> TerrariumAccessory { get; set; } = [];
     public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = [];
     public virtual ICollection<TerrariumVariant> TerrariumVariants { get; set; } = [];

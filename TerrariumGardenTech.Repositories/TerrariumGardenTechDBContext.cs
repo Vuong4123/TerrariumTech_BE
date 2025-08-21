@@ -110,10 +110,38 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public DbSet<ComboCategory> ComboCategory { get; set; }
     public DbSet<Combo> Combo { get; set; }
     public DbSet<ComboItem> ComboItem { get; set; }
+    public DbSet<TerrariumLayout> TerrariumLayouts { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>
         {
+            modelBuilder.Entity<TerrariumLayout>(entity =>
+            {
+                // Primary key
+                entity.HasKey(e => e.LayoutId);
+
+                // User relationship (creator)
+                entity.HasOne(d => d.User)
+                    .WithMany() // User có nhiều layouts
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.Restrict) // Không xóa cascade
+                    .HasConstraintName("FK_TerrariumLayout_User");
+
+                // Reviewer relationship (manager)
+                entity.HasOne(d => d.Reviewer)
+                    .WithMany() // User có thể review nhiều layouts
+                    .HasForeignKey(d => d.ReviewedBy)
+                    .OnDelete(DeleteBehavior.Restrict) // Không xóa cascade
+                    .HasConstraintName("FK_TerrariumLayout_Reviewer");
+
+                // Terrarium relationship
+                entity.HasOne(d => d.Terrarium)
+                    .WithMany() // Terrarium có thể có nhiều layouts
+                    .HasForeignKey(d => d.TerrariumId)
+                    .OnDelete(DeleteBehavior.Cascade) // Xóa terrarium thì xóa layout
+                    .HasConstraintName("FK_TerrariumLayout_Terrarium");
+            });
+
             entity.HasKey(e => e.AccessoryId).HasName("PK__Accessor__77E65FD722D6ED59");
 
             entity.ToTable("Accessory");

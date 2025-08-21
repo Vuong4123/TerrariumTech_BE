@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using System.Text;
-using System.Text.RegularExpressions;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.RequestModel.TerraniumLayout;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Common.ResponseModel.Base;
 using TerrariumGardenTech.Common.ResponseModel.Terrarium;
+using TerrariumGardenTech.Common.ResponseModel.TerrariumLayout;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -31,7 +31,7 @@ public class AITerrariumResponse
     public int Stock { get; set; }
     public string ImageUrl { get; set; }
     public int Height { get; set; }    // cm
-    public int Width { get; set; }     // cm  
+    public int Width { get; set; }     // cm
     public int Depth { get; set; }     // cm
     public List<string> TerrariumImages { get; set; }
     public List<string> Accessories { get; set; }
@@ -48,6 +48,7 @@ public class TerrariumService : ITerrariumService
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _cloudinaryService = cloudinaryService ?? throw new ArgumentNullException(nameof(cloudinaryService));
     }
+
     public async Task<AITerrariumResponse> PredictTerrariumAsync(AITerrariumRequest request)
     {
         try
@@ -263,7 +264,7 @@ public class TerrariumService : ITerrariumService
 
         for (int i = 0; i < simplePrompts.Length; i++)
         {
-            var url = await GenerateImage(simplePrompts[i], i + 100); 
+            var url = await GenerateImage(simplePrompts[i], i + 100);
             if (url != null)
             {
                 images.Add(url);
@@ -361,8 +362,6 @@ public class TerrariumService : ITerrariumService
             return new List<string> { "Moss", "Soil", "Small plants", "Decorative stones" };
         }
     }
-
-
 
     public async Task<IBusinessResult> GetAll(TerrariumGetAllRequest request)
     {
@@ -1035,5 +1034,184 @@ public class TerrariumService : ITerrariumService
         }
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, list);
+    }
+
+    // CREATE - Fixed với proper repository calls
+    public async Task<TerrariumLayout> CreateAsync(CreateLayoutRequest request)
+    {
+        // Kiểm tra terrarium tồn tại
+        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
+        if (terrarium == null)
+            throw new ArgumentException("Terrarium not found");
+
+        // Tạo layout đơn giản
+        var layout = new TerrariumLayout
+        {
+            UserId = request.userId,
+            LayoutName = request.LayoutName,
+            TerrariumId = request.TerrariumId,
+            Status = LayoutStatus.Pending,
+            CreatedDate = DateTime.Now,
+            UpdatedDate = DateTime.Now
+        };
+
+        await _unitOfWork.TerrariumLayout.CreateAsync(layout);
+        return layout;
+    }
+
+    // GET BY ID - Simple, no includes
+    public async Task<TerrariumLayoutDetailDto?> GetByIdAsync(int id)
+    {
+        var layout = await _unitOfWork.TerrariumLayout.GetByIdAsync(id);
+        if (layout == null) return null;
+
+        return new TerrariumLayoutDetailDto
+        {
+            LayoutId = layout.LayoutId,
+            LayoutName = layout.LayoutName,
+            Status = layout.Status.ToString(),
+            FinalPrice = layout.FinalPrice,
+            CreatedDate = layout.CreatedDate,
+            UpdatedDate = layout.UpdatedDate,
+            UserId = layout.UserId,
+            TerrariumId = layout.TerrariumId,
+            ReviewedBy = layout.ReviewedBy,
+            ReviewDate = layout.ReviewDate,
+            ReviewNotes = layout.ReviewNotes
+        };
+    }
+
+    // GET ALL - Simple list
+    public async Task<List<TerrariumLayoutDto>> GetAllAsync()
+    {
+        var layouts = await _unitOfWork.TerrariumLayout.GetAllAsync();
+
+        return layouts.Select(l => new TerrariumLayoutDto
+        {
+            LayoutId = l.LayoutId,
+            LayoutName = l.LayoutName,
+            Status = l.Status.ToString(),
+            FinalPrice = l.FinalPrice,
+            CreatedDate = l.CreatedDate,
+            UpdatedDate = l.UpdatedDate,
+            UserId = l.UserId,
+            TerrariumId = l.TerrariumId,
+            ReviewedBy = l.ReviewedBy,
+            ReviewDate = l.ReviewDate,
+            ReviewNotes = l.ReviewNotes
+        }).ToList();
+    }
+
+    // GET BY USER
+    public async Task<List<TerrariumLayoutDto>> GetByUserIdAsync(int userId)
+    {
+        var allLayouts = await _unitOfWork.TerrariumLayout.GetAllAsync();
+        var userLayouts = allLayouts.Where(l => l.UserId == userId).ToList();
+
+        return userLayouts.Select(l => new TerrariumLayoutDto
+        {
+            LayoutId = l.LayoutId,
+            LayoutName = l.LayoutName,
+            Status = l.Status.ToString(),
+            FinalPrice = l.FinalPrice,
+            CreatedDate = l.CreatedDate,
+            UpdatedDate = l.UpdatedDate,
+            UserId = l.UserId,
+            TerrariumId = l.TerrariumId,
+            ReviewedBy = l.ReviewedBy,
+            ReviewDate = l.ReviewDate,
+            ReviewNotes = l.ReviewNotes
+        }).ToList();
+    }
+
+    // GET PENDING
+    public async Task<List<TerrariumLayoutDto>> GetPendingAsync()
+    {
+        var allLayouts = await _unitOfWork.TerrariumLayout.GetAllAsync();
+        var pendingLayouts = allLayouts.Where(l => l.Status == LayoutStatus.Pending).ToList();
+
+        return pendingLayouts.Select(l => new TerrariumLayoutDto
+        {
+            LayoutId = l.LayoutId,
+            LayoutName = l.LayoutName,
+            Status = l.Status.ToString(),
+            FinalPrice = l.FinalPrice,
+            CreatedDate = l.CreatedDate,
+            UpdatedDate = l.UpdatedDate,
+            UserId = l.UserId,
+            TerrariumId = l.TerrariumId,
+            ReviewedBy = l.ReviewedBy,
+            ReviewDate = l.ReviewDate,
+            ReviewNotes = l.ReviewNotes
+        }).ToList();
+    }
+
+    // SINGLE UPDATE METHOD - Handle all updates
+    public async Task<bool> UpdateAsync(int id, UpdateLayoutRequest request)
+    {
+        var layout = await _unitOfWork.TerrariumLayout.GetByIdAsync(id);
+        if (layout == null) return false;
+
+        // Update all provided fields
+        if (!string.IsNullOrEmpty(request.LayoutName))
+            layout.LayoutName = request.LayoutName;
+
+        if (request.TerrariumId.HasValue)
+        {
+            // Validate terrarium exists
+            var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId.Value);
+            if (terrarium == null)
+                throw new ArgumentException("Terrarium not found");
+
+            layout.TerrariumId = request.TerrariumId.Value;
+        }
+
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            // Validate status
+            var validStatuses = new[] { "Pending", "Approved", "Rejected", "Ordered" };
+            if (!validStatuses.Contains(request.Status))
+                throw new ArgumentException("Invalid status");
+
+            layout.Status = request.Status;
+
+            // Auto set review info when status changes
+            if (request.Status != "Pending" && request.ReviewedBy.HasValue)
+            {
+                layout.ReviewedBy = request.ReviewedBy.Value;
+                layout.ReviewDate = DateTime.Now;
+            }
+        }
+
+        if (request.FinalPrice.HasValue)
+            layout.FinalPrice = request.FinalPrice.Value;
+
+        if (request.ReviewedBy.HasValue)
+            layout.ReviewedBy = request.ReviewedBy.Value;
+
+        if (!string.IsNullOrEmpty(request.ReviewNotes))
+            layout.ReviewNotes = request.ReviewNotes;
+
+        layout.UpdatedDate = DateTime.Now;
+
+        await _unitOfWork.TerrariumLayout.UpdateAsync(layout);
+        return true;
+    }
+
+    // REVIEW
+    public async Task<TerrariumLayout> ReviewAsync(int id, int managerId, string status, decimal? price, string? notes)
+    {
+        var layout = await _unitOfWork.TerrariumLayout.GetByIdAsync(id);
+        if (layout == null) throw new ArgumentException("Layout not found");
+
+        layout.Status = status;
+        layout.FinalPrice = price;
+        layout.ReviewedBy = managerId;
+        layout.ReviewDate = DateTime.Now;
+        layout.ReviewNotes = notes;
+        layout.UpdatedDate = DateTime.Now;
+
+        await _unitOfWork.TerrariumLayout.UpdateAsync(layout);
+        return layout;
     }
 }
