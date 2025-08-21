@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using System.Net;
+using System.Net.Sockets;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Config;
 using TerrariumGardenTech.Common.RequestModel.Payment;
@@ -33,13 +35,37 @@ public class VnPayService : IVnPayService
 
         try
         {
+            //// ===== 0) TẮT VNPAY BẰNG CONFIG =====
+            //var enabled = _configuration.GetValue<bool?>("Vnpay:Enabled") ?? false;
+            //if (!enabled)
+            //    return new BusinessResult(Const.FAIL_CREATE_CODE, "VNPAY đang được tắt qua cấu hình.");
+
+            // ===== 1) ĐỌC VÀ KIỂM TRA CẤU HÌNH =====
+            var tmnCode = _configuration["Vnpay:TmnCode"];
+            var secret = _configuration["Vnpay:HashSecret"];
+            var baseUrl = _configuration["Vnpay:BaseUrl"];
+            var version = _configuration["Vnpay:Version"] ?? "2.1.0";
+            var currCode = _configuration["Vnpay:CurrCode"] ?? "VND";
+            var locale = _configuration["Vnpay:Locale"] ?? "vn";
+            var command = _configuration["Vnpay:Command"] ?? "pay";
+            var returnUrl = _configuration["PaymentCallBack:ReturnUrl"];
+
+            if (string.IsNullOrWhiteSpace(tmnCode) ||
+                string.IsNullOrWhiteSpace(secret) ||
+                string.IsNullOrWhiteSpace(baseUrl) ||
+                string.IsNullOrWhiteSpace(returnUrl))
+            {
+                return new BusinessResult(Const.FAIL_CREATE_CODE,
+                    "Thiếu cấu hình VNPAY (TmnCode/HashSecret/BaseUrl/ReturnUrl).");
+            }
+
+            // ===== 2) LẤY ĐƠN HÀNG & TÍNH TIỀN =====
             var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(model.OrderId);
             if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "No data found.");
 
             if (order.OrderItems == null || !order.OrderItems.Any())
                 return new BusinessResult(Const.NOT_FOUND_CODE, "No items found in order.");
 
-            // 1) Tính tổng gốc
             decimal baseAmount = order.TotalAmount > 0
                 ? order.TotalAmount
                 : order.OrderItems.Sum(i => i.TotalPrice ?? 0);
@@ -47,56 +73,63 @@ public class VnPayService : IVnPayService
             if (baseAmount <= 0)
                 return new BusinessResult(Const.BAD_REQUEST_CODE, "Invalid order amount.");
 
-            // 2) Tính số tiền phải trả
-            //    - Trả toàn bộ => giảm 10%
-            //    - Không => lấy cọc (nếu có) hoặc tổng gốc
             decimal payable = model.PayAll
                 ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
                 : (order.Deposit ?? baseAmount);
 
-            var amountVnd = (int)payable;                  // VND
+            var amountVnd = (int)Math.Round(payable, 0);
+
             var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
                 TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
+            // ===== 3) TẠO URL THANH TOÁN =====
             var pay = new VnPayLibrary();
-
-            var urlCallBack = 
-                "https://localhost:7072/api/Payment/vn-pay/callback";
-            //"http://terarium.shop/api/Payment/vn-pay/callback";
-
-            pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
-            pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
-            pay.AddRequestData("vnp_TmnCode", _configuration["Vnpay:TmnCode"]);
-            pay.AddRequestData("vnp_Amount", (amountVnd * 100).ToString()); // ✅ VNPAY = VND*100
+            pay.AddRequestData("vnp_Version", version);
+            pay.AddRequestData("vnp_Command", command);
+            pay.AddRequestData("vnp_TmnCode", tmnCode);
+            pay.AddRequestData("vnp_Amount", (amountVnd * 100).ToString());  // VND * 100
             pay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
-            pay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
-            pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
-            pay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"]);
+            pay.AddRequestData("vnp_CurrCode", currCode);
+            pay.AddRequestData("vnp_IpAddr", GetClientIp(context));
+            pay.AddRequestData("vnp_Locale", locale);
             pay.AddRequestData("vnp_OrderInfo",
                 $"{model.Name} {model.OrderDescription} {(model.PayAll ? "(Full)" : "(Partial/Deposit)")}");
-            pay.AddRequestData("vnp_OrderType", model.OrderType);
-            pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
+            pay.AddRequestData("vnp_OrderType", model.OrderType ?? "other");
+            pay.AddRequestData("vnp_ReturnUrl", returnUrl);
             pay.AddRequestData("vnp_TxnRef", model.OrderId.ToString());
 
-            var paymentUrl = pay.CreateRequestUrl(_configuration["Vnpay:BaseUrl"], _configuration["Vnpay:HashSecret"]);
+            var paymentUrl = pay.GetPaymentUrl(baseUrl, secret); // alias của CreateRequestUrl
             if (string.IsNullOrEmpty(paymentUrl))
-                return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail", paymentUrl);
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Fail tạo URL VNPAY.");
+
+            // (Tuỳ chọn) log chuỗi ký để so khớp khi cần
+            // _logger.LogInformation("VNPAY RAW:{raw} HASH:{hash}", pay.LastRequestRaw, pay.LastRequestHash);
 
             return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Success", paymentUrl);
         }
         catch (Exception e)
         {
-            return new BusinessResult(Const.ERROR_EXCEPTION, "Fail", e.Message);
+            return new BusinessResult(Const.ERROR_EXCEPTION, "Fail", e.ToString());
         }
     }
 
     public async Task<IBusinessResult> PaymentExecute(IQueryCollection collections)
     {
-
         try
         {
+            //// ===== 0) TẮT VNPAY BẰNG CONFIG =====
+            //var enabled = _configuration.GetValue<bool?>("Vnpay:Enabled") ?? false;
+            //if (!enabled)
+            //    return new BusinessResult(Const.FAIL_READ_CODE, "VNPAY đang được tắt qua cấu hình.");
+
+            // ===== 1) ĐỌC & KIỂM TRA CẤU HÌNH =====
+            var secret = _configuration["Vnpay:HashSecret"];
+            if (string.IsNullOrWhiteSpace(secret))
+                return new BusinessResult(Const.FAIL_READ_CODE, "Thiếu HashSecret.");
+
+            // ===== 2) XÁC THỰC CALLBACK =====
             var pay = new VnPayLibrary();
-            var response = pay.GetFullResponseData(collections, _configuration["Vnpay:HashSecret"]);
+            var response = pay.GetFullResponseData(collections, secret);
             if (!response.Success)
                 return new BusinessResult(Const.FAIL_READ_CODE, "VNPAY xác thực thất bại!");
 
@@ -108,7 +141,7 @@ public class VnPayService : IVnPayService
             if (order == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, $"Không tìm thấy đơn hàng: {orderId}");
 
-            // ===== Tính số tiền =====
+            // ===== 3) TÍNH SỐ TIỀN & ĐỐI CHIẾU =====
             decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
 
             var baseAmount = order.TotalAmount > 0
@@ -116,15 +149,12 @@ public class VnPayService : IVnPayService
                 : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
 
             baseAmount = RoundVnd(baseAmount);
-            var fullAfter10 = RoundVnd(baseAmount * 0.9m);          // payAll -10%
+            var fullAfter10 = RoundVnd(baseAmount * 0.9m);
 
-            var amountMinor = response.Amount ?? 0m;                 // vnp_Amount = VND * 100
-            var paid = RoundVnd(amountMinor / 100m);                 // về VND nguyên
+            var amountMinor = response.Amount ?? 0m;   // vnp_Amount = VND * 100
+            var paid = RoundVnd(amountMinor / 100m);
 
-            // Xác định có phải payAll không
             var isPayAll = (paid == fullAfter10);
-
-            // expected cho lần thanh toán này
             var expected = isPayAll
                 ? fullAfter10
                 : RoundVnd(order.Deposit ?? baseAmount);
@@ -132,41 +162,35 @@ public class VnPayService : IVnPayService
             if (paid != expected)
                 return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
 
-            // ===== Cập nhật đơn =====
-            var success = response.Success;
-            order.PaymentStatus = success ? "Paid" : "Failed";
+            // ===== 4) CẬP NHẬT ĐƠN =====
+            order.PaymentStatus = "Paid";
             order.TransactionId = response.TransactionId;
 
-            // Chỉ lưu DiscountAmount khi payAll thành công
-            if (success && isPayAll)
-            {
-                order.DiscountAmount = baseAmount - fullAfter10;     // đúng 10% đã giảm
-            }
+            if (isPayAll)
+                order.DiscountAmount = baseAmount - fullAfter10;
 
             await _unitOfWork.Order.UpdateAsync(order);
 
-            if (order.Payment == null) order.Payment = new List<Payment>();
+            order.Payment ??= new System.Collections.Generic.List<Payment>();
             order.Payment.Add(new Payment
             {
                 OrderId = order.OrderId,
-                PaymentMethod =  "VNPAY" ,
+                PaymentMethod = "VNPAY",
                 PaymentAmount = paid,
-                Status = success ? "Paid" : "Failed",
-                PaymentDate = response.PaymentDate ?? DateTime.UtcNow,
+                Status = "Paid",
+                PaymentDate = response.PaymentDate ?? DateTime.UtcNow
             });
 
             await _unitOfWork.SaveAsync();
 
-            return new BusinessResult(
-                success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-                success ? "Payment success" : "Payment failed"
-            );
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment success");
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
         }
     }
+
 
 
     #region Helper Methods
@@ -212,6 +236,26 @@ public class VnPayService : IVnPayService
         if (expected < 0) expected = 0;
         return RoundVnd(expected);
     }
+    // ===== Helper: lấy IP client (kể cả sau proxy) =====
+    private static string GetClientIp(HttpContext context)
+    {
+        try
+        {
+            var xff = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(xff))
+                return xff.Split(',')[0].Trim();
+
+            var ip = context.Connection.RemoteIpAddress;
+            if (ip?.AddressFamily == AddressFamily.InterNetworkV6)
+                ip = Dns.GetHostEntry(ip)
+                        .AddressList
+                        .FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
+
+            return ip?.ToString() ?? "127.0.0.1";
+        }
+        catch { return "127.0.0.1"; }
+    }
+
 
     #endregion
 
