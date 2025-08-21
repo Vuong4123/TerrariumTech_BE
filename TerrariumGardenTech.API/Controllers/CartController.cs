@@ -300,7 +300,7 @@ namespace TerrariumGardenTech.API.Controllers
         /// </summary>
         [HttpPost("checkout-cart")]
         [Authorize]
-        public async Task<IActionResult> Checkout()
+        public async Task<IActionResult> CheckoutCart()
         {
             try
             {
@@ -324,7 +324,41 @@ namespace TerrariumGardenTech.API.Controllers
                 return StatusCode(500, new { message = "Lỗi server khi checkout" });
             }
         }
+        /// <summary>
+        /// Checkout 1 sản phẩm trong giỏ hàng
+        /// </summary>
+        [HttpPost("checkout/item/{cartItemId}")]
+        public async Task<IActionResult> CheckoutItem(int cartItemId)
+        {
+            // lấy userId từ token hoặc context
+            var userId = User.GetUserId();
+            if (userId == 0) return Unauthorized();
 
+            var result = await _cartService.CheckoutItemAsync(userId, cartItemId);
+
+            if (result.Status == Const.SUCCESS_CREATE_CODE)
+                return Ok(result);
+
+            return BadRequest(result);
+        }
+
+        /// <summary>
+        /// Checkout nhiều sản phẩm (truyền list cartItemIds)
+        /// </summary>
+
+        [HttpPost("checkout/multiple")]
+        public async Task<IActionResult> CheckoutMultiple([FromBody] CheckoutCartRequest request)
+        {
+            var userId = User.GetUserId();
+            if (userId == 0) return Unauthorized();
+
+            var result = await _cartService.CheckoutMultipleItemsAsync(userId, request.CartItemIds);
+
+            if (result.Status == Const.SUCCESS_CREATE_CODE)
+                return Ok(result);
+
+            return BadRequest(result);
+        }
 
         //[HttpPost("checkout/selected")]
         //public async Task<IActionResult> CheckoutSelected([FromBody] CheckoutSelectedRequest req)

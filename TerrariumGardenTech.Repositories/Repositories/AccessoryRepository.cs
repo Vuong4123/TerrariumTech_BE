@@ -23,7 +23,13 @@ public class AccessoryRepository : GenericRepository<Accessory>
             .Where(e => name.Contains(e.Name)) // Tìm tất cả các Accessory có tên nằm trong danh sách names
             .ToListAsync();
     }
+    public Task<Accessory?> GetByIdAsync(int id)
+        => _dbContext.Accessories.FirstOrDefaultAsync(a => a.AccessoryId == id);
 
+    public Task<Accessory?> GetByIdWithImagesAsync(int id) // <-- mới
+        => _dbContext.Accessories
+               .Include(a => a.AccessoryImages)
+               .FirstOrDefaultAsync(a => a.AccessoryId == id);
     public async Task<IEnumerable<Accessory>> FilterAccessoryAsync(int? categoryId)
     {
         return await _context.Accessories.Where(a => a.CategoryId == categoryId).ToListAsync();
