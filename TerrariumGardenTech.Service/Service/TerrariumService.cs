@@ -395,12 +395,14 @@ public class TerrariumService : ITerrariumService
             MaxPrice = t.MaxPrice,
             Stock = t.Stock,
             Status = t.Status,
+            GeneratedByAI = t.GeneratedByAI,
             TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
             {
                 TerrariumImageId = ti.TerrariumImageId,
                 TerrariumId = ti.TerrariumId,
                 ImageUrl = ti.ImageUrl ?? string.Empty
             }).ToList(),
+            
             // Thêm rating
             AverageRating = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].AverageRating : 0,
             FeedbackCount = ratingStats.ContainsKey(t.TerrariumId) ? ratingStats[t.TerrariumId].FeedbackCount : 0,
@@ -698,6 +700,7 @@ public class TerrariumService : ITerrariumService
 
                 Description = terrariumCreateRequest.Description,
                 Status = terrariumCreateRequest.Status,
+                GeneratedByAI = true,
 
                 CreatedAt = DateTime.Now
             };
