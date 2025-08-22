@@ -1368,6 +1368,10 @@ namespace TerrariumGardenTech.Service.Service
                 UpdatedAt = cartItem.UpdatedAt
             };
 
+            response.TotalCartPrice = totalPrice;
+            response.TotalCartQuantity = totalQuantity;
+            return response;
+
         }
 
         public async Task<IBusinessResult> ValidateCartAsync(int userId)
