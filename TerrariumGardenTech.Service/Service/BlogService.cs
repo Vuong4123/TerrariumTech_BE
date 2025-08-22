@@ -102,12 +102,21 @@ public class BlogService(
     {
         try
         {
-            // Kiểm tra blog category có tồn tại không
-            var blogCategoryExists =
-                await _unitOfWork.BlogCategory.AnyAsync(c => c.BlogCategoryId == blogUpdateRequest.BlogCategoryId);
+            // Kiểm tra BlogCategory có tồn tại
+            var blogCategoryExists = await _unitOfWork.BlogCategory
+                .AnyAsync(c => c.BlogCategoryId == blogUpdateRequest.BlogCategoryId);
 
             if (!blogCategoryExists)
                 return new BusinessResult(Const.FAIL_CREATE_CODE, "BlogCategoryId không tồn tại.");
+
+            // Kiểm tra Title có bị trùng (ngoại trừ chính nó)
+            // 2) Kiểm tra Title có trùng (loại trừ chính nó)
+            var allBlogs = await _unitOfWork.Blog.GetAllAsync();
+            var titleExists = allBlogs.Any(b => b.Title == blogUpdateRequest.Title
+                                                && b.BlogId != blogUpdateRequest.BlogId);
+
+            if (titleExists)
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Title đã tồn tại, vui lòng chọn tiêu đề khác.");
 
             // Lấy blog theo ID
             var blog = await _unitOfWork.Blog.GetByIdAsync(blogUpdateRequest.BlogId);
@@ -117,11 +126,9 @@ public class BlogService(
             // Nếu có ảnh mới → xóa ảnh cũ và upload ảnh mới
             if (blogUpdateRequest.ImageFile != null)
             {
-                // Xoá ảnh cũ nếu có
                 if (!string.IsNullOrEmpty(blog.UrlImage))
-                    await _cloudinaryService.DeleteImageAsync(blog.UrlImage); // gọi hàm bạn đã viết
+                    await _cloudinaryService.DeleteImageAsync(blog.UrlImage);
 
-                // Upload ảnh mới
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
                     blogUpdateRequest.ImageFile,
                     folder: "blog_images"
@@ -130,11 +137,10 @@ public class BlogService(
                 if (uploadResult.Status == Const.SUCCESS_CREATE_CODE)
                     blog.UrlImage = uploadResult.Data?.ToString();
                 else
-                    return new BusinessResult(Const.FAIL_CREATE_CODE,
-                        "Upload ảnh mới thất bại: " + uploadResult.Message);
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, "Upload ảnh mới thất bại: " + uploadResult.Message);
             }
 
-            // Cập nhật các thông tin còn lại
+            // Cập nhật thông tin còn lại
             blog.Title = blogUpdateRequest.Title;
             blog.Content = blogUpdateRequest.Content;
             blog.bodyHTML = blogUpdateRequest.bodyHTML;
@@ -142,7 +148,6 @@ public class BlogService(
             blog.IsFeatured = blogUpdateRequest.IsFeatured;
             blog.UpdatedAt = DateTime.UtcNow;
 
-            // Lưu thay đổi
             var result = await _unitOfWork.Blog.UpdateAsync(blog);
 
             if (result > 0)
@@ -162,9 +167,23 @@ public class BlogService(
         {
             var currentUserId = userContextService.GetCurrentUser();
 
+            // Kiểm tra BlogCategory có tồn tại
+            var blogCategoryExists = await _unitOfWork.BlogCategory
+                .AnyAsync(c => c.BlogCategoryId == blogCreateRequest.BlogCategoryId);
+
+            if (!blogCategoryExists)
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "BlogCategoryId không tồn tại.");
+
+            // Kiểm tra Title có bị trùng
+            // 2) Kiểm tra Title có trùng (loại trừ chính nó)
+            var allBlogs = await _unitOfWork.Blog.GetAllAsync();
+            var titleExists = allBlogs.Any(b => b.Title == blogCreateRequest.Title);
+
+            if (titleExists)
+                return new BusinessResult(Const.FAIL_CREATE_CODE, "Title đã tồn tại, vui lòng chọn tiêu đề khác.");
+
             string? uploadedImageUrl = null;
 
-            // Nếu có ảnh thì upload
             if (blogCreateRequest.ImageFile != null)
             {
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
@@ -194,7 +213,8 @@ public class BlogService(
 
             var result = await _unitOfWork.Blog.CreateAsync(blog);
 
-            if (result > 0) return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blog);
+            if (result > 0)
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, blog);
 
             return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
         }

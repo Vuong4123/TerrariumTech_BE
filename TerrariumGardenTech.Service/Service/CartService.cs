@@ -867,6 +867,286 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, $"Lỗi khi checkout: {ex.Message}");
             }
         }
+        public async Task<IBusinessResult> CheckoutItemAsync(int userId, int cartItemId)
+        {
+            try
+            {
+                var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
+                if (cart == null || !cart.CartItems.Any())
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Giỏ hàng trống hoặc không tồn tại.");
+
+                var defaultAddress = await _unitOfWork.Address.GetDefaultByUserIdAsync(userId);
+                if (defaultAddress == null)
+                    return new BusinessResult(Const.BAD_REQUEST_CODE, "Vui lòng thêm địa chỉ trước khi thanh toán.");
+
+                var cartItem = cart.CartItems.FirstOrDefault(c => c.CartItemId == cartItemId);
+                if (cartItem == null)
+                    return new BusinessResult(Const.BAD_REQUEST_CODE, "Sản phẩm không tồn tại trong giỏ.");
+
+                var order = new Order
+                {
+                    UserId = userId,
+                    AddressId = defaultAddress.AddressId,
+                    OrderDate = DateTime.UtcNow,
+                    Status = OrderStatusEnum.Pending,
+                    PaymentStatus = "Unpaid",
+                    OrderItems = new List<OrderItem>()
+                };
+
+                decimal totalPrice = 0;
+
+                // === Xử lý combo ===
+                if (cartItem.ItemType == CartItemType.COMBO && cartItem.ComboId.HasValue)
+                {
+                    var combo = await _unitOfWork.Combo.GetByIdAsync(cartItem.ComboId.Value);
+                    if (combo != null)
+                    {
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            ComboId = cartItem.ComboId,
+                            Quantity = cartItem.Quantity,
+                            UnitPrice = combo.ComboPrice,
+                            TotalPrice = combo.ComboPrice * cartItem.Quantity,
+                            ItemType = "Combo"
+                        });
+
+                        totalPrice += combo.ComboPrice * cartItem.Quantity;
+
+                        combo.StockQuantity -= cartItem.Quantity;
+                        combo.SoldQuantity += cartItem.Quantity;
+                        await _unitOfWork.Combo.UpdateAsync(combo);
+                    }
+                }
+
+                // === Xử lý accessory ===
+                if (cartItem.AccessoryId.HasValue && cartItem.AccessoryQuantity.HasValue)
+                {
+                    var accessory = await _unitOfWork.Accessory.GetByIdAsync(cartItem.AccessoryId.Value);
+                    if (accessory != null)
+                    {
+                        var qty = cartItem.AccessoryQuantity.Value;
+                        var unitPrice = accessory.Price;
+                        var subTotal = qty * unitPrice;
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            AccessoryId = cartItem.AccessoryId,
+                            Quantity = qty,
+                            UnitPrice = unitPrice,
+                            TotalPrice = subTotal,
+                            ItemType = "Single"
+                        });
+
+                        totalPrice += subTotal;
+
+                        accessory.StockQuantity -= qty;
+                        await _unitOfWork.Accessory.UpdateAsync(accessory);
+                    }
+                }
+
+                // === Xử lý terrarium variant ===
+                if (cartItem.TerrariumVariantId.HasValue && cartItem.TerrariumVariantQuantity.HasValue)
+                {
+                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(cartItem.TerrariumVariantId.Value);
+                    if (variant != null)
+                    {
+                        var qty = cartItem.TerrariumVariantQuantity.Value;
+                        var unitPrice = variant.Price;
+                        var subTotal = qty * unitPrice;
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            TerrariumVariantId = cartItem.TerrariumVariantId,
+                            Quantity = qty,
+                            UnitPrice = unitPrice,
+                            TotalPrice = subTotal,
+                            ItemType = "Single"
+                        });
+
+                        totalPrice += subTotal;
+
+                        variant.StockQuantity -= qty;
+                        await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                    }
+                }
+
+                order.TotalAmount = totalPrice;
+                await _unitOfWork.Order.CreateAsync(order);
+
+                // Xoá item vừa checkout khỏi giỏ
+                await _unitOfWork.CartItem.RemoveAsync(cartItem);
+
+                await _unitOfWork.SaveAsync();
+
+                var orderResponse = _mapper.Map<OrderResponse>(order);
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Checkout sản phẩm thành công", orderResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during checkout item {CartItemId} for user {UserId}", cartItemId, userId);
+                return new BusinessResult(Const.ERROR_EXCEPTION, $"Lỗi khi checkout: {ex.Message}");
+            }
+        }
+
+        public async Task<IBusinessResult> CheckoutMultipleItemsAsync(int userId, List<int> cartItemIds)
+        {
+            try
+            {
+                if (cartItemIds == null || cartItemIds.Count == 0)
+                    return new BusinessResult(Const.BAD_REQUEST_CODE, "Vui lòng chọn sản phẩm để thanh toán.");
+
+                // Lấy giỏ hàng của user
+                var cart = await _unitOfWork.Cart.GetByUserIdAsync(userId);
+                if (cart == null || !cart.CartItems.Any())
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Giỏ hàng trống hoặc không tồn tại.");
+
+                // Lọc ra các item được chọn
+                var selectedIds = cartItemIds.Distinct().ToHashSet();
+                var itemsToCheckout = cart.CartItems
+                    .Where(ci => selectedIds.Contains(ci.CartItemId))
+                    .ToList();
+
+                if (itemsToCheckout.Count == 0)
+                    return new BusinessResult(Const.BAD_REQUEST_CODE, "Không tìm thấy sản phẩm hợp lệ trong giỏ.");
+
+                // Địa chỉ mặc định
+                var defaultAddress = await _unitOfWork.Address.GetDefaultByUserIdAsync(userId);
+                if (defaultAddress == null)
+                    return new BusinessResult(Const.BAD_REQUEST_CODE, "Vui lòng thêm địa chỉ trước khi thanh toán.");
+
+                // Tạo đơn
+                var order = new Order
+                {
+                    UserId = userId,
+                    AddressId = defaultAddress.AddressId,
+                    OrderDate = DateTime.UtcNow,
+                    Status = OrderStatusEnum.Pending,
+                    PaymentStatus = "Unpaid",
+                    OrderItems = new List<OrderItem>()
+                };
+
+                decimal totalCartPrice = 0m;
+
+                // (Tuỳ bạn: nếu UnitOfWork hỗ trợ transaction, nên bọc trong transaction)
+                foreach (var cartItem in itemsToCheckout)
+                {
+                    // === COMBO ===
+                    if (cartItem.ItemType == CartItemType.COMBO && cartItem.ComboId.HasValue)
+                    {
+                        var combo = await _unitOfWork.Combo.GetByIdAsync(cartItem.ComboId.Value);
+                        if (combo == null)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, "Combo không tồn tại.");
+
+                        // kiểm tồn (nếu dùng)
+                        if (combo.StockQuantity < cartItem.Quantity)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, $"Combo không đủ tồn kho (cần {cartItem.Quantity}, còn {combo.StockQuantity}).");
+
+                        var lineTotal = combo.ComboPrice * cartItem.Quantity;
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            ComboId = cartItem.ComboId,
+                            Quantity = cartItem.Quantity,
+                            UnitPrice = combo.ComboPrice,
+                            TotalPrice = lineTotal,
+                            ItemType = "Combo"
+                        });
+
+                        totalCartPrice += lineTotal;
+
+                        combo.StockQuantity -= cartItem.Quantity;
+                        combo.SoldQuantity += cartItem.Quantity;
+                        await _unitOfWork.Combo.UpdateAsync(combo);
+                    }
+
+                    // === ACCESSORY ===
+                    if (cartItem.AccessoryId.HasValue && cartItem.AccessoryQuantity.HasValue)
+                    {
+                        var accessory = await _unitOfWork.Accessory.GetByIdAsync(cartItem.AccessoryId.Value);
+                        if (accessory == null)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, "Phụ kiện không tồn tại.");
+
+                        var qty = cartItem.AccessoryQuantity.Value;
+
+                        if (qty <= 0)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, "Số lượng phụ kiện không hợp lệ.");
+
+                        if (accessory.StockQuantity < qty)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, $"Phụ kiện '{accessory.Name}' không đủ tồn kho (cần {qty}, còn {accessory.StockQuantity}).");
+
+                        var unitPrice = accessory.Price;
+                        var lineTotal = unitPrice * qty;
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            AccessoryId = cartItem.AccessoryId,
+                            AccessoryQuantity = qty,
+                            Quantity = qty,
+                            UnitPrice = unitPrice,
+                            TotalPrice = lineTotal,
+                            ItemType = "Single"
+                        });
+
+                        totalCartPrice += lineTotal;
+
+                        accessory.StockQuantity -= qty;
+                        await _unitOfWork.Accessory.UpdateAsync(accessory);
+                    }
+
+                    // === TERRARIUM VARIANT ===
+                    if (cartItem.TerrariumVariantId.HasValue && cartItem.TerrariumVariantQuantity.HasValue)
+                    {
+                        var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(cartItem.TerrariumVariantId.Value);
+                        if (variant == null)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, "Biến thể terrarium không tồn tại.");
+
+                        var qty = cartItem.TerrariumVariantQuantity.Value;
+
+                        if (qty <= 0)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, "Số lượng biến thể không hợp lệ.");
+
+                        if (variant.StockQuantity < qty)
+                            return new BusinessResult(Const.BAD_REQUEST_CODE, $"Biến thể '{variant.VariantName}' không đủ tồn kho (cần {qty}, còn {variant.StockQuantity}).");
+
+                        var unitPrice = variant.Price;
+                        var lineTotal = unitPrice * qty;
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            TerrariumVariantId = cartItem.TerrariumVariantId,
+                            TerrariumVariantQuantity = qty,
+                            Quantity = qty,
+                            UnitPrice = unitPrice,
+                            TotalPrice = lineTotal,
+                            ItemType = "Single"
+                        });
+
+                        totalCartPrice += lineTotal;
+
+                        variant.StockQuantity -= qty;
+                        await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                    }
+                }
+
+                // Hoàn tất đơn
+                order.TotalAmount = totalCartPrice;
+                await _unitOfWork.Order.CreateAsync(order);
+
+                // Xoá các item đã checkout khỏi giỏ
+                foreach (var item in itemsToCheckout)
+                    await _unitOfWork.CartItem.RemoveAsync(item);
+
+                await _unitOfWork.SaveAsync();
+
+                var orderResponse = _mapper.Map<OrderResponse>(order);
+                return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Checkout thành công các sản phẩm đã chọn.", orderResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during checkout multiple items for user {UserId}", userId);
+                return new BusinessResult(Const.ERROR_EXCEPTION, $"Lỗi khi checkout: {ex.Message}");
+            }
+        }
 
         #endregion
 
@@ -1088,7 +1368,6 @@ namespace TerrariumGardenTech.Service.Service
                 UpdatedAt = cartItem.UpdatedAt
             };
 
-            return response;
         }
 
         public async Task<IBusinessResult> ValidateCartAsync(int userId)
@@ -1237,7 +1516,7 @@ namespace TerrariumGardenTech.Service.Service
                             continue;
                         }
 
-                    
+
                         if (accessory.StockQuantity <= 0)
                         {
                             issues.Add($"Phụ kiện '{accessory.Name}' đã hết hàng");
