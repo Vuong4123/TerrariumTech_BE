@@ -68,6 +68,26 @@ public class TerrariumRepository : GenericRepository<Terrarium>
 
         return (await queryable.ToListAsync(), totalOrigin);
     }
+
+    public async Task<(IEnumerable<Terrarium>, int)> GetGenByAI(TerrariumGetAllRequest request)
+    {
+        var queryable = _dbContext.Terrariums.AsQueryable();
+        queryable = queryable.Include(t => t.TerrariumImages);
+        queryable = Include(queryable, request.IncludeProperties);
+        var totalOrigin = queryable.Count();
+
+        // filter
+        // Chỉ lấy terrarium không được tạo bởi AI
+        queryable = queryable.Where(t => t.GeneratedByAI == true);
+        // end
+
+        queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
+
+        return (await queryable.ToListAsync(), totalOrigin);
+    }
+
+
+
     // Lấy dữ liệu Terrarium theo ID kèm theo hình ảnh
     public async Task<Terrarium> GetTerrariumWithImagesByIdAsync(int id)
     {

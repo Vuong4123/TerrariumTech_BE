@@ -391,7 +391,7 @@ public class TerrariumService : ITerrariumService
             EnvironmentId = t.EnvironmentId,
             ShapeId = t.ShapeId,
             TankMethodId = t.TankMethodId,
-            TerrariumName = t.TerrariumName,
+            TerrariumName = t.TerrariumName, 
             Description = t.Description,
             MinPrice = t.MinPrice,
             MaxPrice = t.MaxPrice,
@@ -414,6 +414,36 @@ public class TerrariumService : ITerrariumService
 
         var tableResponse = new QueryTableResult(request, terrariums, tuple.Item2);
 
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tableResponse);
+    }
+
+    public async Task<IBusinessResult> GetAllGeneratedByAI(TerrariumGetAllRequest request)
+    {
+        var tuple = await _unitOfWork.Terrarium.GetGenByAI(request);
+        var list = tuple.Item1.ToList();
+
+        if (!list.Any())
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+
+        var terrariums = list.Select(t => new TerrariumDetailResponse
+        {
+            TerrariumId = t.TerrariumId,
+            TerrariumName = t.TerrariumName,
+            Description = t.Description,
+            MinPrice = t.MinPrice,
+            MaxPrice = t.MaxPrice,
+            Stock = t.Stock,
+            Status = t.Status,
+            GeneratedByAI = t.GeneratedByAI,
+            TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
+            {
+                TerrariumImageId = ti.TerrariumImageId,
+                TerrariumId = ti.TerrariumId,
+                ImageUrl = ti.ImageUrl ?? string.Empty
+            }).ToList()
+        }).ToList();
+
+        var tableResponse = new QueryTableResult(request, terrariums, tuple.Item2);
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", tableResponse);
     }
 
@@ -771,9 +801,11 @@ public class TerrariumService : ITerrariumService
         try
         {
             // Lấy danh sách Accessory theo tên
-            var AccessoryNames = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
-            if (AccessoryNames == null || AccessoryNames.Count == 0)
-                return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
+            List<Accessory> accessories = new();
+            if (terrariumCreateRequest.AccessoryNames != null && terrariumCreateRequest.AccessoryNames.Any())
+            {
+                accessories = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
+            }
 
             //// Kiểm tra nếu không có variant, hãy gán giá trị mặc định cho MinPrice và MaxPrice
             //decimal defaultPrice = 100; // Giá trị mặc định khi không có variant
@@ -818,7 +850,7 @@ public class TerrariumService : ITerrariumService
             if (result > 0)
             {
                 // Gán Accessory vào Terrarium
-                foreach (var accessory in AccessoryNames)
+                foreach (var accessory in accessories)
                 {
                     var terrariumAccessory = new TerrariumAccessory
                     {

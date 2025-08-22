@@ -11,6 +11,7 @@ namespace TerrariumGardenTech.Service.IService;
 public interface ITerrariumService
 {
     Task<IBusinessResult> GetAll(TerrariumGetAllRequest request);
+    Task<IBusinessResult> GetAllGeneratedByAI(TerrariumGetAllRequest request);
 
     // Task<BusinessResult> GetAllOfParam(string type, string shape, string tankMethod, string theme, string size);
     Task<IBusinessResult> GetTerrariumSuggestions(int userId);
