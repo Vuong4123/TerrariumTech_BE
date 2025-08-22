@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -28,6 +29,32 @@ public class TerrariumController : ControllerBase
     public async Task<IBusinessResult> Get([FromQuery] TerrariumGetAllRequest request)
     {
         return await _terrariumService.GetAll(request);
+    }
+
+    /// <summary>
+    /// Lấy danh sách Terrarium được tạo bởi AI (GeneratedByAI = true)
+    /// Hỗ trợ include, sort, và pagination qua query string.
+    /// </summary>
+    /// <example>
+    /// GET /api/Terrarium/get-all-generated?Pagination.PageNumber=1&amp;Pagination.PageSize=10&amp;Pagination.IsPagingEnabled=true&amp;IncludeProperties=TerrariumImages
+    /// </example>
+    [HttpGet("get-all-generated")]
+    //[ProducesResponseType(typeof(BusinessResult), 200)]
+    //[ProducesResponseType(typeof(BusinessResult), 400)]
+    public async Task<IActionResult> GetAllGeneratedByAI([FromQuery] TerrariumGetAllRequest request)
+    {
+        var result = await _terrariumService.GetAllGeneratedByAI(request);
+
+        // Giữ 200 cho cả trường hợp có data hoặc không có (tùy convention của bạn)
+        if (result.Status == Const.SUCCESS_READ_CODE || result.Status == Const.WARNING_NO_DATA_CODE)
+            return Ok(result);
+
+        // Các lỗi nhập liệu / bad request
+        if (result.Status == Const.BAD_REQUEST_CODE)
+            return BadRequest(result);
+
+        // Mặc định
+        return StatusCode(500, result);
     }
 
     [HttpGet("filter")]
@@ -94,7 +121,7 @@ public class TerrariumController : ControllerBase
 
     // POST api/<TerrariumController>
     [HttpPost("add-terrariumbyai")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
+    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> PostAI([FromBody] TerrariumCreateRequest terrariumCreate)
     {
         return await _terrariumService.CreateTerrariumAI(terrariumCreate);
