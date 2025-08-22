@@ -61,6 +61,8 @@ public class OrderService : IOrderService
             {
                 orderResponse.OrderItems.Add(new OrderItemResponse
                 {
+                    ComboId = item.ComboId ?? 0,
+                    ItemType = item.ItemType,
                     OrderItemId = item.OrderItemId,
                     AccessoryId = item.AccessoryId,
                     TerrariumVariantId = item.TerrariumVariantId,
@@ -108,7 +110,9 @@ public class OrderService : IOrderService
         {
             orderResponse.OrderItems.Add(new OrderItemResponse
             {
+                ComboId = item.ComboId ?? 0,
                 OrderItemId = item.OrderItemId,
+                ItemType = item.ItemType,
                 AccessoryId = item.AccessoryId,
                 TerrariumVariantId = item.TerrariumVariantId,
                 AccessoryQuantity = item.AccessoryQuantity,
@@ -154,6 +158,8 @@ public class OrderService : IOrderService
             {
                 orderResponse.OrderItems.Add(new OrderItemResponse
                 {
+                    ComboId = item.ComboId ?? 0,
+                    ItemType = item.ItemType,
                     OrderItemId = item.OrderItemId,
                     AccessoryId = item.AccessoryId,
                     TerrariumVariantId = item.TerrariumVariantId,
@@ -170,9 +176,6 @@ public class OrderService : IOrderService
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng thành công", result);
     }
-
-
-
 
     //public async Task<int> CreateAsync(OrderCreateRequest request)
     //{
@@ -241,8 +244,10 @@ public class OrderService : IOrderService
 
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
-        ValidateCreateRequest(request);
-
+        if (request.ComboId <= 0)
+        {
+            ValidateCreateRequest(request);
+        }
         if (request.VoucherId == 0) request.VoucherId = null;
 
         int userId = _userContextService.GetCurrentUser();
@@ -311,6 +316,26 @@ public class OrderService : IOrderService
                     TotalPrice = line
                 });
             }
+            if (request.ComboId.HasValue && (request.ComboId ?? 0) > 0)
+            {
+                var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId ?? 0);
+                if(combo == null) { throw new ArgumentException("Combo chưa tồn tại"); };
+                foreach (var com in combo.ComboItems)
+                {
+                    orderItems.Add(new OrderItem
+                    {
+                        ComboId = request.ComboId,
+                        AccessoryId = com.AccessoryId,
+                        TerrariumVariantId = com.TerrariumVariantId,
+                        AccessoryQuantity = 1,
+                        TerrariumVariantQuantity = 1,
+                        Quantity = 1,
+                        UnitPrice = 0,
+                        ItemType = reqItem.ItemType,
+                        TotalPrice = request.TotalAmount
+                    });
+                }
+            }
         }
 
         totalAmount -= discountAmount;
@@ -342,12 +367,6 @@ public class OrderService : IOrderService
             throw new Exception("Order create error: " + msg, ex);
         }
     }
-
-
-
-
-
-
 
     public async Task<bool> UpdateStatusAsync(int id, OrderStatusEnum status)
     {
@@ -386,8 +405,6 @@ public class OrderService : IOrderService
             throw new InvalidOperationException("Xung đột dữ liệu, vui lòng thử lại.");
         }
     }
-
-
 
     public async Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId)
     {

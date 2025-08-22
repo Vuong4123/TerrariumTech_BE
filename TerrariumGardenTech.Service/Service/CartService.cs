@@ -1367,7 +1367,7 @@ namespace TerrariumGardenTech.Service.Service
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt
             };
-
+            return response;
         }
 
         public async Task<IBusinessResult> ValidateCartAsync(int userId)

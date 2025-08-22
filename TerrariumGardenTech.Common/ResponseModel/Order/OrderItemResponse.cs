@@ -3,6 +3,8 @@
 /// <summary>Dữ liệu trả về cho từng mục hàng</summary>
 public class OrderItemResponse
 {
+    public int ComboId { get; set; } // ID của combo nếu có
+    public string ItemType { get; set; } = "Single"; // Loại mục hàng, có thể là "Single" hoặc "Combo"
     public int OrderItemId { get; set; }
     public int? AccessoryId { get; set; }
     public int? TerrariumVariantId { get; set; }
