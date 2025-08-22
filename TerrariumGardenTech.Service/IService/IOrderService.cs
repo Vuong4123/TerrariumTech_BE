@@ -18,8 +18,8 @@ public interface IOrderService
     Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId);
 
 
-    Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId);
-    Task<(bool, string)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId);
+    Task<(bool, string, object?)> RequestRefundAsync(CreateRefundRequest request, int currentUserId);
+    Task<(bool, string, object?)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId);
 
     Task<IBusinessResult> GetAllWithPaginationAsync(PaginationRequest request);
     Task<IBusinessResult> GetByUserWithPaginationAsync(int userId, PaginationRequest request);

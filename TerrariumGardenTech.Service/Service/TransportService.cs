@@ -12,11 +12,13 @@ namespace TerrariumGardenTech.Service.Service
     {
         private readonly UnitOfWork _unitOfWork;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IWalletServices _walletService;
 
-        public TransportService(UnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
+        public TransportService(UnitOfWork unitOfWork, ICloudinaryService cloudinaryService, IWalletServices walletService)
         {
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinaryService;
+            _walletService = walletService;
         }
 
         public async Task<(int, IEnumerable<OrderTransport>)> Paging(int? orderId, int? shipperId, TransportStatusEnum? status, bool? isRefund, int pageIndex = 1, int pageSize = 10)
@@ -48,7 +50,7 @@ namespace TerrariumGardenTech.Service.Service
             if ((request.UserId.HasValue && assignUser == null) || currentUser == null)
                 return new BusinessResult(false, "Thông tin người dùng không hợp lệ!");
 
-            var order = await _unitOfWork.Order.DbSet().Include(x => x.Transports).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
+            var order = await _unitOfWork.Order.DbSet().Include(x => x.Transports).Include(x => x.OrderItems).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
             if (order == null)
                 return new BusinessResult(false, "Không tìm thấy thông tin đơn hàng!");
             if (order.Transports != null && (
@@ -96,7 +98,12 @@ namespace TerrariumGardenTech.Service.Service
                         IsRefund = request.IsRefund,
                         UserId = assignUser?.UserId,
                         CreatedDate = DateTime.Now,
-                        CreatedBy = currentUser.Username
+                        CreatedBy = currentUser.Username,
+                        Items = order.OrderItems.Select(x => new OrderTransportItem
+                        {
+                            OrderItemId = x.OrderItemId,
+                            Quantity = x.Quantity ?? 0
+                        }).ToList()
                     };
                     if (order.Status == OrderStatusEnum.Processing)
                         order.Status = OrderStatusEnum.Shipping;
@@ -110,6 +117,7 @@ namespace TerrariumGardenTech.Service.Service
                     await _unitOfWork.SaveAsync();
                     transport.Order = null;
                     transport.TransportLogs = null;
+                    transport.Items = transport.Items.Select(x => { x.OrderTransport = null; return x; }).ToList();
                     return new BusinessResult(true, "Tạo đơn vận chuyển thành công!", transport);
                 }
                 catch (Exception)
@@ -233,21 +241,39 @@ namespace TerrariumGardenTech.Service.Service
             }
             transport.Status = request.Status;
             transport.UserId = request.AssignToUserId ?? transport.UserId;
-            if (request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.GetFromCustomerFail)
-                transport.ContactFailNumber = request.ContactFailNumber.Value;
-            if (transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping)
-                order.Status = OrderStatusEnum.Failed;
-            if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.GetFromCustomerFail)
-                order.Status = OrderStatusEnum.Completed;
-            if (transport.Status == TransportStatusEnum.ShippingToWareHouse)
-                order.Status = OrderStatusEnum.Refunded;
-            await _unitOfWork.TransportLog.CreateAsync(log);
-            await _unitOfWork.Transport.UpdateAsync(transport);
-            await _unitOfWork.Order.UpdateAsync(order);
-            await _unitOfWork.SaveAsync();
-            transport.Order = null;
-            transport.TransportLogs = null;
-            return new BusinessResult(true, "Cập nhật thông tin đơn vận chuyển thành công!", transport);
+            using (var trans = await _unitOfWork.Transport.BeginTransactionAsync())
+            {
+                try
+                {
+                    if (request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.GetFromCustomerFail)
+                        transport.ContactFailNumber = request.ContactFailNumber.Value;
+                    if (transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping)
+                        order.Status = OrderStatusEnum.Failed;
+                    if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.GetFromCustomerFail)
+                        order.Status = OrderStatusEnum.Completed;
+                    if (transport.Status == TransportStatusEnum.ShippingToWareHouse)
+                    {
+                        var refund = await _unitOfWork.OrderRequestRefund.DbSet()
+                            .AsNoTracking().Include(x => x.Items).FirstOrDefaultAsync(x => x.TransportId == transport.TransportId);
+                        if (refund != null && refund.Items != null && refund.Items.Any())
+                        {
+                            var point = refund.Items.Sum(x => x.RefundPoint);
+                            await _walletService.RefundAsync(order.UserId, point, order.OrderId);
+                        }
+                    }
+                    await _unitOfWork.TransportLog.CreateAsync(log);
+                    await _unitOfWork.Transport.UpdateAsync(transport);
+                    await _unitOfWork.Order.UpdateAsync(order);
+                    await _unitOfWork.SaveAsync();
+                    transport.Order = null;
+                    transport.TransportLogs = null;
+                    return new BusinessResult(true, "Cập nhật thông tin đơn vận chuyển thành công!", transport);
+                }
+                catch (Exception)
+                {
+                    return new BusinessResult(false, "Cập nhập thông tin đơn vận chuyển thất bại!");
+                }
+            }
         }
     }
 }

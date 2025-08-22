@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Common.RequestModel.Payment;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -128,6 +128,17 @@ public class PaymentController : ControllerBase
         return Ok(rsp);
     }
 
+    // NEW: Tạo link nạp ví MoMo (sử dụng amount + userId trong extraData)
+    [HttpPost("momo/wallet/create")]
+    public async Task<IActionResult> CreateMomoWalletTopup([FromBody] MomoWalletTopupRequest request)
+    {
+        if (!ModelState.IsValid || request.UserId <= 0 || request.Amount <= 0)
+            return BadRequest("Invalid payload");
+
+        var rsp = await _momoServices.CreateMomoWalletTopupUrl(request);
+        return Ok(rsp);
+    }
+
     // MoMo redirect về (ReturnUrl) — chỉ điều hướng UI
     [HttpGet("momo/callback")]
     public async Task<IActionResult> MomoCallback()
@@ -171,6 +182,22 @@ public class PaymentController : ControllerBase
         return Content(BuildRedirectHtml(feUrl), "text/html");
     }
 
+    // NEW: Redirect callback for Wallet topup. Only verify signature, then redirect to FE with status & amount.
+    [HttpGet("momo/wallet/callback")]
+    public async Task<IActionResult> MomoWalletCallback()
+    {
+        string Get(string k) => Request.Query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
+
+        var resultCode = Get("resultCode");
+        var isSuccess = resultCode == "0";
+        var amount = Get("amount");
+        try { await _momoServices.MomoWalletReturnExecute(Request.Query); } catch { }
+
+        var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
+        var feUrl = $"{baseUrl}?status={(isSuccess ? "success" : "fail")}&amount={Uri.EscapeDataString(amount)}";
+        return Content(BuildRedirectHtml(feUrl), "text/html");
+    }
+
     // MoMo IPN (server-to-server) — xác thực & cập nhật đơn hàng
     [HttpPost("momo/ipn")]
     public async Task<IActionResult> MomoIpn([FromBody] MomoIpnModel body)
@@ -182,6 +209,20 @@ public class PaymentController : ControllerBase
 
         // MoMo mong nhận 200 OK với body JSON có resultCode/message
         // 0 = success; khác 0 = fail
+        if (rs.Status == Const.SUCCESS_UPDATE_CODE)
+            return Ok(new { resultCode = 0, message = "success" });
+
+        return Ok(new { resultCode = 5, message = "fail" });
+    }
+
+    // NEW: IPN cho nạp ví MoMo
+    [HttpPost("momo/wallet/ipn")]
+    public async Task<IActionResult> MomoWalletIpn([FromBody] MomoIpnModel body)
+    {
+        _logger.LogInformation("MOMO WALLET IPN: {@body}", body);
+
+        var rs = await _momoServices.MomoWalletIpnExecute(body);
+
         if (rs.Status == Const.SUCCESS_UPDATE_CODE)
             return Ok(new { resultCode = 0, message = "success" });
 
