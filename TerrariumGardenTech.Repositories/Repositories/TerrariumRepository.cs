@@ -59,9 +59,10 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         var totalOrigin = queryable.Count();
 
         // filter
-        
+        // Chỉ lấy terrarium không được tạo bởi AI
+        queryable = queryable.Where(t => !t.GeneratedByAI);
         // end
-        
+
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 
         return (await queryable.ToListAsync(), totalOrigin);
@@ -175,70 +176,90 @@ public class TerrariumRepository : GenericRepository<Terrarium>
     }
 
     // A) Top bán all-time (trả danh sách TerrariumId theo thứ tự giảm dần)
+    // Chỉ lấy terrarium không phải GeneratedByAI
     public async Task<List<int>> GetBestSellerTerrariumIdsAsync(int topN)
     {
+        if (topN <= 0) return new List<int>();
+
         var q =
-            from oi in _context.OrderItems
+            from oi in _context.OrderItems.AsNoTracking()
             where oi.TerrariumVariantId != null
                && oi.Order != null
                && oi.Order.PaymentStatus == "Paid"
-            group oi by oi.TerrariumVariant.TerrariumId into g
-            orderby g.Sum(x => (x.TerrariumVariantQuantity ?? x.Quantity ?? 0)) descending
-            select new { TerrariumId = g.Key };
+            join v in _context.TerrariumVariants.AsNoTracking()
+                on oi.TerrariumVariantId equals v.TerrariumVariantId
+            join t in _context.Terrariums.AsNoTracking()
+                on v.TerrariumId equals t.TerrariumId
+            where !t.GeneratedByAI
+            group new { oi, v, t } by v.TerrariumId into g
+            orderby g.Sum(x => (x.oi.TerrariumVariantQuantity ?? x.oi.Quantity ?? 0)) descending
+            select g.Key;
 
-        return await q.Take(topN).Select(x => x.TerrariumId).ToListAsync();
+        return await q.Take(topN).ToListAsync();
     }
 
-    // B) Top bán theo khoảng ngày (vd 7d)
+    // B) Top bán theo khoảng ngày (vd 7d) + filter !GeneratedByAI
     public async Task<List<int>> GetBestSellerTerrariumIdsInRangeAsync(DateTime fromUtc, DateTime toUtc, int topN)
     {
+        if (topN <= 0) return new List<int>();
+
         var q =
-            from oi in _context.OrderItems
+            from oi in _context.OrderItems.AsNoTracking()
             where oi.TerrariumVariantId != null
                && oi.Order != null
                && oi.Order.PaymentStatus == "Paid"
                && oi.Order.OrderDate >= fromUtc
                && oi.Order.OrderDate <= toUtc
-            group oi by oi.TerrariumVariant.TerrariumId into g
-            orderby g.Sum(x => (x.TerrariumVariantQuantity ?? x.Quantity ?? 0)) descending
-            select new { TerrariumId = g.Key };
+            join v in _context.TerrariumVariants.AsNoTracking()
+                on oi.TerrariumVariantId equals v.TerrariumVariantId
+            join t in _context.Terrariums.AsNoTracking()
+                on v.TerrariumId equals t.TerrariumId
+            where !t.GeneratedByAI
+            group new { oi, v, t } by v.TerrariumId into g
+            orderby g.Sum(x => (x.oi.TerrariumVariantQuantity ?? x.oi.Quantity ?? 0)) descending
+            select g.Key;
 
-        return await q.Take(topN).Select(x => x.TerrariumId).ToListAsync();
+        return await q.Take(topN).ToListAsync();
     }
 
-    // C) Top rated (avg rating cao nhất) – có thể lọc minFeedback để loại spam
+    // C) Top rated (avg rating cao nhất) – filter !GeneratedByAI
+    // (có thể thêm minFeedback nếu cần)
     public async Task<List<int>> GetTopRatedTerrariumIdsAsync(int topN)
     {
         if (topN <= 0) return new List<int>();
 
-        var query = _context.Feedbacks
-            .Where(fb => fb.Rating.HasValue
-                         && fb.OrderItem != null
-                         && fb.OrderItem.TerrariumVariant != null
-                         && fb.OrderItem.TerrariumVariant.TerrariumId != null)
-            .Select(fb => new
-            {
-                TerrariumId = (int)fb.OrderItem!.TerrariumVariant!.TerrariumId!, // ✅ ép kiểu
-                Rating = (double)fb.Rating!.Value
-            })
-            .GroupBy(x => x.TerrariumId)
-            .Select(g => new
-            {
-                TerrariumId = g.Key,
-                AvgRating = g.Average(x => x.Rating)
-            })
-            .OrderByDescending(x => x.AvgRating)
-            .ThenBy(x => x.TerrariumId) // tie-break cho kết quả ổn định
-            .Take(topN)
-            .Select(x => x.TerrariumId);
+        var q =
+            from fb in _context.Feedbacks.AsNoTracking()
+            where fb.Rating.HasValue
+               && fb.OrderItem != null
+               && fb.OrderItem.TerrariumVariantId != null
+            join v in _context.TerrariumVariants.AsNoTracking()
+                on fb.OrderItem!.TerrariumVariantId equals v.TerrariumVariantId
+            join t in _context.Terrariums.AsNoTracking()
+                on v.TerrariumId equals t.TerrariumId
+            where !t.GeneratedByAI
+            select new { TerrariumId = t.TerrariumId, Rating = (double)fb.Rating!.Value };
 
-        return await query.ToListAsync();
+        var result = await q
+            .GroupBy(x => x.TerrariumId)
+            .Select(g => new { TerrariumId = g.Key, AvgRating = g.Average(x => x.Rating) })
+            .OrderByDescending(x => x.AvgRating)
+            .ThenBy(x => x.TerrariumId) // tie-break ổn định
+            .Take(topN)
+            .Select(x => x.TerrariumId)
+            .ToListAsync();
+
+        return result;
     }
 
-    // D) Newest
+    // D) Newest – filter !GeneratedByAI
     public async Task<List<Terrarium>> GetNewestAsync(int topN)
     {
+        if (topN <= 0) return new List<Terrarium>();
+
         return await _context.Terrariums
+            .AsNoTracking()
+            .Where(t => !t.GeneratedByAI)                // <-- filter
             .Include(t => t.TerrariumImages)
             .OrderByDescending(t => t.CreatedAt)
             .ThenByDescending(t => t.TerrariumId)
