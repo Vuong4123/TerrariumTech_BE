@@ -18,19 +18,14 @@ public class AddCartItemRequest
     public int? AccessoryId { get; set; }
 
     /// <summary>
-    /// ID bể thủy sinh (nullable - dùng khi mua bể)
-    /// </summary>
-    public int? TerrariumVariantId { get; set; }
-
-    /// <summary>
     /// Số lượng phụ kiện (chỉ có giá trị khi AccessoryId có giá trị)
     /// </summary>
     public int? AccessoryQuantity { get; set; }
-
     /// <summary>
     /// Số lượng bể thủy sinh (chỉ có giá trị khi TerrariumVariantId có giá trị)
     /// </summary>
     public int? VariantQuantity { get; set; }
+    public List<TerrariumVariantResponse> TerrariumVariants { get; set; }
 }
 
 /// <summary>

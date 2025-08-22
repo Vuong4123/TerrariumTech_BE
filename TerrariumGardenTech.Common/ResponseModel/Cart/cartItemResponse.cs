@@ -4,16 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common.ResponseModel.Combo;
+using TerrariumGardenTech.Repositories.Entity;
 
-    //public class CartItemDetail
-    //{
-    //    public string ProductName { get; set; } = default!;
-    //    public int Quantity { get; set; }
-    //    public decimal Price { get; set; }
-    //    public decimal TotalPrice { get; set; }
-    //}
+//public class CartItemDetail
+//{
+//    public string ProductName { get; set; } = default!;
+//    public int Quantity { get; set; }
+//    public decimal Price { get; set; }
+//    public decimal TotalPrice { get; set; }
+//}
 
-    public class CartItemResponse
+public class CartItemResponse
     {
         public int CartItemId { get; set; }
         public int CartId { get; set; }
@@ -42,14 +43,35 @@ using TerrariumGardenTech.Common.ResponseModel.Combo;
         public DateTime UpdatedAt { get; set; }
     }
 
-    public class CartItemDetail
+public class CartItemDetail
+{
+    public string ProductName { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public decimal Price { get; set; }
+    public decimal TotalPrice { get; set; }
+    public string? ImageUrl { get; set; }
+    public List<string>? ImageUrls
     {
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
+        get; set;
+    }
+    public string? ProductType { get; set; }
+    public List<TerrariumVariantResponse>? TerrariumVariants { get; set; } // ✅ Fix property name
+}
+public class TerrariumVariantResponse
+    {
+        public int TerrariumVariantId { get; set; }
+
+        public int TerrariumId { get; set; }
+
+        public string VariantName { get; set; }
+
         public decimal Price { get; set; }
-        public decimal TotalPrice { get; set; }
-        public string? ImageUrl { get; set; }
-        public string? ProductType { get; set; } // "Terrarium", "Accessory", "Combo"
+
+        public int StockQuantity { get; set; }
+        public string UrlImage { get; set; }
+        public DateTime? CreatedAt { get; set; }
+
+        public DateTime? UpdatedAt { get; set; }
     }
     /// <summary>
     /// Response cho một bundle (bể + phụ kiện kèm theo)

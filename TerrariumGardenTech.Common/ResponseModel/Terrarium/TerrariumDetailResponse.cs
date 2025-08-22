@@ -6,6 +6,7 @@ public class TerrariumDetailResponse
     public int EnvironmentId { get; set; }
     public int ShapeId { get; set; }
     public int TankMethodId { get; set; }
+    public int? VariantId { get; set; }  // ID của biến thể bể thủy sinh (nếu có)
     public string TerrariumName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal? MinPrice { get; set; }  // Giá thấp nhất
