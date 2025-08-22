@@ -1,13 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Text;
+﻿using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.Terrarium;
-using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.Service;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.API.Controllers
 {
