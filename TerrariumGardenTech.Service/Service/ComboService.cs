@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Combo;
@@ -99,10 +100,14 @@ namespace TerrariumGardenTech.Service.Service
         {
             try
             {
-                var combo = await _unitOfWork.Combo.GetByIdAsync(id);
+                var combo = await _unitOfWork.Combo
+                    .Include(c => c.ComboItems)
+                    .Include(c => c.ComboCategory)
+                    .FirstOrDefaultAsync(r => r.ComboId == id);
+
                 if (combo == null)
                 {
-                    return new BusinessResult(Const.WARNING_NO_DATA_CODE, "Không tìm thấy combo");
+                    return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy combo");
                 }
 
                 var result = await MapToComboResponse(combo);

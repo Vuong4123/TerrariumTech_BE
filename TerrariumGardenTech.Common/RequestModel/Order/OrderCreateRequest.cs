@@ -21,5 +21,7 @@ public class OrderCreateRequest
     public int? VoucherId { get; set; }
     public decimal? Deposit { get; set; }
     public int? AddressId { get; set; }
+    public int? ComboId { get; set; }
     public List<OrderItemCreateRequest> Items { get; set; } = new();
+    public int TotalAmount { get; set; } // Tổng số tiền đơn hàng, có thể tính toán từ Items
 }

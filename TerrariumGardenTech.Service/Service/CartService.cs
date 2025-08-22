@@ -1367,7 +1367,6 @@ namespace TerrariumGardenTech.Service.Service
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt
             };
-
             response.TotalCartPrice = totalPrice;
             response.TotalCartQuantity = totalQuantity;
             return response;
