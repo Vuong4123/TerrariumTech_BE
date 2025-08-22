@@ -121,7 +121,8 @@ public class TerrariumController : ControllerBase
 
     // POST api/<TerrariumController>
     [HttpPost("add-terrariumbyai")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
+    [Authorize]
+
     public async Task<IBusinessResult> PostAI([FromBody] TerrariumCreateRequest terrariumCreate)
     {
         return await _terrariumService.CreateTerrariumAI(terrariumCreate);
