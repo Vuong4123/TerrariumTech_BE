@@ -19,7 +19,7 @@ public partial class TerrariumVariant
     public string UrlImage { get; set; }
     public DateTime? CreatedAt { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; } = DateTime.Now;
 
     public virtual ICollection<LayoutTerrarium> LayoutTerrarium { get; set; } = new List<LayoutTerrarium>();
 

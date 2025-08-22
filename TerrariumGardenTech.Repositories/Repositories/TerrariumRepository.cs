@@ -54,7 +54,8 @@ public class TerrariumRepository : GenericRepository<Terrarium>
     // Nạp dữ liệu Terrarium cùng với ảnh (TerrariumImages)
     public async Task<(IEnumerable<Terrarium>, int)> GetFilterAndPagedAsync(TerrariumGetAllRequest request)
     {
-        var queryable = _dbContext.Terrariums.AsQueryable(); 
+        var queryable = _dbContext.Terrariums.AsQueryable();
+        queryable = queryable.Include(t => t.TerrariumImages);
         queryable = Include(queryable, request.IncludeProperties);
         var totalOrigin = queryable.Count();
 

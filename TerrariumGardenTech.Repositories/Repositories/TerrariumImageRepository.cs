@@ -18,6 +18,7 @@ public class TerrariumImageRepository : GenericRepository<TerrariumImage>
     {
         return await _context.TerrariumImages
             .Where(ti => ti.TerrariumId == terrariumId)
+            .Include(i => i.Terrarium)
             .ToListAsync();
     }
 
