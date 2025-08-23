@@ -16,6 +16,7 @@ public class AddCartItemRequest
     /// ID phụ kiện (nullable - dùng khi mua phụ kiện đơn lẻ)
     /// </summary>
     public int? AccessoryId { get; set; }
+    public int? TerrariumVariantId { get; set; }
 
     /// <summary>
     /// Số lượng phụ kiện (chỉ có giá trị khi AccessoryId có giá trị)
@@ -25,7 +26,7 @@ public class AddCartItemRequest
     /// Số lượng bể thủy sinh (chỉ có giá trị khi TerrariumVariantId có giá trị)
     /// </summary>
     public int? VariantQuantity { get; set; }
-    public List<TerrariumVariantResponse> TerrariumVariants { get; set; }
+    //public List<TerrariumVariantResponse> TerrariumVariants { get; set; }
 }
 
 /// <summary>

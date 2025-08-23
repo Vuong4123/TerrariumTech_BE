@@ -229,54 +229,54 @@ namespace TerrariumGardenTech.Service.Service
                         // Tạo mới bể
                         var quantity = request.VariantQuantity ?? 1;
 
-                        // Tạo variants nếu có trong request
-                        if (request.TerrariumVariants?.Any() == true)
-                        {
-                            foreach (var variant in request.TerrariumVariants)
-                            {
-                                var newVariant = new TerrariumVariant
-                                {
-                                    TerrariumId = request.TerrariumId,
-                                    VariantName = variant.VariantName,
-                                    Price = variant.Price,
-                                    StockQuantity = variant.StockQuantity,
-                                    UrlImage = variant.UrlImage,
-                                    CreatedAt = DateTime.UtcNow,
-                                    UpdatedAt = DateTime.UtcNow
-                                };
-                                await _unitOfWork.TerrariumVariant.CreateAsync(newVariant);
-                            }
-                            await _unitOfWork.SaveAsync(); // Save để có ID cho variants mới
-                        }
+                        //// Tạo variants nếu có trong request
+                        //if (request.TerrariumVariants?.Any() == true)
+                        //{
+                        //    foreach (var variant in request.TerrariumVariants)
+                        //    {
+                        //        var newVariant = new TerrariumVariant
+                        //        {
+                        //            TerrariumId = request.TerrariumId,
+                        //            VariantName = variant.VariantName,
+                        //            Price = variant.Price,
+                        //            StockQuantity = variant.StockQuantity,
+                        //            UrlImage = variant.UrlImage,
+                        //            CreatedAt = DateTime.UtcNow,
+                        //            UpdatedAt = DateTime.UtcNow
+                        //        };
+                        //        await _unitOfWork.TerrariumVariant.CreateAsync(newVariant);
+                        //    }
+                        //    await _unitOfWork.SaveAsync(); // Save để có ID cho variants mới
+                        //}
 
-                        // Lấy tất cả variants của terrarium
-                        var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(request.TerrariumId);
+                        //// Lấy tất cả variants của terrarium
+                        //var terrariumVariants = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(request.TerrariumId);
 
-                        if (terrariumVariants?.Any() == true)
-                        {
-                            // Tạo cart item cho từng variant
-                            foreach (var variant in terrariumVariants)
-                            {
-                                var cartItem = new CartItem
-                                {
-                                    TerrariumId = request.TerrariumId,
-                                    CartId = cart.CartId,
-                                    TerrariumVariantId = variant.TerrariumVariantId,
-                                    TerrariumVariantQuantity = quantity,
-                                    Quantity = quantity,
-                                    UnitPrice = variant.Price,
-                                    TotalPrice = variant.Price * quantity,
-                                    ItemType = CartItemType.MAIN_ITEM,
-                                    ParentCartItemId = null,
-                                    CreatedAt = DateTime.UtcNow,
-                                    UpdatedAt = DateTime.UtcNow
-                                };
-                                await _unitOfWork.CartItem.CreateAsync(cartItem);
-                                addedItem = cartItem; // Lấy item cuối cùng để return
-                            }
-                        }
-                        else
-                        {
+                        //if (terrariumVariants?.Any() == true)
+                        //{
+                        //    // Tạo cart item cho từng variant
+                        //    foreach (var variant in terrariumVariants)
+                        //    {
+                        //        var cartItem = new CartItem
+                        //        {
+                        //            TerrariumId = request.TerrariumId,
+                        //            CartId = cart.CartId,
+                        //            TerrariumVariantId = variant.TerrariumVariantId,
+                        //            TerrariumVariantQuantity = quantity,
+                        //            Quantity = quantity,
+                        //            UnitPrice = variant.Price,
+                        //            TotalPrice = variant.Price * quantity,
+                        //            ItemType = CartItemType.MAIN_ITEM,
+                        //            ParentCartItemId = null,
+                        //            CreatedAt = DateTime.UtcNow,
+                        //            UpdatedAt = DateTime.UtcNow
+                        //        };
+                        //        await _unitOfWork.CartItem.CreateAsync(cartItem);
+                        //        addedItem = cartItem; // Lấy item cuối cùng để return
+                        //    }
+                        //}
+                        //else
+                        //{
                             // Không có variant, tạo cart item cho terrarium chính
                             var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
                             var basePrice = terrarium?.MinPrice ?? 0;
@@ -284,8 +284,11 @@ namespace TerrariumGardenTech.Service.Service
                             var cartItem = new CartItem
                             {
                                 TerrariumId = request.TerrariumId,
+                                TerrariumVariantId = request.TerrariumVariantId,
+                                TerrariumVariantQuantity = request.VariantQuantity,
                                 CartId = cart.CartId,
-                                TerrariumVariantQuantity = quantity,
+                                AccessoryId = request.AccessoryId,
+                                AccessoryQuantity = request.AccessoryQuantity ?? 0,
                                 Quantity = quantity,
                                 UnitPrice = basePrice,
                                 TotalPrice = basePrice * quantity,
@@ -296,10 +299,10 @@ namespace TerrariumGardenTech.Service.Service
                             };
                             await _unitOfWork.CartItem.CreateAsync(cartItem);
                             addedItem = cartItem;
-                        }
+                     //   }
                     }
 
-                    bundleResponse.MainItem = await BuildCartItemResponseAsync(addedItem);
+                    //bundleResponse.MainItem = await BuildCartItemResponseAsync(addedIte m);
                 }
                 else if (request.AccessoryId.HasValue)
                 {

@@ -35,14 +35,14 @@ namespace TerrariumGardenTech.API.Controllers
 
         // POST api/<FeedbackImageController>
         [HttpPost("add-image")]
-        public Task<IBusinessResult> Post([FromBody] FeedbackImageUploadRequest feedbackImageUploadRequest)
+        public Task<IBusinessResult> Post([FromForm] FeedbackImageUploadRequest feedbackImageUploadRequest)
         {
             return _feedbackImageService.CreateFeedbackImageAsync(feedbackImageUploadRequest.ImageFile, feedbackImageUploadRequest.FeedbackId);
         }
 
         // PUT api/<FeedbackImageController>/5
         [HttpPut("update-image/{id}")]
-        public Task<IBusinessResult> Put(int id, [FromBody] FeedbackImageUploadUpdateRequest feedbackImageUploadUpdateRequest)
+        public Task<IBusinessResult> Put(int id, [FromForm] FeedbackImageUploadUpdateRequest feedbackImageUploadUpdateRequest)
         {
             feedbackImageUploadUpdateRequest.FeedbackImageId = id; // Set the ID for the update request
             return _feedbackImageService.UpdateFeedbackImageAsync(feedbackImageUploadUpdateRequest);
