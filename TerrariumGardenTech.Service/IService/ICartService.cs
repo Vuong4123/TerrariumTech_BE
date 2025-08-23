@@ -31,6 +31,6 @@ namespace TerrariumGardenTech.Service.IService
         // Utility methods
         Task<IBusinessResult> GetCartSummaryAsync(int userId);
         Task<IBusinessResult> ValidateCartAsync(int userId);
-
+        Task<IBusinessResult> ChangeVariantAsync(int userId, int cartItemId, ChangeVariantRequest request);
     }
 }

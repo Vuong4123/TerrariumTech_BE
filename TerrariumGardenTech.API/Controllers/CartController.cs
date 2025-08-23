@@ -201,6 +201,35 @@ namespace TerrariumGardenTech.API.Controllers
                 return StatusCode(500, new { message = "Lỗi server khi cập nhật sản phẩm" });
             }
         }
+        [HttpPut("change-variant/{itemId}")]
+        [Authorize]
+        public async Task<IActionResult> ChangeVariant(int itemId, [FromBody] ChangeVariantRequest request)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+
+                if (request == null || request.NewVariantId <= 0)
+                {
+                    return BadRequest(new { message = "Variant ID không hợp lệ." });
+                }
+
+                var result = await _cartService.ChangeVariantAsync(userId, itemId, request);
+
+                if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                    return Ok(result);
+
+                if (result.Status == Const.WARNING_NO_DATA_CODE || result.Status == Const.FAIL_READ_CODE)
+                    return NotFound(result);
+
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing variant for cart item {ItemId}", itemId);
+                return StatusCode(500, new { message = "Lỗi server khi thay đổi variant" });
+            }
+        }
 
         /// <summary>
         /// Xóa một sản phẩm khỏi giỏ hàng
