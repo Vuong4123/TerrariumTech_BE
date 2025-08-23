@@ -54,7 +54,7 @@ public class TransportController : ControllerBase
     {
         var currentUserId = User.GetUserId();
         var response = await _transportService.CreateTransport(request, currentUserId);
-        if (response.Status == Const.SUCCESS_READ_CODE)
+        if (response.Status != Const.SUCCESS_CREATE_CODE)
             return BadRequest(response);
         return Ok(response);
     }
@@ -68,7 +68,7 @@ public class TransportController : ControllerBase
         var currentUserId = User.GetUserId();
         request.TransportId = transportId;
         var response = await _transportService.UpdateTransport(request, currentUserId);
-        if (response.Status == Const.SUCCESS_READ_CODE)
+        if (response.Status != Const.SUCCESS_CREATE_CODE)
             return BadRequest(response);
         return Ok(response);
     }
@@ -77,7 +77,7 @@ public class TransportController : ControllerBase
     public async Task<IActionResult> Remove(int transportId)
     {
         var response = await _transportService.DeleteTransport(transportId);
-        if (response.Status == Const.SUCCESS_READ_CODE)
+        if (response.Status != Const.SUCCESS_DELETE_CODE)
             return BadRequest(response);
         return Ok(response);
     }

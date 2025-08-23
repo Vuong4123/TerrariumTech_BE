@@ -1,4 +1,6 @@
-﻿namespace TerrariumGardenTech.Service.Base;
+﻿using TerrariumGardenTech.Common;
+
+namespace TerrariumGardenTech.Service.Base;
 
 public interface IBusinessResult
 {
@@ -15,7 +17,7 @@ public class BusinessResult : IBusinessResult
         Message = "Action fail";
     }
 
-    public BusinessResult(bool status, string message, object? data = null) : this(status ? 1 : 0, message)
+    public BusinessResult(bool status, string message, object? data = null) : this(status ? Const.SUCCESS_CREATE_CODE : 0, message)
     {
         Data = data;
     }

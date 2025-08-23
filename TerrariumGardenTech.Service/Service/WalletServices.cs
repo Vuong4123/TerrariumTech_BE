@@ -18,7 +18,7 @@ namespace TerrariumGardenTech.Service.Service
         {
             _unitOfWork = unitOfWork;
         }
-        private async Task<Wallet> GetOrCreateUserWallet(int userId)
+        public async Task<Wallet> GetOrCreateUserWallet(int userId)
         {
             var wallet = await _unitOfWork.Wallet
                 .FindOneAsync(w => w.UserId == userId && w.WalletType == "User");

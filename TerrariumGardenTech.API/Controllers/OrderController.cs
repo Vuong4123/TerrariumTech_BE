@@ -287,10 +287,10 @@ public class OrderController : ControllerBase
     {
         request.OrderId = id;
         var currentUserId = User.GetUserId();
-        var (success, message) = await _svc.RequestRefundAsync(request, currentUserId);
+        var (success, message, refund) = await _svc.RequestRefundAsync(request, currentUserId);
         if (success)
             return Ok(new { message });
-        return BadRequest(new { message });
+        return BadRequest(new { message, data = refund });
     }
 
     [HttpPut("Refund/{id}")]
@@ -298,10 +298,10 @@ public class OrderController : ControllerBase
     {
         request.RefundId = id;
         var currentUserId = User.GetUserId();
-        var (success, message) = await _svc.UpdateRequestRefundAsync(request, currentUserId);
+        var (success, message, refund) = await _svc.UpdateRequestRefundAsync(request, currentUserId);
         if (success)
             return Ok(new { message });
-        return BadRequest(new { message });
+        return BadRequest(new { message, data = refund });
     }
 
     // TerrariumGardenTech.API/Controllers/OrderController.cs - Thêm methods mới

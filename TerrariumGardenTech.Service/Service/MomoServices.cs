@@ -10,6 +10,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Common.Entity;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -117,6 +118,75 @@ namespace TerrariumGardenTech.Service.Service
             return Convert.ToBase64String(qrCodeBytes);
         }
 
+        // NEW: Create MoMo link for Wallet Top-up with metadata (userId + random orderId)
+        public async Task<MomoQrResponse> CreateMomoWalletTopupUrl(MomoWalletTopupRequest req)
+        {
+            var momoSection = _config.GetSection("Momo");
+
+            string endpoint = momoSection["PaymentUrl"];
+            string partnerCode = momoSection["PartnerCode"];
+            string accessKey = momoSection["AccessKey"];
+            string secretKey = momoSection["SecretKey"];
+            string returnUrl = momoSection["WalletReturnUrl"] ?? momoSection["ReturnUrl"];
+            string ipnUrl = momoSection["WalletIpnUrl"] ?? momoSection["IpnUrl"];
+            string requestType = "captureWallet";
+
+            long amount = req.Amount; // VND
+
+            string randomId = Guid.NewGuid().ToString("N").Substring(0, 12);
+            string orderId = $"WL_{randomId}"; // independent from Order table
+            string orderInfo = string.IsNullOrWhiteSpace(req.Description) ? "Wallet Top-up" : req.Description!;
+            string requestId = Guid.NewGuid().ToString();
+
+            var meta = new { userId = req.UserId };
+            string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(meta)));
+
+            string rawHash = $"accessKey={accessKey}&amount={amount}&extraData={extraData}" +
+                             $"&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}" +
+                             $"&partnerCode={partnerCode}&redirectUrl={returnUrl}" +
+                             $"&requestId={requestId}&requestType={requestType}";
+
+            string signature = CreateSignature(secretKey, rawHash);
+
+            var payload = new
+            {
+                partnerCode,
+                accessKey,
+                requestId,
+                amount = amount.ToString(),
+                orderId,
+                orderInfo,
+                redirectUrl = returnUrl,
+                ipnUrl,
+                extraData,
+                requestType,
+                signature,
+                lang = "vi"
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(endpoint, content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(responseContent);
+            if (doc.RootElement.TryGetProperty("payUrl", out var payUrlElement))
+            {
+                string payUrl = payUrlElement.GetString();
+                return new MomoQrResponse
+                {
+                    PayUrl = payUrl,
+                    QrImageBase64 = GenerateBase64QrCode(payUrl)
+                };
+            }
+
+            var message = doc.RootElement.TryGetProperty("message", out var msg)
+                ? msg.GetString()
+                : "Unknown error from Momo";
+            throw new Exception($"Momo error: {message}");
+        }
+
 
         
 
@@ -172,7 +242,7 @@ namespace TerrariumGardenTech.Service.Service
                 baseAmount = RoundVnd(baseAmount);
                 var fullAfter10 = RoundVnd(baseAmount * 0.9m);
 
-                if (!long.TryParse(Get("amount"), out var amt))
+                if (!long.TryParse(Get("amount"), out var amt) || amt <= 0)
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
 
                 var paid = RoundVnd(amt);
@@ -278,6 +348,129 @@ namespace TerrariumGardenTech.Service.Service
 
                 return new BusinessResult(success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
                                           success ? "Payment success (IPN)" : "Payment failed (IPN)");
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+            }
+        }
+
+        // NEW: IPN for Wallet top-up. Verify signature; DO NOT credit to avoid double-processing; rely on Return callback per requirement.
+        public async Task<IBusinessResult> MomoWalletIpnExecute(MomoIpnModel body)
+        {
+            try
+            {
+                var secretKey = _config["Momo:SecretKey"];
+
+                var map = new Dictionary<string, string>
+                {
+                    ["amount"] = body.amount,
+                    ["extraData"] = body.extraData,
+                    ["message"] = body.message,
+                    ["orderId"] = body.orderId,
+                    ["orderInfo"] = body.orderInfo,
+                    ["orderType"] = body.orderType,
+                    ["partnerCode"] = body.partnerCode,
+                    ["payType"] = body.payType,
+                    ["requestId"] = body.requestId,
+                    ["responseTime"] = body.responseTime,
+                    ["resultCode"] = body.resultCode,
+                    ["transId"] = body.transId
+                };
+
+                var raw = BuildRawSignature(map);
+                var calcSig = CreateSignature(secretKey, raw);
+
+                if (!string.Equals(calcSig, body.signature, StringComparison.OrdinalIgnoreCase))
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
+
+                // If needed, we could parse userId/amount here, but to avoid double-crediting we simply acknowledge.
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Verified");
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+            }
+        }
+
+        // NEW: Return for Wallet top-up — verify signature, parse userId and amount, then credit wallet points (1000 VND => 1 point)
+        public async Task<IBusinessResult> MomoWalletReturnExecute(IQueryCollection query)
+        {
+            try
+            {
+                var accessKey = _config["Momo:AccessKey"];
+                var secretKey = _config["Momo:SecretKey"];
+
+                string Get(string k) => query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
+
+                var raw = string.Join("&", new[]
+                {
+                    $"accessKey={accessKey}",
+                    $"amount={Get("amount")}",
+                    $"extraData={Get("extraData")}",
+                    $"message={Get("message")}",
+                    $"orderId={Get("orderId")}",
+                    $"orderInfo={Get("orderInfo")}",
+                    $"orderType={Get("orderType")}",
+                    $"partnerCode={Get("partnerCode")}",
+                    $"payType={Get("payType")}",
+                    $"requestId={Get("requestId")}",
+                    $"responseTime={Get("responseTime")}",
+                    $"resultCode={Get("resultCode")}",
+                    $"transId={Get("transId")}"
+                });
+
+                var calcSig = CreateSignature(secretKey, raw);
+                var signature = Get("signature");
+                if (!string.Equals(calcSig, signature, StringComparison.OrdinalIgnoreCase))
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
+
+                if (!long.TryParse(Get("amount"), out var amt))
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
+
+                int userId = 0;
+                var extra = Get("extraData");
+                if (!string.IsNullOrEmpty(extra))
+                {
+                    try
+                    {
+                        var json = Encoding.UTF8.GetString(Convert.FromBase64String(extra));
+                        using var doc = JsonDocument.Parse(json);
+                        if (doc.RootElement.TryGetProperty("userId", out var userIdEl))
+                            userId = userIdEl.GetInt32();
+                    }
+                    catch { }
+                }
+
+                if (userId <= 0)
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid userId in extraData");
+
+                var success = Get("resultCode") == "0";
+                if (!success)
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Payment failed");
+
+                var wallet = await _unitOfWork.Wallet.FindOneAsync(w => w.UserId == userId && w.WalletType == "User");
+                if (wallet == null)
+                {
+                    wallet = new Wallet { UserId = userId, WalletType = "User", Balance = 0 };
+                    await _unitOfWork.Wallet.CreateAsync(wallet);
+                }
+
+                var points = (decimal)amt / 1000m;
+                wallet.Balance += points;
+
+                await _unitOfWork.WalletTransactionRepository.CreateAsync(new WalletTransaction
+                {
+                    WalletId = wallet.WalletId,
+                    Amount = points,
+                    Type = "Deposit",
+                    CreatedDate = DateTime.UtcNow,
+                    OrderId = null
+                });
+
+                await _unitOfWork.SaveAsync();
+
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Wallet top-up success");
             }
             catch (Exception ex)
             {

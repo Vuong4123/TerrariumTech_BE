@@ -52,6 +52,7 @@ namespace TerrariumGardenTech.Common.Entity
         public string? CreatedBy { get; set; }
 
         public virtual Order Order { get; set; } = null!;
+        public virtual IEnumerable<OrderTransportItem> Items { get; set; } = Enumerable.Empty<OrderTransportItem>();
         public virtual ICollection<TransportLog> TransportLogs { get; set; } = new List<TransportLog>();
     }
 
@@ -101,5 +102,15 @@ namespace TerrariumGardenTech.Common.Entity
         public string? CreatedBy { get; set; }
 
         public virtual OrderTransport Transport { get; set; } = null!;
+    }
+
+    public class OrderTransportItem
+    {
+        public int TransportItemId { get; set; }
+        public int OrderItemId { get; set; }
+        public int Quantity { get; set; }
+        public int TransportId { get; set; }
+
+        public virtual OrderTransport? OrderTransport { get; set; }
     }
 }

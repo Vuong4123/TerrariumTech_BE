@@ -9,9 +9,33 @@ namespace TerrariumGardenTech.Common.RequestModel.Cart;
 /// 2. Mua phụ kiện đơn lẻ  
 /// 3. Mua bể + combo phụ kiện
 /// </summary>
+//public class AddCartItemRequest
+//{
+//    public int TerrariumId { get; set; }
+//    /// <summary>
+//    /// ID phụ kiện (nullable - dùng khi mua phụ kiện đơn lẻ)
+//    /// </summary>
+//    public int? AccessoryId { get; set; }
+
+//    /// <summary>
+//    /// Số lượng phụ kiện (chỉ có giá trị khi AccessoryId có giá trị)
+//    /// </summary>
+//    public int? AccessoryQuantity { get; set; }
+//    /// <summary>
+//    /// Số lượng bể thủy sinh (chỉ có giá trị khi TerrariumVariantId có giá trị)
+//    /// </summary>
+//    public int? VariantQuantity { get; set; }
+//    public List<TerrariumVariantResponse> TerrariumVariants { get; set; }
+//}
 public class AddCartItemRequest
 {
     public int TerrariumId { get; set; }
+
+    /// <summary>
+    /// ID của variant cụ thể muốn thêm vào giỏ
+    /// </summary>
+    public int? TerrariumVariantId { get; set; }
+
     /// <summary>
     /// ID phụ kiện (nullable - dùng khi mua phụ kiện đơn lẻ)
     /// </summary>
@@ -19,14 +43,17 @@ public class AddCartItemRequest
     public int? TerrariumVariantId { get; set; }
 
     /// <summary>
-    /// Số lượng phụ kiện (chỉ có giá trị khi AccessoryId có giá trị)
+    /// Số lượng phụ kiện
     /// </summary>
     public int? AccessoryQuantity { get; set; }
+
     /// <summary>
-    /// Số lượng bể thủy sinh (chỉ có giá trị khi TerrariumVariantId có giá trị)
+    /// Số lượng variant/terrarium
     /// </summary>
     public int? VariantQuantity { get; set; }
-    //public List<TerrariumVariantResponse> TerrariumVariants { get; set; }
+
+    // REMOVE THIS - Không cần tạo variant khi add to cart
+    // public List<TerrariumVariantResponse> TerrariumVariants { get; set; }
 }
 
 /// <summary>
