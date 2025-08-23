@@ -40,7 +40,6 @@ public class AddCartItemRequest
     /// ID phụ kiện (nullable - dùng khi mua phụ kiện đơn lẻ)
     /// </summary>
     public int? AccessoryId { get; set; }
-    public int? TerrariumVariantId { get; set; }
 
     /// <summary>
     /// Số lượng phụ kiện
