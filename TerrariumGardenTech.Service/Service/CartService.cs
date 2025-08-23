@@ -293,7 +293,7 @@ namespace TerrariumGardenTech.Service.Service
                         }
                     }
 
-                    bundleResponse.MainItem = await BuildCartItemResponseAsync(addedItem);
+                    //bundleResponse.MainItem = await BuildCartItemResponseAsync(addedIte m);
                 }
                 else if (request.AccessoryId.HasValue)
                 {
