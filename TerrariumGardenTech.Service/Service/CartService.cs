@@ -276,8 +276,6 @@ namespace TerrariumGardenTech.Service.Service
                             var cartItem = new CartItem
                             {
                                 TerrariumId = request.TerrariumId,
-                                TerrariumVariantId = request.TerrariumVariantId,
-                                TerrariumVariantQuantity = request.VariantQuantity,
                                 CartId = cart.CartId,
                                 TerrariumVariantId = null,
                                 TerrariumVariantQuantity = quantity,
@@ -292,7 +290,7 @@ namespace TerrariumGardenTech.Service.Service
 
                             await _unitOfWork.CartItem.CreateAsync(cartItem);
                             addedItem = cartItem;
-                     //   }
+                        }
                     }
 
                     //bundleResponse.MainItem = await BuildCartItemResponseAsync(addedIte m);

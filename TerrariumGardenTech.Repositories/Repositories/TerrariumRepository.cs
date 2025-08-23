@@ -63,10 +63,15 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         // Chỉ lấy terrarium không được tạo bởi AI
         queryable = queryable.Where(t => !t.GeneratedByAI);
         // end
+        // totalRecords phải tính sau filter
+        var totalRecords = await queryable.CountAsync();
+
+        // sort mới nhất -> cũ nhất
+        queryable = queryable.OrderByDescending(t => t.CreatedAt);
 
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 
-        return (await queryable.ToListAsync(), totalOrigin);
+        return (await queryable.ToListAsync(), totalRecords);
     }
 
     public async Task<(IEnumerable<Terrarium>, int)> GetGenByAI(TerrariumGetAllRequest request)
@@ -80,10 +85,14 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         // Chỉ lấy terrarium không được tạo bởi AI
         queryable = queryable.Where(t => t.GeneratedByAI == true);
         // end
+        var totalRecords = await queryable.CountAsync();
+
+        // sort mới nhất -> cũ nhất
+        queryable = queryable.OrderByDescending(t => t.CreatedAt);
 
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 
-        return (await queryable.ToListAsync(), totalOrigin);
+        return (await queryable.ToListAsync(), totalRecords);
     }
 
 
