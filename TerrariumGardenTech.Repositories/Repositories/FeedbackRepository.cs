@@ -50,6 +50,25 @@ namespace TerrariumGardenTech.Repositories.Repositories
             return (list, total);
         }
 
+        // Lấy theo ID (không bao gồm ảnh)
+        public async Task<(List<Feedback> Items, int Total)> GetByAccessoryAsync(int accesoryId, int page, int pageSize)
+        {
+            var q = _context.Feedbacks
+                .Include(f => f.FeedbackImages)
+                .Include(f => f.OrderItem)
+                    .ThenInclude(oi => oi.Accessory) // để lấy tên nếu cần
+                .Where(f => !f.IsDeleted && f.OrderItem.AccessoryId == accesoryId);
+
+            var total = await q.CountAsync();
+
+            var list = await q.OrderByDescending(f => f.CreatedAt)
+                              .Skip((page - 1) * pageSize)
+                              .Take(pageSize)
+                              .ToListAsync();
+
+            return (list, total);
+        }
+
 
         // Get all có paging
         public async Task<(List<Feedback> Items, int Total)> GetAllAsync(int page, int pageSize)
@@ -63,6 +82,22 @@ namespace TerrariumGardenTech.Repositories.Repositories
             return (list, total);
         }
 
+        // Get all có paging theo UserId
+        public async Task<(List<Feedback> Items, int Total)> GetAllByUserAsync(int userId, int page, int pageSize)
+        {
+            var q = _context.Feedbacks
+                            .Include(f => f.FeedbackImages)
+                            .Where(f => f.UserId == userId);
+
+            var total = await q.CountAsync();
+
+            var list = await q.OrderByDescending(f => f.CreatedAt)
+                              .Skip((page - 1) * pageSize)
+                              .Take(pageSize)
+                              .ToListAsync();
+
+            return (list, total);
+        }
         // Soft‑delete
         public async Task<bool> SoftDeleteAsync(int id)
         {
