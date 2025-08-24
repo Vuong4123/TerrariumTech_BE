@@ -39,7 +39,19 @@ namespace TerrariumGardenTech.Service.Service
             var mapped = _mapper.Map<List<FeedbackResponse>>(list);
             return (mapped, total);
         }
-
+        // Lấy feedback theo terrarium với phân trang
+        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetByAccessoryAsync(int terrariumId, int page, int pageSize)
+        {
+            var (list, total) = await _uow.Feedback.GetByAccessoryAsync(terrariumId, page, pageSize);
+            var mapped = _mapper.Map<List<FeedbackResponse>>(list);
+            return (mapped, total);
+        }
+        // Lấy feedback theo UserId (có paging)
+        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetAllByUserAsync(int userId, int page, int pageSize)
+        {
+            var (list, total) = await _uow.Feedback.GetAllByUserAsync(userId, page, pageSize);
+            return (_mapper.Map<List<FeedbackResponse>>(list), total);
+        }
 
 
         public async Task<(IEnumerable<FeedbackResponse>, int)> GetAllAsync(int page, int pageSize)

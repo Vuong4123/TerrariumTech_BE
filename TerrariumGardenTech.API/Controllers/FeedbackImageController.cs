@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.FeedbackImage;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.Service;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,6 +13,10 @@ namespace TerrariumGardenTech.API.Controllers
     public class FeedbackImageController : ControllerBase
     {
         private readonly IFeedbackImageService _feedbackImageService;   
+        public FeedbackImageController(IFeedbackImageService feedbackImageService)
+        {
+            _feedbackImageService = feedbackImageService ;
+        }
         // GET: api/<FeedbackImageController>
         [HttpGet("get-all")]
         public async Task<IBusinessResult> Get()

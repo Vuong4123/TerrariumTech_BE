@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using TerrariumGardenTech.Common.RequestModel.FeedbackImage;
-using TerrariumGardenTech.Common.ResponseModel.Feedback;
 using TerrariumGardenTech.Service.Base;
 
 namespace FeedbackGardenTech.Service.IService

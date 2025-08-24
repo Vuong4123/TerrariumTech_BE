@@ -35,6 +35,24 @@ namespace TerrariumGardenTech.API.Controllers
             Response.Headers.Add("X-Total-Count", total.ToString());
             return Ok(items);
         }
+        // Lấy feedback theo terrarium với phân trang
+        [HttpGet("accessory/{accessoryId:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByAccessory(int accessoryId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var (items, total) = await _svc.GetByAccessoryAsync(accessoryId, page, pageSize);
+            Response.Headers.Add("X-Total-Count", total.ToString());
+            return Ok(items);
+        }
+        // Lấy feedback theo terrarium với phân trang
+        [HttpGet("user/{userId:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByUser(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var (items, total) = await _svc.GetAllByUserAsync(userId, page, pageSize);
+            Response.Headers.Add("X-Total-Count", total.ToString());
+            return Ok(items);
+        }
 
         [HttpGet]
         [Authorize(Roles = "Admin")]

@@ -1,4 +1,5 @@
 using DotNetEnv;
+using FeedbackGardenTech.Service.IService;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -29,10 +30,10 @@ Env.Load(); // Tải biến môi trường từ file .env nếu có
 
 var builder = WebApplication.CreateBuilder(args);
 
-//FirebaseApp.Create(new AppOptions
-//{
-//    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
-//});
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile("notification-terrariumtech-firebase-adminsdk.json")
+});
 // Thêm dịch vụ CORS
 const string CorsPolicy = "AllowFrontend";
     builder.Services.AddCors(options =>
@@ -113,6 +114,7 @@ builder.Services.AddScoped<IPayOsService, PayOsService>();
 builder.Services.AddScoped<IWalletServices, WalletServices>();
 builder.Services.AddScoped<IMomoServices, MomoServices>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IFeedbackImageService, FeedbackImageService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IChatService, ChatService>();

@@ -23,7 +23,7 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult> GetAllFeedbackImageAsync()
         {
-           var result = _unitOfWork.FeedbackImage.GetAllAsync();
+           var result = await _unitOfWork.FeedbackImage.GetAllAsync();
             if (result == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "No feedback images found.");
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Feedback images retrieved successfully.", result);
@@ -41,7 +41,7 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<IBusinessResult?> GetFeedbackImageByIdAsync(int feedbackImgId)
         {
-            var result = _unitOfWork.FeedbackImage.GetByIdAsync(feedbackImgId);
+            var result = await _unitOfWork.FeedbackImage.GetByIdAsync(feedbackImgId);
             if (result == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "No feedback images found.");
             return new BusinessResult(Const.SUCCESS_READ_CODE, "Feedback images retrieved successfully.", result);
