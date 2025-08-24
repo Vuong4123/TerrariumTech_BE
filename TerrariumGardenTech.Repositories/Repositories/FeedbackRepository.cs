@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Common.ResponseModel.Feedback;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -12,92 +13,190 @@ namespace TerrariumGardenTech.Repositories.Repositories
     public class FeedbackRepository : GenericRepository<Feedback>
     {
         public FeedbackRepository(TerrariumGardenTechDBContext ctx) : base(ctx) { }
-
-        // Giữ nguyên
+        private IQueryable<Feedback> BaseQuery()
+        {
+            return _context.Feedbacks
+                .Include(f => f.FeedbackImages)
+                .Include(f => f.OrderItem)
+                    .ThenInclude(oi => oi.TerrariumVariant)
+                        .ThenInclude(tv => tv.Terrarium) // để lấy TerrariumId/Name nếu cần
+                .Include(f => f.OrderItem)
+                    .ThenInclude(oi => oi.Accessory);
+        }
+        // Lấy feedback theo OrderItemId
         public async Task<List<Feedback>> GetByOrderItemAsync(int orderItemId)
-            => await _context.Feedbacks
-                             .Include(f => f.FeedbackImages)
-                             .Where(f => f.OrderItemId == orderItemId)
-                             .ToListAsync();
+        {
+            return await BaseQuery()
+                .Where(f => f.OrderItemId == orderItemId && !f.IsDeleted)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+        }
 
-        public async Task<double?> GetAverageRatingByUserAsync(int userId)
-            => await _context.Feedbacks
-                             .Where(f => f.UserId == userId && f.Rating.HasValue)
-                             .AverageAsync(f => (double?)f.Rating);
-
-        // Lấy theo ID (bao gồm ảnh)
+        // Lấy feedback theo Id
         public async Task<Feedback?> GetByIdAsync(int id)
-            => await _context.Feedbacks
-                             .Include(f => f.FeedbackImages)
-                             .FirstOrDefaultAsync(f => f.FeedbackId == id);
-
-        // Lấy theo ID (không bao gồm ảnh)
-        public async Task<(List<Feedback> Items, int Total)> GetByTerrariumAsync(int terrariumId, int page, int pageSize)
         {
-            var q = _context.Feedbacks
-                .Include(f => f.FeedbackImages)
-                .Include(f => f.OrderItem)
-                    .ThenInclude(oi => oi.TerrariumVariant) // để lấy tên nếu cần
-                .Where(f => !f.IsDeleted && f.OrderItem.TerrariumVariantId == terrariumId);
-
-            var total = await q.CountAsync();
-
-            var list = await q.OrderByDescending(f => f.CreatedAt)
-                              .Skip((page - 1) * pageSize)
-                              .Take(pageSize)
-                              .ToListAsync();
-
-            return (list, total);
+            return await BaseQuery()
+                .FirstOrDefaultAsync(f => f.FeedbackId == id && !f.IsDeleted);
         }
 
-        // Lấy theo ID (không bao gồm ảnh)
-        public async Task<(List<Feedback> Items, int Total)> GetByAccessoryAsync(int accesoryId, int page, int pageSize)
+        // Trung bình rating theo user
+        public async Task<double?> GetAverageRatingByUserAsync(int userId)
         {
-            var q = _context.Feedbacks
-                .Include(f => f.FeedbackImages)
-                .Include(f => f.OrderItem)
-                    .ThenInclude(oi => oi.Accessory) // để lấy tên nếu cần
-                .Where(f => !f.IsDeleted && f.OrderItem.AccessoryId == accesoryId);
-
-            var total = await q.CountAsync();
-
-            var list = await q.OrderByDescending(f => f.CreatedAt)
-                              .Skip((page - 1) * pageSize)
-                              .Take(pageSize)
-                              .ToListAsync();
-
-            return (list, total);
+            return await _context.Feedbacks
+                .Where(f => f.UserId == userId && f.Rating.HasValue && !f.IsDeleted)
+                .AverageAsync(f => (double?)f.Rating);
         }
-
 
         // Get all có paging
-        public async Task<(List<Feedback> Items, int Total)> GetAllAsync(int page, int pageSize)
+        public async Task<(List<FeedbackResponse> Items, int Total)> GetAllDtoAsync(int page, int pageSize)
         {
-            var q = _context.Feedbacks.Include(f => f.FeedbackImages);
-            var total = await q.CountAsync();
-            var list = await q.OrderByDescending(f => f.CreatedAt)
-                               .Skip((page - 1) * pageSize)
-                               .Take(pageSize)
-                               .ToListAsync();
-            return (list, total);
-        }
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
 
-        // Get all có paging theo UserId
-        public async Task<(List<Feedback> Items, int Total)> GetAllByUserAsync(int userId, int page, int pageSize)
-        {
-            var q = _context.Feedbacks
-                            .Include(f => f.FeedbackImages)
-                            .Where(f => f.UserId == userId);
+            var q = _context.Feedbacks.Where(f => !f.IsDeleted);
 
             var total = await q.CountAsync();
 
-            var list = await q.OrderByDescending(f => f.CreatedAt)
-                              .Skip((page - 1) * pageSize)
-                              .Take(pageSize)
-                              .ToListAsync();
+            var items = await q
+                .OrderByDescending(f => f.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(f => new FeedbackResponse
+                {
+                    FeedbackId = f.FeedbackId,
+                    OrderItemId = f.OrderItemId,
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt,
+                    UpdatedAt = f.UpdatedAt,
 
-            return (list, total);
+                    // Terrarium gốc qua Variant (an toàn null)
+                    TerrariumId = f.OrderItem.TerrariumVariant != null
+                                    ? (int?)f.OrderItem.TerrariumVariant.TerrariumId
+                                    : null,
+                    TerrariumName = f.OrderItem.TerrariumVariant != null
+                                    ? f.OrderItem.TerrariumVariant.Terrarium.TerrariumName // hoặc .Name nếu Terrarium có Name
+                                    : null,
+
+                    // Accessory
+                    AccessoryId = f.OrderItem.AccessoryId,
+                    AccessoryName = f.OrderItem.Accessory != null
+                                    ? f.OrderItem.Accessory.Name                   // hoặc .Title nếu field là Title
+                                    : null,
+
+                    // Ảnh
+                    Images = f.FeedbackImages
+                              .Select(img => new FeedbackImageResponse
+                              {
+                                  FeedbackImageId = img.FeedbackImageId,
+                                  Url = img.ImageUrl
+                              })
+                              .ToList()
+                })
+                .ToListAsync();
+
+            return (items, total);
         }
+
+        public async Task<(List<FeedbackResponse> Items, int Total)>
+    GetAllByUserDtoAsync(int userId, int page, int pageSize)
+        {
+            var q = _context.Feedbacks.Where(f => !f.IsDeleted && f.UserId == userId);
+            var total = await q.CountAsync();
+            var items = await q.OrderByDescending(f => f.CreatedAt)
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(f => new FeedbackResponse
+                {
+                    FeedbackId = f.FeedbackId,
+                    OrderItemId = f.OrderItemId,
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt,
+                    UpdatedAt = f.UpdatedAt,
+                    TerrariumId = f.OrderItem.TerrariumVariant != null
+                                    ? (int?)f.OrderItem.TerrariumVariant.TerrariumId : null,
+                    TerrariumName = f.OrderItem.TerrariumVariant != null
+                                    ? f.OrderItem.TerrariumVariant.Terrarium.TerrariumName : null,
+                    AccessoryId = f.OrderItem.AccessoryId,
+                    AccessoryName = f.OrderItem.Accessory != null ? f.OrderItem.Accessory.Name : null,
+                    Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
+                    {
+                        FeedbackImageId = img.FeedbackImageId,
+                        Url = img.ImageUrl
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+        public async Task<(List<FeedbackResponse> Items, int Total)>
+            GetByTerrariumDtoAsync(int terrariumId, int page, int pageSize)
+        {
+            var q = _context.Feedbacks.Where(f =>
+                !f.IsDeleted &&
+                f.OrderItem.TerrariumVariant != null &&
+                f.OrderItem.TerrariumVariant.TerrariumId == terrariumId);
+
+            var total = await q.CountAsync();
+            var items = await q.OrderByDescending(f => f.CreatedAt)
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(f => new FeedbackResponse
+                {
+                    FeedbackId = f.FeedbackId,
+                    OrderItemId = f.OrderItemId,
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt,
+                    UpdatedAt = f.UpdatedAt,
+                    TerrariumId = f.OrderItem.TerrariumVariant.TerrariumId,
+                    TerrariumName = f.OrderItem.TerrariumVariant.Terrarium.TerrariumName, // hoặc .Name
+                    AccessoryId = f.OrderItem.AccessoryId,
+                    AccessoryName = f.OrderItem.Accessory != null ? f.OrderItem.Accessory.Name : null,
+                    Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
+                    {
+                        FeedbackImageId = img.FeedbackImageId,
+                        Url = img.ImageUrl
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+        public async Task<(List<FeedbackResponse> Items, int Total)>
+            GetByAccessoryDtoAsync(int accessoryId, int page, int pageSize)
+        {
+            var q = _context.Feedbacks.Where(f => !f.IsDeleted && f.OrderItem.AccessoryId == accessoryId);
+            var total = await q.CountAsync();
+            var items = await q.OrderByDescending(f => f.CreatedAt)
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(f => new FeedbackResponse
+                {
+                    FeedbackId = f.FeedbackId,
+                    OrderItemId = f.OrderItemId,
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt,
+                    UpdatedAt = f.UpdatedAt,
+                    TerrariumId = f.OrderItem.TerrariumVariant != null
+                                    ? (int?)f.OrderItem.TerrariumVariant.TerrariumId : null,
+                    TerrariumName = f.OrderItem.TerrariumVariant != null
+                                    ? f.OrderItem.TerrariumVariant.Terrarium.TerrariumName : null,
+                    AccessoryId = f.OrderItem.AccessoryId,
+                    AccessoryName = f.OrderItem.Accessory != null ? f.OrderItem.Accessory.Name : null,
+                    Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
+                    {
+                        FeedbackImageId = img.FeedbackImageId,
+                        Url = img.ImageUrl
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+
         // Soft‑delete
         public async Task<bool> SoftDeleteAsync(int id)
         {
