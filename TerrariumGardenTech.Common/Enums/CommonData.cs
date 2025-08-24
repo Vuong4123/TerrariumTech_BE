@@ -16,6 +16,7 @@ public static class CommonData
     }
     public struct LayoutStatus
     {
+        public const string Draft = "Draft"; // Mới tạo, chưa gửi duyệt
         public const string Pending = "Pending"; // Chờ duyệt
         public const string Approved = "Approved";
         public const string Rejected = "Rejected";

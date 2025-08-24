@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.TerraniumLayout;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
@@ -24,8 +25,27 @@ public class TerrariumLayoutController : ControllerBase
     {
         try
         {
+            request.userId = request.userId <= 0 ? int.Parse(User.FindFirst("UserId")?.Value ?? "0") : request.userId;
             var result = await _service.CreateAsync(request);
             return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+    [HttpPut("{id}/submit")]
+    [Authorize]
+    public async Task<IActionResult> SubmitLayout(int id, int userId)
+    {
+        try
+        {
+            var result = await _service.SubmitLayoutAsync(id, userId);
+
+            if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                return Ok(result);
+
+            return BadRequest(result);
         }
         catch (Exception ex)
         {
@@ -127,11 +147,4 @@ public class TerrariumLayoutController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-}
-
-public class ReviewRequest
-{
-    public string Status { get; set; }
-    public decimal? Price { get; set; }
-    public string? Notes { get; set; }
 }

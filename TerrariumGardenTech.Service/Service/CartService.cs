@@ -1438,8 +1438,10 @@ namespace TerrariumGardenTech.Service.Service
                 AccessoryId = cartItem.AccessoryId,
                 TerrariumVariantId = cartItem.TerrariumVariantId,
                 //Item = itemDetails,
-                TotalCartPrice = totalPrice,
-                TotalCartQuantity = totalQuantity,
+                //TotalCartPrice = totalPrice,
+                //TotalCartQuantity = totalQuantity,
+                TotalCartPrice = cartItem.TotalPrice,
+                TotalCartQuantity = cartItem.Quantity,
                 ItemType = cartItem.ItemType,
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt

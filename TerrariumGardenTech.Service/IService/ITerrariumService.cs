@@ -37,4 +37,5 @@ public interface ITerrariumService
     Task<List<TerrariumLayoutDto>> GetByUserIdAsync(int userId);
     Task<List<TerrariumLayoutDto>> GetPendingAsync();
     Task<TerrariumLayout> ReviewAsync(int id, int managerId, string status, decimal? price, string? notes);
+    Task<IBusinessResult> SubmitLayoutAsync(int layoutId, int userId);
 }
