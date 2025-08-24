@@ -45,3 +45,10 @@ public class CreateLayoutRequest
     public string LayoutName { get; set; }
     public int TerrariumId { get; set; } // Client chọn terrarium có sẵn
 }
+
+public class ReviewRequest
+{
+    public string Status { get; set; }
+    public decimal? Price { get; set; }
+    public string? Notes { get; set; }
+}

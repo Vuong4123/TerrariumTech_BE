@@ -1130,24 +1130,58 @@ public class TerrariumService : ITerrariumService
     // CREATE - Fixed với proper repository calls
     public async Task<TerrariumLayout> CreateAsync(CreateLayoutRequest request)
     {
-        // Kiểm tra terrarium tồn tại
-        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
-        if (terrarium == null)
-            throw new ArgumentException("Terrarium not found");
-
-        // Tạo layout đơn giản
-        var layout = new TerrariumLayout
+        try
         {
-            UserId = request.userId,
-            LayoutName = request.LayoutName,
-            TerrariumId = request.TerrariumId,
-            Status = LayoutStatus.Pending,
-            CreatedDate = DateTime.Now,
-            UpdatedDate = DateTime.Now
-        };
+            // Kiểm tra terrarium tồn tại
+            var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
+            if (terrarium == null)
+                throw new ArgumentException("Terrarium not found");
 
-        await _unitOfWork.TerrariumLayout.CreateAsync(layout);
-        return layout;
+            // Tạo layout đơn giản
+            var layout = new TerrariumLayout
+            {
+                UserId = request.userId,
+                LayoutName = request.LayoutName,
+                TerrariumId = request.TerrariumId,
+                Status = LayoutStatus.Draft,
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now
+            };
+
+            await _unitOfWork.TerrariumLayout.CreateAsync(layout);
+            return layout;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+    // Service method
+    public async Task<IBusinessResult> SubmitLayoutAsync(int layoutId, int userId)
+    {
+        var layout = await _unitOfWork.TerrariumLayout.GetByIdAsync(layoutId);
+
+        if (layout == null)
+            return new BusinessResult(Const.FAIL_READ_CODE, "Layout không tồn tại");
+
+        if (layout.UserId != userId)
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Bạn không có quyền với layout này");
+
+        if (layout.Status != LayoutStatus.Draft)
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Layout đã được gửi trước đó");
+
+        // Validate layout có đủ thông tin chưa
+        if (string.IsNullOrEmpty(layout.LayoutName))
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập tên layout");
+
+        // Chuyển sang Pending
+        layout.Status = LayoutStatus.Pending;
+        layout.UpdatedDate = DateTime.Now;
+
+        await _unitOfWork.TerrariumLayout.UpdateAsync(layout);
+        await _unitOfWork.SaveAsync();
+
+        return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Đã gửi yêu cầu thành công", layout);
     }
 
     // GET BY ID - Simple, no includes

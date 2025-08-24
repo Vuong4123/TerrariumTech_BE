@@ -295,6 +295,7 @@ public class OrderService : IOrderService
                     TerrariumVariantQuantity = 0,
                     Quantity = qty,
                     UnitPrice = unit,
+                    ItemType = reqItem.ItemType,
                     TotalPrice = line
                 });
             }
@@ -315,6 +316,7 @@ public class OrderService : IOrderService
                     TerrariumVariantQuantity = qty,
                     Quantity = qty,
                     UnitPrice = unit,
+                    ItemType = reqItem.ItemType,
                     TotalPrice = line
                 });
             }
