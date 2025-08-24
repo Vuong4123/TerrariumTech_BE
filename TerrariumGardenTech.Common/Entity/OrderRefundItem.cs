@@ -1,4 +1,6 @@
-﻿namespace TerrariumGardenTech.Common.Entity
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TerrariumGardenTech.Common.Entity
 {
     public class OrderRefundItem
     {
@@ -8,6 +10,16 @@
         /// Id sản phẩm cần hoàn tiền
         /// </summary>
         public int OrderItemId { get; set; }
+        /// <summary>
+        /// Tên sản phẩm tại thời điểm tạo đơn vận chuyển, để tránh việc thay đổi tên sp sau này ảnh hưởng đến lịch sử vận chuyển
+        /// </summary>
+        [NotMapped]
+        public string? Name { get; set; }
+        /// <summary>
+        /// Ảnh sản phẩm tại thời điểm tạo đơn vận chuyển, để tránh việc thay đổi tên sp sau này ảnh hưởng đến lịch sử vận chuyển
+        /// </summary>
+        [NotMapped]
+        public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
         /// <summary>
         /// Số lượng sản phẩm cần hoàn tiền
         /// </summary>
