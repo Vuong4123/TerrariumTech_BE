@@ -32,32 +32,32 @@ namespace TerrariumGardenTech.Service.Service
             return _mapper.Map<FeedbackResponse>(created ?? entity);
         }
 
-        // Lấy feedback theo terrarium với phân trang
-        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetByTerrariumAsync(int terrariumId, int page, int pageSize)
+        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetAllAsync(int page, int pageSize)
         {
-            var (list, total) = await _uow.Feedback.GetByTerrariumAsync(terrariumId, page, pageSize);
-            var mapped = _mapper.Map<List<FeedbackResponse>>(list);
-            return (mapped, total);
+            NormalizePaging(ref page, ref pageSize);
+            var (items, total) = await _uow.Feedback.GetAllDtoAsync(page, pageSize);
+            return (items, total);
         }
-        // Lấy feedback theo terrarium với phân trang
-        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetByAccessoryAsync(int terrariumId, int page, int pageSize)
-        {
-            var (list, total) = await _uow.Feedback.GetByAccessoryAsync(terrariumId, page, pageSize);
-            var mapped = _mapper.Map<List<FeedbackResponse>>(list);
-            return (mapped, total);
-        }
-        // Lấy feedback theo UserId (có paging)
+
         public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetAllByUserAsync(int userId, int page, int pageSize)
         {
-            var (list, total) = await _uow.Feedback.GetAllByUserAsync(userId, page, pageSize);
-            return (_mapper.Map<List<FeedbackResponse>>(list), total);
+            NormalizePaging(ref page, ref pageSize);
+            var (items, total) = await _uow.Feedback.GetAllByUserDtoAsync(userId, page, pageSize);
+            return (items, total);
         }
 
-
-        public async Task<(IEnumerable<FeedbackResponse>, int)> GetAllAsync(int page, int pageSize)
+        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetByTerrariumAsync(int terrariumId, int page, int pageSize)
         {
-            var (list, total) = await _uow.Feedback.GetAllAsync(page, pageSize);
-            return (_mapper.Map<List<FeedbackResponse>>(list), total);
+            NormalizePaging(ref page, ref pageSize);
+            var (items, total) = await _uow.Feedback.GetByTerrariumDtoAsync(terrariumId, page, pageSize);
+            return (items, total);
+        }
+
+        public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetByAccessoryAsync(int accessoryId, int page, int pageSize)
+        {
+            NormalizePaging(ref page, ref pageSize);
+            var (items, total) = await _uow.Feedback.GetByAccessoryDtoAsync(accessoryId, page, pageSize);
+            return (items, total);
         }
 
         public async Task<List<FeedbackResponse>> GetByOrderItemAsync(int orderItemId)
@@ -87,6 +87,13 @@ namespace TerrariumGardenTech.Service.Service
             if (e == null || e.IsDeleted) return false;
             if (e.UserId != userId) throw new UnauthorizedAccessException();
             return await _uow.Feedback.SoftDeleteAsync(id);
+        }
+
+        private static void NormalizePaging(ref int page, ref int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 200) pageSize = 200; // giới hạn tối đa để bảo vệ DB
         }
     }
 }

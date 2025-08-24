@@ -14,10 +14,13 @@ namespace TerrariumGardenTech.Common.ResponseModel.Feedback
         public string Comment { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public IEnumerable<string>? Images { get; set; }
+        //public IEnumerable<string>? Images { get; set; }
+        public List<FeedbackImageResponse> Images { get; set; } = new();
 
         // NEW:
-        public int TerrariumId { get; set; }
+        public int? TerrariumId { get; set; }
         public string? TerrariumName { get; set; }
+        public int? AccessoryId { get; set; }
+        public string? AccessoryName { get; set; }
     }
 }
