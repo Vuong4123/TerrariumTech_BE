@@ -24,6 +24,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Common.Security;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -57,6 +58,11 @@ public class UserService : IUserService
                     u => u.Username == userRequest.Username || u.Email == userRequest.Email, false);
             if (existingUser != null)
                 return (Const.FAIL_CREATE_CODE, "Username hoặc Email đã tồn tại");
+
+            // ✅ THÊM: kiểm tra độ mạnh mật khẩu
+            var (ok, err) = PasswordValidator.Validate(userRequest.PasswordHash);
+            if (!ok)
+                return (Const.FAIL_CREATE_CODE, err);
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userRequest.PasswordHash);
 
@@ -297,6 +303,11 @@ public class UserService : IUserService
             // Kiểm tra token hết hạn
             if (!user.EndToken.HasValue || user.EndToken.Value < DateTime.UtcNow)
                 return (Const.FAIL_READ_CODE, "Token đã hết hạn");
+
+            // ✅ THÊM: kiểm tra độ mạnh mật khẩu mới
+            var (ok, err) = PasswordValidator.Validate(newPassword);
+            if (!ok)
+                return (Const.FAIL_CREATE_CODE, err);
 
             // Mã hóa mật khẩu mới
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
