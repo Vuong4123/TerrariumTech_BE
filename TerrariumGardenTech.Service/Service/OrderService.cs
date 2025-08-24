@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography.Xml;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
@@ -567,6 +568,67 @@ public class OrderService : IOrderService
         refundRequest.Order = null;
         refundRequest.Items = refundRequest.Items.Select(x => { x.OrderRefund = null; return x; }).ToList();
         return (true, "Yêu cầu hoàn tiền đã được gửi thành công!", refundRequest);
+    }
+
+    public async Task<IBusinessResult> GetRefundAsync(int orderId)
+    {
+        var order = await _unitOfWork.Order.DbSet().Include(x => x.Refunds).AsNoTracking().FirstOrDefaultAsync(x => x.OrderId == orderId);
+        if (order == null)
+            return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy thông tin hóa đơn!", null);
+
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách yêu cầu hoàn tiền thành công!", order.Refunds.Select(x =>
+        {
+            x.Order = null;
+            return x;
+        }).ToArray());
+    }
+
+    public async Task<IBusinessResult> GetRefundDetailAsync(int refundId)
+    {
+        var refund = await _unitOfWork.OrderRequestRefund.DbSet().Include(x => x.Items).AsNoTracking().FirstOrDefaultAsync(x => x.RequestRefundId == refundId);
+        if (refund == null)
+            return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy yêu cầu hoàn tiền!", null);
+        
+        refund.Items = null;
+        var orderItems = (await _unitOfWork.Order.DbSet().AsNoTracking()
+                .Include(x => x.OrderItems).ThenInclude(x => x.Combo)
+                .Include(x => x.OrderItems).ThenInclude(x => x.Accessory).ThenInclude(x => x.AccessoryImages)
+                .Include(x => x.OrderItems).ThenInclude(x => x.TerrariumVariant)
+                .FirstOrDefaultAsync(x => x.OrderId == refund.OrderId))
+                ?.OrderItems;
+        refund.Items = refund.Items?.Select(item => {
+            item.OrderRefund = null;
+
+            var orderItem = orderItems?.FirstOrDefault(oi => oi.OrderItemId == item.OrderItemId);
+            if (orderItem != null)
+            {
+                if (orderItem.TerrariumVariant != null)
+                {
+                    item.Name = orderItem.TerrariumVariant.VariantName;
+                    if (!string.IsNullOrEmpty(orderItem.TerrariumVariant.UrlImage))
+                        item.Images = new[] { orderItem.TerrariumVariant.UrlImage };
+                }
+                else if (orderItem.Combo != null)
+                {
+                    item.Name = orderItem.Combo.Name;
+                    if (!string.IsNullOrEmpty(orderItem.Combo.ImageUrl))
+                        item.Images = new[] { orderItem.Combo.ImageUrl };
+                }
+                else if (orderItem.Accessory != null)
+                {
+                    item.Name = orderItem.Accessory.Name;
+                    item.Images = orderItem.Accessory.AccessoryImages.Where(x => !string.IsNullOrEmpty(x.ImageUrl)).Select(x => x.ImageUrl);
+                }
+                else
+                {
+                    item.Name = "Underfine";
+                    item.Images = Array.Empty<string>();
+                }
+            }
+
+            return item;
+        }).ToList();
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy thông tin yêu cầu hoàn tiền thành công!", refund);
     }
 
     public async Task<(bool, string, object?)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId)

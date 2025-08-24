@@ -19,6 +19,8 @@ public interface IOrderService
 
 
     Task<(bool, string, object?)> RequestRefundAsync(CreateRefundRequest request, int currentUserId);
+    Task<IBusinessResult> GetRefundDetailAsync(int refundId);
+    Task<IBusinessResult> GetRefundAsync(int orderId);
     Task<(bool, string, object?)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId);
 
     Task<IBusinessResult> GetAllWithPaginationAsync(PaginationRequest request);

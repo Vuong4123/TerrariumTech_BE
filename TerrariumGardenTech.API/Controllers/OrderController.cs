@@ -293,6 +293,24 @@ public class OrderController : ControllerBase
         return BadRequest(new { message, data = refund });
     }
 
+    [HttpGet("{id}/Refund")]
+    public async Task<IActionResult> GetAllRefund(int id)
+    {
+        var result = await _svc.GetRefundAsync(id);
+        if (result.Status == Const.SUCCESS_READ_CODE)
+            return Ok(new { result.Data });
+        return BadRequest(new { messsage = result.Message });
+    }
+
+    [HttpGet("Refund/{refundId}")]
+    public async Task<IActionResult> GetRefundDetail(int refundId)
+    {
+        var result = await _svc.GetRefundDetailAsync(refundId);
+        if (result.Status == Const.SUCCESS_READ_CODE)
+            return Ok(new { result.Data });
+        return BadRequest(new { messsage = result.Message });
+    }
+
     [HttpPut("Refund/{id}")]
     public async Task<IActionResult> UpdateRefundRequest(int id, [FromBody] UpdateRefundRequest request)
     {
