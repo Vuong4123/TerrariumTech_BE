@@ -6,6 +6,7 @@ public class ComboItem
 {
     public int ComboItemId { get; set; }
     public int ComboId { get; set; }
+    public int? TerrariumId { get; set; }
     public int? TerrariumVariantId { get; set; }
     public int? AccessoryId { get; set; }
     public int Quantity { get; set; } = 1;

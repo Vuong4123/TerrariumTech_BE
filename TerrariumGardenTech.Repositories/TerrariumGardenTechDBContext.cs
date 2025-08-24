@@ -1257,11 +1257,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderRequestRefund_Order");
-            entity.Property(e => e.Status).IsRequired()
-               .HasConversion(new ValueConverter<RequestRefundStatusEnum, string>(
-                   v => v.ToString(),
-                   v => (RequestRefundStatusEnum)Enum.Parse(typeof(RequestRefundStatusEnum), v)
-               )).HasMaxLength(50);
         });
         // Chat entity configuration
         modelBuilder.Entity<Chat>(entity =>

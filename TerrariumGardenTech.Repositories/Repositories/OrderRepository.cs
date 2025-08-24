@@ -49,6 +49,18 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.ReturnExchangeRequests)
             .ToListAsync();
     }
+    public async Task<List<Order>> GetAllWithStatus(string status)
+    {
+        return await _context.Orders
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.TerrariumVariant)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.Payment)
+            .Include(o => o.ReturnExchangeRequests)
+            .Where(o => o.Status.ToString() == status)
+            .ToListAsync();
+    }
 
     public async Task<int> SaveAsync()
     {

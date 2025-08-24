@@ -11,7 +11,7 @@ namespace TerrariumGardenTech.Common.RequestModel.Order
     public class UpdateRefundRequest
     {
         public int RefundId { get; set; }
-        public RequestRefundStatusEnum Status { get; set; }
+        public string Status { get; set; }
         public string? Reason { get; set; }
         public decimal? RefundAmount { get; set; }
         public bool IsPoint { get; set; }

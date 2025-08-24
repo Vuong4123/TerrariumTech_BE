@@ -25,3 +25,28 @@ public class OrderCreateRequest
     public List<OrderItemCreateRequest> Items { get; set; } = new();
     public int TotalAmount { get; set; } // Tổng số tiền đơn hàng, có thể tính toán từ Items
 }
+public class CancelOrderRequest
+{
+    public string CancelReason { get; set; }
+    public string? AdditionalNotes { get; set; }
+}
+public class AcceptRefundRequest
+{
+    public bool IsApproved { get; set; }
+    public string? Notes { get; set; }
+    public string? RejectionReason { get; set; } // Lý do từ chối nếu không duyệt
+}
+
+public class RefundRequestDto
+{
+    public int RefundId { get; set; }
+    // Thông tin refund
+    public int UserId { get; set; }
+    public string UserEmail { get; set; }
+    public int OrderId { get; set; }
+    public decimal RefundAmount { get; set; }
+    public string Reason { get; set; }
+    public string RefundStatus { get; set; }
+    public DateTime RequestDate { get; set; }
+    public string OrderStatus { get; set; }
+}

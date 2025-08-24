@@ -23,4 +23,7 @@ public interface IOrderService
 
     Task<IBusinessResult> GetAllWithPaginationAsync(PaginationRequest request);
     Task<IBusinessResult> GetByUserWithPaginationAsync(int userId, PaginationRequest request);
+    Task<IBusinessResult> AcceptRefundRequestAsync(int refundId, int staffId, AcceptRefundRequest request);
+    Task<IBusinessResult> CancelOrderAsync(int orderId, int userId, CancelOrderRequest request);
+    Task<IBusinessResult> GetPendingRefundRequestsAsync();
 }

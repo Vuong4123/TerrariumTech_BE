@@ -22,4 +22,11 @@ public static class CommonData
         public const string Rejected = "Rejected";
         public const string Ordered = "Ordered";
     }
+    public struct OrderRequestRefundStatus
+    {
+        public const string Pending = "Pending"; // Chờ duyệt
+        public const string Approved = "Approved"; // Đã duyệt
+        public const string Rejected = "Rejected"; // Bị từ chối
+        public const string Cancel = "Cancel"; // Bị từ chối
+    }
 }

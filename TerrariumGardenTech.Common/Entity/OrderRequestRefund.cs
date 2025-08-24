@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Common.Entity
 {
     public class OrderRequestRefund
     {
+        [Key]
         public int RequestRefundId { get; set; }
         public int OrderId { get; set; }
         /// <summary>
@@ -23,7 +26,7 @@ namespace TerrariumGardenTech.Common.Entity
         /// <summary>
         /// Trạng thái của yêu cầu hoàn tiền
         /// </summary>
-        public RequestRefundStatusEnum Status { get; set; }
+        public string Status { get; set; } = CommonData.OrderRequestRefundStatus.Pending;
         /// <summary>
         /// Lý do sửa đổi yêu cầu hoàn tiền - quản lý điền lý do
         /// </summary>
@@ -48,7 +51,7 @@ namespace TerrariumGardenTech.Common.Entity
         /// Thời gian sửa đổi yêu cầu hoàn tiền
         /// </summary>
         public DateTime LastModifiedDate { get; set; }
-
+        public string Notes { get; set; } = "";
         public virtual Order Order { get; set; } = null!;
     }
 }

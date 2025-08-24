@@ -31,3 +31,24 @@ public class OrderResponse
 
     public List<OrderItemResponse> OrderItems { get; set; } = new();
 }
+public class CancelOrderResponse
+{
+    public int OrderId { get; set; }
+    public string Status { get; set; }
+    public DateTime CancelledAt { get; set; }
+    public string CancelReason { get; set; }
+    public decimal RefundAmount { get; set; }
+    public string RefundStatus { get; set; }
+    public string Message { get; set; }
+}
+public class AcceptRefundResponse
+{
+    public int RefundId { get; set; }
+    public int OrderId { get; set; }
+    public string RefundStatus { get; set; }
+    public decimal RefundAmount { get; set; }
+    public DateTime ProcessedAt { get; set; }
+    public int ProcessedBy { get; set; }
+    public bool IsApproved { get; set; }
+    public string Message { get; set; }
+}

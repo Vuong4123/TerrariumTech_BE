@@ -37,11 +37,9 @@ public class ComboResponse
 public class ComboItemResponse
 {
     public int ComboItemId { get; set; }
+    public int TerrariumId { get; set; }
     public int? TerrariumVariantId { get; set; }
     public int? AccessoryId { get; set; }
-    public string ProductType { get; set; } = string.Empty; // "Terrarium" or "Accessory"
-    public string ProductName { get; set; } = string.Empty;
-    public string? ProductImage { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice => UnitPrice * Quantity;

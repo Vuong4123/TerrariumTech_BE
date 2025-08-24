@@ -29,6 +29,7 @@ public class CreateComboRequest
 
 public class ComboItemRequest
 {
+    public int? TerrariumId { get; set; }
     public int? TerrariumVariantId { get; set; }
     public int? AccessoryId { get; set; }
     public int Quantity { get; set; } = 1;
