@@ -47,6 +47,15 @@ namespace TerrariumGardenTech.Repositories.Repositories
                 .AverageAsync(f => (double?)f.Rating);
         }
 
+        // 1 user chỉ được feedback 1 lần cho mỗi orderItem (bỏ qua bản đã xoá mềm)
+        public async Task<bool> ExistsByOrderItemAndUserAsync(int orderItemId, int userId)
+        {
+            return await _context.Feedbacks
+                .AnyAsync(f => f.OrderItemId == orderItemId
+                               && f.UserId == userId
+                               && !f.IsDeleted);
+        }
+
         // Get all có paging
         public async Task<(List<FeedbackResponse> Items, int Total)> GetAllDtoAsync(int page, int pageSize)
         {
