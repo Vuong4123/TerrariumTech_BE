@@ -25,8 +25,6 @@ public class BlogCategoryController : ControllerBase
 
     // GET: api/<BlogCategoryController>
     [HttpGet("get-all")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
-
     public async Task<IBusinessResult> Get()
     {
         return await _blogCategoryService.GetAllBlogCategory();
@@ -34,7 +32,6 @@ public class BlogCategoryController : ControllerBase
 
     // GET api/<BlogCategoryController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogCategoryService.GetById(id);

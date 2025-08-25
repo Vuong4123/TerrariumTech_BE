@@ -72,16 +72,16 @@ namespace TerrariumGardenTech.Service.Service
             // 6) raw signature – đúng thứ tự và giá trị
             var fields = new (string k, string v)[]
             {
-        ("accessKey",   accessKey),
-        ("amount",      amount.ToString(CultureInfo.InvariantCulture)),
-        ("extraData",   extraData),
-        ("ipnUrl",      ipnUrl),
-        ("orderId",     orderId),
-        ("orderInfo",   orderInfo),
-        ("partnerCode", partnerCode),
-        ("redirectUrl", returnUrl),
-        ("requestId",   requestId),
-        ("requestType", requestType),
+                ("accessKey",   accessKey),
+                ("amount",      amount.ToString(CultureInfo.InvariantCulture)),
+                ("extraData",   extraData),
+                ("ipnUrl",      ipnUrl),
+                ("orderId",     orderId),
+                ("orderInfo",   orderInfo),
+                ("partnerCode", partnerCode),
+                ("redirectUrl", returnUrl),
+                ("requestId",   requestId),
+                ("requestType", requestType),
             };
             string rawHash = string.Join("&", fields.Select(p => $"{p.k}={p.v}"));
 
@@ -248,7 +248,7 @@ namespace TerrariumGardenTech.Service.Service
 
                 // ---- từ đây trở xuống giữ logic của bạn ----
                 var orderIdRaw = Get("orderId");
-                var idStr = orderIdRaw?.Split('_').FirstOrDefault();
+                var idStr = orderIdRaw?.Split('-').FirstOrDefault();
                 if (!int.TryParse(idStr, out var orderId))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid orderId");
 
