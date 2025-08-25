@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.TerraniumLayout;
 using TerrariumGardenTech.Repositories.Entity;
@@ -138,7 +139,7 @@ public class TerrariumLayoutController : ControllerBase
     {
         try
         {
-            var managerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var managerId = GetCurrentUserId();
             var result = await _service.ReviewAsync(id, managerId, request.Status, request.Price, request.Notes);
             return Ok(result);
         }
@@ -146,5 +147,13 @@ public class TerrariumLayoutController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+    }
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+            return userId;
+
+        return 0;
     }
 }
