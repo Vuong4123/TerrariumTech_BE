@@ -29,6 +29,28 @@ public class PaymentController : ControllerBase
         _logger = logger;
     }
 
+    [AllowAnonymous]
+    [HttpGet("momo/membership/callback")]
+    public async Task<IActionResult> MomoMembershipCallback()
+    {
+        var result = await _momoServices.MomoMembershipReturnExecute(Request.Query);
+        var isSuccess = result.Status == Const.SUCCESS_UPDATE_CODE;
+
+        var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
+        var feUrl = $"{baseUrl}?status={(isSuccess ? "success" : "fail")}&type=membership";
+        return Content(BuildRedirectHtml(feUrl), "text/html");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("momo/membership/ipn")]
+    public async Task<IActionResult> MomoMembershipIpn([FromBody] MomoIpnModel body)
+    {
+        var rs = await _momoServices.MomoMembershipIpnExecute(body);
+        if (rs.Status == Const.SUCCESS_UPDATE_CODE)
+            return Ok(new { resultCode = 0, message = "success" });
+        return Ok(new { resultCode = 5, message = "fail" });
+    }
+
 
     // ====================== PAYOS ======================
 

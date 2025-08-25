@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using System.Net.Http.Json;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Repositories;
@@ -21,13 +23,248 @@ namespace TerrariumGardenTech.Service.Service
         private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
         private readonly UnitOfWork _unitOfWork;
-
+        
         public MomoServices(IConfiguration config, IHttpClientFactory httpClientFactory, UnitOfWork unitOfWork)
         {
             _config = config;
             _httpClient = httpClientFactory.CreateClient();
             _unitOfWork = unitOfWork;
+            
         }
+
+        public async Task<MomoQrResponse> CreateMomoMembershipDirectPaymentUrl(DirectPaymentRequest req)
+        {
+            var momo = _config.GetSection("Momo");
+            string endpoint = momo["PaymentUrl"]!;
+            string partnerCode = momo["PartnerCode"]!;
+            string accessKey = momo["AccessKey"]!;
+            string secretKey = momo["SecretKey"]!;
+            string returnUrl = momo["MembershipReturnUrl"] ?? momo["ReturnUrl"]!;
+            string ipnUrl = momo["MembershipIpnUrl"] ?? momo["IpnUrl"]!;
+            string requestType = "captureWallet";
+
+            // Lấy gói và tiền phải trả (VND, làm tròn)
+            var package = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(req.PackageId)
+                          ?? throw new Exception("Membership package not found");
+            long amount = (long)Math.Round(package.Price, 0, MidpointRounding.AwayFromZero);
+
+            // orderId/requestId độc lập hệ Order
+            string orderId = $"MB_{req.UserId}_{req.PackageId}_{Guid.NewGuid():N}";
+            string requestId = Guid.NewGuid().ToString("N");
+            string orderInfo = SanitizeOrderInfo($"Membership {package.Type} ({package.Id})");
+
+            // extraData: đủ thông tin để tạo Membership khi callback
+            string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                JsonSerializer.Serialize(new
+                {
+                    userId = req.UserId,
+                    packageId = req.PackageId,
+                    startDate = req.StartDate.ToString("o")
+                })
+            ));
+
+            // Raw signature đúng thứ tự theo MoMo v2
+            string rawHash =
+                $"accessKey={accessKey}&amount={amount}&extraData={extraData}" +
+                $"&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}" +
+                $"&partnerCode={partnerCode}&redirectUrl={returnUrl}" +
+                $"&requestId={requestId}&requestType={requestType}";
+
+            string signature = CreateSignature(secretKey, rawHash);
+
+            var payload = new
+            {
+                partnerCode,
+                accessKey,
+                requestId,
+                amount,
+                orderId,
+                orderInfo,
+                redirectUrl = returnUrl,
+                ipnUrl,
+                extraData,
+                requestType,
+                signature,
+                lang = "vi"
+            };
+
+            using var reqMsg = new HttpRequestMessage(HttpMethod.Post, endpoint)
+            { Content = JsonContent.Create(payload) };
+
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+            var httpRes = await _httpClient.SendAsync(reqMsg);
+            var body = await httpRes.Content.ReadAsStringAsync();
+
+            if (!httpRes.IsSuccessStatusCode)
+                throw new Exception($"MoMo HTTP {(int)httpRes.StatusCode}: {body}");
+
+            var momoRes = JsonSerializer.Deserialize<MomoCreateResponse>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                          ?? throw new Exception("Cannot parse MoMo response");
+
+            if (momoRes.ResultCode != 0)
+                throw new Exception($"MoMo error {momoRes.ResultCode}: {momoRes.Message ?? "Unknown"}");
+
+            var payUrl = momoRes.PayUrl ?? momoRes.Deeplink ?? momoRes.QrCodeUrl;
+            if (string.IsNullOrWhiteSpace(payUrl))
+                throw new Exception("MoMo response missing payUrl");
+
+            return new MomoQrResponse
+            {
+                PayUrl = payUrl!,
+                QrImageBase64 = GenerateBase64QrCode(payUrl!)
+            };
+        }
+
+        // 2.2) ReturnUrl cho Membership: verify & tạo Membership (idempotent)
+        public async Task<IBusinessResult> MomoMembershipReturnExecute(IQueryCollection query)
+        {
+            try
+            {
+                var accessKey = _config["Momo:AccessKey"];
+                var secretKey = _config["Momo:SecretKey"];
+                string Get(string k) => query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
+
+                var raw = string.Join("&", new[]
+                {
+                $"accessKey={accessKey}",
+                $"amount={Get("amount")}",
+                $"extraData={Get("extraData")}",
+                $"message={Get("message")}",
+                $"orderId={Get("orderId")}",
+                $"orderInfo={Get("orderInfo")}",
+                $"orderType={Get("orderType")}",
+                $"partnerCode={Get("partnerCode")}",
+                $"payType={Get("payType")}",
+                $"requestId={Get("requestId")}",
+                $"responseTime={Get("responseTime")}",
+                $"resultCode={Get("resultCode")}",
+                $"transId={Get("transId")}"
+            });
+
+                var calcSig = CreateSignature(secretKey, raw);
+                if (!string.Equals(calcSig, Get("signature"), StringComparison.OrdinalIgnoreCase))
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
+
+                if (Get("resultCode") != "0")
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Payment failed");
+
+                if (!long.TryParse(Get("amount"), out var amt) || amt <= 0)
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
+
+                // Giải mã metadata
+                int userId, packageId; DateTime startDate;
+                try
+                {
+                    var json = Encoding.UTF8.GetString(Convert.FromBase64String(Get("extraData")));
+                    using var doc = JsonDocument.Parse(json);
+                    userId = doc.RootElement.GetProperty("userId").GetInt32();
+                    packageId = doc.RootElement.GetProperty("packageId").GetInt32();
+                    startDate = DateTime.Parse(
+                        doc.RootElement.GetProperty("startDate").GetString()!,
+                        null, DateTimeStyles.RoundtripKind
+                    );
+                }
+                catch
+                {
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid extraData");
+                }
+
+                // Đối chiếu số tiền với giá gói
+                var pkg = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
+                if (pkg == null) return new BusinessResult(Const.NOT_FOUND_CODE, "Package not found");
+                long expected = (long)Math.Round(pkg.Price, 0, MidpointRounding.AwayFromZero);
+                if (amt != expected)
+                    return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={amt}, expected={expected}");
+
+                // Idempotent: nếu đã có Membership Active tương ứng thì coi như thành công
+                var existed = await _unitOfWork.MemberShip.FindAsync(m =>
+                    m.UserId == userId && m.PackageId == packageId &&
+                    m.StartDate == startDate && m.StatusEnum == MembershipStatus.Active);
+
+                int membershipId;
+                if (existed.Any())
+                {
+                    membershipId = existed.First().MembershipId;
+                }
+                else
+                {
+                    var membership = new Membership
+                    {
+                        UserId = userId,
+                        PackageId = pkg.Id,
+                        Price = pkg.Price,
+                        StartDate = startDate,
+                        EndDate = startDate.AddDays(pkg.DurationDays),
+                        StatusEnum = MembershipStatus.Active
+                    };
+                    await _unitOfWork.MemberShip.CreateAsync(membership);
+                    await _unitOfWork.SaveAsync();
+                    membershipId = membership.MembershipId;
+                }
+
+                // Không tạo/ghi Order, chỉ trả SUCCESS
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Membership payment success",
+                                          new { MembershipId = membershipId });
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+            }
+        }
+
+        // 2.3) IPN cho Membership: chỉ verify; không ghi DB để tránh double-processing
+        public async Task<IBusinessResult> MomoMembershipIpnExecute(MomoIpnModel body)
+        {
+            try
+            {
+                var secretKey = _config["Momo:SecretKey"];
+                var map = new Dictionary<string, string>
+                {
+                    ["amount"] = body.amount,
+                    ["extraData"] = body.extraData,
+                    ["message"] = body.message,
+                    ["orderId"] = body.orderId,
+                    ["orderInfo"] = body.orderInfo,
+                    ["orderType"] = body.orderType,
+                    ["partnerCode"] = body.partnerCode,
+                    ["payType"] = body.payType,
+                    ["requestId"] = body.requestId,
+                    ["responseTime"] = body.responseTime,
+                    ["resultCode"] = body.resultCode,
+                    ["transId"] = body.transId
+                };
+                var raw = BuildRawSignature(map); // helper đã có sẵn
+                var calcSig = CreateSignature(secretKey, raw);
+                if (!string.Equals(calcSig, body.signature, StringComparison.OrdinalIgnoreCase))
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
+
+                // (tuỳ chọn) kiểm tra amount khớp giá gói từ extraData
+                try
+                {
+                    if (!string.IsNullOrEmpty(body.extraData))
+                    {
+                        var json = Encoding.UTF8.GetString(Convert.FromBase64String(body.extraData));
+                        using var doc = JsonDocument.Parse(json);
+                        var packageId = doc.RootElement.GetProperty("packageId").GetInt32();
+                        var pkg = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
+                        if (pkg != null && long.TryParse(body.amount, out var amt))
+                        {
+                            var expected = (long)Math.Round(pkg.Price, 0, MidpointRounding.AwayFromZero);
+                            if (amt != expected)
+                                return new BusinessResult(Const.FAIL_READ_CODE, "Amount mismatch");
+                        }
+                    }
+                }
+                catch { /* ignore */ }
+
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Verified");
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+            }
+        }
+
 
         public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
         {
