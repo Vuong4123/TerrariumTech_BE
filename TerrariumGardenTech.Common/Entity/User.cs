@@ -50,7 +50,7 @@ public partial class User
     public int OtpResendCount { get; set; }         // số lần resend trong khung thời gian
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
-    public virtual ICollection<AisuggestLayout> AisuggestLayouts { get; set; } = new List<AisuggestLayout>();
+    //public virtual ICollection<AisuggestLayout> AisuggestLayouts { get; set; } = new List<AisuggestLayout>();
 
     public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
 
@@ -64,7 +64,6 @@ public partial class User
 
     public virtual ICollection<Personalize> Personalizes { get; set; } = new List<Personalize>();
 
-    public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
 
     public virtual ICollection<Chat> ChatsAsUser1 { get; set; } = new List<Chat>();
 
