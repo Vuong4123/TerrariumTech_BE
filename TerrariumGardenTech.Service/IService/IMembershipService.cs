@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Repositories.Entity;
+﻿using TerrariumGardenTech.Common.ResponseModel.Order;
+using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Service.IService;
 
@@ -13,5 +14,5 @@ public interface IMembershipService
     Task<int> UpdateAllExpiredMembershipsAsync(); // Updates all expired memberships
     Task<int> UpdateExpiredMembershipsByUserIdAsync(int userId); // Updates expired memberships for a user
     bool IsMembershipExpired(Membership membership); // Checks if a membership is expired
-    Task<int> CreateMembershipForUserAsync(int userId, int packageId, DateTime startDate);
+    Task<MembershipCreationResult> CreateMembershipForUserAsync(int userId, int packageId, DateTime startDate);
 }

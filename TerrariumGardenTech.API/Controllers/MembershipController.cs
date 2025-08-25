@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.MemberShip;
+using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -14,12 +17,15 @@ public class MembershipController : ControllerBase
 {
     private readonly IMembershipPackageService _membershipPackageService;
     private readonly IMembershipService _membershipService;
+    private readonly IMomoServices _momoServices;
 
     public MembershipController(IMembershipService membershipService,
-        IMembershipPackageService membershipPackageService)
+        IMembershipPackageService membershipPackageService,
+        IMomoServices momoServices)
     {
         _membershipService = membershipService;
         _membershipPackageService = membershipPackageService;
+        _momoServices = momoServices;
     }
 
 
@@ -44,8 +50,21 @@ public class MembershipController : ControllerBase
             var membershipId =
                 await _membershipService.CreateMembershipForUserAsync(request.UserId, request.PackageId,
                     request.StartDate);
+
+            var momo = new MomoRequest
+            {
+                OrderId = membershipId.OrderId,
+                PayAll = true
+            };
+            var rsp = await _momoServices.CreateMomoPaymentUrl(momo);
+            var responseData = new MembershipCreationResult
+            {
+                MembershipId = membershipId.MembershipId,
+                OrderId = membershipId.OrderId,
+                MomoQrResponse = rsp
+            };
             return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership cho người dùng thành công",
-                membershipId);
+                responseData);
         }
         catch (UnauthorizedAccessException ex)
         {
