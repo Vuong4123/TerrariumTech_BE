@@ -1127,6 +1127,8 @@ public class TerrariumService : ITerrariumService
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, list);
     }
 
+
+    #region Terrarium Layout Management
     // CREATE - Fixed với proper repository calls
     public async Task<TerrariumLayout> CreateAsync(CreateLayoutRequest request)
     {
@@ -1211,7 +1213,9 @@ public class TerrariumService : ITerrariumService
     {
         var layouts = await _unitOfWork.TerrariumLayout.GetAllAsync();
 
-        return layouts.Select(l => new TerrariumLayoutDto
+        return layouts
+            .OrderByDescending(l => l.UpdatedDate) // sắp xếp mới nhất
+        .Select(l => new TerrariumLayoutDto
         {
             LayoutId = l.LayoutId,
             LayoutName = l.LayoutName,
@@ -1233,7 +1237,9 @@ public class TerrariumService : ITerrariumService
         var allLayouts = await _unitOfWork.TerrariumLayout.GetAllAsync();
         var userLayouts = allLayouts.Where(l => l.UserId == userId).ToList();
 
-        return userLayouts.Select(l => new TerrariumLayoutDto
+        return userLayouts
+         .OrderByDescending(l => l.UpdatedDate) // sắp xếp mới nhất
+        .Select(l => new TerrariumLayoutDto
         {
             LayoutId = l.LayoutId,
             LayoutName = l.LayoutName,
@@ -1255,7 +1261,9 @@ public class TerrariumService : ITerrariumService
         var allLayouts = await _unitOfWork.TerrariumLayout.GetAllAsync();
         var pendingLayouts = allLayouts.Where(l => l.Status == LayoutStatus.Pending).ToList();
 
-        return pendingLayouts.Select(l => new TerrariumLayoutDto
+        return pendingLayouts
+         .OrderByDescending(l => l.UpdatedDate) // sắp xếp mới nhất
+        .Select(l => new TerrariumLayoutDto
         {
             LayoutId = l.LayoutId,
             LayoutName = l.LayoutName,
@@ -1339,4 +1347,5 @@ public class TerrariumService : ITerrariumService
         await _unitOfWork.TerrariumLayout.UpdateAsync(layout);
         return layout;
     }
+    #endregion
 }
