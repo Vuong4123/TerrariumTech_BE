@@ -21,10 +21,26 @@ namespace TerrariumGardenTech.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] FeedbackCreateRequest req)
         {
-            var res = await _svc.CreateAsync(req, UserId);
-            return CreatedAtAction(nameof(GetByOrderItem),
-                                   new { orderItemId = res.OrderItemId }, res);
+            try
+            {
+                var res = await _svc.CreateAsync(req, UserId);
+                return CreatedAtAction(nameof(GetByOrderItem),
+                                       new { orderItemId = res.OrderItemId }, res);
+            }
+            catch (ArgumentException ex)            // dữ liệu không hợp lệ (comment rỗng, rating ngoài 1..5)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)     // đã feedback cho orderItem này
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)      // không thuộc user này
+            {
+                return Forbid();
+            }
         }
+
 
         // Lấy feedback theo terrarium với phân trang
         [HttpGet("terrarium/{terrariumId:int}")]
@@ -69,7 +85,26 @@ namespace TerrariumGardenTech.API.Controllers
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Put(int id, [FromBody] FeedbackUpdateRequest req)
-            => Ok(await _svc.UpdateAsync(id, req, UserId));
+        {
+            try
+            {
+                var res = await _svc.UpdateAsync(id, req, UserId);
+                return Ok(res);
+            }
+            catch (KeyNotFoundException ex)          // feedback không tồn tại
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)             // validate sai
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)      // không phải chủ sở hữu
+            {
+                return Forbid();
+            }
+        }
+
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)

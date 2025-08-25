@@ -22,15 +22,32 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<FeedbackResponse> CreateAsync(FeedbackCreateRequest req, int userId)
         {
+            // Chuẩn hoá & validate
+            req.Comment = (req.Comment ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(req.Comment))
+                throw new ArgumentException("Nội dung đánh giá (comment) không được để trống.");
+
+            // Rating là int (không nullable) -> kiểm trực tiếp
+            if (req.Rating < 1 || req.Rating > 5)
+                throw new ArgumentException("Rating phải nằm trong khoảng 1..5.");
+
+            // Chặn trùng: 1 user – 1 orderItem
+            var isDup = await _uow.Feedback.ExistsByOrderItemAndUserAsync(req.OrderItemId, userId);
+            if (isDup)
+                throw new InvalidOperationException("Bạn đã gửi đánh giá cho sản phẩm này.");
+
+            // Tạo mới (giữ nguyên flow cũ)
             var entity = _mapper.Map<Feedback>(req);
             entity.UserId = userId;
 
             await _uow.Feedback.CreateAsync(entity);
 
-            // Load lại có kèm FeedbackImages để map ra Response.Images
+            // Load lại để có FeedbackImages rồi map ra Response (giữ nguyên hành vi cũ)
             var created = await _uow.Feedback.GetByIdAsync(entity.FeedbackId);
             return _mapper.Map<FeedbackResponse>(created ?? entity);
         }
+
+
 
         public async Task<(IEnumerable<FeedbackResponse> Items, int Total)> GetAllAsync(int page, int pageSize)
         {
@@ -74,12 +91,24 @@ namespace TerrariumGardenTech.Service.Service
             if (entity.UserId != userId)
                 throw new UnauthorizedAccessException();
 
-            _mapper.Map(req, entity); // Profile đã set UpdatedAt
-            await _uow.Feedback.UpdateAsync(entity);
+            // Chuẩn hoá & validate (rating là int thường)
+            if (req.Comment != null)
+            {
+                req.Comment = req.Comment.Trim();
+                if (req.Comment.Length == 0)
+                    throw new ArgumentException("Nội dung đánh giá (comment) không được để trống.");
+            }
+            if (req.Rating < 1 || req.Rating > 5)
+                throw new ArgumentException("Rating phải nằm trong khoảng 1..5.");
+
+            _mapper.Map(req, entity);                 // Profile đang set UpdatedAt và map các field:contentReference[oaicite:2]{index=2}
+            await _uow.Feedback.UpdateAsync(entity);  // Repo set UpdatedAt = UtcNow & SaveChanges:contentReference[oaicite:3]{index=3}
 
             var updated = await _uow.Feedback.GetByIdAsync(id);
             return _mapper.Map<FeedbackResponse>(updated ?? entity);
         }
+
+
 
         public async Task<bool> DeleteAsync(int id, int userId)
         {
