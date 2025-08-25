@@ -7,6 +7,7 @@ namespace TerrariumGardenTech.Service.IService;
 public interface IBlogService
 {
     Task<IBusinessResult> GetAll();
+    Task<IBusinessResult> GetByCategory(int categoryId);
     Task<IBusinessResult> GetById(int id);
     Task<IBusinessResult> CreateBlog(BlogCreateRequest blogCreateRequest);
     Task<IBusinessResult> UpdateBlog(BlogUpdateRequest blogUpdateRequest);
