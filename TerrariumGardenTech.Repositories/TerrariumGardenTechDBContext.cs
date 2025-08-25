@@ -101,7 +101,9 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<TransportLog> TransportLogs { get; set; }
     public DbSet<OrderTransport> OrderTransports { get; set; }
+    public DbSet<OrderTransportItem> OrderTransportItems { get; set; }
     public DbSet<OrderRequestRefund> OrderRequestRefunds { get; set; }
+    public DbSet<OrderRefundItem> OrderRefundItems { get; set; }
     public virtual DbSet<Chat> Chats { get; set; }
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
@@ -1247,6 +1249,17 @@ public partial class TerrariumGardenTechDBContext : DbContext
                    v => (TransportStatusEnum)Enum.Parse(typeof(TransportStatusEnum), v)
                )).HasMaxLength(50);
         });
+        
+        modelBuilder.Entity<OrderTransportItem>(entity =>
+        {
+            entity.HasKey(e => e.TransportItemId);
+            entity.ToTable("OrderTransportItem");
+            entity.Property(e => e.TransportId).IsRequired();
+            entity.HasOne(d => d.OrderTransport).WithMany(p => p.Items)
+                .HasForeignKey(d => d.TransportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OrderTransportItem_OrderTransport");
+        });
 
         modelBuilder.Entity<OrderRequestRefund>(entity =>
         {
@@ -1258,6 +1271,18 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderRequestRefund_Order");
         });
+
+        modelBuilder.Entity<OrderRefundItem>(entity =>
+        {
+            entity.HasKey(entity => entity.OrderRefundItemId).HasName("PK_OrderRefundItemId");
+            entity.ToTable("OrderRefundItemId");
+            entity.Property(e => e.OrderRefundId).IsRequired();
+            entity.HasOne(d => d.OrderRefund).WithMany(p => p.Items)
+                .HasForeignKey(d => d.OrderRefundId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OrderRefundItem_OrderRefundId");
+        });
+
         // Chat entity configuration
         modelBuilder.Entity<Chat>(entity =>
         {

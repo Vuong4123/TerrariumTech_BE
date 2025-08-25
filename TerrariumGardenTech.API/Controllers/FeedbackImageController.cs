@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.Common.RequestModel.FeedbackImage;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.Service;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,6 +13,10 @@ namespace TerrariumGardenTech.API.Controllers
     public class FeedbackImageController : ControllerBase
     {
         private readonly IFeedbackImageService _feedbackImageService;   
+        public FeedbackImageController(IFeedbackImageService feedbackImageService)
+        {
+            _feedbackImageService = feedbackImageService ;
+        }
         // GET: api/<FeedbackImageController>
         [HttpGet("get-all")]
         public async Task<IBusinessResult> Get()
@@ -35,14 +40,14 @@ namespace TerrariumGardenTech.API.Controllers
 
         // POST api/<FeedbackImageController>
         [HttpPost("add-image")]
-        public Task<IBusinessResult> Post([FromBody] FeedbackImageUploadRequest feedbackImageUploadRequest)
+        public Task<IBusinessResult> Post([FromForm] FeedbackImageUploadRequest feedbackImageUploadRequest)
         {
             return _feedbackImageService.CreateFeedbackImageAsync(feedbackImageUploadRequest.ImageFile, feedbackImageUploadRequest.FeedbackId);
         }
 
         // PUT api/<FeedbackImageController>/5
         [HttpPut("update-image/{id}")]
-        public Task<IBusinessResult> Put(int id, [FromBody] FeedbackImageUploadUpdateRequest feedbackImageUploadUpdateRequest)
+        public Task<IBusinessResult> Put(int id, [FromForm] FeedbackImageUploadUpdateRequest feedbackImageUploadUpdateRequest)
         {
             feedbackImageUploadUpdateRequest.FeedbackImageId = id; // Set the ID for the update request
             return _feedbackImageService.UpdateFeedbackImageAsync(feedbackImageUploadUpdateRequest);

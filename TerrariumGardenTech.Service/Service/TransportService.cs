@@ -13,11 +13,13 @@ namespace TerrariumGardenTech.Service.Service
     {
         private readonly UnitOfWork _unitOfWork;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IWalletServices _walletService;
 
-        public TransportService(UnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
+        public TransportService(UnitOfWork unitOfWork, ICloudinaryService cloudinaryService, IWalletServices walletService)
         {
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinaryService;
+            _walletService = walletService;
         }
 
         public async Task<(int, IEnumerable<OrderTransport>)> Paging(int? orderId, int? shipperId, TransportStatusEnum? status, bool? isRefund, int pageIndex = 1, int pageSize = 10)
@@ -32,11 +34,20 @@ namespace TerrariumGardenTech.Service.Service
             if (isRefund.HasValue)
                 query = query.Where(x => x.IsRefund == isRefund.Value);
             var total = await query.CountAsync();
-            var datas = await query.OrderByDescending(x => x.CreatedDate)
+            var datas = await query.Include(x => x.TransportLogs).OrderByDescending(x => x.CreatedDate)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToArrayAsync();
-            return (total, datas);
+            return (total, datas.Select(x =>
+            {
+                if (x.TransportLogs == null || !x.TransportLogs.Any())
+                    return x;
+
+                var lastLog = x.TransportLogs.OrderByDescending(log => log.LogId).FirstOrDefault();
+                x.Image = lastLog?.CheckinImage;
+                x.TransportLogs = null;
+                return x;
+            }));
         }
 
         public async Task<IBusinessResult> CreateTransport(CreateTransportModel request, int currentUserId)
@@ -49,7 +60,7 @@ namespace TerrariumGardenTech.Service.Service
             if ((request.UserId.HasValue && assignUser == null) || currentUser == null)
                 return new BusinessResult(false, "Thông tin người dùng không hợp lệ!");
 
-            var order = await _unitOfWork.Order.DbSet().Include(x => x.Transports).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
+            var order = await _unitOfWork.Order.DbSet().Include(x => x.Transports).Include(x => x.OrderItems).FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
             if (order == null)
                 return new BusinessResult(false, "Không tìm thấy thông tin đơn hàng!");
             if (order.Transports != null && (
@@ -97,7 +108,12 @@ namespace TerrariumGardenTech.Service.Service
                         IsRefund = request.IsRefund,
                         UserId = assignUser?.UserId,
                         CreatedDate = DateTime.Now,
-                        CreatedBy = currentUser.Username
+                        CreatedBy = currentUser.Username,
+                        Items = order.OrderItems.Select(x => new OrderTransportItem
+                        {
+                            OrderItemId = x.OrderItemId,
+                            Quantity = x.Quantity ?? 0
+                        }).ToList()
                     };
                     if (order.Status == OrderStatusEnum.Processing)
                         order.Status = OrderStatusEnum.Shipping;
@@ -111,6 +127,7 @@ namespace TerrariumGardenTech.Service.Service
                     await _unitOfWork.SaveAsync();
                     transport.Order = null;
                     transport.TransportLogs = null;
+                    transport.Items = transport.Items.Select(x => { x.OrderTransport = null; return x; }).ToList();
                     return new BusinessResult(true, "Tạo đơn vận chuyển thành công!", transport);
                 }
                 catch (Exception)
@@ -153,19 +170,61 @@ namespace TerrariumGardenTech.Service.Service
         public async Task<OrderTransport> GetById(int transportId)
         {
             var transport = await _unitOfWork.Transport.DbSet().AsNoTracking()
-                .Include(x => x.TransportLogs).FirstOrDefaultAsync(x => x.TransportId == transportId);
+                .Include(x => x.TransportLogs).Include(x => x.Items)
+                .FirstOrDefaultAsync(x => x.TransportId == transportId);
             if (transport == null) return null;
 
+            var orderItems = (await _unitOfWork.Order.DbSet().AsNoTracking()
+                .Include(x => x.OrderItems).ThenInclude(x => x.Combo)
+                .Include(x => x.OrderItems).ThenInclude(x => x.Accessory).ThenInclude(x => x.AccessoryImages)
+                .Include(x => x.OrderItems).ThenInclude(x => x.TerrariumVariant)
+                .FirstOrDefaultAsync(x => x.OrderId == transport.OrderId))
+                ?.OrderItems;
+
             transport.TransportLogs = transport.TransportLogs.Select(x => { x.Transport = null; return x; }).OrderByDescending(x => x.CreatedDate).ToList();
+            transport.Items = transport.Items.Select(item => {
+                item.OrderTransport = null;
+
+                var orderItem = orderItems?.FirstOrDefault(oi => oi.OrderItemId == item.OrderItemId);
+                if (orderItem != null)
+                {
+                    if (orderItem.TerrariumVariant != null)
+                    {
+                        item.Name = orderItem.TerrariumVariant.VariantName;
+                        if (!string.IsNullOrEmpty(orderItem.TerrariumVariant.UrlImage))
+                            item.Images = new[] { orderItem.TerrariumVariant.UrlImage };
+                    }
+                    else if (orderItem.Combo != null)
+                    {
+                        item.Name = orderItem.Combo.Name;
+                        if (!string.IsNullOrEmpty(orderItem.Combo.ImageUrl))
+                            item.Images = new[] { orderItem.Combo.ImageUrl };
+                    }
+                    else if (orderItem.Accessory != null)
+                    {
+                        item.Name = orderItem.Accessory.Name;
+                        item.Images = orderItem.Accessory.AccessoryImages.Where(x => !string.IsNullOrEmpty(x.ImageUrl)).Select(x => x.ImageUrl);
+                    }
+                    else
+                    {
+                        item.Name = "Underfine";
+                        item.Images = Array.Empty<string>();
+                    }
+                }
+
+                return item; 
+            }).ToList();
             return transport;
         }
 
         public async Task<IEnumerable<OrderTransport>> GetByOrderId(int orderId)
         {
             var transports = await _unitOfWork.Transport.DbSet().AsNoTracking()
+                .Include(x => x.TransportLogs)
                 .Where(x => x.OrderId == orderId)
                 .OrderByDescending(x => x.CreatedDate)
                 .ToListAsync();
+
             return transports.Select(x => { 
                 x.Order = null;
                 return x; 
@@ -234,21 +293,41 @@ namespace TerrariumGardenTech.Service.Service
             }
             transport.Status = request.Status;
             transport.UserId = request.AssignToUserId ?? transport.UserId;
-            if (request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.GetFromCustomerFail)
-                transport.ContactFailNumber = request.ContactFailNumber.Value;
-            if (transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping)
-                order.Status = OrderStatusEnum.Failed;
-            if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.GetFromCustomerFail)
-                order.Status = OrderStatusEnum.Completed;
-            if (transport.Status == TransportStatusEnum.ShippingToWareHouse)
-                order.Status = OrderStatusEnum.Refunded;
-            await _unitOfWork.TransportLog.CreateAsync(log);
-            await _unitOfWork.Transport.UpdateAsync(transport);
-            await _unitOfWork.Order.UpdateAsync(order);
-            await _unitOfWork.SaveAsync();
-            transport.Order = null;
-            transport.TransportLogs = null;
-            return new BusinessResult(true, "Cập nhật thông tin đơn vận chuyển thành công!", transport);
+            using (var trans = await _unitOfWork.Transport.BeginTransactionAsync())
+            {
+                try
+                {
+                    if (request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.GetFromCustomerFail)
+                        transport.ContactFailNumber = request.ContactFailNumber.Value;
+                    if (transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping)
+                        order.Status = OrderStatusEnum.Failed;
+                    if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.GetFromCustomerFail)
+                        order.Status = OrderStatusEnum.Completed;
+                    if (transport.Status == TransportStatusEnum.ShippingToWareHouse)
+                    {
+                        var refund = await _unitOfWork.OrderRequestRefund.DbSet()
+                            .AsNoTracking().Include(x => x.Items).FirstOrDefaultAsync(x => x.TransportId == transport.TransportId);
+                        if (refund != null && refund.Items != null && refund.Items.Any())
+                        {
+                            var point = refund.Items.Sum(x => x.RefundPoint);
+                            await _walletService.RefundAsync(order.UserId, point, order.OrderId);
+                        }
+                    }
+                    await _unitOfWork.TransportLog.CreateAsync(log);
+                    await _unitOfWork.Transport.UpdateAsync(transport);
+                    await _unitOfWork.Order.UpdateAsync(order);
+                    await _unitOfWork.SaveAsync();
+                    transport.Order = null;
+                    transport.TransportLogs = null;
+                    await trans.CommitAsync();
+                    return new BusinessResult(true, "Cập nhật thông tin đơn vận chuyển thành công!", transport);
+                }
+                catch (Exception)
+                {
+                    await trans.RollbackAsync();
+                    return new BusinessResult(false, "Cập nhập thông tin đơn vận chuyển thất bại!");
+                }
+            }
         }
     }
 }

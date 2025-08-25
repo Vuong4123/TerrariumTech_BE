@@ -293,7 +293,7 @@ namespace TerrariumGardenTech.Service.Service
                         }
                     }
 
-                    bundleResponse.MainItem = await BuildCartItemResponseAsync(addedItem);
+                    //bundleResponse.MainItem = await BuildCartItemResponseAsync(addedIte m);
                 }
                 else if (request.AccessoryId.HasValue)
                 {
@@ -1446,7 +1446,10 @@ namespace TerrariumGardenTech.Service.Service
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt
             };
+            response.TotalCartPrice = totalPrice;
+            response.TotalCartQuantity = totalQuantity;
             return response;
+
         }
 
         public async Task<IBusinessResult> ValidateCartAsync(int userId)

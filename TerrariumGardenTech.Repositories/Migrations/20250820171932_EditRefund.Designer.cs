@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250820171932_EditRefund")]
+    partial class EditRefund
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,9 +89,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TerrariumId")
                         .HasColumnType("int");
 
                     b.Property<int?>("TerrariumVariantId")
@@ -540,57 +540,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasIndex("TerrariumId");
 
                     b.ToTable("TerrariumAccessory");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TerrariumLayout", b =>
-                {
-                    b.Property<int>("LayoutId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LayoutId"));
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal?>("FinalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("LayoutName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ReviewDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ReviewNotes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ReviewedBy")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TerrariumId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("LayoutId");
-
-                    b.HasIndex("ReviewedBy");
-
-                    b.HasIndex("TerrariumId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("TerrariumLayouts");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TransportLog", b =>
@@ -1660,9 +1609,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<int>("EnvironmentId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("GeneratedByAI")
-                        .HasColumnType("bit");
-
                     b.Property<decimal>("MaxPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -2136,35 +2082,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Accessory");
 
                     b.Navigation("Terrarium");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TerrariumLayout", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "Reviewer")
-                        .WithMany()
-                        .HasForeignKey("ReviewedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("FK_TerrariumLayout_Reviewer");
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Terrarium", "Terrarium")
-                        .WithMany()
-                        .HasForeignKey("TerrariumId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_TerrariumLayout_Terrarium");
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_TerrariumLayout_User");
-
-                    b.Navigation("Reviewer");
-
-                    b.Navigation("Terrarium");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TransportLog", b =>

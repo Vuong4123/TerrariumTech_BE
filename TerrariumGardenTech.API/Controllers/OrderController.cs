@@ -290,7 +290,25 @@ public class OrderController : ControllerBase
         var (success, message) = await _svc.RequestRefundAsync(request, userId);
         if (success)
             return Ok(new { message });
-        return BadRequest(new { message });
+        return BadRequest(new { message, data = success });
+    }
+
+    [HttpGet("{id}/Refund")]
+    public async Task<IActionResult> GetAllRefund(int id)
+    {
+        var result = await _svc.GetRefundAsync(id);
+        if (result.Status == Const.SUCCESS_READ_CODE)
+            return Ok(new { result.Data });
+        return BadRequest(new { messsage = result.Message });
+    }
+
+    [HttpGet("Refund/{refundId}")]
+    public async Task<IActionResult> GetRefundDetail(int refundId)
+    {
+        var result = await _svc.GetRefundDetailAsync(refundId);
+        if (result.Status == Const.SUCCESS_READ_CODE)
+            return Ok(new { result.Data });
+        return BadRequest(new { messsage = result.Message });
     }
 
     [HttpPut("Refund/{id}")]
@@ -298,10 +316,10 @@ public class OrderController : ControllerBase
     {
         request.RefundId = id;
         var currentUserId = User.GetUserId();
-        var (success, message) = await _svc.UpdateRequestRefundAsync(request, currentUserId);
+        var (success, message, refund) = await _svc.UpdateRequestRefundAsync(request, currentUserId);
         if (success)
             return Ok(new { message });
-        return BadRequest(new { message });
+        return BadRequest(new { message, data = refund });
     }
 
     // TerrariumGardenTech.API/Controllers/OrderController.cs - Thêm methods mới

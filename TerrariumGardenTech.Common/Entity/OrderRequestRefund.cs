@@ -19,7 +19,6 @@ namespace TerrariumGardenTech.Common.Entity
         /// Lý do yêu cầu hoàn tiền
         /// </summary>
         public string Reason { get; set; } = "";
-        /// <summary>
         /// Ngày tạo yêu cầu hoàn tiền
         /// </summary>
         public DateTime RequestDate { get; set; }
@@ -43,7 +42,6 @@ namespace TerrariumGardenTech.Common.Entity
         /// Đánh dấu không hoàn tiền mà chuyển sang điểm
         /// </summary>
         public bool IsPoint { get; set; }
-        /// <summary>
         /// Thông tin vận chuyển liên quan đến yêu cầu hoàn tiền
         /// </summary>
         public int? TransportId { get; set; }
@@ -53,5 +51,7 @@ namespace TerrariumGardenTech.Common.Entity
         public DateTime LastModifiedDate { get; set; }
         public string Notes { get; set; } = "";
         public virtual Order Order { get; set; } = null!;
+
+        public IEnumerable<OrderRefundItem>? Items { get; set; }
     }
 }

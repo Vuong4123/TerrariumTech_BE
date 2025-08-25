@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Common.Enums;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Repositories.Entity;
 
 namespace TerrariumGardenTech.Common.Entity
@@ -51,7 +52,14 @@ namespace TerrariumGardenTech.Common.Entity
         /// </summary>
         public string? CreatedBy { get; set; }
 
+        /// <summary>
+        /// Ảnh cuối checkin vận chuyển - ko có trong db
+        /// </summary>
+        [NotMapped]
+        public string? Image { get; set; }
+
         public virtual Order Order { get; set; } = null!;
+        public virtual ICollection<OrderTransportItem>? Items { get; set; }
         public virtual ICollection<TransportLog> TransportLogs { get; set; } = new List<TransportLog>();
     }
 
@@ -101,5 +109,25 @@ namespace TerrariumGardenTech.Common.Entity
         public string? CreatedBy { get; set; }
 
         public virtual OrderTransport Transport { get; set; } = null!;
+    }
+
+    public class OrderTransportItem
+    {
+        public int TransportItemId { get; set; }
+        public int OrderItemId { get; set; }
+        /// <summary>
+        /// Tên sản phẩm tại thời điểm tạo đơn vận chuyển, để tránh việc thay đổi tên sp sau này ảnh hưởng đến lịch sử vận chuyển
+        /// </summary>
+        [NotMapped]
+        public string? Name { get; set; }
+        /// <summary>
+        /// Ảnh sản phẩm tại thời điểm tạo đơn vận chuyển, để tránh việc thay đổi tên sp sau này ảnh hưởng đến lịch sử vận chuyển
+        /// </summary>
+        [NotMapped]
+        public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
+        public int Quantity { get; set; }
+        public int TransportId { get; set; }
+
+        public virtual OrderTransport? OrderTransport { get; set; }
     }
 }
