@@ -12,8 +12,8 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    [Migration("20250824144040_AddTable240820251")]
-    partial class AddTable240820251
+    [Migration("20250825182634_AddOtpResendFieldsToUsers")]
+    partial class AddOtpResendFieldsToUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -332,6 +332,46 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("MembershipPackage");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRefundItem", b =>
+                {
+                    b.Property<int>("OrderRefundItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderRefundItemId"));
+
+                    b.Property<bool?>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderRefundId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReasonModified")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RefundPoint")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserModified")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrderRefundItemId")
+                        .HasName("PK_OrderRefundItemId");
+
+                    b.HasIndex("OrderRefundId");
+
+                    b.ToTable("OrderRefundItemId", (string)null);
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRequestRefund", b =>
                 {
                     b.Property<int>("RequestRefundId")
@@ -432,6 +472,30 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderTransport", (string)null);
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderTransportItem", b =>
+                {
+                    b.Property<int>("TransportItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransportItemId"));
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransportId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TransportItemId");
+
+                    b.HasIndex("TransportId");
+
+                    b.ToTable("OrderTransportItem", (string)null);
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Shape", b =>
@@ -1785,6 +1849,12 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<DateTime?>("OtpExpiration")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("OtpResendCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("OtpSentAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -2036,6 +2106,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRefundItem", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Common.Entity.OrderRequestRefund", "OrderRefund")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderRefundId")
+                        .IsRequired()
+                        .HasConstraintName("FK_OrderRefundItem_OrderRefundId");
+
+                    b.Navigation("OrderRefund");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRequestRefund", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
@@ -2056,6 +2137,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasConstraintName("FK_OrderTransport_Order");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderTransportItem", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Common.Entity.OrderTransport", "OrderTransport")
+                        .WithMany("Items")
+                        .HasForeignKey("TransportId")
+                        .IsRequired()
+                        .HasConstraintName("FK_OrderTransportItem_OrderTransport");
+
+                    b.Navigation("OrderTransport");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TerrariumAccessory", b =>
@@ -2560,8 +2652,15 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Memberships");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRequestRefund", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderTransport", b =>
                 {
+                    b.Navigation("Items");
+
                     b.Navigation("TransportLogs");
                 });
 

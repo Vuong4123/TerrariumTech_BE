@@ -46,7 +46,8 @@ public partial class User
     public DateTime? OtpExpiration { get; set; }
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime? RefreshTokenExpiryDate { get; set; }
-
+    public DateTime? OtpSentAt { get; set; }        // lần gửi OTP gần nhất
+    public int OtpResendCount { get; set; }         // số lần resend trong khung thời gian
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     public virtual ICollection<AisuggestLayout> AisuggestLayouts { get; set; } = new List<AisuggestLayout>();
