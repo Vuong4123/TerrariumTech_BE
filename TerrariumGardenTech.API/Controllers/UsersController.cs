@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Auth;
+using TerrariumGardenTech.Common.RequestModel.UserManagement;
 using TerrariumGardenTech.Common.RequestModel.Voucher;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
@@ -51,6 +52,14 @@ public class UsersController : ControllerBase
         return Ok(new { message });
     }
 
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest req)
+    {
+        var (code, msg) = await _userService.ResendOtpAsync(req.Email);
+        if (code == Const.SUCCESS_CREATE_CODE) return Ok(new { message = msg });
+        if (code == Const.ERROR_EXCEPTION) return StatusCode(500, new { message = msg });
+        return BadRequest(new { message = msg });
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)

@@ -4,7 +4,6 @@ using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Services;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,8 +17,6 @@ using System.Text;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Auth;
-using TerrariumGardenTech.Common.RequestModel.Voucher;
-using TerrariumGardenTech.Common.ResponseModel.User;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -332,20 +329,10 @@ public class UserService : IUserService
     {
         try
         {
-            //var httpClient = new HttpClient();
-            //var googleApiUrl = $"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={accessToken}";
-
             // Lấy thông tin người dùng từ Google API
             if (string.IsNullOrEmpty(accessToken))
-                return new BusinessResult(Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE,
-                    null);
-
-            //if (string.IsNullOrEmpty(response))
-            //    return new BusinessResult (Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE, null);
-
-
-            // Giả sử `response` chứa JSON của người dùng, bạn có thể parse nó và lấy các thông tin cần thiết
-            //var userInfo = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfo>(response);
+                return new BusinessResult(Const.ERROR_EXCEPTION_CODE_LOGINGOOGLE, Const.ERROR_EXCEPTION_MSG_LOGINGOOGLE,null);    
+            // Giả sử `response` chứa JSON của người dùng, bạn có thể parse nó và lấy các thông tin cần thiết          
             var userInfo = await VerifyGoogleAccessToken(accessToken);
 
             // Kiểm tra người dùng có trong hệ thống chưa
@@ -489,5 +476,55 @@ public class UserService : IUserService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task<(int Code, string Msg)> ResendOtpAsync(string email)
+    {
+        try
+        {
+            var user = await _unitOfWork.User.FindOneAsync(u => u.Email == email, false);
+            if (user == null)
+                return (Const.FAIL_READ_CODE, "Email không tồn tại");
+
+            // Chỉ cho resend khi tài khoản CHƯA kích hoạt
+            if (string.Equals(user.Status, AccountStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase))
+                return (Const.FAIL_CREATE_CODE, "Tài khoản đã kích hoạt, không cần OTP");
+
+            // Cooldown: 60 giây giữa 2 lần gửi
+            var now = DateTime.UtcNow;
+            if (user.OtpSentAt.HasValue && now - user.OtpSentAt.Value < TimeSpan.FromSeconds(60))
+            {
+                var wait = 60 - (int)(now - user.OtpSentAt.Value).TotalSeconds;
+                return (Const.FAIL_CREATE_CODE, $"Vui lòng thử lại sau {wait}s");
+            }
+
+            // Giới hạn số lần resend trong 1 giờ (ví dụ 3 lần)
+            // Reset cửa sổ sau 1 giờ
+            if (user.OtpSentAt.HasValue && now - user.OtpSentAt.Value > TimeSpan.FromHours(1))
+            {
+                user.OtpResendCount = 0;
+            }
+            if (user.OtpResendCount >= 3)
+                return (Const.FAIL_CREATE_CODE, "Bạn đã vượt quá số lần gửi lại OTP. Vui lòng thử lại sau 1 giờ.");
+
+            // Tạo và lưu OTP mới
+            var otp = GenerateOtp();
+            user.Otp = otp;
+            user.OtpExpiration = now.AddMinutes(10);   // hoặc 1 phút nếu bạn muốn ngắn
+            user.OtpSentAt = now;
+            user.OtpResendCount += 1;
+
+            await _unitOfWork.User.UpdateAsync(user);
+
+            // Gửi email OTP
+            await SendOtpEmailAsync(email, otp);
+
+            return (Const.SUCCESS_CREATE_CODE, "Đã gửi lại OTP");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gửi lại OTP");
+            return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
+        }
     }
 }
