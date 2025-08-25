@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TerrariumGardenTech.Repositories.Entity;
 
@@ -11,9 +12,11 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    partial class TerrariumGardenTechDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250825234340_DeleteTableV1")]
+    partial class DeleteTableV1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -861,6 +864,37 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("Address", (string)null);
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AisuggestLayout", b =>
+                {
+                    b.Property<int>("LayoutId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("layoutId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LayoutId"));
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("createdAt")
+                        .HasDefaultValueSql("(sysutcdatetime())");
+
+                    b.Property<string>("LayoutData")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("layoutData");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("userId");
+
+                    b.HasKey("LayoutId")
+                        .HasName("PK__AISugges__023A37EFFA219D01");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AISuggestLayout", (string)null);
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Blog", b =>
                 {
                     b.Property<int>("BlogId")
@@ -1127,6 +1161,43 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasIndex("FeedbackId");
 
                     b.ToTable("FeedbackImage", (string)null);
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.LayoutTerrarium", b =>
+                {
+                    b.Property<int>("LayoutTerrariumId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("layoutTerrariumId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LayoutTerrariumId"));
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("createdAt")
+                        .HasDefaultValueSql("(sysutcdatetime())");
+
+                    b.Property<string>("LayoutData")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("layoutData");
+
+                    b.Property<int>("TerrariumVariantId")
+                        .HasColumnType("int")
+                        .HasColumnName("terrariumVariantId");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updatedAt")
+                        .HasDefaultValueSql("(sysutcdatetime())");
+
+                    b.HasKey("LayoutTerrariumId")
+                        .HasName("PK__LayoutTe__ED2AF5EA0034035F");
+
+                    b.HasIndex("TerrariumVariantId");
+
+                    b.ToTable("LayoutTerrarium", (string)null);
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Membership", b =>
@@ -2094,6 +2165,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.AisuggestLayout", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
+                        .WithMany("AisuggestLayouts")
+                        .HasForeignKey("UserId")
+                        .IsRequired()
+                        .HasConstraintName("FK_AISuggestLayout_User");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Blog", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.BlogCategory", "BlogCategory")
@@ -2179,6 +2261,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasConstraintName("FK_FeedbackImage_Feedback");
 
                     b.Navigation("Feedback");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.LayoutTerrarium", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Repositories.Entity.TerrariumVariant", "TerrariumVariant")
+                        .WithMany("LayoutTerrarium")
+                        .HasForeignKey("TerrariumVariantId")
+                        .IsRequired()
+                        .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
+
+                    b.Navigation("TerrariumVariant");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Membership", b =>
@@ -2528,6 +2621,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.TerrariumVariant", b =>
                 {
+                    b.Navigation("LayoutTerrarium");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("PromotionTerrariumVariants");
@@ -2536,6 +2631,8 @@ namespace TerrariumGardenTech.Repositories.Migrations
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.User", b =>
                 {
                     b.Navigation("Addresses");
+
+                    b.Navigation("AisuggestLayouts");
 
                     b.Navigation("Blogs");
 
