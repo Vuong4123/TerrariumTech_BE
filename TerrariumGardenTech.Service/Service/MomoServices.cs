@@ -1,16 +1,18 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using System.Globalization;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
-using TerrariumGardenTech.Common.Entity;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -31,17 +33,17 @@ namespace TerrariumGardenTech.Service.Service
         {
             var momoSection = _config.GetSection("Momo");
 
-            string endpoint = momoSection["PaymentUrl"];
-            string partnerCode = momoSection["PartnerCode"];
-            string accessKey = momoSection["AccessKey"];
-            string secretKey = momoSection["SecretKey"];
-            string returnUrl = momoSection["ReturnUrl"];
-            string ipnUrl = momoSection["IpnUrl"];
+            string endpoint = momoSection["PaymentUrl"]!;
+            string partnerCode = momoSection["PartnerCode"]!;
+            string accessKey = momoSection["AccessKey"]!;
+            string secretKey = momoSection["SecretKey"]!;
+            string returnUrl = momoSection["ReturnUrl"]!;
+            string ipnUrl = momoSection["IpnUrl"]!;
             string requestType = "captureWallet";
 
-            // ✅ Tính tiền phải trả từ Order
-            var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(req.OrderId);
-            if (order is null) throw new Exception("Order not found");
+            // 1) Tính tiền phải trả
+            var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(req.OrderId)
+                         ?? throw new Exception("Order not found");
 
             decimal baseAmount = order.TotalAmount > 0
                 ? order.TotalAmount
@@ -51,26 +53,47 @@ namespace TerrariumGardenTech.Service.Service
                 ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
                 : (order.Deposit ?? baseAmount);
 
-            long amount = (long)payable; // MoMo dùng VND (không *100)
+            if (payable <= 0) throw new Exception("Invalid amount");
 
-            string orderId = $"{req.OrderId}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
-            string orderInfo = $"{req.OrderInfo} {(req.PayAll ? "(Full -10%)" : "(Partial)")}";
-            string requestId = Guid.NewGuid().ToString();
+            // 2) amount phải là số nguyên (VND) – KHÔNG ToString theo culture
+            long amount = (long)payable;
+
+            // 3) orderId/requestId tuyệt đối duy nhất
+            string orderId = $"{req.OrderId}-{Guid.NewGuid():N}";
+            string requestId = Guid.NewGuid().ToString("N");
+
+            // 4) orderInfo an toàn – loại bỏ ký tự phá vỡ chuỗi ký
+            string orderInfoRaw = $"{req.OrderInfo} {(req.PayAll ? "(Full -10%)" : "(Partial)")}";
+            string orderInfo = SanitizeOrderInfo(orderInfoRaw); // bỏ &, =, \r\n,…
+
+            // 5) extraData base64 (có thể để rỗng)
             string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes("stk=0329126894"));
 
-            string rawHash = $"accessKey={accessKey}&amount={amount}&extraData={extraData}" +
-                             $"&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}" +
-                             $"&partnerCode={partnerCode}&redirectUrl={returnUrl}" +
-                             $"&requestId={requestId}&requestType={requestType}";
+            // 6) raw signature – đúng thứ tự và giá trị
+            var fields = new (string k, string v)[]
+            {
+        ("accessKey",   accessKey),
+        ("amount",      amount.ToString(CultureInfo.InvariantCulture)),
+        ("extraData",   extraData),
+        ("ipnUrl",      ipnUrl),
+        ("orderId",     orderId),
+        ("orderInfo",   orderInfo),
+        ("partnerCode", partnerCode),
+        ("redirectUrl", returnUrl),
+        ("requestId",   requestId),
+        ("requestType", requestType),
+            };
+            string rawHash = string.Join("&", fields.Select(p => $"{p.k}={p.v}"));
 
-            string signature = CreateSignature(secretKey, rawHash);
+            string signature = HmacSha256(secretKey, rawHash);
 
+            // 7) Gửi payload – để amount là số, không phải string
             var payload = new
             {
                 partnerCode,
                 accessKey,
                 requestId,
-                amount = amount.ToString(),
+                amount,
                 orderId,
                 orderInfo,
                 redirectUrl = returnUrl,
@@ -81,42 +104,41 @@ namespace TerrariumGardenTech.Service.Service
                 lang = "vi"
             };
 
-            var json = System.Text.Json.JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync(endpoint, content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            using var doc = JsonDocument.Parse(responseContent);
-            if (doc.RootElement.TryGetProperty("payUrl", out var payUrlElement))
+            using var reqMsg = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
-                string payUrl = payUrlElement.GetString();
-                return new MomoQrResponse
-                {
-                    PayUrl = payUrl,
-                    QrImageBase64 = GenerateBase64QrCode(payUrl)
-                };
-            }
+                Content = JsonContent.Create(payload)
+            };
 
-            var message = doc.RootElement.TryGetProperty("message", out var msg)
-                ? msg.GetString()
-                : "Unknown error from Momo";
-            throw new Exception($"Momo error: {message}");
+            // timeout phòng kẹt
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            var httpRes = await _httpClient.SendAsync(reqMsg);
+            var body = await httpRes.Content.ReadAsStringAsync();
+
+            if (!httpRes.IsSuccessStatusCode)
+                throw new Exception($"MoMo HTTP {(int)httpRes.StatusCode}: {body}");
+
+            var momo = JsonSerializer.Deserialize<MomoCreateResponse>(body, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? throw new Exception("Cannot parse MoMo response");
+
+            // 8) Kiểm tra resultCode
+            if (momo.ResultCode != 0)
+                throw new Exception($"MoMo error {momo.ResultCode}: {momo.Message ?? "Unknown"}");
+
+            var payUrl = momo.PayUrl ?? momo.Deeplink ?? momo.QrCodeUrl;
+            if (string.IsNullOrWhiteSpace(payUrl))
+                throw new Exception("MoMo response missing payUrl");
+
+            return new MomoQrResponse
+            {
+                PayUrl = payUrl!,
+                QrImageBase64 = GenerateBase64QrCode(payUrl!)
+            };
         }
-        private string CreateSignature(string key, string rawData)
-        {
-            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
-            byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-            return BitConverter.ToString(hash).Replace("-", "").ToLower();
-        }
-        private string GenerateBase64QrCode(string content)
-        {
-            using var qrGenerator = new QRCoder.QRCodeGenerator();
-            using var qrCodeData = qrGenerator.CreateQrCode(content, QRCoder.QRCodeGenerator.ECCLevel.Q);
-            using var qrCode = new QRCoder.PngByteQRCode(qrCodeData);
-            byte[] qrCodeBytes = qrCode.GetGraphic(20);
-            return Convert.ToBase64String(qrCodeBytes);
-        }
+
+        
 
         // NEW: Create MoMo link for Wallet Top-up with metadata (userId + random orderId)
         public async Task<MomoQrResponse> CreateMomoWalletTopupUrl(MomoWalletTopupRequest req)
@@ -506,6 +528,53 @@ namespace TerrariumGardenTech.Service.Service
             if (expected < 0) expected = 0;
             return RoundVnd(expected);
         }
+
+        // === Helpers ===
+        private static string HmacSha256(string key, string raw)
+        {
+            using var h = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+            var hash = h.ComputeHash(Encoding.UTF8.GetBytes(raw));
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+
+        private static string SanitizeOrderInfo(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "Thanh toan don hang";
+            // Loại bỏ ký tự có thể phá format rawHash (&, =)
+            s = s.Replace("&", " ")
+                 .Replace("=", " ")
+                 .Replace("\r", " ")
+                 .Replace("\n", " ");
+            // Giới hạn theo spec (thường 255)
+            return s.Length > 250 ? s[..250] : s;
+        }
+        private string CreateSignature(string key, string rawData)
+        {
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+            byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+            return BitConverter.ToString(hash).Replace("-", "").ToLower();
+        }
+        private string GenerateBase64QrCode(string content)
+        {
+            using var qrGenerator = new QRCoder.QRCodeGenerator();
+            using var qrCodeData = qrGenerator.CreateQrCode(content, QRCoder.QRCodeGenerator.ECCLevel.Q);
+            using var qrCode = new QRCoder.PngByteQRCode(qrCodeData);
+            byte[] qrCodeBytes = qrCode.GetGraphic(20);
+            return Convert.ToBase64String(qrCodeBytes);
+        }
+
+
         #endregion
     }
+
+    // Model nhỏ để đọc phản hồi MoMo
+    public sealed class MomoCreateResponse
+    {
+        public int? ResultCode { get; set; }     // 0 = success
+        public string? Message { get; set; }
+        public string? PayUrl { get; set; }
+        public string? Deeplink { get; set; }
+        public string? QrCodeUrl { get; set; }
+    }
+
 }
