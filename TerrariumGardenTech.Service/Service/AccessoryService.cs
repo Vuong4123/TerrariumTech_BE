@@ -117,21 +117,28 @@ public class AccessoryService : IAccessoryService
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoryResponse);
     }
 
-    // Lọc Accessory theo CategoryId
+    // Overload mới: có request để phân trang/sort/include
     public async Task<IBusinessResult> FilterAccessoryAsync(int? categoryId)
     {
+        if (categoryId is null)
+            return new BusinessResult(Const.WARNING_NO_DATA_CODE, "CategoryId is required.");
+
+        // Lấy theo category (repo hiện tại của bạn trả IEnumerable<Accessory>)
         var accessories = await _unitOfWork.Accessory.FilterAccessoryAsync(categoryId);
-        if (accessories == null || !accessories.Any())
+        var list = (accessories ?? Enumerable.Empty<Accessory>())
+            .OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt ?? DateTime.MinValue) // mới -> cũ
+            .ThenByDescending(a => a.AccessoryId)
+            .ToList();
+
+        if (list.Count == 0)
             return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No accessories matched the given filter.");
 
-        var accessoryIds = accessories.Select(a => a.AccessoryId).ToList();
+        // Lấy stats theo list id
+        var ids = list.Select(a => a.AccessoryId).ToList();
+        var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(ids);
+        var purchaseStats = await _unitOfWork.Accessory.GetAccessoryPurchaseCountsAsync(ids);
 
-        // Rating
-        var ratingStats = await _unitOfWork.Accessory.GetAccessoryRatingStatsAsync(accessoryIds);
-        // ✅ Lượt mua cho cả list (1 query)
-        var purchaseStats = await _unitOfWork.Accessory.GetAccessoryPurchaseCountsAsync(accessoryIds);
-
-        var accessoriesResponse = accessories.Select(a => new AccessoryResponse
+        var data = list.Select(a => new AccessoryResponse
         {
             AccessoryId = a.AccessoryId,
             Name = a.Name,
@@ -143,15 +150,19 @@ public class AccessoryService : IAccessoryService
             CategoryId = a.CategoryId,
             CreatedAt = a.CreatedAt ?? DateTime.MinValue,
             UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,
-
+            AccessoryImages = (a.AccessoryImages ?? new List<AccessoryImage>())
+                                .Select(ai => new AccessoryImageResponse
+                                {
+                                    AccessoryImageId = ai.AccessoryImageId,
+                                    ImageUrl = ai.ImageUrl,
+                                    AccessoryId = ai.AccessoryId
+                                }).ToList(),
             AverageRating = ratingStats.TryGetValue(a.AccessoryId, out var r) ? r.AverageRating : 0,
             FeedbackCount = ratingStats.TryGetValue(a.AccessoryId, out var r2) ? r2.FeedbackCount : 0,
-
-            // ✅ gắn lượt mua
             PurchaseCount = purchaseStats.TryGetValue(a.AccessoryId, out var pc) ? pc : 0
         }).ToList();
 
-        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, accessoriesResponse);
+        return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, data);
     }
 
     public async Task<IBusinessResult> Save(Accessory accessory)

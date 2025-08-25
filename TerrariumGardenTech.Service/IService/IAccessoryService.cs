@@ -10,6 +10,7 @@ public interface IAccessoryService
     Task<IBusinessResult> GetByAccesname(string name);
     Task<IBusinessResult> GetById(int id);
     Task<IBusinessResult> FilterAccessoryAsync(int? categoryId);
+    //Task<IBusinessResult> FilterAccessoryAsync(int? categoryId, AccessoryGetAllRequest request);
     Task<IBusinessResult> CreateAccessory(AccessoryCreateRequest accessoryCreateRequest);
     Task<IBusinessResult> UpdateAccessory(AccessoryUpdateRequest accessoryUpdateRequest);
     Task<IBusinessResult> Save(Accessory accessory);
