@@ -17,7 +17,11 @@ public class BlogService(
     {
         // Lấy tất cả blog từ cơ sở dữ liệu
         var blogs = await _unitOfWork.Blog.GetAllAsync();
-
+        // sắp xếp mới nhất → cũ nhất
+        var ordered = blogs?
+            .OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt) // đổi tên field nếu khác
+            .ThenByDescending(b => b.BlogId)
+            .ToList();
         // Kiểm tra nếu có dữ liệu
         if (blogs != null && blogs.Any())
         {
@@ -30,6 +34,8 @@ public class BlogService(
                 Title = b.Title,
                 Content = b.Content,
                 UrlImage = b.UrlImage ?? string.Empty,  // Đảm bảo UrlImage không null
+                CreatedAt = b.CreatedAt,
+                UpdatedAt = b.UpdatedAt,
                 IsFeatured = b.IsFeatured,
                 Status = b.Status
             }).ToList();
@@ -40,6 +46,38 @@ public class BlogService(
 
         // Trả về lỗi nếu không có dữ liệu
         return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found.");
+    }
+
+    public async Task<IBusinessResult> GetByCategory(int categoryId)
+    {
+        var blogs = await _unitOfWork.Blog.GetAllAsync();
+
+        var filtered = blogs?
+            .Where(b => b.BlogCategoryId == categoryId)
+            .OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt)
+            .ThenByDescending(b => b.BlogId)
+            .ToList();
+
+        if (filtered != null && filtered.Any())
+        {
+            var blogResponses = filtered.Select(b => new BlogResponse
+            {
+                BlogCategoryId = b.BlogCategoryId,
+                BlogId = b.BlogId,
+                UserId = b.UserId,
+                Title = b.Title,
+                Content = b.Content,
+                UrlImage = b.UrlImage ?? string.Empty,
+                IsFeatured = b.IsFeatured,
+                CreatedAt = b.CreatedAt,
+                UpdatedAt = b.UpdatedAt,
+                Status = b.Status
+            }).ToList();
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Data retrieved successfully.", blogResponses);
+        }
+
+        return new BusinessResult(Const.WARNING_NO_DATA_CODE, "No data found for this category.");
     }
 
     public async Task<IBusinessResult> GetById(int id)
@@ -61,6 +99,8 @@ public class BlogService(
                 bodyHTML = blog.bodyHTML ?? string.Empty, // Đảm bảo bodyHTML không null
                 UrlImage = blog.UrlImage ?? string.Empty, // Đảm bảo UrlImage không null
                 IsFeatured = blog.IsFeatured,
+                CreatedAt = blog.CreatedAt,
+                UpdatedAt = blog.UpdatedAt,
                 Status = blog.Status
             };
 
