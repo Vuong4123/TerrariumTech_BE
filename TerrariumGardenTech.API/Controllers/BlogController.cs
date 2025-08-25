@@ -32,7 +32,6 @@ public class BlogController : ControllerBase
 
     // GET api/<BlogController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogService.GetById(id);
