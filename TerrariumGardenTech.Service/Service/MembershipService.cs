@@ -1,4 +1,6 @@
 ﻿using TerrariumGardenTech.Common.Enums;
+using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
@@ -49,7 +51,7 @@ public class MembershipService : IMembershipService
         return membership.MembershipId;
     }
 
-    public async Task<int> CreateMembershipForUserAsync(int userId, int packageId, DateTime startDate)
+    public async Task<MembershipCreationResult> CreateMembershipForUserAsync(int userId, int packageId, DateTime startDate)
     {
         var package = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
         if (package == null)
@@ -64,9 +66,21 @@ public class MembershipService : IMembershipService
             EndDate = startDate.AddDays(package.DurationDays),
             StatusEnum = MembershipStatus.Active
         };
-
         await _unitOfWork.MemberShip.CreateAsync(membership);
-        return membership.MembershipId;
+        var order = new Order
+        {
+            UserId = userId,
+            TotalAmount = package.Price,
+            OrderDate = DateTime.UtcNow,
+            Status = OrderStatusEnum.Pending,
+            PaymentStatus = "Unpaid",
+        };
+        await _unitOfWork.Order.CreateAsync(order);
+        return new MembershipCreationResult
+        {
+            MembershipId = membership.MembershipId,
+            OrderId = order.OrderId
+        };
     }
 
     public async Task<List<Membership>> GetAllMembershipsAsync()
@@ -183,7 +197,8 @@ public class MembershipService : IMembershipService
 
     public bool IsMembershipExpired(Membership membership)
     {
-        return membership.EndDate.HasValue && membership.EndDate.Value < DateTime.UtcNow;
+        var check = _unitOfWork.MemberShip.IsMembershipExpired(membership.UserId, membership.PackageId);
+        return check;
     }
 
     private bool CanAccessUser(int targetUserId)

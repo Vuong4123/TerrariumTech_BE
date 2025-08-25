@@ -1,7 +1,7 @@
 ﻿using Org.BouncyCastle.Asn1.Ocsp;
 
 using TerrariumGardenTech.Common.Enums;
-
+using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Order;
@@ -51,4 +51,10 @@ public class AcceptRefundResponse
     public int ProcessedBy { get; set; }
     public bool IsApproved { get; set; }
     public string Message { get; set; }
+}
+public class MembershipCreationResult
+{
+    public int MembershipId { get; set; }
+    public int OrderId { get; set; }
+    public MomoQrResponse MomoQrResponse { get; set; } // URL để người dùng thanh toán
 }
