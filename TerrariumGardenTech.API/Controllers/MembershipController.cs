@@ -28,6 +28,23 @@ public class MembershipController : ControllerBase
         _momoServices = momoServices;
     }
 
+    [HttpPost("momo/create-direct")]
+    [Authorize]
+    public async Task<IActionResult> CreateMembershipMomoDirect(
+    [FromServices] IUserContextService userContext,
+    [FromBody] DirectPaymentRequest request)
+    {
+        // Lấy user hiện tại thay vì tin payload
+        var payload = new DirectPaymentRequest
+        {
+            UserId = userContext.GetCurrentUser(),
+            PackageId = request.PackageId,
+            StartDate = request.StartDate
+        };
+
+        var rsp = await _momoServices.CreateMomoMembershipDirectPaymentUrl(payload);
+        return Ok(rsp);
+    }
 
     // Người dùng tự mua membership
     [HttpPost("purchase")]
