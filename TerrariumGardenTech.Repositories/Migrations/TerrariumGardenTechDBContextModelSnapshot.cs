@@ -228,6 +228,9 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TerrariumId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("TerrariumVariantId")
                         .HasColumnType("int");
 
@@ -374,21 +377,40 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestRefundId"));
 
+                    b.Property<bool>("IsPoint")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("LastModifiedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReasonModified")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("RefundAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("RequestDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("TransportId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserModified")
                         .HasColumnType("int");
 
                     b.HasKey("RequestRefundId")
@@ -1822,6 +1844,12 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("OtpExpiration")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OtpResendCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("OtpSentAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
