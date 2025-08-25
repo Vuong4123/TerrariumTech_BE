@@ -417,6 +417,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     ComboId = comboId,
                     TerrariumVariantId = item.TerrariumVariantId,
+                    TerrariumId = item.TerrariumId,
                     AccessoryId = item.AccessoryId,
                     Quantity = item.Quantity,
                     UnitPrice = unitPrice,
@@ -469,35 +470,12 @@ namespace TerrariumGardenTech.Service.Service
 
             foreach (var item in comboItems)
             {
-                string productName = "Unknown";
-                string productImage = "";
-
-                if (item.TerrariumVariantId.HasValue)
-                {
-                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
-                    if (variant != null)
-                    {
-                        productName = variant.VariantName;
-                        productImage = variant.UrlImage;
-
-                    }
-                }
-                else if (item.AccessoryId.HasValue)
-                {
-                    var accessory = await _unitOfWork.Accessory.GetByIdAsync(item.AccessoryId.Value);
-                    if (accessory != null)
-                    {
-                        productName = accessory.Name;
-                    }
-                }
-
                 result.Add(new ComboItemResponse
                 {
                     ComboItemId = item.ComboItemId,
                     TerrariumVariantId = item.TerrariumVariantId,
+                    TerrariumId = item.TerrariumId ?? 0,
                     AccessoryId = item.AccessoryId,
-                    ProductName = productName,
-                    ProductImage = productImage,
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice
                 });

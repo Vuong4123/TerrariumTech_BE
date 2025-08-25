@@ -5,6 +5,7 @@ using TerrariumGardenTech.Common.RequestModel.Transports;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -88,7 +89,7 @@ namespace TerrariumGardenTech.Service.Service
             if (request.IsRefund)
             {
                 refun = await _unitOfWork.OrderRequestRefund.DbSet()
-                    .FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.Status == RequestRefundStatusEnum.Approved);
+                    .FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.Status == OrderRequestRefundStatus.Approved);
                 if (refun == null)
                     return new BusinessResult(false, "Không tìm thấy thông tin yêu cầu hoàn tiền cho đơn hàng này!");
             }

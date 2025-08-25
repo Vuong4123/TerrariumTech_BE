@@ -7,6 +7,7 @@ using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.RequestModel.Pagination;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -283,14 +284,13 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost("{id:int}/Refund")]
-    public async Task<IActionResult> RequestRefund(int id, [FromBody] CreateRefundRequest request)
+    public async Task<IActionResult> RequestRefund(int id, int userId, [FromBody] CreateRefundRequest request)
     {
         request.OrderId = id;
-        var currentUserId = User.GetUserId();
-        var (success, message, refund) = await _svc.RequestRefundAsync(request, currentUserId);
+        var (success, message) = await _svc.RequestRefundAsync(request, userId);
         if (success)
             return Ok(new { message });
-        return BadRequest(new { message, data = refund });
+        return BadRequest(new { message, data = success });
     }
 
     [HttpGet("{id}/Refund")]
@@ -392,5 +392,48 @@ public class OrderController : ControllerBase
             return StatusCode(500, new { message = ex.Message });
         }
     }
+    [HttpPut("{orderId}/cancel")]
+    [Authorize]
+    public async Task<IActionResult> CancelOrder(int orderId, int userId, [FromBody] CancelOrderRequest request)
+    {
+        try
+        {
+            var result = await _svc.CancelOrderAsync(orderId, userId, request);
 
+            if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                return Ok(result);
+
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi server khi hủy đơn hàng" });
+        }
+    }
+    [HttpPut("refund/{refundId}/accept")]
+    [Authorize(Roles = "Admin,Manager,Staff")]
+    public async Task<IActionResult> AcceptRefundRequest(int refundId, [FromBody] AcceptRefundRequest request)
+    {
+        try
+        {
+            var staffId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            var result = await _svc.AcceptRefundRequestAsync(refundId, staffId, request);
+
+            if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                return Ok(result);
+
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi server khi xử lý yêu cầu hoàn tiền" });
+        }
+    }
+    [HttpGet("refund/pending")]
+    [Authorize(Roles = "Admin,Manager,Staff")]
+    public async Task<IActionResult> GetPendingRefundRequests()
+    {
+        var result = await _svc.GetPendingRefundRequestsAsync();
+        return Ok(result);
+    }
 }

@@ -12,6 +12,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -244,6 +245,388 @@ public class OrderService : IOrderService
     //    await _unitOfWork.SaveAsync();
     //    return order.OrderId;
     //}
+    public async Task<IBusinessResult> CancelOrderAsync(int orderId, int userId, CancelOrderRequest request)
+    {
+        try
+        {
+            // 1. Lấy thông tin đơn hàng
+            var order = await _unitOfWork.Order.GetByIdAsync(orderId);
+            if (order == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy đơn hàng");
+
+            // 2. Kiểm tra quyền
+            if (order.UserId != userId)
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Bạn không có quyền hủy đơn hàng này");
+
+            // 3. Validate trạng thái có thể hủy
+            var cancellableStatuses = new[] {
+            OrderStatusEnum.Pending,
+            OrderStatusEnum.Processing
+        };
+
+            if (!cancellableStatuses.Contains(order.Status))
+            {
+                return new BusinessResult(Const.FAIL_UPDATE_CODE,
+                    $"Không thể hủy đơn hàng ở trạng thái {order.Status}. Chỉ có thể hủy đơn ở trạng thái Pending hoặc Processing");
+            }
+
+            // 4. Validate lý do hủy
+            if (string.IsNullOrWhiteSpace(request.CancelReason))
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập lý do hủy đơn");
+
+            // 5. Cập nhật trạng thái đơn hàng
+            order.Status = OrderStatusEnum.Cancle;
+            order.PaymentStatus = "Unpaid";
+            // 7. Xử lý hoàn tiền vào ví (nếu đã thanh toán)
+            decimal refundAmount = 0;
+            if (order.PaymentStatus == "Paid" || order.Deposit > 0)
+            {
+                refundAmount = await ProcessRefundToWalletAsync(order, userId, request);
+            }
+
+            // 8. Hoàn lại stock cho sản phẩm
+            await RestoreStockForOrderItemsAsync(orderId);
+
+            // 9. Gửi notification
+            await SendCancelNotificationAsync(order, request.CancelReason);
+
+            // 10. Save changes
+            await _unitOfWork.Order.UpdateAsync(order);
+            await _unitOfWork.SaveAsync();
+
+            var response = new CancelOrderResponse
+            {
+                OrderId = orderId,
+                Status = order.Status.ToString(),
+                CancelledAt = DateTime.UtcNow,
+                CancelReason = request.CancelReason,
+                RefundAmount = refundAmount,
+                RefundStatus = refundAmount > 0 ? "Đã hoàn tiền vào ví" : "Không có tiền cần hoàn",
+                Message = "Hủy đơn hàng thành công"
+            };
+
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Hủy đơn hàng thành công", response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling order {OrderId} for user {UserId}", orderId, userId);
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi hủy đơn hàng: {ex.Message}");
+        }
+    }
+    #region Helper
+    // Xử lý hoàn tiền vào ví
+    private async Task<decimal> ProcessRefundToWalletAsync(Order order, int userId, CancelOrderRequest request)
+    {
+        // Tính số tiền cần hoàn
+        decimal refundAmount = 0;
+
+        // Nếu đã thanh toán toàn bộ
+        if (order.PaymentStatus == "Paid")
+        {
+            refundAmount = order.TotalAmount - (order.DiscountAmount ?? 0);
+        }
+        // Nếu chỉ đặt cọc
+        else if (order.Deposit > 0)
+        {
+            refundAmount = order.Deposit.Value;
+        }
+
+        if (refundAmount > 0)
+        {
+            // Lấy ví của user
+            var wallet = await _unitOfWork.Wallet.GetByUserIdAndTypeAsync(userId, "User");
+            if (wallet == null)
+            {
+                // Tạo ví mới nếu chưa có
+                wallet = new Wallet
+                {
+                    UserId = userId,
+                    Balance = 0
+                };
+                await _unitOfWork.Wallet.CreateAsync(wallet);
+            }
+
+            // Cộng tiền vào ví
+            wallet.Balance += refundAmount;
+            await _unitOfWork.Wallet.UpdateAsync(wallet);
+
+            // Tạo transaction history
+            var transaction = new WalletTransaction
+            {
+                WalletId = wallet.WalletId,
+                Type = "Refund",
+                Amount = refundAmount,
+                OrderId = order.OrderId,
+            };
+            await _unitOfWork.WalletTransactionRepository.CreateAsync(transaction);
+
+            // Tạo refund record
+            var refund = new OrderRequestRefund
+            {
+                OrderId = order.OrderId,
+                RefundAmount = refundAmount,
+                Reason = request.CancelReason,
+                Status = OrderRequestRefundStatus.Pending,
+                RequestDate = DateTime.UtcNow
+            };
+            await _unitOfWork.OrderRequestRefund.CreateAsync(refund);
+        }
+
+        return refundAmount;
+    }
+
+    // Hoàn lại stock cho sản phẩm
+    private async Task RestoreStockForOrderItemsAsync(int orderId)
+    {
+        var order = _unitOfWork.Order.GetById(orderId);
+
+        foreach (var item in order.OrderItems)
+        {
+            // Hoàn stock cho accessory
+            if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
+            {
+                var accessory = await _unitOfWork.Accessory.GetByIdAsync(item.AccessoryId.Value);
+                if (accessory != null)
+                {
+                    accessory.StockQuantity += item.AccessoryQuantity.Value;
+                    await _unitOfWork.Accessory.UpdateAsync(accessory);
+                }
+            }
+
+            // Hoàn stock cho terrarium variant
+            if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    variant.StockQuantity += item.TerrariumVariantQuantity.Value;
+                    await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                }
+            }
+        }
+    }
+
+    // Gửi notification
+    private async Task SendCancelNotificationAsync(Order order, string reason)
+    {
+        // Email notification
+        var emailContent = $@"
+        <h3>Đơn hàng #{order.OrderId} đã được hủy</h3>
+        <p>Lý do: {reason}</p>
+        <p>Số tiền sẽ được hoàn vào ví của bạn trong vòng 24h.</p>
+    ";
+
+        // Gửi email (implement theo email service của bạn)
+        // await _emailService.SendEmailAsync(order.User.Email, "Thông báo hủy đơn hàng", emailContent);
+
+        // In-app notification
+        var notification = new Notification
+        {
+            UserId = order.UserId,
+            Title = "Đơn hàng đã được hủy",
+            Message = $"Đơn hàng #{order.OrderId} đã được hủy thành công",
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        await _unitOfWork.Notification.CreateAsync(notification);
+    }
+
+    #endregion
+    public async Task<IBusinessResult> AcceptRefundRequestAsync(int refundId, int staffId, AcceptRefundRequest request)
+    {
+        try
+        {
+            // 1. Lấy thông tin refund request
+            var refundRequest = await _unitOfWork.OrderRequestRefund.GetByIdAsync(refundId);
+            if (refundRequest == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy yêu cầu hoàn tiền");
+
+            // 2. Kiểm tra trạng thái
+            if (refundRequest.Status != OrderRequestRefundStatus.Pending)
+            {
+                return new BusinessResult(Const.FAIL_UPDATE_CODE,
+                    $"Yêu cầu hoàn tiền đã được xử lý trước đó với trạng thái: {refundRequest.Status}");
+            }
+
+            // 3. Lấy thông tin order
+            var order = await _unitOfWork.Order.GetByIdAsync(refundRequest.OrderId);
+            if (order == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy đơn hàng liên quan");
+
+            // 4. Xử lý approve/reject
+            if (request.IsApproved)
+            {
+                // APPROVE - Thực hiện hoàn tiền
+                refundRequest.Status = OrderRequestRefundStatus.Approved;
+                refundRequest.UserModified = staffId;
+                refundRequest.LastModifiedDate = DateTime.UtcNow;
+
+                // Thực hiện hoàn tiền vào ví
+                var refundResult = await ProcessActualRefundAsync(order, refundRequest);
+                if (!refundResult.Success)
+                {
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE,
+                        $"Lỗi khi hoàn tiền: {refundResult.Message}");
+                }
+
+                // Cập nhật trạng thái order nếu cần
+                if (order.Status == OrderStatusEnum.Cancle)
+                {
+                    order.Status = OrderStatusEnum.Refunded;
+                }
+
+                // Gửi notification cho user
+                await SendRefundApprovedNotificationAsync(order, refundRequest);
+            }
+            else
+            {
+                // REJECT - Từ chối hoàn tiền
+                if (string.IsNullOrWhiteSpace(request.RejectionReason))
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập lý do từ chối");
+
+                refundRequest.Status = OrderRequestRefundStatus.Rejected;
+                refundRequest.UserModified = staffId;
+                refundRequest.LastModifiedDate = DateTime.UtcNow;
+                refundRequest.Notes = request.RejectionReason;
+
+                // Gửi notification cho user
+                await SendRefundRejectedNotificationAsync(order, refundRequest, request.RejectionReason);
+            }
+
+            // 5. Save changes
+            await _unitOfWork.OrderRequestRefund.UpdateAsync(refundRequest);
+            await _unitOfWork.Order.UpdateAsync(order);
+            await _unitOfWork.SaveAsync();
+
+            var response = new AcceptRefundResponse
+            {
+                RefundId = refundId,
+                OrderId = order.OrderId,
+                RefundStatus = refundRequest.Status,
+                RefundAmount = refundRequest.RefundAmount ?? 0,
+                ProcessedAt = refundRequest.LastModifiedDate,
+                ProcessedBy = staffId,
+                IsApproved = request.IsApproved,
+                Message = request.RejectionReason
+            };
+
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error accepting refund request {RefundId}", refundId);
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi xử lý yêu cầu hoàn tiền: {ex.Message}");
+        }
+    }
+    #region Helper for Refund Approval
+    // Thực hiện hoàn tiền thực tế
+    private async Task<(bool Success, string Message)> ProcessActualRefundAsync(Order order, OrderRequestRefund refundRequest)
+    {
+        try
+        {
+            // Lấy ví của user
+            var wallet = await _unitOfWork.Wallet.GetByUserIdAndTypeAsync(order.UserId, "User");
+            if (wallet == null)
+            {
+                // Tạo ví mới nếu chưa có
+                wallet = new Wallet
+                {
+                    UserId = order.UserId,
+                    Balance = 0,
+                    WalletType = "User"
+                };
+                await _unitOfWork.Wallet.CreateAsync(wallet);
+                await _unitOfWork.SaveAsync();
+            }
+
+            // Cộng tiền vào ví
+            wallet.Balance += refundRequest.RefundAmount ?? 0;
+            await _unitOfWork.Wallet.UpdateAsync(wallet);
+
+            // Tạo transaction history
+            var transaction = new WalletTransaction
+            {
+                WalletId = wallet.WalletId,
+                Type = "Refund",
+                Amount = refundRequest.RefundAmount ?? 0,
+                OrderId = order.OrderId
+            };
+            await _unitOfWork.WalletTransactionRepository.CreateAsync(transaction);
+
+            return (true, "Hoàn tiền thành công");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing refund for order {OrderId}", order.OrderId);
+            return (false, ex.Message);
+        }
+    }
+    public async Task<IBusinessResult> GetPendingRefundRequestsAsync()
+    {
+        try
+        {
+            var pendingRefunds = await _unitOfWork.OrderRequestRefund
+                .GetAllWithStatus(OrderRequestRefundStatus.Pending);
+
+            var response = new List<RefundRequestDto>();
+
+            foreach (var refund in pendingRefunds)
+            {
+                var order = await _unitOfWork.Order.GetByIdAsync(refund.OrderId);
+                var user = await _unitOfWork.User.GetByIdAsync(order.UserId);
+
+                response.Add(new RefundRequestDto
+                {
+                    RefundId = refund.RequestRefundId,
+                    OrderId = refund.OrderId,
+                    UserId = order.UserId,
+                    UserEmail = user?.Email,
+                    RefundAmount = refund.RefundAmount ?? 0,
+                    Reason = refund.Reason,
+                    RequestDate = refund.RequestDate,
+                    RefundStatus = refund.Status,
+                    OrderStatus = order.Status.ToString()
+                });
+            }
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách thành công", response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting pending refund requests");
+            return new BusinessResult(Const.FAIL_READ_CODE, $"Lỗi: {ex.Message}");
+        }
+    }
+
+    // Gửi notification khi duyệt hoàn tiền
+    private async Task SendRefundApprovedNotificationAsync(Order order, OrderRequestRefund refundRequest)
+    {
+        var notification = new Notification
+        {
+            UserId = order.UserId,
+            Title = "Yêu cầu hoàn tiền được chấp nhận",
+            Message = $"Yêu cầu hoàn tiền {refundRequest.RefundAmount:C} cho đơn hàng #{order.OrderId} đã được duyệt. Tiền đã được chuyển vào ví của bạn.",
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        await _unitOfWork.Notification.CreateAsync(notification);
+    }
+
+    // Gửi notification khi từ chối hoàn tiền
+    private async Task SendRefundRejectedNotificationAsync(Order order, OrderRequestRefund refundRequest, string reason)
+    {
+        var notification = new Notification
+        {
+            UserId = order.UserId,
+            Title = "Yêu cầu hoàn tiền bị từ chối",
+            Message = $"Yêu cầu hoàn tiền cho đơn hàng #{order.OrderId} đã bị từ chối. Lý do: {reason}",
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        await _unitOfWork.Notification.CreateAsync(notification);
+    }
+
+    #endregion
 
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
@@ -509,32 +892,32 @@ public class OrderService : IOrderService
     }
 
 
-    public async Task<(bool, string, object?)> RequestRefundAsync(CreateRefundRequest request, int currentUserId)
+    public async Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId)
     {
         var order = await _unitOfWork.Order.DbSet().Include(x => x.OrderItems).FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.UserId == currentUserId);
         if (order == null)
-            return (false, "Không tìm thấy thông tin hóa đơn!", null);
+            return (false, "Không tìm thấy thông tin hóa đơn!");
 
-        if (order.Status != OrderStatusEnum.Completed)
-            return (false, "Đơn hàng này không cho phép hoàn tiền!", null);
+        if (order.Status == OrderStatusEnum.Completed)
+            return (false, "Đơn hàng này không cho phép hoàn tiền!");
 
         if (request.RefundItems == null || !request.RefundItems.Any())
-            return (false, "Vui lòng chọn sản phẩm cần hoàn tiền!", null);
+            return (false, "Vui lòng chọn sản phẩm cần hoàn tiền!");
 
         if (request.RefundItems.Any(x => x.Quantity <= 0))
-            return (false, "Số lượng sản phẩm yêu cầu hoàn tiền phải lớn hơn 0!", null);
+            return (false, "Số lượng sản phẩm yêu cầu hoàn tiền phải lớn hơn 0!");
 
         if (request.RefundItems.Any(x => string.IsNullOrEmpty(x.Reason)))
-            return (false, "Vui lòng nhập đầy đủ lý do hoàn tiền!", null);
+            return (false, "Vui lòng nhập đầy đủ lý do hoàn tiền!");
 
         if (request.RefundItems.Any(x => !order.OrderItems.Any(i => i.OrderItemId == x.OrderItemId)))
-            return (false, "Danh sách sản phẩm cần hoàn tiền không chính xác!", null);
+            return (false, "Danh sách sản phẩm cần hoàn tiền không chính xác!");
 
         if (request.RefundItems.Any(x => order.OrderItems.Any(i => x.OrderItemId == x.OrderItemId && i.Quantity < x.Quantity)))
-            return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!", null);
+            return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!");
 
         var existedRefundItems = await _unitOfWork.OrderRequestRefund.DbSet()
-            .Include(x => x.Items).Where(x => x.OrderId == order.OrderId && x.Status == RequestRefundStatusEnum.Approved)
+            .Include(x => x.Items).Where(x => x.OrderId == order.OrderId && x.Status == CommonData.OrderRequestRefundStatus.Approved)
             .SelectMany(x => x.Items).Where(x => x.IsApproved == true).ToArrayAsync();
         if (existedRefundItems.Any())
         {
@@ -548,33 +931,34 @@ public class OrderService : IOrderService
             });
             // Nếu có thằng nào có tổng số lượng yêu cầu refund > số lượng đã đặt trong đơn hàng
             if (checkQuantity.Any(x => x))
-                return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!", null);
+                return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!");
         }
 
         var refundRequest = new OrderRequestRefund
         {
             OrderId = order.OrderId,
-            Status = RequestRefundStatusEnum.Waiting,
-            RequestDate = DateTime.Today,
             Items = request.RefundItems.Select(x => new OrderRefundItem
             {
                 OrderItemId = x.OrderItemId,
                 Quantity = x.Quantity
             }).ToList(),
+            Reason = request.Reason,
+            Status = CommonData.OrderRequestRefundStatus.Pending,
+            RequestDate = System.DateTime.Today            
         };
         order.Status = OrderStatusEnum.RequestRefund;
         await _unitOfWork.OrderRequestRefund.CreateAsync(refundRequest);
         await _unitOfWork.SaveAsync();
         refundRequest.Order = null;
         refundRequest.Items = refundRequest.Items.Select(x => { x.OrderRefund = null; return x; }).ToList();
-        return (true, "Yêu cầu hoàn tiền đã được gửi thành công!", refundRequest);
+        return (true, "Yêu cầu hoàn tiền đã được gửi thành công!");
     }
 
     public async Task<IBusinessResult> GetRefundAsync(int orderId)
     {
         var order = await _unitOfWork.Order.DbSet().Include(x => x.Refunds).AsNoTracking().FirstOrDefaultAsync(x => x.OrderId == orderId);
         if (order == null)
-            return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy thông tin hóa đơn!", null);
+            return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy thông tin hóa đơn!");
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách yêu cầu hoàn tiền thành công!", order.Refunds.Select(x =>
         {
@@ -636,42 +1020,24 @@ public class OrderService : IOrderService
         var refund = await _unitOfWork.OrderRequestRefund.DbSet().Include(x => x.Order).Include(x => x.Items).FirstOrDefaultAsync(x => x.RequestRefundId == request.RefundId);
         if (refund == null)
             return (false, "Không tìm thấy yêu cầu hoàn tiền!", null);
-        if (refund.Order?.UserId != currentUserId && request.Status != RequestRefundStatusEnum.Cancle)
+        if (refund.Order.UserId != currentUserId && request.Status != CommonData.OrderRequestRefundStatus.Rejected)
             return (false, "Bạn không có quyền thực hiện thao tác này!", null);
 
-        //if (request.Status == RequestRefundStatusEnum.Waiting)
-        //    return (false, "Trạng thái cho đơn yêu cầu hoàn tiền không hợp lệ!", null);
+        if (request.Status == CommonData.OrderRequestRefundStatus.Pending)
+            return (false, "Trạng thái cho đơn yêu cầu hoàn tiền không hợp lệ!", null);
 
-        if ((request.Status == RequestRefundStatusEnum.Cancle || request.Status == RequestRefundStatusEnum.Approved || request.Status == RequestRefundStatusEnum.Rejected) && refund.Status != RequestRefundStatusEnum.Waiting)
-            return (false, "Yêu cầu hoàn tiền này không thể bị chỉnh sửa nữa!", null);
+        if ((request.Status == CommonData.OrderRequestRefundStatus.Cancel || request.Status == CommonData.OrderRequestRefundStatus.Approved || request.Status == CommonData.OrderRequestRefundStatus.Rejected) && refund.Status != CommonData.OrderRequestRefundStatus.Pending)
+            return (false, "Yêu cầu hoàn tiền này không thể hủy!", null);
 
-        if (request.Items == null || !request.Items.Any())
-            return (false, "Thông tin sản phẩm yêu cầu hoàn tiền không chính xác!", null);
-
-        if (request.Items.Any(x => x.Point <= 0))
+        if (request.Status == CommonData.OrderRequestRefundStatus.Rejected && string.IsNullOrEmpty(request.Reason))
+            return (false, "Lý do từ chối yêu cầu hoàn tiền không được để trống!", null);
+        if (request.Status == CommonData.OrderRequestRefundStatus.Approved && (!request.RefundAmount.HasValue && request.RefundAmount < 0))
             return (false, "Số tiền hoàn lại hoặc số điểm hoàn lại phải lớn hơn 0!", null);
-
-        foreach (var item in refund.Items)
-        {
-            var itemEdit = request.Items.FirstOrDefault(x => x.OrderRefundItemId == item.OrderRefundItemId);
-            if (itemEdit == null) continue;
-            if (!itemEdit.IsApproved && string.IsNullOrEmpty(itemEdit.Reason))
-                return (false, "Vui lòng nhập lý do không hoàn tiền cho sản phẩm!", null);
-
-            item.IsApproved = itemEdit.IsApproved;
-            item.ReasonModified = itemEdit.Reason;
-            item.RefundPoint = itemEdit.Point;
-            item.UserModified = currentUserId;
-        }
-
-        if ((request.Status == RequestRefundStatusEnum.Approved || request.Status == RequestRefundStatusEnum.Rejected) && refund.Items.Any(x => !x.IsApproved.HasValue))
-            return (false, "Vui lòng cập nhập trạng thái cho tất cả các sản phẩm yêu cầu hoàn tiền trước khi chuyển trạng thái đơn yêu cầu!", null);
-
-        if (request.Status == RequestRefundStatusEnum.Rejected && refund.Items.Any(x => x.IsApproved == true))
-            return (false, "Đã có sản phẩm được duyệt hoàn tiền, không thể chuyển trạng thái từ chối cho đơn yêu cầu!", null);
-
+        var order = await _unitOfWork.Order.FindOneAsync(x => x.OrderId == refund.OrderId);
+        if (order == null)
+            return (false, "Không tìm thấy đơn hàng cần hoàn tiền!", null);
         OrderTransport? transport = null;
-        if (request.Status == RequestRefundStatusEnum.Approved && request.CreateTransport && refund.Items.Any(x => x.IsApproved == true))
+        if (request.Status == CommonData.OrderRequestRefundStatus.Approved && request.CreateTransport)
         {
             if (!request.EstimateCompletedDate.HasValue)
                 return (false, "Vui lòng chọn ngày dự kiến sẽ lấy hàng hoàn tiền!", null);
@@ -704,7 +1070,19 @@ public class OrderService : IOrderService
         using (var trans = await _unitOfWork.OrderRequestRefund.BeginTransactionAsync())
         {
             refund.Status = request.Status;
-            refund.LastModifiedDate = DateTime.Now;
+            refund.ReasonModified = request.Reason;
+            refund.UserModified = currentUserId;
+            refund.LastModifiedDate = System.DateTime.Now;
+            refund.IsPoint = request.IsPoint;
+            if (refund.Status == CommonData.OrderRequestRefundStatus.Approved)
+            {
+                order.Status = OrderStatusEnum.Refuning;
+                refund.RefundAmount = request.RefundAmount;
+            }
+            else
+            {
+                order.Status = OrderStatusEnum.Completed;
+            }
             var isRollback = false;
             try
             {
@@ -929,72 +1307,6 @@ public class OrderService : IOrderService
                 throw new ArgumentException("Item phải có AccessoryId hoặc TerrariumVariantId và quantity > 0.", nameof(r.Items));
         }
     }
-
-
-
-    // CHUYỂN thành async để gọi DB bên trong
-    private async Task<Order> MapToEntityAsync(OrderCreateRequest r, int userId)
-    {
-        var orderItems = new List<OrderItem>();
-        decimal totalAmount = 0m;
-
-        foreach (var reqItem in r.Items)
-        {
-            if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
-            {
-                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
-                int qty = reqItem.AccessoryQuantity ?? 0;
-                decimal unitPrice = acc.Price;
-                var lineTotal = unitPrice * qty;
-                totalAmount += lineTotal;
-
-                orderItems.Add(new OrderItem
-                {
-                    AccessoryId = reqItem.AccessoryId,
-                    TerrariumVariantId = null,
-                    AccessoryQuantity = qty,
-                    TerrariumVariantQuantity = 0,
-                    Quantity = qty,
-                    UnitPrice = unitPrice,
-                    TotalPrice = lineTotal
-                });
-            }
-            if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
-            {
-                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
-                int qty = reqItem.TerrariumVariantQuantity ?? 0;
-                decimal unitPrice = variant.Price;
-                var lineTotal = unitPrice * qty;
-                totalAmount += lineTotal;
-
-                orderItems.Add(new OrderItem
-                {
-                    AccessoryId = null,
-                    TerrariumVariantId = reqItem.TerrariumVariantId,
-                    AccessoryQuantity = 0,
-                    TerrariumVariantQuantity = qty,
-                    Quantity = qty,
-                    UnitPrice = unitPrice,
-                    TotalPrice = lineTotal
-                });
-            }
-        }
-
-        var order = new Order
-        {
-            UserId = userId, // Truyền từ controller hoặc context
-            VoucherId = r.VoucherId,
-            Deposit = r.Deposit,
-            TotalAmount = totalAmount,
-            OrderDate = System.DateTime.UtcNow,
-            Status = OrderStatusEnum.Pending,
-            OrderItems = orderItems
-        };
-
-        return order;
-    }
-
-
 
     private static OrderResponse ToResponse(Order o, UnitOfWork unitOfWork)
     {
