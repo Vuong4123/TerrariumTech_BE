@@ -5,7 +5,7 @@ public class CreateOrderItemRequest
 {
     /// <summary>ID đơn hàng mà mục này thuộc về</summary>
     public int OrderId { get; set; }
-
+    public int? TerrariumId { get; set; }
     /// <summary>ID phụ kiện (nếu là accessory item)</summary>
     public int? AccessoryId { get; set; }
 

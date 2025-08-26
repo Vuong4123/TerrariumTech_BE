@@ -11,6 +11,7 @@ public partial class OrderItem
     public int OrderItemId { get; set; }
 
     public int OrderId { get; set; }
+    public int? TerrariumId { get; set; }
 
     public int? AccessoryId { get; set; }
 

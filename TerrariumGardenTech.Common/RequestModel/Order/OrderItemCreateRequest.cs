@@ -14,6 +14,7 @@
 public class OrderItemCreateRequest
 {
     public string ItemType { get; set; }
+    public int? TerrariumId { get; set; }
     public int? AccessoryId { get; set; }
     public int? TerrariumVariantId { get; set; }
     public int? AccessoryQuantity { get; set; }

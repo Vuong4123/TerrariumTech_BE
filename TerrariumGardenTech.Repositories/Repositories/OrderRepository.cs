@@ -33,7 +33,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Accessory)
             .Include(o => o.Payment)
-            .Include(o => o.ReturnExchangeRequests)
+            //.Include(o => o.ReturnExchangeRequests)
             .FirstOrDefaultAsync(o => o.OrderId == id);
     }
 
@@ -46,7 +46,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Accessory)
             .Include(o => o.Payment)
-            .Include(o => o.ReturnExchangeRequests)
+            //.Include(o => o.ReturnExchangeRequests)
             .ToListAsync();
     }
     public async Task<List<Order>> GetAllWithStatus(string status)
@@ -57,7 +57,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Accessory)
             .Include(o => o.Payment)
-            .Include(o => o.ReturnExchangeRequests)
+            //.Include(o => o.ReturnExchangeRequests)
             .Where(o => o.Status.ToString() == status)
             .ToListAsync();
     }

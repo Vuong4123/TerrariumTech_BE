@@ -154,7 +154,7 @@ namespace TerrariumGardenTech.API.Controllers
                     message = "Thêm sản phẩm thành công",
                     successCount = successResults.Count,
                     errorCount = errors.Count,
-                    data = successResults,
+                    data = successResults.ToArray(),
                     errors = errors.Any() ? errors : null
                 };
 

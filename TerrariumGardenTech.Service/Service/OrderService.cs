@@ -68,6 +68,7 @@ public class OrderService : IOrderService
                     ComboId = item.ComboId ?? 0,
                     ItemType = item.ItemType,
                     OrderItemId = item.OrderItemId,
+                    TerrariumId = item.TerrariumId,
                     AccessoryId = item.AccessoryId,
                     TerrariumVariantId = item.TerrariumVariantId,
                     AccessoryQuantity = item.AccessoryQuantity,
@@ -117,6 +118,7 @@ public class OrderService : IOrderService
                 ComboId = item.ComboId ?? 0,
                 OrderItemId = item.OrderItemId,
                 ItemType = item.ItemType,
+                TerrariumId = item.TerrariumId,
                 AccessoryId = item.AccessoryId,
                 TerrariumVariantId = item.TerrariumVariantId,
                 AccessoryQuantity = item.AccessoryQuantity,
@@ -165,6 +167,7 @@ public class OrderService : IOrderService
                     ComboId = item.ComboId ?? 0,
                     ItemType = item.ItemType,
                     OrderItemId = item.OrderItemId,
+                    TerrariumId = item.TerrariumId,
                     AccessoryId = item.AccessoryId,
                     TerrariumVariantId = item.TerrariumVariantId,
                     AccessoryQuantity = item.AccessoryQuantity,
@@ -674,6 +677,7 @@ public class OrderService : IOrderService
                 orderItems.Add(new OrderItem
                 {
                     AccessoryId = reqItem.AccessoryId,
+                    TerrariumId = reqItem.TerrariumId,
                     TerrariumVariantId = null,
                     AccessoryQuantity = qty,
                     TerrariumVariantQuantity = 0,
@@ -695,6 +699,7 @@ public class OrderService : IOrderService
                 orderItems.Add(new OrderItem
                 {
                     AccessoryId = null,
+                    TerrariumId = reqItem.TerrariumId,
                     TerrariumVariantId = reqItem.TerrariumVariantId,
                     AccessoryQuantity = 0,
                     TerrariumVariantQuantity = qty,
@@ -714,6 +719,7 @@ public class OrderService : IOrderService
                     {
                         ComboId = request.ComboId,
                         AccessoryId = com.AccessoryId,
+                        TerrariumId = reqItem.TerrariumId,
                         TerrariumVariantId = com.TerrariumVariantId,
                         AccessoryQuantity = 1,
                         TerrariumVariantQuantity = 1,
@@ -1158,6 +1164,7 @@ public class OrderService : IOrderService
                     orderResponse.OrderItems.Add(new OrderItemResponse
                     {
                         OrderItemId = item.OrderItemId,
+                        TerrariumId = item.TerrariumId,
                         AccessoryId = item.AccessoryId,
                         TerrariumVariantId = item.TerrariumVariantId,
                         AccessoryQuantity = item.AccessoryQuantity,
@@ -1239,6 +1246,7 @@ public class OrderService : IOrderService
                     orderResponse.OrderItems.Add(new OrderItemResponse
                     {
                         OrderItemId = item.OrderItemId,
+                        TerrariumId = item.TerrariumId,
                         AccessoryId = item.AccessoryId,
                         TerrariumVariantId = item.TerrariumVariantId,
                         AccessoryQuantity = item.AccessoryQuantity,
@@ -1335,6 +1343,7 @@ public class OrderService : IOrderService
             OrderItems = o.OrderItems.Select(i => new OrderItemResponse
             {
                 OrderItemId = i.OrderItemId,
+                TerrariumId = i.TerrariumId,
                 AccessoryId = i.AccessoryId,
                 TerrariumVariantId = i.TerrariumVariantId,
                 Quantity = i.Quantity ?? 0,

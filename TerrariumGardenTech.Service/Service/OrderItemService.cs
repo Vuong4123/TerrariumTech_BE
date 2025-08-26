@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Common.RequestModel.OrderItem;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Repositories.Repositories;
 using TerrariumGardenTech.Service.IService;
@@ -11,11 +12,13 @@ public class OrderItemService : IOrderItemService
 {
     private readonly OrderRepository _orderRepo;
     private readonly OrderItemRepository _repo;
+    private readonly UnitOfWork _unitOfWork;
 
-    public OrderItemService(OrderItemRepository repo, OrderRepository orderRepo)
+    public OrderItemService(OrderItemRepository repo, OrderRepository orderRepo, UnitOfWork unitOfWork)
     {
         _repo = repo ?? throw new ArgumentNullException(nameof(repo));
         _orderRepo = orderRepo ?? throw new ArgumentNullException(nameof(orderRepo));
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<IEnumerable<OrderItemSummaryResponse>> GetAllAsync()
@@ -56,10 +59,13 @@ public class OrderItemService : IOrderItemService
         var order = await _orderRepo.GetByIdAsync(r.OrderId);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng ({r.OrderId}) không tồn tại.");
-
+        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(r.TerrariumVariantId ?? 0);
+        if (r.TerrariumVariantId != null && terrarium == null)
+            throw new KeyNotFoundException($"Terrarium ({r.TerrariumVariantId}) không tồn tại.");
         var entity = new OrderItem
         {
             OrderId = r.OrderId,
+            TerrariumId = r.TerrariumId,
             AccessoryId = r.AccessoryId,
             TerrariumVariantId = r.TerrariumVariantId,
             Quantity = r.Quantity,
@@ -94,7 +100,10 @@ public class OrderItemService : IOrderItemService
         var order = await _orderRepo.GetByIdAsync(entity.OrderId);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng ({entity.OrderId}) không tồn tại.");
-
+        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(r.TerrariumVariantId ?? 0);
+        if (r.TerrariumVariantId != null && terrarium == null)
+            throw new KeyNotFoundException($"Terrarium ({r.TerrariumVariantId}) không tồn tại.");
+        entity.TerrariumId = r.TerrariumId;
         entity.AccessoryId = r.AccessoryId;
         entity.TerrariumVariantId = r.TerrariumVariantId;
         entity.Quantity = r.Quantity;
@@ -162,6 +171,7 @@ public class OrderItemService : IOrderItemService
         {
             OrderItemId = o.OrderItemId,
             OrderId = o.OrderId,
+            TerrariumId = o.TerrariumId,
             AccessoryId = o.AccessoryId,
             TerrariumVariantId = o.TerrariumVariantId,
             Quantity = o.Quantity ?? 0,
