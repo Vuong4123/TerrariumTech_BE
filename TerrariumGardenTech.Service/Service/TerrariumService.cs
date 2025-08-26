@@ -882,13 +882,13 @@ public class TerrariumService : ITerrariumService
                 return new BusinessResult(Const.WARNING_NO_DATA_CODE, Const.WARNING_NO_DATA_MSG);
 
             // Kiểm tra xem tên Terrarium mới đã tồn tại chưa
-            var existingTerrarium = await _unitOfWork.Terrarium
-                .FindAsync(t => t.TerrariumName == terrariumUpdateRequest.TerrariumName && t.TerrariumId != terrariumUpdateRequest.TerrariumId);
+            //var existingTerrarium = await _unitOfWork.Terrarium
+            //    .FindAsync(t => t.TerrariumName == terrariumUpdateRequest.TerrariumName && t.TerrariumId != terrariumUpdateRequest.TerrariumId);
 
-            if (existingTerrarium.Any())
-            {
-                return new BusinessResult(Const.WARNING_EXISTING_NAME_CODE, "Tên Terrarium đã tồn tại.");
-            }
+            //if (existingTerrarium.Any())
+            //{
+            //    return new BusinessResult(Const.WARNING_EXISTING_NAME_CODE, "Tên Terrarium đã tồn tại.");
+            //}
 
             // Kiểm tra xem Environment, Shape, và TankMethod có tồn tại không
             var environmentExists = await _unitOfWork.Environment
