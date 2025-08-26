@@ -37,6 +37,7 @@ public partial class Order
 
     public virtual ICollection<Payment> Payment { get; set; } = new List<Payment>();
 
+   // public virtual ICollection<ReturnExchangeRequest> ReturnExchangeRequests { get; set; } = new List<ReturnExchangeRequest>();
 
     public virtual User User { get; set; }
     public virtual Address Address { get; set; }   // Navigation property mới

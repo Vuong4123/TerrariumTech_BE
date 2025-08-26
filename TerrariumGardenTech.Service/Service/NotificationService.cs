@@ -110,7 +110,7 @@ public class NotificationService : INotificationService
             Message = n.Message,
             IsRead = n.IsRead,
             CreatedAt = n.CreatedAt
-        }).ToList();
+        }).OrderByDescending(c => c.CreatedAt).ToList();
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, notificationResponses);
     }
@@ -148,7 +148,7 @@ public class NotificationService : INotificationService
             Message = n.Message,
             IsRead = n.IsRead,
             CreatedAt = n.CreatedAt
-        }).ToList();
+        }).OrderByDescending(c => c.CreatedAt).ToList();
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, Const.SUCCESS_READ_MSG, notificationResponses);
     }

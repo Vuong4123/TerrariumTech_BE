@@ -949,10 +949,10 @@ public partial class TerrariumGardenTechDBContext : DbContext
         //        .HasColumnName("status");
         //    entity.Property(e => e.UserId).HasColumnName("userId");
 
-        //    entity.HasOne(d => d.Order).WithMany(p => p.ReturnExchangeRequests)
-        //        .HasForeignKey(d => d.OrderId)
-        //        .OnDelete(DeleteBehavior.ClientSetNull)
-        //        .HasConstraintName("FK_ReturnExchangeRequest_Order");
+            //entity.HasOne(d => d.Order).WithMany(p => p.ReturnExchangeRequests)
+            //    .HasForeignKey(d => d.OrderId)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_ReturnExchangeRequest_Order");
 
         //    entity.HasOne(d => d.User).WithMany(p => p.ReturnExchangeRequests)
         //        .HasForeignKey(d => d.UserId)
