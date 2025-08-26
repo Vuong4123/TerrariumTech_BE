@@ -32,7 +32,11 @@ public class AccessoryRepository : GenericRepository<Accessory>
                .FirstOrDefaultAsync(a => a.AccessoryId == id);
     public async Task<IEnumerable<Accessory>> FilterAccessoryAsync(int? categoryId)
     {
-        return await _context.Accessories.Where(a => a.CategoryId == categoryId).ToListAsync();
+        return await _context.Accessories
+        .Where(a => a.CategoryId == categoryId)
+        .OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt ?? DateTime.MinValue)
+        //.Take(take) // lấy n bản ghi mới nhất
+        .ToListAsync();
     }
 
     // Nạp dữ liệu Accessory cùng với ảnh (AccessoryImages)
@@ -45,7 +49,7 @@ public class AccessoryRepository : GenericRepository<Accessory>
         // filter
 
         // end
-
+        queryable = queryable.OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt ?? DateTime.MinValue);
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 
         return (await queryable.ToListAsync(), totalOrigin);

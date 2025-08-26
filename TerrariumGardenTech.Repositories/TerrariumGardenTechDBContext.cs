@@ -47,7 +47,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<Address> Addresses { get; set; }
 
 
-    public virtual DbSet<AisuggestLayout> AisuggestLayouts { get; set; }
+    //public virtual DbSet<AisuggestLayout> AisuggestLayouts { get; set; }
 
     public virtual DbSet<Blog> Blogs { get; set; }
 
@@ -59,7 +59,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
 
     public virtual DbSet<FeedbackImage> FeedbackImages { get; set; }
 
-    public virtual DbSet<LayoutTerrarium> LayoutTerraria { get; set; }
+    //public virtual DbSet<LayoutTerrarium> LayoutTerraria { get; set; }
 
     public virtual DbSet<Membership> Memberships { get; set; }
 
@@ -76,10 +76,6 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public virtual DbSet<Promotion> Promotions { get; set; }
 
     public virtual DbSet<PromotionTerrariumVariant> PromotionTerrariumVariants { get; set; }
-
-    public virtual DbSet<ReturnExchangeRequest> ReturnExchangeRequests { get; set; }
-
-    public virtual DbSet<ReturnExchangeRequestItem> ReturnExchangeRequestItems { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
 
@@ -500,26 +496,26 @@ public partial class TerrariumGardenTechDBContext : DbContext
         //        .HasConstraintName("FK_AddressDelivery_Order");
         //});
 
-        modelBuilder.Entity<AisuggestLayout>(entity =>
-        {
-            entity.HasKey(e => e.LayoutId).HasName("PK__AISugges__023A37EFFA219D01");
+        //modelBuilder.Entity<AisuggestLayout>(entity =>
+        //{
+        //    entity.HasKey(e => e.LayoutId).HasName("PK__AISugges__023A37EFFA219D01");
 
 
-            entity.ToTable("AISuggestLayout");
+        //    entity.ToTable("AISuggestLayout");
 
-            entity.Property(e => e.LayoutId).HasColumnName("layoutId");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("createdAt");
-            entity.Property(e => e.LayoutData).HasColumnName("layoutData");
-            entity.Property(e => e.UserId).HasColumnName("userId");
+        //    entity.Property(e => e.LayoutId).HasColumnName("layoutId");
+        //    entity.Property(e => e.CreatedAt)
+        //        .HasDefaultValueSql("(sysutcdatetime())")
+        //        .HasColumnName("createdAt");
+        //    entity.Property(e => e.LayoutData).HasColumnName("layoutData");
+        //    entity.Property(e => e.UserId).HasColumnName("userId");
 
 
-            entity.HasOne(d => d.User).WithMany(p => p.AisuggestLayouts)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AISuggestLayout_User");
-        });
+        //    entity.HasOne(d => d.User).WithMany(p => p.AisuggestLayouts)
+        //        .HasForeignKey(d => d.UserId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_AISuggestLayout_User");
+        //});
 
         modelBuilder.Entity<Blog>(entity =>
         {
@@ -629,27 +625,27 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_FeedbackImage_Feedback");
         });
 
-        modelBuilder.Entity<LayoutTerrarium>(entity =>
-        {
-            entity.HasKey(e => e.LayoutTerrariumId).HasName("PK__LayoutTe__ED2AF5EA0034035F");
+        //modelBuilder.Entity<LayoutTerrarium>(entity =>
+        //{
+        //    entity.HasKey(e => e.LayoutTerrariumId).HasName("PK__LayoutTe__ED2AF5EA0034035F");
 
-            entity.ToTable("LayoutTerrarium");
+        //    entity.ToTable("LayoutTerrarium");
 
-            entity.Property(e => e.LayoutTerrariumId).HasColumnName("layoutTerrariumId");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("createdAt");
-            entity.Property(e => e.LayoutData).HasColumnName("layoutData");
-            entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("updatedAt");
+        //    entity.Property(e => e.LayoutTerrariumId).HasColumnName("layoutTerrariumId");
+        //    entity.Property(e => e.CreatedAt)
+        //        .HasDefaultValueSql("(sysutcdatetime())")
+        //        .HasColumnName("createdAt");
+        //    entity.Property(e => e.LayoutData).HasColumnName("layoutData");
+        //    entity.Property(e => e.TerrariumVariantId).HasColumnName("terrariumVariantId");
+        //    entity.Property(e => e.UpdatedAt)
+        //        .HasDefaultValueSql("(sysutcdatetime())")
+        //        .HasColumnName("updatedAt");
 
-            entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.LayoutTerrarium)
-                .HasForeignKey(d => d.TerrariumVariantId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
-        });
+        //    entity.HasOne(d => d.TerrariumVariant).WithMany(p => p.LayoutTerrarium)
+        //        .HasForeignKey(d => d.TerrariumVariantId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_LayoutTerrarium_TerrariumVariant");
+        //});
 
         //modelBuilder.Entity<Membership>(entity =>
         //{
@@ -935,61 +931,61 @@ public partial class TerrariumGardenTechDBContext : DbContext
                 .HasConstraintName("FK_PromotionTerrariumVariant_TerrariumVariant");
         });
 
-        modelBuilder.Entity<ReturnExchangeRequest>(entity =>
-        {
-            entity.HasKey(e => e.RequestId).HasName("PK__ReturnEx__E3C5DE3141AB3D28");
+        //modelBuilder.Entity<ReturnExchangeRequest>(entity =>
+        //{
+        //    entity.HasKey(e => e.RequestId).HasName("PK__ReturnEx__E3C5DE3141AB3D28");
 
-            entity.ToTable("ReturnExchangeRequest");
+        //    entity.ToTable("ReturnExchangeRequest");
 
-            entity.Property(e => e.RequestId).HasColumnName("requestId");
-            entity.Property(e => e.OrderId).HasColumnName("orderId");
-            entity.Property(e => e.Reason).HasColumnName("reason");
-            entity.Property(e => e.RequestDate)
-                .HasDefaultValueSql("(sysutcdatetime())")
-                .HasColumnName("requestDate");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("pending")
-                .HasColumnName("status");
-            entity.Property(e => e.UserId).HasColumnName("userId");
+        //    entity.Property(e => e.RequestId).HasColumnName("requestId");
+        //    entity.Property(e => e.OrderId).HasColumnName("orderId");
+        //    entity.Property(e => e.Reason).HasColumnName("reason");
+        //    entity.Property(e => e.RequestDate)
+        //        .HasDefaultValueSql("(sysutcdatetime())")
+        //        .HasColumnName("requestDate");
+        //    entity.Property(e => e.Status)
+        //        .HasMaxLength(20)
+        //        .HasDefaultValue("pending")
+        //        .HasColumnName("status");
+        //    entity.Property(e => e.UserId).HasColumnName("userId");
 
             //entity.HasOne(d => d.Order).WithMany(p => p.ReturnExchangeRequests)
             //    .HasForeignKey(d => d.OrderId)
             //    .OnDelete(DeleteBehavior.ClientSetNull)
             //    .HasConstraintName("FK_ReturnExchangeRequest_Order");
 
-            entity.HasOne(d => d.User).WithMany(p => p.ReturnExchangeRequests)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ReturnExchangeRequest_User");
-        });
+        //    entity.HasOne(d => d.User).WithMany(p => p.ReturnExchangeRequests)
+        //        .HasForeignKey(d => d.UserId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_ReturnExchangeRequest_User");
+        //});
 
-        modelBuilder.Entity<ReturnExchangeRequestItem>(entity =>
-        {
-            entity.HasKey(e => e.RequestItemId).HasName("PK__ReturnEx__FDD6A58FF74806E9");
+        //modelBuilder.Entity<ReturnExchangeRequestItem>(entity =>
+        //{
+        //    entity.HasKey(e => e.RequestItemId).HasName("PK__ReturnEx__FDD6A58FF74806E9");
 
-            entity.ToTable("ReturnExchangeRequestItem");
+        //    entity.ToTable("ReturnExchangeRequestItem");
 
-            entity.Property(e => e.RequestItemId).HasColumnName("requestItemId");
-            entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.RequestId).HasColumnName("requestId");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("pending")
-                .HasColumnName("status");
+        //    entity.Property(e => e.RequestItemId).HasColumnName("requestItemId");
+        //    entity.Property(e => e.Notes).HasColumnName("notes");
+        //    entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
+        //    entity.Property(e => e.Quantity).HasColumnName("quantity");
+        //    entity.Property(e => e.RequestId).HasColumnName("requestId");
+        //    entity.Property(e => e.Status)
+        //        .HasMaxLength(20)
+        //        .HasDefaultValue("pending")
+        //        .HasColumnName("status");
 
-            entity.HasOne(d => d.OrderItem).WithMany(p => p.ReturnExchangeRequestItems)
-                .HasForeignKey(d => d.OrderItemId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ReturnExchangeRequestItem_OrderItem");
+        //    entity.HasOne(d => d.OrderItem).WithMany(p => p.ReturnExchangeRequestItems)
+        //        .HasForeignKey(d => d.OrderItemId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_ReturnExchangeRequestItem_OrderItem");
 
-            entity.HasOne(d => d.Request).WithMany(p => p.ReturnExchangeRequestItems)
-                .HasForeignKey(d => d.RequestId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ReturnExchangeRequestItem_Request");
-        });
+        //    entity.HasOne(d => d.Request).WithMany(p => p.ReturnExchangeRequestItems)
+        //        .HasForeignKey(d => d.RequestId)
+        //        .OnDelete(DeleteBehavior.ClientSetNull)
+        //        .HasConstraintName("FK_ReturnExchangeRequestItem_Request");
+        //});
 
         modelBuilder.Entity<Role>(entity =>
         {

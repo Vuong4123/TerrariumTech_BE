@@ -12,8 +12,8 @@ using TerrariumGardenTech.Repositories.Entity;
 namespace TerrariumGardenTech.Repositories.Migrations
 {
     [DbContext(typeof(TerrariumGardenTechDBContext))]
-    [Migration("20250824144040_AddTable240820251")]
-    partial class AddTable240820251
+    [Migration("20250825234340_DeleteTableV1")]
+    partial class DeleteTableV1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -332,6 +332,46 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("MembershipPackage");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRefundItem", b =>
+                {
+                    b.Property<int>("OrderRefundItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderRefundItemId"));
+
+                    b.Property<bool?>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderRefundId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReasonModified")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RefundPoint")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserModified")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrderRefundItemId")
+                        .HasName("PK_OrderRefundItemId");
+
+                    b.HasIndex("OrderRefundId");
+
+                    b.ToTable("OrderRefundItemId", (string)null);
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRequestRefund", b =>
                 {
                     b.Property<int>("RequestRefundId")
@@ -432,6 +472,30 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderTransport", (string)null);
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderTransportItem", b =>
+                {
+                    b.Property<int>("TransportItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransportItemId"));
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransportId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TransportItemId");
+
+                    b.HasIndex("TransportId");
+
+                    b.ToTable("OrderTransportItem", (string)null);
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.Shape", b =>
@@ -1496,92 +1560,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.ToTable("PromotionTerrariumVariant", (string)null);
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ReturnExchangeRequest", b =>
-                {
-                    b.Property<int>("RequestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("requestId");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestId"));
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int")
-                        .HasColumnName("orderId");
-
-                    b.Property<string>("Reason")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("reason");
-
-                    b.Property<DateTime?>("RequestDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("requestDate")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<string>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("pending")
-                        .HasColumnName("status");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("userId");
-
-                    b.HasKey("RequestId")
-                        .HasName("PK__ReturnEx__E3C5DE3141AB3D28");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ReturnExchangeRequest", (string)null);
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ReturnExchangeRequestItem", b =>
-                {
-                    b.Property<int>("RequestItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("requestItemId");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestItemId"));
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("notes");
-
-                    b.Property<int>("OrderItemId")
-                        .HasColumnType("int")
-                        .HasColumnName("orderItemId");
-
-                    b.Property<int?>("Quantity")
-                        .HasColumnType("int")
-                        .HasColumnName("quantity");
-
-                    b.Property<int>("RequestId")
-                        .HasColumnType("int")
-                        .HasColumnName("requestId");
-
-                    b.Property<string>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("pending")
-                        .HasColumnName("status");
-
-                    b.HasKey("RequestItemId")
-                        .HasName("PK__ReturnEx__FDD6A58FF74806E9");
-
-                    b.HasIndex("OrderItemId");
-
-                    b.HasIndex("RequestId");
-
-                    b.ToTable("ReturnExchangeRequestItem", (string)null);
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Role", b =>
                 {
                     b.Property<int>("RoleId")
@@ -1783,6 +1761,12 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("OtpExpiration")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OtpResendCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("OtpSentAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
@@ -2036,6 +2020,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRefundItem", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Common.Entity.OrderRequestRefund", "OrderRefund")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderRefundId")
+                        .IsRequired()
+                        .HasConstraintName("FK_OrderRefundItem_OrderRefundId");
+
+                    b.Navigation("OrderRefund");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRequestRefund", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
@@ -2056,6 +2051,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
                         .HasConstraintName("FK_OrderTransport_Order");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderTransportItem", b =>
+                {
+                    b.HasOne("TerrariumGardenTech.Common.Entity.OrderTransport", "OrderTransport")
+                        .WithMany("Items")
+                        .HasForeignKey("TransportId")
+                        .IsRequired()
+                        .HasConstraintName("FK_OrderTransportItem_OrderTransport");
+
+                    b.Navigation("OrderTransport");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.TerrariumAccessory", b =>
@@ -2418,44 +2424,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("TerrariumVariant");
                 });
 
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ReturnExchangeRequest", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.Order", "Order")
-                        .WithMany("ReturnExchangeRequests")
-                        .HasForeignKey("OrderId")
-                        .IsRequired()
-                        .HasConstraintName("FK_ReturnExchangeRequest_Order");
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.User", "User")
-                        .WithMany("ReturnExchangeRequests")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_ReturnExchangeRequest_User");
-
-                    b.Navigation("Order");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ReturnExchangeRequestItem", b =>
-                {
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.OrderItem", "OrderItem")
-                        .WithMany("ReturnExchangeRequestItems")
-                        .HasForeignKey("OrderItemId")
-                        .IsRequired()
-                        .HasConstraintName("FK_ReturnExchangeRequestItem_OrderItem");
-
-                    b.HasOne("TerrariumGardenTech.Repositories.Entity.ReturnExchangeRequest", "Request")
-                        .WithMany("ReturnExchangeRequestItems")
-                        .HasForeignKey("RequestId")
-                        .IsRequired()
-                        .HasConstraintName("FK_ReturnExchangeRequestItem_Request");
-
-                    b.Navigation("OrderItem");
-
-                    b.Navigation("Request");
-                });
-
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Terrarium", b =>
                 {
                     b.HasOne("TerrariumGardenTech.Common.Entity.EnvironmentTerrarium", "Environment")
@@ -2560,8 +2528,15 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Memberships");
                 });
 
+            modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderRequestRefund", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("TerrariumGardenTech.Common.Entity.OrderTransport", b =>
                 {
+                    b.Navigation("Items");
+
                     b.Navigation("TransportLogs");
                 });
 
@@ -2617,26 +2592,17 @@ namespace TerrariumGardenTech.Repositories.Migrations
 
                     b.Navigation("Refunds");
 
-                    b.Navigation("ReturnExchangeRequests");
-
                     b.Navigation("Transports");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.OrderItem", b =>
                 {
                     b.Navigation("Feedbacks");
-
-                    b.Navigation("ReturnExchangeRequestItems");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Promotion", b =>
                 {
                     b.Navigation("PromotionTerrariumVariants");
-                });
-
-            modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.ReturnExchangeRequest", b =>
-                {
-                    b.Navigation("ReturnExchangeRequestItems");
                 });
 
             modelBuilder.Entity("TerrariumGardenTech.Repositories.Entity.Role", b =>
@@ -2683,8 +2649,6 @@ namespace TerrariumGardenTech.Repositories.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("Personalizes");
-
-                    b.Navigation("ReturnExchangeRequests");
 
                     b.Navigation("SentMessages");
                 });

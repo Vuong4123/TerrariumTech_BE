@@ -15,10 +15,14 @@ namespace TerrariumGardenTech.Service.IService
     {
         Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest request);
         Task<MomoQrResponse> CreateMomoWalletTopupUrl(MomoWalletTopupRequest request);
-
         Task<IBusinessResult> MomoReturnExecute(IQueryCollection query);
         Task<IBusinessResult> MomoWalletReturnExecute(IQueryCollection query);
         Task<IBusinessResult> MomoIpnExecute(MomoIpnModel body);
         Task<IBusinessResult> MomoWalletIpnExecute(MomoIpnModel body);
+
+        // NEW — Membership direct (không Order)
+        Task<MomoQrResponse> CreateMomoMembershipDirectPaymentUrl(DirectPaymentRequest request);
+        Task<IBusinessResult> MomoMembershipReturnExecute(IQueryCollection query);
+        Task<IBusinessResult> MomoMembershipIpnExecute(MomoIpnModel body);
     }
 }

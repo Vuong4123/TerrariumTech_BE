@@ -67,7 +67,7 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         var totalRecords = await queryable.CountAsync();
 
         // sort mới nhất -> cũ nhất
-        queryable = queryable.OrderByDescending(t => t.CreatedAt);
+        queryable = queryable.OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt ?? DateTime.MinValue);
 
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 
@@ -88,7 +88,7 @@ public class TerrariumRepository : GenericRepository<Terrarium>
         var totalRecords = await queryable.CountAsync();
 
         // sort mới nhất -> cũ nhất
-        queryable = queryable.OrderByDescending(t => t.CreatedAt);
+        queryable = queryable.OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt ?? DateTime.MinValue);
 
         queryable = request.Pagination.IsPagingEnabled ? GetQueryablePagination(queryable, request) : queryable;
 

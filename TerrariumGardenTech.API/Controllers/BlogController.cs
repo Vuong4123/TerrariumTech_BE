@@ -29,10 +29,15 @@ public class BlogController : ControllerBase
     {
         return await _blogService.GetAll();
     }
+    // GET: api/<BlogController>
+    [HttpGet("get-by-categoryId/{categoryId}")]
+    public async Task<IBusinessResult> GetByCategoryId(int categoryId)
+    {
+        return await _blogService.GetByCategory(categoryId);
+    }
 
     // GET api/<BlogController>/5
     [HttpGet("get/{id}")]
-    [Authorize(Roles = "Admin,Staff,Manager,User")]
     public async Task<IBusinessResult> Get(int id)
     {
         return await _blogService.GetById(id);

@@ -1,4 +1,5 @@
 using DotNetEnv;
+using FeedbackGardenTech.Service.IService;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -113,6 +114,7 @@ builder.Services.AddScoped<IPayOsService, PayOsService>();
 builder.Services.AddScoped<IWalletServices, WalletServices>();
 builder.Services.AddScoped<IMomoServices, MomoServices>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IFeedbackImageService, FeedbackImageService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IChatService, ChatService>();
