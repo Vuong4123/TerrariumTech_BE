@@ -826,7 +826,7 @@ namespace TerrariumGardenTech.Service.Service
                     UserId = userId,
                     AddressId = defaultAddress.AddressId,
                     OrderDate = DateTime.UtcNow,
-                    Status = OrderStatusEnum.Pending,
+                    Status = OrderStatusData.Pending,
                     PaymentStatus = "Unpaid",
                     OrderItems = new List<OrderItem>()
                 };
@@ -955,7 +955,7 @@ namespace TerrariumGardenTech.Service.Service
                     UserId = userId,
                     AddressId = defaultAddress.AddressId,
                     OrderDate = DateTime.UtcNow,
-                    Status = OrderStatusEnum.Pending,
+                    Status = OrderStatusData.Pending,
                     PaymentStatus = "Unpaid",
                     OrderItems = new List<OrderItem>()
                 };
@@ -1087,7 +1087,7 @@ namespace TerrariumGardenTech.Service.Service
                     UserId = userId,
                     AddressId = defaultAddress.AddressId,
                     OrderDate = DateTime.UtcNow,
-                    Status = OrderStatusEnum.Pending,
+                    Status = OrderStatusData.Pending,
                     PaymentStatus = "Unpaid",
                     OrderItems = new List<OrderItem>()
                 };

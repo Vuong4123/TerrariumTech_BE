@@ -64,23 +64,23 @@ namespace TerrariumGardenTech.Service.Service
             if (order == null)
                 return new BusinessResult(false, "Không tìm thấy thông tin đơn hàng!");
             if (order.Transports != null && (
-                (order.Status == OrderStatusEnum.Processing && order.Transports.Any(x => x.Status == TransportStatusEnum.Shipping || x.Status == TransportStatusEnum.Completed)) ||
-                (order.Status == OrderStatusEnum.Refuning && order.Transports.Any(x => x.Status == TransportStatusEnum.InCustomer))))
+                (order.Status == OrderStatusData.Processing && order.Transports.Any(x => x.Status == TransportStatusEnum.Shipping || x.Status == TransportStatusEnum.Completed)) ||
+                (order.Status == OrderStatusData.Refuning && order.Transports.Any(x => x.Status == TransportStatusEnum.InCustomer))))
                 return new BusinessResult(false, "Đơn hàng này đang có đơn vận chuyển, không thể tạo thêm");
             var verifyStatus = order.Status switch
             {
-                OrderStatusEnum.Cancle => "Đơn hàng đã bị hủy, không thể thực hiện tạo đơn vận chuyển!",
-                OrderStatusEnum.Pending => "Đơn hàng đang chờ xác nhận, không thể thực hiện vận chuyển!",
-                OrderStatusEnum.Confirmed => "Đơn hàng chưa được hoàn thiện, không thể thực hiện vận chuyển!",
-                OrderStatusEnum.Shipping => "Đơn hàng đang được vận chuyển!",
-                OrderStatusEnum.Completed => "Đơn hàng đã giao thành công, không thể thực hiện tiếp!",
-                OrderStatusEnum.RequestRefund => "Đơn hàng đang có yêu cầu hoàn tiện, không thể thực hiện tiếp!",
-                OrderStatusEnum.Refunded => "Đơn hàng đã hoàn tiền, không thể thực hiện tiếp!",
+                OrderStatusData.Cancel => "Đơn hàng đã bị hủy, không thể thực hiện tạo đơn vận chuyển!",
+                OrderStatusData.Pending => "Đơn hàng đang chờ xác nhận, không thể thực hiện vận chuyển!",
+                OrderStatusData.Confirmed => "Đơn hàng chưa được hoàn thiện, không thể thực hiện vận chuyển!",
+                OrderStatusData.Shipping => "Đơn hàng đang được vận chuyển!",
+                OrderStatusData.Completed => "Đơn hàng đã giao thành công, không thể thực hiện tiếp!",
+                OrderStatusData.RequestRefund => "Đơn hàng đang có yêu cầu hoàn tiện, không thể thực hiện tiếp!",
+                OrderStatusData.Refunded => "Đơn hàng đã hoàn tiền, không thể thực hiện tiếp!",
                 _ => string.Empty
             };
-            if (order.Status == OrderStatusEnum.Shipping && request.IsRefund)
+            if (order.Status == OrderStatusData.Shipping && request.IsRefund)
                 return new BusinessResult(false, "Không thể tạo đơn hoàn tiền cho đơn hàng chưa giao!");
-            if (order.Status == OrderStatusEnum.Refuning && !request.IsRefund)
+            if (order.Status == OrderStatusData.Refuning && !request.IsRefund)
                 return new BusinessResult(false, "Không thể tạo đơn giao tới khách hàng cho đơn hàng hoàn tiền!");
             if (!string.IsNullOrEmpty(verifyStatus))
                 return new BusinessResult(false, verifyStatus);
@@ -89,7 +89,7 @@ namespace TerrariumGardenTech.Service.Service
             if (request.IsRefund)
             {
                 refun = await _unitOfWork.OrderRequestRefund.DbSet()
-                    .FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.Status == OrderRequestRefundStatus.Approved);
+                    .FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.Status == OrderStatusData.Approved);
                 if (refun == null)
                     return new BusinessResult(false, "Không tìm thấy thông tin yêu cầu hoàn tiền cho đơn hàng này!");
             }
@@ -115,8 +115,8 @@ namespace TerrariumGardenTech.Service.Service
                             Quantity = x.Quantity ?? 0
                         }).ToList()
                     };
-                    if (order.Status == OrderStatusEnum.Processing)
-                        order.Status = OrderStatusEnum.Shipping;
+                    if (order.Status == OrderStatusData.Processing)
+                        order.Status = OrderStatusData.Shipping;
                     await _unitOfWork.Transport.CreateAsync(transport);
                     await _unitOfWork.SaveAsync();
                     if (refun != null)
@@ -159,7 +159,7 @@ namespace TerrariumGardenTech.Service.Service
             await Task.WhenAll(logs.Select(_unitOfWork.TransportLog.RemoveAsync));
             if (order != null)
             {
-                order.Status = transport.IsRefund ? OrderStatusEnum.Refunded : OrderStatusEnum.Processing;
+                order.Status = transport.IsRefund ? OrderStatusData.Refunded : OrderStatusData.Processing;
                 await _unitOfWork.Order.UpdateAsync(order);
             }    
             await _unitOfWork.Transport.RemoveAsync(transport);
@@ -300,9 +300,9 @@ namespace TerrariumGardenTech.Service.Service
                     if (request.Status == TransportStatusEnum.Failed || request.Status == TransportStatusEnum.GetFromCustomerFail)
                         transport.ContactFailNumber = request.ContactFailNumber.Value;
                     if (transport.Status == TransportStatusEnum.Failed || transport.Status == TransportStatusEnum.LostShipping)
-                        order.Status = OrderStatusEnum.Failed;
+                        order.Status = OrderStatusData.Failed;
                     if (transport.Status == TransportStatusEnum.Completed || transport.Status == TransportStatusEnum.GetFromCustomerFail)
-                        order.Status = OrderStatusEnum.Completed;
+                        order.Status = OrderStatusData.Completed;
                     if (transport.Status == TransportStatusEnum.ShippingToWareHouse)
                     {
                         var refund = await _unitOfWork.OrderRequestRefund.DbSet()

@@ -12,7 +12,7 @@ public interface IOrderService
     Task<IBusinessResult> GetByIdAsync(int orderId);
     Task<int> CreateAsync(OrderCreateRequest request);
 
-    Task<bool> UpdateStatusAsync(int id, OrderStatusEnum status);
+    Task<bool> UpdateStatusAsync(int id, string status);
     Task<bool> DeleteAsync(int id);
     Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod);
     Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId);

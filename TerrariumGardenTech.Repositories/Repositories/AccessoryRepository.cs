@@ -3,6 +3,7 @@ using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Repositories;
 
@@ -101,7 +102,7 @@ public class AccessoryRepository : GenericRepository<Accessory>
 
         var dict = await _context.OrderItems
             .Where(oi => oi.AccessoryId.HasValue && idList.Contains(oi.AccessoryId.Value))
-            .Where(oi => oi.Order.Status == OrderStatusEnum.Completed) // chỉ tính đơn đã hoàn tất
+            .Where(oi => oi.Order.Status == OrderStatusData.Completed) // chỉ tính đơn đã hoàn tất
             .GroupBy(oi => oi.AccessoryId!.Value)
             .Select(g => new
             {

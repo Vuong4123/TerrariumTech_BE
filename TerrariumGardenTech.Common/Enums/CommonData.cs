@@ -22,11 +22,22 @@ public static class CommonData
         public const string Rejected = "Rejected";
         public const string Ordered = "Ordered";
     }
-    public struct OrderRequestRefundStatus
+    public struct OrderStatusData
     {
-        public const string Pending = "Pending"; // Chờ duyệt
-        public const string Approved = "Approved"; // Đã duyệt
-        public const string Rejected = "Rejected"; // Bị từ chối
-        public const string Cancel = "Cancel"; // Bị từ chối
+        public const string Pending = "Pending";         // Chờ duyệt
+        public const string Approved = "Approved";       // Đã duyệt
+        public const string Rejected = "Rejected";       // Bị từ chối
+        public const string Cancel = "Cancel";           // Đã hủy
+        public const string Confirmed = "Confirmed";     // Đã xác nhận
+
+        public const string Processing = "Processing";   // Đang xử lý
+        public const string Shipping = "Shipping";       // Đang giao hàng
+        public const string Completed = "Completed";     // Hoàn thành
+        public const string Failed = "Failed";           // Giao hàng thất bại
+
+        public const string RequestRefund = "RequestRefund"; // Yêu cầu hoàn tiền
+        public const string Refuning = "Refuning";           // Đang hoàn tiền
+        public const string Refunded = "Refunded";           // Đã hoàn tiền
     }
+
 }

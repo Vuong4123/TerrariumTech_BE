@@ -733,10 +733,10 @@ public partial class TerrariumGardenTechDBContext : DbContext
             //    .HasColumnName("status");
             entity.Property(e => e.Status)
     .IsRequired()
-    .HasConversion(new ValueConverter<OrderStatusEnum, string>(
-        v => v.ToString(),
-        v => Enum.Parse<OrderStatusEnum>(v, /*ignoreCase=*/ true)
-    ))
+    //.HasConversion(new ValueConverter<s, string>(
+    //    v => v.ToString(),
+    //    v => Enum.Parse<OrderStatusEnum>(v, /*ignoreCase=*/ true)
+    //))
     .HasMaxLength(50)
     .HasColumnName("status");
 

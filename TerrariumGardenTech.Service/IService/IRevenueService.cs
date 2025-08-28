@@ -1,4 +1,5 @@
-﻿using TerrariumGardenTech.Service.Base;
+﻿using TerrariumGardenTech.Common.ResponseModel.Revenue;
+using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService;
 
@@ -20,4 +21,5 @@ public interface IRevenueService
 
     // Conversion & Funnel
     Task<IBusinessResult> GetConversionRatesAsync(DateTime? from = null, DateTime? to = null);
+    Task<AdminMembershipStatisticsDto> GetComprehensiveStatisticsAsync();
 }
