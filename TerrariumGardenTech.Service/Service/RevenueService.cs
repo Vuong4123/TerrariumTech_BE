@@ -125,7 +125,7 @@ public class RevenueService : IRevenueService
     /// </summary>
     public async Task<IBusinessResult> GetRevenueByProductAsync(DateTime? from = null, DateTime? to = null)
     {
-        var fromDate = from ?? DateTime.Now;
+        var fromDate = from ?? DateTime.Now.AddMonths(-1);
         var toDate = to ?? DateTime.Now;
 
         var orders = await _unitOfWork.Order.GetAllAsync2();
@@ -136,12 +136,11 @@ public class RevenueService : IRevenueService
 
         var orderItems = completedOrders.SelectMany(o => o.OrderItems).ToList();
 
-        var terrariumRevenue = orderItems
-            .Where(item => item.TerrariumVariantId.HasValue)
-            .Sum(item => item.TotalPrice ?? 0);
-
         var accessoryRevenue = orderItems
             .Where(item => item.AccessoryId.HasValue)
+            .Sum(item => item.TotalPrice ?? 0);
+        var terrariumRevenue = orderItems
+            .Where(item => item.TerrariumId.HasValue)
             .Sum(item => item.TotalPrice ?? 0);
 
         var totalRevenue = terrariumRevenue + accessoryRevenue;
@@ -883,7 +882,27 @@ public class RevenueService : IRevenueService
             }
 
             var totalOrders = filteredOrders.Count;
-            var statusStats = new List<OrderStatusDetail>();
+
+            // THÊM CODE TÍNH TOÁN statusStats Ở ĐÂY
+            var statusGroups = filteredOrders
+                .GroupBy(o => o.Status)
+                .Select(g => new OrderStatusDetail
+                {
+                    Status = g.Key.ToString(),
+                    Count = g.Count(),
+                    Percentage = Math.Round((double)g.Count() / totalOrders * 100, 2),
+                    TotalRevenue = g.Sum(o => o.TotalAmount),
+                    AverageOrderValue = g.Average(o => o.TotalAmount)
+                })
+                .ToList();
+
+            var statusStats = statusGroups; // Hoặc gán trực tiếp vào statusStats
+
+            // Kiểm tra statusStats có data không
+            if (!statusStats.Any())
+            {
+                return new BusinessResult(Const.WARNING_NO_DATA_CODE, "Không có dữ liệu thống kê trạng thái");
+            }
 
             // Tính toán trends (so với kỳ trước)
             var previousPeriodFrom = fromDate.AddDays(-(toDate - fromDate).Days);
@@ -897,7 +916,7 @@ public class RevenueService : IRevenueService
                 var previousCount = previousOrders.Count(o => o.Status.ToString() == currentStatus.Status);
                 var growthPercent = previousCount > 0
                     ? Math.Round(((double)(currentStatus.Count - previousCount) / previousCount) * 100, 2)
-                    : 100; // Nếu trước đó = 0 thì tăng 100%
+                    : 100;
 
                 trends.Add(new StatusTrend
                 {
@@ -910,10 +929,10 @@ public class RevenueService : IRevenueService
                 });
             }
 
-            // Sửa lỗi ở đây - thay đổi cách tính completion rate và cancellation rate
-            var confirmedStatus = statusStats.FirstOrDefault(s => s.Status == "Confirmed");
-            var cancelledStatus = statusStats.FirstOrDefault(s => s.Status == "Cancelled");
-            var pendingStatus = statusStats.FirstOrDefault(s => s.Status == "Pending");
+            // Lấy các status cụ thể
+            var completedStatus = statusStats.FirstOrDefault(s => s.Status == OrderStatusEnum.Completed.ToString());
+            var cancelledStatus = statusStats.FirstOrDefault(s => s.Status == OrderStatusEnum.Cancle.ToString()); // Note: "Cancle" not "Cancel"
+            var pendingStatus = statusStats.FirstOrDefault(s => s.Status == OrderStatusEnum.Pending.ToString());
 
             var result = new OrdersByStatusResponse
             {
@@ -924,9 +943,14 @@ public class RevenueService : IRevenueService
                 StatusTrends = trends,
                 Summary = new OrderStatusSummary
                 {
-                    MostCommonStatus = statusStats.OrderByDescending(s => s.Count).First().Status,
-                    CompletionRate = totalOrders > 0 ? Math.Round(((double)(confirmedStatus?.Count ?? 0) / totalOrders) * 100, 2) : 0,
-                    CancellationRate = totalOrders > 0 ? Math.Round(((double)(cancelledStatus?.Count ?? 0) / totalOrders) * 100, 2) : 0,
+                    // Sử dụng FirstOrDefault() thay vì First() để tránh exception
+                    MostCommonStatus = statusStats.OrderByDescending(s => s.Count).FirstOrDefault()?.Status ?? "N/A",
+                    CompletionRate = totalOrders > 0
+                        ? Math.Round(((double)(completedStatus?.Count ?? 0) / totalOrders) * 100, 2)
+                        : 0,
+                    CancellationRate = totalOrders > 0
+                        ? Math.Round(((double)(cancelledStatus?.Count ?? 0) / totalOrders) * 100, 2)
+                        : 0,
                     PendingOrdersValue = pendingStatus?.TotalRevenue ?? 0
                 }
             };
@@ -939,5 +963,6 @@ public class RevenueService : IRevenueService
             return new BusinessResult(Const.FAIL_READ_CODE, $"Lỗi khi lấy thống kê: {ex.Message}");
         }
     }
+
     #endregion Helper Methods
 }
