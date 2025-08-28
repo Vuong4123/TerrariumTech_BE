@@ -585,6 +585,7 @@ public class OrderService : IOrderService
                     UserId = order.UserId,
                     UserEmail = user?.Email,
                     RefundAmount = refund.RefundAmount ?? 0,
+                    Images = refund.Images,
                     Reason = refund.Reason,
                     RequestDate = refund.RequestDate,
                     RefundStatus = refund.Status,
@@ -921,7 +922,9 @@ public class OrderService : IOrderService
 
         if (request.RefundItems.Any(x => order.OrderItems.Any(i => x.OrderItemId == x.OrderItemId && i.Quantity < x.Quantity)))
             return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!");
-
+        var checkE = _unitOfWork.OrderRequestRefund.FindOneAsync(q => q.OrderId == request.OrderId && q.UserModified == currentUserId);
+        if(checkE.Result != null)
+            return (false, "Đơn hàng này đang xử lý hoàn tiền !");
         var existedRefundItems = await _unitOfWork.OrderRequestRefund.DbSet()
             .Include(x => x.Items).Where(x => x.OrderId == order.OrderId && x.Status == CommonData.OrderStatusData.Approved)
             .SelectMany(x => x.Items).Where(x => x.IsApproved == true).ToArrayAsync();
@@ -943,13 +946,15 @@ public class OrderService : IOrderService
         var refundRequest = new OrderRequestRefund
         {
             OrderId = order.OrderId,
+            Images = request.Images,
             Items = request.RefundItems.Select(x => new OrderRefundItem
             {
                 OrderItemId = x.OrderItemId,
                 Quantity = x.Quantity
             }).ToList(),
             Reason = request.Reason,
-            Status = CommonData.OrderStatusData.Pending,
+            Status = OrderStatusData.Pending,
+            UserModified = currentUserId,
             RequestDate = System.DateTime.Today            
         };
         order.Status = OrderStatusData.RequestRefund;
@@ -965,14 +970,14 @@ public class OrderService : IOrderService
         var order = await _unitOfWork.Order.DbSet().Include(x => x.Refunds).AsNoTracking().FirstOrDefaultAsync(x => x.OrderId == orderId);
         if (order == null)
             return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy thông tin hóa đơn!");
-
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách yêu cầu hoàn tiền thành công!", order.Refunds.Select(x =>
+        var res = new RefundResponse
         {
-            x.Order = null;
-            return x;
-        }).ToArray());
+            OrderId = orderId,
+            RefundId = order.Refunds.Select(c => c.RequestRefundId)
+        };
+        return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách yêu cầu hoàn tiền thành công!", res);
     }
-
+    
     public async Task<IBusinessResult> GetRefundDetailAsync(int refundId)
     {
         var refund = await _unitOfWork.OrderRequestRefund.DbSet().Include(x => x.Items).AsNoTracking().FirstOrDefaultAsync(x => x.RequestRefundId == refundId);

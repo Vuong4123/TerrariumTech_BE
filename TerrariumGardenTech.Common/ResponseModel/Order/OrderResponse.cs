@@ -53,6 +53,10 @@ public class AcceptRefundResponse
     public bool IsApproved { get; set; }
     public string Message { get; set; }
 }
+public class RefundResponse {
+    public int OrderId { get; set; }
+    public IEnumerable<int> RefundId {get; set; }
+}
 public class MembershipCreationResult
 {
     public int MembershipId { get; set; }
