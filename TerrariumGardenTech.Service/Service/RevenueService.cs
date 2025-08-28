@@ -6,6 +6,7 @@ using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -30,15 +31,15 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-12);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            o.Status == OrderStatusEnum.Confirmed &&
+            o.Status == OrderStatusData.Completed &&
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
 
         var previousPeriodFrom = fromDate.AddDays(-(toDate - fromDate).Days);
         var previousPeriodOrders = orders.Where(o =>
-            o.Status == OrderStatusEnum.Confirmed &&
+            o.Status == OrderStatusData.Completed &&
             o.OrderDate >= previousPeriodFrom &&
             o.OrderDate < fromDate).ToList();
 
@@ -77,9 +78,9 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-3);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            o.Status == OrderStatusEnum.Confirmed &&
+            o.Status == OrderStatusData.Completed &&
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
 
@@ -127,9 +128,9 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now;
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            o.Status == OrderStatusEnum.Confirmed &&
+            o.Status == OrderStatusData.Completed &&
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
 
@@ -172,30 +173,22 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-1);
         var toDate = to ?? DateTime.Now;
 
-        var allOrders = await _unitOfWork.Order.GetAllAsync();
+        var allOrders = await _unitOfWork.Order.GetAllAsync2();
         var orders = allOrders.Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate).ToList();
 
         var result = new OrderStatsResponse
         {
             TotalOrders = orders.Count,
-            CompletedOrders = orders.Count(o => o.Status == OrderStatusEnum.Confirmed),
-            PendingOrders = orders.Count(o => o.Status == OrderStatusEnum.Pending),
-            CancelledOrders = orders.Count(o => o.Status == OrderStatusEnum.Cancle),
-            ProcessingOrders = orders.Count(o => o.Status == OrderStatusEnum.Processing),
+            CompletedOrders = orders.Count(o => o.Status == OrderStatusData.Completed),
+            PendingOrders = orders.Count(o => o.Status == OrderStatusData.Pending),
+            CancelledOrders = orders.Count(o => o.Status == OrderStatusData.Cancel),
+            ProcessingOrders = orders.Count(o => o.Status == OrderStatusData.Processing),
 
-            CompletionRate = orders.Count > 0 ? Math.Round(((double)orders.Count(o => o.Status == OrderStatusEnum.Confirmed) / orders.Count) * 100, 2) : 0,
-            CancellationRate = orders.Count > 0 ? Math.Round(((double)orders.Count(o => o.Status == OrderStatusEnum.Cancle) / orders.Count) * 100, 2) : 0,
+            CompletionRate = orders.Count > 0 ? Math.Round(((double)orders.Count(o => o.Status == OrderStatusData.Completed) / orders.Count) * 100, 2) : 0,
+            CancellationRate = orders.Count > 0 ? Math.Round(((double)orders.Count(o => o.Status == OrderStatusData.Cancel) / orders.Count) * 100, 2) : 0,
 
             AverageOrderValue = orders.Count > 0 ? orders.Average(o => o.TotalAmount) : 0,
-            AverageItemsPerOrder = orders.Count > 0 ? orders.SelectMany(o => o.OrderItems).Count() / (double)orders.Count : 0,
-
-            OrdersByStatus = Enum.GetValues<OrderStatusEnum>()
-                .Select(status => new OrderStatusStat
-                {
-                    Status = status.ToString(),
-                    Count = orders.Count(o => o.Status == status),
-                    Percentage = orders.Count > 0 ? Math.Round(((double)orders.Count(o => o.Status == status) / orders.Count) * 100, 2) : 0
-                }).ToList()
+            AverageItemsPerOrder = orders.Count > 0 ? orders.SelectMany(o => o.OrderItems).Count() / (double)orders.Count : 0
         };
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy thống kê đơn hàng thành công", result);
@@ -209,7 +202,7 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-3);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var filteredOrders = orders.Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate).ToList();
 
         List<OrderTrendData> trendData = new List<OrderTrendData>();
@@ -256,7 +249,7 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-12);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var filteredOrders = orders.Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate).ToList();
 
         var customerOrders = filteredOrders
@@ -300,11 +293,11 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-12);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var users = await _unitOfWork.User.GetAllAsync();
 
         var customerData = orders
-            .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate && o.Status == OrderStatusEnum.Confirmed)
+            .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate && o.Status == OrderStatusData.Completed)
             .GroupBy(o => o.UserId)
             .Select(g => new TopCustomer
             {
@@ -331,12 +324,12 @@ public class RevenueService : IRevenueService
     /// </summary>
     public async Task<IBusinessResult> GetTopSellingProductsAsync(int top = 10, DateTime? from = null, DateTime? to = null)
     {
-        var fromDate = from ?? DateTime.Now;
+        var fromDate = from ?? DateTime.Now.AddMonths(-1);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            o.Status == OrderStatusEnum.Confirmed &&
+            o.Status == OrderStatusData.Completed &&
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
 
@@ -347,6 +340,8 @@ public class RevenueService : IRevenueService
 
         // Top phụ kiện
         var topAccessories = await GetTopAccessories(orderItems, top);
+        // Top be
+        var topTerrarium = await GetTopTerrarium(orderItems, top);
 
         var result = new TopSellingProductsResponse
         {
@@ -366,9 +361,9 @@ public class RevenueService : IRevenueService
         var fromDate = from ?? DateTime.Now.AddMonths(-3);
         var toDate = to ?? DateTime.Now;
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            o.Status == OrderStatusEnum.Confirmed &&
+            o.Status == OrderStatusData.Completed &&
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
 
@@ -419,7 +414,7 @@ public class RevenueService : IRevenueService
         // Giả sử bạn có bảng tracking visits/sessions
         // Ở đây tôi sẽ dùng dữ liệu có sẵn để ước tính
 
-        var orders = await _unitOfWork.Order.GetAllAsync();
+        var orders = await _unitOfWork.Order.GetAllAsync2();
         var carts = await _unitOfWork.Cart.GetAllAsync();
 
         var periodOrders = orders.Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate).ToList();
@@ -428,7 +423,7 @@ public class RevenueService : IRevenueService
         var totalVisits = periodCarts.Count * 3; // Ước tính mỗi cart có 3 visits
         var cartsCreated = periodCarts.Count;
         var ordersCreated = periodOrders.Count;
-        var completedOrders = periodOrders.Count(o => o.Status == OrderStatusEnum.Confirmed);
+        var completedOrders = periodOrders.Count(o => o.Status == OrderStatusData.Completed);
 
         var result = new ConversionRatesResponse
         {
@@ -447,8 +442,165 @@ public class RevenueService : IRevenueService
     }
 
     #endregion Conversion Analytics
+    public async Task<AdminMembershipStatisticsDto> GetComprehensiveStatisticsAsync()
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            var startOfCurrentMonth = new DateTime(now.Year, now.Month, 1);
+            var startOfLastMonth = startOfCurrentMonth.AddMonths(-1);
+            var start12MonthsAgo = startOfCurrentMonth.AddMonths(-11);
 
+            // Lấy tất cả memberships với details
+            var allMemberships = await _unitOfWork.MemberShip.GetAllWithDetailsAsync();
+
+            // Lấy active memberships
+            var activeMemberships = await _unitOfWork.MemberShip.GetActiveMembershipsAsync();
+
+            // Thống kê tổng quan
+            var statistics = new AdminMembershipStatisticsDto
+            {
+                TotalMemberships = allMemberships.Count,
+                ActiveMemberships = activeMemberships.Count,
+                ExpiredMemberships = allMemberships.Count(m =>
+                    m.Status == "Expired" || m.EndDate < now),
+                CancelledMemberships = allMemberships.Count(m =>
+                    m.Status == "Cancelled"),
+
+                // Doanh thu
+                TotalRevenue = allMemberships.Sum(m => m.Price),
+                CurrentMonthRevenue = allMemberships
+                    .Where(m => m.StartDate >= startOfCurrentMonth)
+                    .Sum(m => m.Price),
+                LastMonthRevenue = allMemberships
+                    .Where(m => m.StartDate >= startOfLastMonth &&
+                           m.StartDate < startOfCurrentMonth)
+                    .Sum(m => m.Price)
+            };
+
+            // Tính % tăng trưởng
+            statistics.RevenueGrowthPercent = statistics.LastMonthRevenue > 0
+                ? Math.Round(((double)(statistics.CurrentMonthRevenue - statistics.LastMonthRevenue)
+                    / (double)statistics.LastMonthRevenue) * 100, 2)
+                : 0;
+
+            // Thống kê theo gói
+            statistics.PackageSummary = await GetPackageSummaryAsync(allMemberships);
+
+            // Thống kê 12 tháng gần nhất
+            var last12MonthsMemberships = allMemberships
+                .Where(m => m.StartDate >= start12MonthsAgo)
+                .ToList();
+            statistics.Last12MonthsStats = GetLast12MonthsStats(last12MonthsMemberships);
+
+            // Top users
+            statistics.TopUsers = await GetTopUsersAsync(allMemberships);
+
+            return statistics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting comprehensive statistics");
+            throw;
+        }
+    }
     #region Helper Methods
+
+
+    private async Task<List<PackageSummaryDto>> GetPackageSummaryAsync(List<Membership> memberships)
+    {
+        // Lấy tất cả packages
+        var packages = await _unitOfWork.MembershipPackageRepository.GetAllAsync();
+        var activePackages = packages.Where(p => p.IsActive).ToList();
+
+        var totalRevenue = memberships.Sum(m => m.Price);
+
+        var packageStats = activePackages.Select(package =>
+        {
+            var packageMemberships = memberships.Where(m => m.PackageId == package.Id).ToList();
+            var revenue = packageMemberships.Sum(m => m.Price);
+
+            return new PackageSummaryDto
+            {
+                PackageId = package.Id,
+                PackageType = package.Type,
+                DurationDays = package.DurationDays,
+                Price = package.Price,
+                TotalSold = packageMemberships.Count,
+                Revenue = revenue,
+                MarketSharePercent = totalRevenue > 0
+                    ? Math.Round((double)(revenue / totalRevenue) * 100, 2)
+                    : 0
+            };
+        })
+        .OrderByDescending(p => p.Revenue)
+        .ToList();
+
+        return packageStats;
+    }
+
+    private List<MonthlyStatDto> GetLast12MonthsStats(List<Membership> memberships)
+    {
+        var now = DateTime.UtcNow;
+        var stats = new List<MonthlyStatDto>();
+
+        for (int i = 11; i >= 0; i--)
+        {
+            var targetDate = now.AddMonths(-i);
+            var startOfMonth = new DateTime(targetDate.Year, targetDate.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            var monthMemberships = memberships
+                .Where(m => m.StartDate >= startOfMonth && m.StartDate <= endOfMonth)
+                .ToList();
+
+            stats.Add(new MonthlyStatDto
+            {
+                Month = startOfMonth.ToString("yyyy-MM"),
+                NewMemberships = monthMemberships.Count,
+                Revenue = monthMemberships.Sum(m => m.Price)
+            });
+        }
+
+        return stats;
+    }
+
+    private async Task<List<TopUserDto>> GetTopUsersAsync(List<Membership> memberships)
+    {
+        var userGroups = memberships
+            .GroupBy(m => m.UserId)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                TotalPurchases = g.Count(),
+                TotalSpent = g.Sum(m => m.Price),
+                LatestMembership = g.OrderByDescending(m => m.StartDate).FirstOrDefault()
+            })
+            .OrderByDescending(u => u.TotalSpent)
+            .Take(10)
+            .ToList();
+
+        var topUsers = new List<TopUserDto>();
+
+        foreach (var userGroup in userGroups)
+        {
+            var user = memberships.FirstOrDefault(m => m.UserId == userGroup.UserId)?.User;
+            if (user != null)
+            {
+                topUsers.Add(new TopUserDto
+                {
+                    UserId = user.UserId,
+                    Username = user.Username,
+                    Email = user.Email,
+                    TotalPurchases = userGroup.TotalPurchases,
+                    TotalSpent = userGroup.TotalSpent,
+                    CurrentPackage = userGroup.LatestMembership?.Package?.Type ?? "None"
+                });
+            }
+        }
+
+        return topUsers;
+    }
     private List<RevenueByPeriod> GetMonthlyRevenue(List<Order> orders, DateTime fromDate, DateTime toDate)
     {
         return orders
@@ -496,6 +648,25 @@ public class RevenueService : IRevenueService
                 ProductId = g.Key,
                 ProductName = accessories.FirstOrDefault(a => a.AccessoryId == g.Key)?.Name ?? "Unknown",
                 TotalQuantitySold = g.Sum(item => item.AccessoryQuantity ?? 0),
+                TotalRevenue = g.Sum(item => item.TotalPrice ?? 0),
+                OrderCount = g.Count()
+            })
+            .OrderByDescending(p => p.TotalQuantitySold)
+            .Take(top)
+            .ToList();
+    }
+    private async Task<List<TopProduct>> GetTopTerrarium(List<OrderItem> orderItems, int top)
+    {
+        var terrariums = orderItems.Where(item => item.TerrariumId.HasValue).ToList();
+        var terrarium = await _unitOfWork.Terrarium.GetAllAsync();
+
+        return terrariums
+            .GroupBy(item => item.TerrariumId.Value)
+            .Select(g => new TopProduct
+            {
+                ProductId = g.Key,
+                ProductName = terrarium.FirstOrDefault(a => a.TerrariumId == g.Key)?.TerrariumName ?? "Unknown",
+                TotalQuantitySold = g.Sum(item => item.Quantity ?? 0),
                 TotalRevenue = g.Sum(item => item.TotalPrice ?? 0),
                 OrderCount = g.Count()
             })
@@ -609,9 +780,9 @@ public class RevenueService : IRevenueService
                 Period = date.ToString("yyyy-MM-dd"),
                 Date = date,
                 TotalOrders = dayOrders.Count,
-                CompletedOrders = dayOrders.Count(o => o.Status == OrderStatusEnum.Confirmed),
-                CancelledOrders = dayOrders.Count(o => o.Status == OrderStatusEnum.Cancle),
-                Revenue = dayOrders.Where(o => o.Status == OrderStatusEnum.Confirmed).Sum(o => o.TotalAmount)
+                CompletedOrders = dayOrders.Count(o => o.Status == OrderStatusData.Completed),
+                CancelledOrders = dayOrders.Count(o => o.Status == OrderStatusData.Cancel),
+                Revenue = dayOrders.Where(o => o.Status == OrderStatusData.Completed).Sum(o => o.TotalAmount)
             });
         }
 
@@ -638,9 +809,9 @@ public class RevenueService : IRevenueService
                 Period = $"Week {weekStart:yyyy-MM-dd}",
                 Date = weekStart,
                 TotalOrders = weekOrders.Count,
-                CompletedOrders = weekOrders.Count(o => o.Status == OrderStatusEnum.Confirmed),
-                CancelledOrders = weekOrders.Count(o => o.Status == OrderStatusEnum.Cancle),
-                Revenue = weekOrders.Where(o => o.Status == OrderStatusEnum.Confirmed).Sum(o => o.TotalAmount)
+                CompletedOrders = weekOrders.Count(o => o.Status == OrderStatusData.Completed),
+                CancelledOrders = weekOrders.Count(o => o.Status == OrderStatusData.Cancel),
+                Revenue = weekOrders.Where(o => o.Status == OrderStatusData.Completed).Sum(o => o.TotalAmount)
             });
         }
 
@@ -659,9 +830,9 @@ public class RevenueService : IRevenueService
                 Period = $"{g.Key.Year}-{g.Key.Month:00}",
                 Date = new DateTime(g.Key.Year ?? DateTime.Now.Year, g.Key.Month ?? DateTime.Now.Month, 1),
                 TotalOrders = g.Count(),
-                CompletedOrders = g.Count(o => o.Status == OrderStatusEnum.Confirmed),
-                CancelledOrders = g.Count(o => o.Status == OrderStatusEnum.Cancle),
-                Revenue = g.Where(o => o.Status == OrderStatusEnum.Confirmed).Sum(o => o.TotalAmount)
+                CompletedOrders = g.Count(o => o.Status == OrderStatusData.Completed),
+                CancelledOrders = g.Count(o => o.Status == OrderStatusData.Cancel),
+                Revenue = g.Where(o => o.Status == OrderStatusData.Completed).Sum(o => o.TotalAmount)
             })
             .OrderBy(r => r.Date)
             .ToList();
@@ -703,7 +874,7 @@ public class RevenueService : IRevenueService
             var fromDate = from ?? DateTime.Now.AddMonths(-3);
             var toDate = to ?? DateTime.Now;
 
-            var orders = await _unitOfWork.Order.GetAllAsync();
+            var orders = await _unitOfWork.Order.GetAllAsync2();
             var filteredOrders = orders.Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate).ToList();
 
             if (!filteredOrders.Any())
@@ -713,35 +884,6 @@ public class RevenueService : IRevenueService
 
             var totalOrders = filteredOrders.Count;
             var statusStats = new List<OrderStatusDetail>();
-
-            // Thống kê theo từng status
-            foreach (OrderStatusEnum status in Enum.GetValues<OrderStatusEnum>())
-            {
-                var statusOrders = filteredOrders.Where(o => o.Status == status).ToList();
-                var statusCount = statusOrders.Count;
-
-                if (statusCount > 0) // Chỉ thêm status có đơn hàng
-                {
-                    statusStats.Add(new OrderStatusDetail
-                    {
-                        Status = status.ToString(),
-                        Count = statusCount,
-                        Percentage = Math.Round(((double)statusCount / totalOrders) * 100, 2),
-                        TotalRevenue = statusOrders.Sum(o => o.TotalAmount),
-                        AverageOrderValue = statusCount > 0 ? statusOrders.Average(o => o.TotalAmount) : 0,
-                        RecentOrders = statusOrders
-                            .OrderByDescending(o => o.OrderDate)
-                            .Take(5)
-                            .Select(o => new RecentOrderSummary
-                            {
-                                OrderId = o.OrderId,
-                                UserId = o.UserId,
-                                TotalAmount = o.TotalAmount,
-                                OrderDate = o.OrderDate ?? DateTime.MinValue
-                            }).ToList()
-                    });
-                }
-            }
 
             // Tính toán trends (so với kỳ trước)
             var previousPeriodFrom = fromDate.AddDays(-(toDate - fromDate).Days);

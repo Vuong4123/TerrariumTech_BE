@@ -3,6 +3,7 @@
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Order;
 
@@ -22,7 +23,7 @@ public class OrderResponse
     public DateTime? OrderDate { get; set; }
 
 
-    public OrderStatusEnum Status { get; set; }
+    public string Status { get; set; }
 
 
     public string PaymentStatus { get; set; } = string.Empty;

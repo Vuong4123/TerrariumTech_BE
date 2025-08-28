@@ -168,7 +168,7 @@ public class OrderController : ControllerBase
     [HttpPut("{id:int}/status")]
     [Authorize(Policy = "Order.UpdateStatus")]
 
-    public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatusEnum status)
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
     {
         try
         {

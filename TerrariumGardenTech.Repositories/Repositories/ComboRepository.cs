@@ -4,6 +4,7 @@ using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Combo;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Repositories;
 
@@ -76,7 +77,7 @@ public class ComboRepository : GenericRepository<Combo>
     {
         return await _context.Orders
             .AnyAsync(o => o.OrderItems.Any(oi => oi.ComboId == comboId &&
-                (o.Status == OrderStatusEnum.Pending || o.Status == OrderStatusEnum.Processing)));
+                (o.Status == OrderStatusData.Pending || o.Status == OrderStatusData.Processing)));
     }
 
     public async Task<Combo?> GetByIdAsync(int id)

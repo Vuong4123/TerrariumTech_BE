@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 
 using TerrariumGardenTech.Common.Enums;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -23,7 +24,7 @@ public partial class Order
 
     public DateTime? OrderDate { get; set; }
 
-    public OrderStatusEnum Status { get; set; }
+    public string Status { get; set; }
 
     public string PaymentStatus { get; set; }
     

@@ -203,5 +203,30 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         #endregion
+        /// <summary>
+        /// Lấy thống kê tổng quát membership cho admin
+        /// </summary>
+        /// <returns>Thống kê chi tiết về membership</returns>
+        [HttpGet("GetMembership")]
+        public async Task<IActionResult> GetMembership()
+        {
+            try
+            {
+                var statistics = await _analyticsService.GetComprehensiveStatisticsAsync();
+
+                return Ok(new BusinessResult(
+                    Const.SUCCESS_READ_CODE,
+                    "Lấy thống kê membership thành công",
+                    statistics
+                ));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new BusinessResult(
+                    Const.ERROR_EXCEPTION,
+                    "Có lỗi xảy ra khi lấy thống kê"
+                ));
+            }
+        }
     }
 }
