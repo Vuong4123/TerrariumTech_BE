@@ -79,8 +79,8 @@ namespace TerrariumGardenTech.Service.Service
 
         public async Task<List<FeedbackResponse>> GetByOrderItemAsync(int orderItemId)
         {
-            var list = await _uow.Feedback.GetByOrderItemAsync(orderItemId);
-            return _mapper.Map<List<FeedbackResponse>>(list);
+            var list = await _uow.Feedback.GetByOrderItemAsyncV2(orderItemId);
+            return (list);
         }
 
         public async Task<FeedbackResponse> UpdateAsync(int id, FeedbackUpdateRequest req, int userId)

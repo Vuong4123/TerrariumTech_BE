@@ -97,6 +97,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
                     Images = f.FeedbackImages
                               .Select(img => new FeedbackImageResponse
                               {
+                                  FeedbackId = img.FeedbackId,
                                   FeedbackImageId = img.FeedbackImageId,
                                   Url = img.ImageUrl
                               })
@@ -130,6 +131,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
                     AccessoryName = f.OrderItem.Accessory != null ? f.OrderItem.Accessory.Name : null,
                     Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
                     {
+                        FeedbackId = img.FeedbackId,
                         FeedbackImageId = img.FeedbackImageId,
                         Url = img.ImageUrl
                     }).ToList()
@@ -164,6 +166,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
                     AccessoryName = f.OrderItem.Accessory != null ? f.OrderItem.Accessory.Name : null,
                     Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
                     {
+                        FeedbackId = img.FeedbackId,
                         FeedbackImageId = img.FeedbackImageId,
                         Url = img.ImageUrl
                     }).ToList()
@@ -196,6 +199,7 @@ namespace TerrariumGardenTech.Repositories.Repositories
                     AccessoryName = f.OrderItem.Accessory != null ? f.OrderItem.Accessory.Name : null,
                     Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
                     {
+                        FeedbackId = img.FeedbackId,
                         FeedbackImageId = img.FeedbackImageId,
                         Url = img.ImageUrl
                     }).ToList()
@@ -205,6 +209,35 @@ namespace TerrariumGardenTech.Repositories.Repositories
             return (items, total);
         }
 
+        public async Task<List<FeedbackResponse>> GetByOrderItemAsyncV2(int orderItemId)
+        {
+            return await _context.Feedbacks
+                .Where(f => !f.IsDeleted && f.OrderItemId == orderItemId)
+                .OrderByDescending(f => f.CreatedAt)
+                .Select(f => new FeedbackResponse
+                {
+                    FeedbackId = f.FeedbackId,
+                    OrderItemId = f.OrderItemId,
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt,
+                    UpdatedAt = f.UpdatedAt,
+                    TerrariumId = f.OrderItem.TerrariumVariant != null
+                                        ? (int?)f.OrderItem.TerrariumVariant.TerrariumId : null,
+                    TerrariumName = f.OrderItem.TerrariumVariant != null
+                                        ? f.OrderItem.TerrariumVariant.Terrarium.TerrariumName : null,
+                    AccessoryId = f.OrderItem.AccessoryId,
+                    AccessoryName = f.OrderItem.Accessory != null
+                                        ? f.OrderItem.Accessory.Name : null,
+                    Images = f.FeedbackImages.Select(img => new FeedbackImageResponse
+                    {
+                        FeedbackId = img.FeedbackId,
+                        FeedbackImageId = img.FeedbackImageId,
+                        Url = img.ImageUrl
+                    }).ToList()
+                })
+                .ToListAsync();
+        }
 
         // Soft‑delete
         public async Task<bool> SoftDeleteAsync(int id)
