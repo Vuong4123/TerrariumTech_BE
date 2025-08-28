@@ -645,10 +645,6 @@ namespace TerrariumGardenTech.Service.Service
                     totalCartPrice += accessoryDetail.TotalPrice;
                     totalCartQuantity += accessoryDetail.Quantity;
                 }
-                else if (cartItem.AccessoryId.HasValue)
-                {
-                    cartItem.AccessoryQuantity = 0;
-                }
 
                 // Cập nhật Terrarium nếu có
                 if (cartItem.TerrariumVariantId.HasValue && request.VariantQuantity.HasValue && request.VariantQuantity.Value > 0)
@@ -678,25 +674,19 @@ namespace TerrariumGardenTech.Service.Service
                     totalCartPrice += terrariumDetail.TotalPrice;
                     totalCartQuantity += terrariumDetail.Quantity;
                 }
-                else if (cartItem.TerrariumVariantId.HasValue)
-                {
-                    cartItem.TerrariumVariantQuantity = 0;
-                }
 
-                // Nếu không còn sản phẩm nào => xóa item
-                if (totalCartQuantity == 0)
-                {
-                    return await RemoveFromCartAsync(userId, cartItemId);
-                }
 
                 // Cập nhật lại tổng giá và số lượng
-                cartItem.Quantity = totalCartQuantity;
-                cartItem.TotalPrice = totalCartPrice;
+                cartItem.Quantity = request.Quantity ?? cartItem.Quantity;
+                if (totalCartPrice > 0)
+                {
+                    cartItem.TotalPrice = totalCartPrice;
+                }
                 cartItem.UnitPrice = totalCartQuantity > 0 ? totalCartPrice / totalCartQuantity : 0;
                 cartItem.UpdatedAt = DateTime.UtcNow;
 
                 cartItemResponse.TotalCartPrice = totalCartPrice;
-                cartItemResponse.TotalCartQuantity = totalCartQuantity;
+                cartItemResponse.TotalCartQuantity = cartItem.Quantity;
                 cartItemResponse.IsInStock = true; // Already checked above
                 cartItemResponse.MaxQuantity = GetMaxQuantityForItem(cartItem);
 
@@ -1447,7 +1437,7 @@ namespace TerrariumGardenTech.Service.Service
                 UpdatedAt = cartItem.UpdatedAt
             };
             response.TotalCartPrice = totalPrice;
-            response.TotalCartQuantity = totalQuantity;
+            response.TotalCartQuantity = cartItem.Quantity;
             return response;
 
         }
