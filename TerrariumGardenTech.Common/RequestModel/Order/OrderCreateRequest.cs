@@ -49,4 +49,6 @@ public class RefundRequestDto
     public string RefundStatus { get; set; }
     public DateTime RequestDate { get; set; }
     public string OrderStatus { get; set; }
+
+    public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
 }

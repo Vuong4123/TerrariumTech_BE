@@ -18,7 +18,6 @@ namespace TerrariumGardenTech.Common.Entity
         /// <summary>
         /// Ảnh sản phẩm tại thời điểm tạo đơn vận chuyển, để tránh việc thay đổi tên sp sau này ảnh hưởng đến lịch sử vận chuyển
         /// </summary>
-        [NotMapped]
         public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
         /// <summary>
         /// Số lượng sản phẩm cần hoàn tiền
