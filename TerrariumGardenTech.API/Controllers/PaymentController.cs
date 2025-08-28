@@ -15,6 +15,8 @@ public class PaymentController : ControllerBase
 {
     // FE domain của bạn
     private const string FE_BASE = "https://terra-tech-garden.vercel.app";
+
+    
     private const string FE_SUCCESS_PATH = "/payment-success";
     private const string FE_FAIL_PATH = "/payment-fail"; // nếu muốn tách trang fail
     private readonly IPayOsService _payOsService;
