@@ -147,6 +147,8 @@ public class UserService : IUserService
             var audience = jwtSettings.GetValue<string>("Audience");
             var expiryMinutes = jwtSettings.GetValue<int>("ExpiryMinutes");
             var isMembership = user.Memberships.Any(m => m.Status.Equals(CommonData.AccountStatus.Active) && m.EndDate > DateTime.UtcNow);
+            var personalize = _unitOfWork.Personalize.GetByUserIdAsync(user.UserId).Result;
+            string checkIspersional = personalize != null ? "true" : "false";
             bool isOtp = user.Otp != null;
             var claims = new[]
             {
@@ -159,7 +161,7 @@ public class UserService : IUserService
                 new Claim("phoneNumber", user.PhoneNumber ?? ""),
                 new Claim("gender", user.Gender ?? ""),
                 new Claim("isMembership", isMembership.ToString()),
-                new Claim("isPersonalize", user.IsPersonalize.ToString()),
+                new Claim("isPersonalize", checkIspersional),
                 new Claim("isOtp", isOtp.ToString()),
                 new Claim("status", user.Status ?? AccountStatus.Active.ToString()) // Sử dụng enum AccountStatus.Active
             };
