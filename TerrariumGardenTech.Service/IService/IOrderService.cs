@@ -18,7 +18,7 @@ public interface IOrderService
     Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId);
 
 
-    Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId);
+    Task<(bool, string)> RequestRefundAsync(RefundRequest request, int currentUserId);
     Task<IBusinessResult> GetRefundDetailAsync(int refundId);
     Task<IBusinessResult> GetRefundAsync(int orderId);
     Task<(bool, string, object?)> UpdateRequestRefundAsync(UpdateRefundRequest request, int currentUserId);

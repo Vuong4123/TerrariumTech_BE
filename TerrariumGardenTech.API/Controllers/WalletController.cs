@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.API.Extensions;
+using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Repositories;
+using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 
 namespace TerrariumGardenTech.API.Controllers
@@ -45,6 +48,30 @@ namespace TerrariumGardenTech.API.Controllers
             var currentUserId = User.GetUserId();
             var balance = await _walletService.GetBalanceAsync(currentUserId);
             return Ok(balance);
+        }
+        /// <summary>
+        /// Lấy biến động số dư ví của người dùng
+        /// </summary>
+        [HttpGet("balance-history/{userId}")]
+        public async Task<IActionResult> GetWalletBalanceHistory(
+            int userId,
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
+        {
+            try
+            {
+                var result = await _walletService.GetWalletBalanceHistoryAsync(userId, fromDate, toDate);
+
+                return Ok(new BusinessResult(
+                    Const.SUCCESS_READ_CODE,
+                    "Lấy biến động số dư ví thành công",
+                    result
+                ));
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new BusinessResult(Const.ERROR_EXCEPTION, ex.Message));
+            }
         }
     }
 }

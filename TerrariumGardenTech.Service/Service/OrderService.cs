@@ -767,11 +767,6 @@ public class OrderService : IOrderService
     {
         if (id <= 0)
             throw new ArgumentException("OrderId phải là số nguyên dương.", nameof(id));
-
-        // Optional: kiểm tra giá trị enum có hợp lệ hay không
-        if (!Enum.IsDefined(typeof(OrderStatusData), status))
-            throw new ArgumentException("Status không hợp lệ.", nameof(status));
-
         var order = await _unitOfWork.Order.GetByIdAsync(id);
 
         if (order == null)
@@ -899,38 +894,42 @@ public class OrderService : IOrderService
     }
 
 
-    public async Task<(bool, string)> RequestRefundAsync(CreateRefundRequest request, int currentUserId)
+    public async Task<(bool, string)> RequestRefundAsync(RefundRequest request, int currentUserId)
     {
-        var order = await _unitOfWork.Order.DbSet().Include(x => x.OrderItems).FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.UserId == currentUserId);
+        var order = await _unitOfWork.Order.DbSet()
+            .Include(x => x.OrderItems)
+            .Include(r => r.Refunds)
+            .FirstOrDefaultAsync(x => x.OrderId == request.OrderId && x.UserId == currentUserId);
         if (order == null)
             return (false, "Không tìm thấy thông tin hóa đơn!");
 
+        var orderItems = order.OrderItems.ToList();
         if (order.Status == OrderStatusData.Completed)
             return (false, "Đơn hàng này không cho phép hoàn tiền!");
 
-        if (request.RefundItems == null || !request.RefundItems.Any())
+        if (orderItems == null || !orderItems.Any())
             return (false, "Vui lòng chọn sản phẩm cần hoàn tiền!");
 
-        if (request.RefundItems.Any(x => x.Quantity <= 0))
+        if (orderItems.Any(x => x.Quantity <= 0))
             return (false, "Số lượng sản phẩm yêu cầu hoàn tiền phải lớn hơn 0!");
 
-        if (request.RefundItems.Any(x => string.IsNullOrEmpty(x.Reason)))
+        if (string.IsNullOrEmpty(request.Reason))
             return (false, "Vui lòng nhập đầy đủ lý do hoàn tiền!");
 
-        if (request.RefundItems.Any(x => !order.OrderItems.Any(i => i.OrderItemId == x.OrderItemId)))
+        if (orderItems.Any(x => !order.OrderItems.Any(i => i.OrderItemId == x.OrderItemId)))
             return (false, "Danh sách sản phẩm cần hoàn tiền không chính xác!");
 
-        if (request.RefundItems.Any(x => order.OrderItems.Any(i => x.OrderItemId == x.OrderItemId && i.Quantity < x.Quantity)))
+        if (orderItems.Any(x => order.OrderItems.Any(i => x.OrderItemId == x.OrderItemId && i.Quantity < x.Quantity)))
             return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!");
-        var checkE = _unitOfWork.OrderRequestRefund.FindOneAsync(q => q.OrderId == request.OrderId && q.UserModified == currentUserId);
-        if(checkE.Result != null)
+        
+        if(order.Refunds.Count() > 0)
             return (false, "Đơn hàng này đang xử lý hoàn tiền !");
         var existedRefundItems = await _unitOfWork.OrderRequestRefund.DbSet()
             .Include(x => x.Items).Where(x => x.OrderId == order.OrderId && x.Status == CommonData.OrderStatusData.Approved)
             .SelectMany(x => x.Items).Where(x => x.IsApproved == true).ToArrayAsync();
         if (existedRefundItems.Any())
         {
-            var checkQuantity = request.RefundItems.Select(x =>
+            var checkQuantity = orderItems.Select(x =>
             {
                 // Số lượng đã từng yêu cầu hoàn hàng
                 var exited = existedRefundItems.FirstOrDefault(item => x.OrderItemId == item.OrderItemId)?.Quantity ?? 0;
@@ -942,15 +941,14 @@ public class OrderService : IOrderService
             if (checkQuantity.Any(x => x))
                 return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!");
         }
-
         var refundRequest = new OrderRequestRefund
         {
             OrderId = order.OrderId,
             Images = request.Images,
-            Items = request.RefundItems.Select(x => new OrderRefundItem
+            Items = orderItems.Select(x => new OrderRefundItem
             {
                 OrderItemId = x.OrderItemId,
-                Quantity = x.Quantity
+                Quantity = x.Quantity ?? 0
             }).ToList(),
             Reason = request.Reason,
             Status = OrderStatusData.Pending,
