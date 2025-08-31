@@ -904,7 +904,7 @@ public class OrderService : IOrderService
             return (false, "Không tìm thấy thông tin hóa đơn!");
 
         var orderItems = order.OrderItems.ToList();
-        if (order.Status == OrderStatusData.Completed)
+        if (order.Status != OrderStatusData.Completed)
             return (false, "Đơn hàng này không cho phép hoàn tiền!");
 
         if (orderItems == null || !orderItems.Any())

@@ -32,3 +32,15 @@ public class WalletStatistics
     public decimal HighestTransaction { get; set; }
     public decimal LowestTransaction { get; set; }
 }
+
+public class WalletBalanceChangeDto
+{
+    public int WalletId { get; set; }
+    public int UserId { get; set; }
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal Income { get; set; }
+    public decimal Expense { get; set; }
+    public decimal BalanceChange { get; set; }
+    public string? Message { get; set; }
+}
