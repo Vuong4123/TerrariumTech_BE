@@ -19,5 +19,7 @@ public class TerrariumDetailResponse
     public bool GeneratedByAI { get; set; }
     // ✅ Thêm mới
     public int PurchaseCount { get; set; }
+
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
     public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
 }

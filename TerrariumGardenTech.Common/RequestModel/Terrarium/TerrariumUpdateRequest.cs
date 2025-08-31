@@ -17,4 +17,5 @@ public class TerrariumUpdateRequest
     public string Status { get; set; } = "Active";
 
     public string? bodyHTML { get; set; } = string.Empty;
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
 }

@@ -23,7 +23,7 @@ public partial class OrderItem
     public int? Quantity { get; set; }
 
     public decimal? UnitPrice { get; set; }
-
+    public int? ParentOrderItemId { get; set; }
     public decimal? TotalPrice { get; set; }
     public int? ComboId { get; set; }
     public string ItemType { get; set; } = "Single";
@@ -37,6 +37,8 @@ public partial class OrderItem
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
     public virtual Order Order { get; set; }
+    public virtual OrderItem? ParentOrderItem { get; set; }
+    public virtual ICollection<OrderItem> ChildOrderItems { get; set; } = new List<OrderItem>();
 
 
     public virtual TerrariumVariant TerrariumVariant { get; set; }

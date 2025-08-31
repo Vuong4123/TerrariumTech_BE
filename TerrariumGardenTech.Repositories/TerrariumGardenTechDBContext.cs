@@ -779,6 +779,23 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__3724BD5293DBCE99");
 
             entity.ToTable("OrderItem");
+            // ✅ Configure self-referencing relationship
+            entity
+                .HasOne(oi => oi.ParentOrderItem)
+                .WithMany(oi => oi.ChildOrderItems)
+                .HasForeignKey(oi => oi.ParentOrderItemId)
+                .OnDelete(DeleteBehavior.Restrict); // Không cho xóa parent khi còn children
+
+            // ✅ Configure other relationships
+            entity
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId);
+
+            entity
+                .HasOne(oi => oi.Combo)
+                .WithMany(c => c.OrderItems)
+                .HasForeignKey(oi => oi.ComboId);
 
             entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
             entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");

@@ -32,7 +32,7 @@ public class CartItem
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice { get; set; }
-
+    public bool IsBundleItem { get; set; } = false;
     // === BUNDLE MANAGEMENT ===
     /// <summary>
     /// ID của item cha (bể thủy sinh chính)

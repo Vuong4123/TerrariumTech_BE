@@ -50,33 +50,23 @@ public class OrderService : IOrderService
                 UserId = order.UserId,
                 AddressId = order.AddressId,
                 TotalAmount = order.TotalAmount,
+                OriginalAmount = order.OriginalAmount, // ✅ THÊM
+                DiscountAmount = order.DiscountAmount,   // ✅ THÊM
                 Deposit = order.Deposit,
                 OrderDate = order.OrderDate,
                 Status = order.Status,
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
-                //ShippingStatus = order.ShippingStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
-                //PaymentMethod = order.PaymentMethod ?? string.Empty,
                 OrderItems = new List<OrderItemResponse>()
-                
             };
 
-            foreach (var item in order.OrderItems)
+            // ✅ CHỈ LẤY MAIN ITEMS (không có parent)
+            var mainItems = order.OrderItems.Where(x => x.ParentOrderItemId == null).ToList();
+
+            foreach (var item in mainItems)
             {
-                orderResponse.OrderItems.Add(new OrderItemResponse
-                {
-                    ComboId = item.ComboId ?? 0,
-                    ItemType = item.ItemType,
-                    OrderItemId = item.OrderItemId,
-                    TerrariumId = item.TerrariumId,
-                    AccessoryId = item.AccessoryId,
-                    TerrariumVariantId = item.TerrariumVariantId,
-                    AccessoryQuantity = item.AccessoryQuantity,
-                    TerrariumVariantQuantity = item.TerrariumVariantQuantity,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    TotalPrice = item.TotalPrice
-                });
+                var itemResponse = await BuildOrderItemResponseAsync(item, order.OrderItems);
+                orderResponse.OrderItems.Add(itemResponse);
             }
 
             result.Add(orderResponse);
@@ -84,8 +74,6 @@ public class OrderService : IOrderService
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng thành công", result);
     }
-
-
     public async Task<IBusinessResult> GetByIdAsync(int orderId)
     {
         if (orderId <= 0)
@@ -101,38 +89,27 @@ public class OrderService : IOrderService
             UserId = order.UserId,
             AddressId = order.AddressId,
             TotalAmount = order.TotalAmount,
+            OriginalAmount = order.OriginalAmount, // ✅ THÊM
+            DiscountAmount = order.DiscountAmount,   // ✅ THÊM
             Deposit = order.Deposit,
             OrderDate = order.OrderDate,
             Status = order.Status,
             PaymentStatus = order.PaymentStatus ?? string.Empty,
-            //ShippingStatus = order.ShippingStatus ?? string.Empty,
             TransactionId = order.TransactionId,
-            //PaymentMethod = order.PaymentMethod ?? string.Empty,
             OrderItems = new List<OrderItemResponse>()
         };
 
-        foreach (var item in order.OrderItems)
+        // ✅ CHỈ LẤY MAIN ITEMS
+        var mainItems = order.OrderItems.Where(x => x.ParentOrderItemId == null).ToList();
+
+        foreach (var item in mainItems)
         {
-            orderResponse.OrderItems.Add(new OrderItemResponse
-            {
-                ComboId = item.ComboId ?? 0,
-                OrderItemId = item.OrderItemId,
-                ItemType = item.ItemType,
-                TerrariumId = item.TerrariumId,
-                AccessoryId = item.AccessoryId,
-                TerrariumVariantId = item.TerrariumVariantId,
-                AccessoryQuantity = item.AccessoryQuantity,
-                TerrariumVariantQuantity = item.TerrariumVariantQuantity,
-                Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice,
-                TotalPrice = item.TotalPrice
-            });
+            var itemResponse = await BuildOrderItemResponseAsync(item, order.OrderItems);
+            orderResponse.OrderItems.Add(itemResponse);
         }
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy đơn hàng thành công", orderResponse);
     }
-
-
     public async Task<IBusinessResult> GetAllOrderByUserId(int userId)
     {
         var orders = await _unitOfWork.Order.FindByUserAsync(userId);
@@ -150,38 +127,123 @@ public class OrderService : IOrderService
                 UserId = order.UserId,
                 AddressId = order.AddressId,
                 TotalAmount = order.TotalAmount,
+                OriginalAmount = order.OriginalAmount, // ✅ THÊM
+                DiscountAmount = order.DiscountAmount,   // ✅ THÊM
                 Deposit = order.Deposit,
                 OrderDate = order.OrderDate,
                 Status = order.Status,
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
-                //ShippingStatus = order.ShippingStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
-                //PaymentMethod = order.PaymentMethod ?? string.Empty,
                 OrderItems = new List<OrderItemResponse>()
             };
 
-            foreach (var item in order.OrderItems)
+            // ✅ CHỈ LẤY MAIN ITEMS
+            var mainItems = order.OrderItems.Where(x => x.ParentOrderItemId == null).ToList();
+
+            foreach (var item in mainItems)
             {
-                orderResponse.OrderItems.Add(new OrderItemResponse
-                {
-                    ComboId = item.ComboId ?? 0,
-                    ItemType = item.ItemType,
-                    OrderItemId = item.OrderItemId,
-                    TerrariumId = item.TerrariumId,
-                    AccessoryId = item.AccessoryId,
-                    TerrariumVariantId = item.TerrariumVariantId,
-                    AccessoryQuantity = item.AccessoryQuantity,
-                    TerrariumVariantQuantity = item.TerrariumVariantQuantity,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    TotalPrice = item.TotalPrice
-                });
+                var itemResponse = await BuildOrderItemResponseAsync(item, order.OrderItems);
+                orderResponse.OrderItems.Add(itemResponse);
             }
 
             result.Add(orderResponse);
         }
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách đơn hàng thành công", result);
+    }
+    private async Task<OrderItemResponse> BuildOrderItemResponseAsync(OrderItem item, ICollection<OrderItem> allOrderItems)
+    {
+        var response = new OrderItemResponse
+        {
+            OrderItemId = item.OrderItemId,
+            ComboId = item.ComboId ?? 0,
+            ItemType = item.ItemType,
+            TerrariumId = item.TerrariumId,
+            AccessoryId = item.AccessoryId,
+            TerrariumVariantId = item.TerrariumVariantId,
+            AccessoryQuantity = item.AccessoryQuantity,
+            TerrariumVariantQuantity = item.TerrariumVariantQuantity,
+            Quantity = item.Quantity,
+            UnitPrice = item.UnitPrice,
+            TotalPrice = item.TotalPrice,
+            ParentOrderItemId = item.ParentOrderItemId,
+            ChildItems = new List<OrderItemResponse>()
+        };
+
+        // ✅ SET PRODUCT NAME & IMAGE
+        await SetProductDetailsAsync(response, item);
+
+        // ✅ NẾU LÀ COMBO, LẤY CHILD ITEMS
+        if (item.ItemType == "Combo" && item.ComboId.HasValue)
+        {
+            var childItems = allOrderItems
+                .Where(x => x.ParentOrderItemId == item.OrderItemId)
+                .ToList();
+
+            foreach (var childItem in childItems)
+            {
+                var childResponse = new OrderItemResponse
+                {
+                    OrderItemId = childItem.OrderItemId,
+                    ComboId = childItem.ComboId ?? 0,
+                    ItemType = childItem.ItemType,
+                    TerrariumId = childItem.TerrariumId,
+                    AccessoryId = childItem.AccessoryId,
+                    TerrariumVariantId = childItem.TerrariumVariantId,
+                    AccessoryQuantity = childItem.AccessoryQuantity,
+                    TerrariumVariantQuantity = childItem.TerrariumVariantQuantity,
+                    Quantity = childItem.Quantity,
+                    UnitPrice = childItem.UnitPrice,
+                    TotalPrice = childItem.TotalPrice,
+                    ParentOrderItemId = childItem.ParentOrderItemId
+                };
+
+                // Set product details cho child item
+                await SetProductDetailsAsync(childResponse, childItem);
+
+                response.ChildItems.Add(childResponse);
+            }
+        }
+
+        return response;
+    }
+
+    private async Task SetProductDetailsAsync(OrderItemResponse response, OrderItem item)
+    {
+        try
+        {
+            if (item.ComboId.HasValue && item.ItemType == "Combo")
+            {
+                var combo = await _unitOfWork.Combo.GetByIdAsync(item.ComboId.Value);
+                response.ProductName = combo?.Name ?? "Unknown Combo";
+                response.ImageUrl = combo?.ImageUrl;
+            }
+            else if (item.AccessoryId.HasValue)
+            {
+                var accessory = await _unitOfWork.Accessory.GetByIdAsync(item.AccessoryId.Value);
+                response.ProductName = accessory?.Name ?? "Unknown Accessory";
+
+                var images = await _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(item.AccessoryId.Value);
+                response.ImageUrl = images?.FirstOrDefault()?.ImageUrl;
+            }
+            else if (item.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                response.ProductName = variant?.VariantName ?? "Unknown Variant";
+                response.ImageUrl = variant?.UrlImage;
+
+                if (item.TerrariumId.HasValue)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(item.TerrariumId.Value);
+                    response.ProductName = $"{terrarium?.TerrariumName} - {variant?.VariantName}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, $"Error setting product details for OrderItem {item.OrderItemId}");
+            response.ProductName = "Unknown Product";
+        }
     }
 
     //public async Task<int> CreateAsync(OrderCreateRequest request)
@@ -263,8 +325,7 @@ public class OrderService : IOrderService
 
             // 3. Validate trạng thái có thể hủy
             var cancellableStatuses = new[] {
-            OrderStatusData.Pending,
-            OrderStatusData.Processing
+            OrderStatusData.Pending
         };
 
             if (!cancellableStatuses.Contains(order.Status))
@@ -279,7 +340,6 @@ public class OrderService : IOrderService
 
             // 5. Cập nhật trạng thái đơn hàng
             order.Status = OrderStatusData.Cancel;
-            order.PaymentStatus = "Unpaid";
             // 7. Xử lý hoàn tiền vào ví (nếu đã thanh toán)
             decimal refundAmount = 0;
             if (order.PaymentStatus == "Paid" || order.Deposit > 0)
@@ -381,9 +441,9 @@ public class OrderService : IOrderService
     // Hoàn lại stock cho sản phẩm
     private async Task RestoreStockForOrderItemsAsync(int orderId)
     {
-        var order = _unitOfWork.Order.GetById(orderId);
+        var order = _unitOfWork.Order.GetOrderbyIdAsync(orderId);
 
-        foreach (var item in order.OrderItems)
+        foreach (var item in order.Result.OrderItems)
         {
             // Hoàn stock cho accessory
             if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
@@ -452,73 +512,154 @@ public class OrderService : IOrderService
             }
 
             // 3. Lấy thông tin order
-            var order = await _unitOfWork.Order.GetByIdAsync(refundRequest.OrderId);
+            var order = await _unitOfWork.Order.GetOrderWithItemsAsync(refundRequest.OrderId);
             if (order == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy đơn hàng liên quan");
 
-            // 4. Xử lý approve/reject
-            if (request.IsApproved)
+            try
             {
-                // APPROVE - Thực hiện hoàn tiền
-                refundRequest.Status = OrderStatusData.Approved;
-                refundRequest.UserModified = staffId;
-                refundRequest.LastModifiedDate = DateTime.UtcNow;
-
-                // Thực hiện hoàn tiền vào ví
-                var refundResult = await ProcessActualRefundAsync(order, refundRequest);
-                if (!refundResult.Success)
+                // 4. Xử lý approve/reject
+                if (request.IsApproved)
                 {
-                    return new BusinessResult(Const.FAIL_UPDATE_CODE,
-                        $"Lỗi khi hoàn tiền: {refundResult.Message}");
+                    // APPROVE - Thực hiện hoàn tiền
+                    refundRequest.Status = OrderStatusData.Approved;
+                    refundRequest.UserModified = staffId;
+                    refundRequest.LastModifiedDate = DateTime.UtcNow;
+
+                    // ✅ HOÀN LẠI STOCK KHI APPROVE REFUND
+                    await RestoreStockForRefundedOrder(order);
+
+                    // Thực hiện hoàn tiền vào ví
+                    var refundResult = await ProcessActualRefundAsync(order, refundRequest);
+                    if (!refundResult.Success)
+                    {
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE,
+                            $"Lỗi khi hoàn tiền: {refundResult.Message}");
+                    }
+
+                    // Cập nhật trạng thái order nếu cần
+                    if (order.Status == OrderStatusData.Cancel)
+                    {
+                        order.Status = OrderStatusData.Refunded;
+                    }
+
+                    // Gửi notification cho user
+                    await SendRefundApprovedNotificationAsync(order, refundRequest);
+                }
+                else
+                {
+                    // REJECT - Từ chối hoàn tiền
+                    if (string.IsNullOrWhiteSpace(request.RejectionReason))
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập lý do từ chối");
+
+                    refundRequest.Status = OrderStatusData.Rejected;
+                    refundRequest.UserModified = staffId;
+                    refundRequest.LastModifiedDate = DateTime.UtcNow;
+                    refundRequest.Notes = request.RejectionReason;
+
+                    // Gửi notification cho user
+                    await SendRefundRejectedNotificationAsync(order, refundRequest, request.RejectionReason);
                 }
 
-                // Cập nhật trạng thái order nếu cần
-                if (order.Status == OrderStatusData.Cancel)
+                // 5. Save changes
+                await _unitOfWork.OrderRequestRefund.UpdateAsync(refundRequest);
+                await _unitOfWork.Order.UpdateAsync(order);
+                await _unitOfWork.SaveAsync();
+
+                var response = new AcceptRefundResponse
                 {
-                    order.Status = OrderStatusData.Refunded;
-                }
+                    RefundId = refundId,
+                    OrderId = order.OrderId,
+                    RefundStatus = refundRequest.Status,
+                    RefundAmount = refundRequest.RefundAmount ?? 0,
+                    ProcessedAt = refundRequest.LastModifiedDate,
+                    ProcessedBy = staffId,
+                    IsApproved = request.IsApproved,
+                    Message = request.RejectionReason
+                };
 
-                // Gửi notification cho user
-                await SendRefundApprovedNotificationAsync(order, refundRequest);
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
             }
-            else
+            catch (Exception ex)
             {
-                // REJECT - Từ chối hoàn tiền
-                if (string.IsNullOrWhiteSpace(request.RejectionReason))
-                    return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập lý do từ chối");
-
-                refundRequest.Status = OrderStatusData.Rejected;
-                refundRequest.UserModified = staffId;
-                refundRequest.LastModifiedDate = DateTime.UtcNow;
-                refundRequest.Notes = request.RejectionReason;
-
-                // Gửi notification cho user
-                await SendRefundRejectedNotificationAsync(order, refundRequest, request.RejectionReason);
+                throw;
             }
-
-            // 5. Save changes
-            await _unitOfWork.OrderRequestRefund.UpdateAsync(refundRequest);
-            await _unitOfWork.Order.UpdateAsync(order);
-            await _unitOfWork.SaveAsync();
-
-            var response = new AcceptRefundResponse
-            {
-                RefundId = refundId,
-                OrderId = order.OrderId,
-                RefundStatus = refundRequest.Status,
-                RefundAmount = refundRequest.RefundAmount ?? 0,
-                ProcessedAt = refundRequest.LastModifiedDate,
-                ProcessedBy = staffId,
-                IsApproved = request.IsApproved,
-                Message = request.RejectionReason
-            };
-
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error accepting refund request {RefundId}", refundId);
             return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi xử lý yêu cầu hoàn tiền: {ex.Message}");
+        }
+    }
+
+    // ✅ HOÀN LẠI STOCK KHI REFUND
+    private async Task RestoreStockForRefundedOrder(Order order)
+    {
+        if (order.OrderItems == null || !order.OrderItems.Any())
+            return;
+
+        foreach (var item in order.OrderItems)
+        {
+            // ✅ 1. HOÀN LẠI STOCK ACCESSORY RIÊNG LẺ
+            if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
+            {
+                await _unitOfWork.Accessory.RestoreStockAsync(item.AccessoryId.Value, item.AccessoryQuantity ?? 0);
+            }
+
+            // ✅ 2. HOÀN LẠI CHO AI TERRARIUM
+            if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+
+                        await RestoreStockForAITerrarium(terrarium.TerrariumId, item.TerrariumVariantQuantity ?? 0);
+                    // Non-AI terrarium: Không cần hoàn vì không bị trừ
+                }
+            }
+
+            // ✅ 3. HOÀN LẠI CHO COMBO
+            if (item.ComboId.HasValue)
+            {
+                await RestoreStockForComboItem(item);
+            }
+        }
+    }
+
+    // ✅ HOÀN LẠI STOCK CHO AI TERRARIUM
+    private async Task RestoreStockForAITerrarium(int terrariumId, int terrariumQuantity)
+    {
+        var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetByTerrariumIdAsync(terrariumId);
+
+        foreach (var ta in terrariumAccessories)
+        {
+            // Hoàn lại stock accessories
+            await _unitOfWork.Accessory.RestoreStockAsync(ta.AccessoryId, terrariumQuantity);
+        }
+    }
+
+    // ✅ HOÀN LẠI STOCK CHO COMBO
+    private async Task RestoreStockForComboItem(OrderItem comboOrderItem)
+    {
+        if (!comboOrderItem.ComboId.HasValue) return;
+
+        var combo = await _unitOfWork.Combo.GetByIdAsync(comboOrderItem.ComboId.Value);
+        if (combo?.ComboItems == null) return;
+
+        foreach (var comboItem in combo.ComboItems)
+        {
+            // Hoàn lại accessory trong combo
+            if (comboItem.AccessoryId.HasValue)
+            {
+                await _unitOfWork.Accessory.RestoreStockAsync(comboItem.AccessoryId.Value, 1);
+            }
+
+            // Hoàn lại terrarium trong combo
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                await _unitOfWork.TerrariumVariant.RestoreStockAsync(comboItem.TerrariumVariantId.Value, 1);
+            }
         }
     }
     #region Helper for Refund Approval
@@ -631,7 +772,135 @@ public class OrderService : IOrderService
     }
 
     #endregion
+    #region old
+    //public async Task<int> CreateAsync(OrderCreateRequest request)
+    //{
+    //    if (request.ComboId <= 0)
+    //    {
+    //        ValidateCreateRequest(request);
+    //    }
+    //    if (request.VoucherId == 0) request.VoucherId = null;
 
+    //    int userId = _userContextService.GetCurrentUser();
+    //    var orderItems = new List<OrderItem>();
+
+    //    int? safeVoucherId = null;
+    //    decimal discountAmount = 0m;
+
+    //    decimal originalAmount = request.TotalAmountOld;   
+    //    decimal finalAmount = request.TotalAmountNew;      
+
+    //    if (request.VoucherId.HasValue && request.VoucherId.Value > 0)
+    //    {
+    //        var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
+    //        if (voucher != null)
+    //        {
+    //            bool isValid =
+    //                voucher.Status == VoucherStatus.Active.ToString() &&
+    //                voucher.ValidFrom <= DateTime.UtcNow &&
+    //                voucher.ValidTo >= DateTime.UtcNow;
+
+    //            if (isValid)
+    //            {
+    //                safeVoucherId = voucher.VoucherId;
+    //                discountAmount = voucher.DiscountAmount ?? 0m;
+    //            }
+    //        }
+    //    }
+
+    //    foreach (var reqItem in request.Items)
+    //    {
+    //        if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
+    //        {
+    //            var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+    //            int qty = reqItem.AccessoryQuantity ?? 0;
+    //            decimal unit = acc.Price;
+    //            decimal line = unit * qty;
+
+    //            orderItems.Add(new OrderItem
+    //            {
+    //                AccessoryId = reqItem.AccessoryId,
+    //                TerrariumId = reqItem.TerrariumId,
+    //                TerrariumVariantId = null,
+    //                AccessoryQuantity = qty,
+    //                TerrariumVariantQuantity = 0,
+    //                Quantity = qty,
+    //                UnitPrice = unit,
+    //                ItemType = reqItem.ItemType,
+    //                TotalPrice = line
+    //            });
+    //        }
+
+    //        if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
+    //        {
+    //            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+    //            int qty = reqItem.TerrariumVariantQuantity ?? 0;
+    //            decimal unit = variant.Price;
+    //            decimal line = unit * qty;
+
+    //            orderItems.Add(new OrderItem
+    //            {
+    //                AccessoryId = null,
+    //                TerrariumId = reqItem.TerrariumId,
+    //                TerrariumVariantId = reqItem.TerrariumVariantId,
+    //                AccessoryQuantity = 0,
+    //                TerrariumVariantQuantity = qty,
+    //                Quantity = qty,
+    //                UnitPrice = unit,
+    //                ItemType = reqItem.ItemType,
+    //                TotalPrice = line
+    //            });
+    //        }
+    //        if (request.ComboId.HasValue && (request.ComboId ?? 0) > 0)
+    //        {
+    //            var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId ?? 0);
+    //            if(combo == null) { throw new ArgumentException("Combo chưa tồn tại"); };
+    //            foreach (var com in combo.ComboItems)
+    //            {
+    //                orderItems.Add(new OrderItem
+    //                {
+    //                    ComboId = request.ComboId,
+    //                    AccessoryId = com.AccessoryId,
+    //                    TerrariumId = reqItem.TerrariumId,
+    //                    TerrariumVariantId = com.TerrariumVariantId,
+    //                    AccessoryQuantity = 1,
+    //                    TerrariumVariantQuantity = 1,
+    //                    Quantity = 1,
+    //                    UnitPrice = 0,
+    //                    ItemType = reqItem.ItemType,
+    //                    TotalPrice = combo.ComboPrice
+    //                });
+    //            }
+    //        }
+    //    }
+
+    //    var order = new Order
+    //    {
+    //        UserId = userId,
+    //        VoucherId = safeVoucherId,     // chỉ set khi hợp lệ
+    //        AddressId = request.AddressId,
+    //        Deposit = request.Deposit,
+    //        OriginalAmount = originalAmount,
+    //        TotalAmount = finalAmount,
+    //        OrderDate = DateTime.UtcNow,
+    //        Status = OrderStatusData.Pending,
+    //        PaymentStatus = "Unpaid",
+    //        OrderItems = orderItems,
+    //    };
+
+    //    try
+    //    {
+    //        await _unitOfWork.Order.CreateAsync(order);
+    //        return order.OrderId;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        var msg = ex.Message + (ex.InnerException != null ? " | INNER: " + ex.InnerException.Message : "");
+    //        _logger?.LogError(ex, $"Order creation failed: {msg}");
+    //        throw new Exception("Order create error: " + msg, ex);
+    //    }
+    //}
+    #endregion
     public async Task<int> CreateAsync(OrderCreateRequest request)
     {
         if (request.ComboId <= 0)
@@ -641,12 +910,17 @@ public class OrderService : IOrderService
         if (request.VoucherId == 0) request.VoucherId = null;
 
         int userId = _userContextService.GetCurrentUser();
-        decimal totalAmount = 0m;
         var orderItems = new List<OrderItem>();
 
         int? safeVoucherId = null;
         decimal discountAmount = 0m;
+        decimal originalAmount = request.TotalAmountOld;
+        decimal finalAmount = request.TotalAmountNew;
 
+        // ✅ VALIDATE STOCK TRƯỚC KHI TẠO ORDER
+        await ValidateStockAvailability(request);
+
+        // ========= VALIDATE VOUCHER =========
         if (request.VoucherId.HasValue && request.VoucherId.Value > 0)
         {
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
@@ -657,92 +931,177 @@ public class OrderService : IOrderService
                     voucher.ValidFrom <= DateTime.UtcNow &&
                     voucher.ValidTo >= DateTime.UtcNow;
 
+                // ✅ CHECK MIN ORDER AMOUNT
+                if (isValid && voucher.MinOrderAmount.HasValue && originalAmount < voucher.MinOrderAmount.Value)
+                {
+                    throw new ArgumentException($"Đơn hàng tối thiểu {voucher.MinOrderAmount.Value:N0}đ để sử dụng voucher này.");
+                }
+
+                // ✅ CHECK PERSONAL VOUCHER
+                if (isValid && voucher.IsPersonal && !string.Equals(voucher.TargetUserId, userId.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ArgumentException("Voucher cá nhân, không thuộc về bạn.");
+                }
+
                 if (isValid)
                 {
                     safeVoucherId = voucher.VoucherId;
-                    discountAmount = voucher.DiscountAmount ?? 0m;
+                    discountAmount = voucher.DiscountAmount ?? 0;
                 }
             }
         }
 
-        foreach (var reqItem in request.Items)
+        // ========= XỬ LÝ COMBO TRƯỚC (NẾU CÓ) =========
+        if (request.ComboId.HasValue && request.ComboId.Value > 0)
         {
-            if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
-            {
-                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
-                int qty = reqItem.AccessoryQuantity ?? 0;
-                decimal unit = acc.Price;
-                decimal line = unit * qty;
-                totalAmount += line;
+            var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId.Value);
+            if (combo == null)
+                throw new ArgumentException("Combo không tồn tại");
 
-                orderItems.Add(new OrderItem
-                {
-                    AccessoryId = reqItem.AccessoryId,
-                    TerrariumId = reqItem.TerrariumId,
-                    TerrariumVariantId = null,
-                    AccessoryQuantity = qty,
-                    TerrariumVariantQuantity = 0,
-                    Quantity = qty,
-                    UnitPrice = unit,
-                    ItemType = reqItem.ItemType,
-                    TotalPrice = line
-                });
-            }
+            // ✅ VALIDATE COMBO STOCK
+            await ValidateComboStock(combo);
 
-            if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
+            // ✅ 1. TẠO ORDER ITEM CHÍNH CHO COMBO
+            var comboMainItem = new OrderItem
             {
-                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
-                int qty = reqItem.TerrariumVariantQuantity ?? 0;
-                decimal unit = variant.Price;
-                decimal line = unit * qty;
-                totalAmount += line;
+                ComboId = request.ComboId,
+                AccessoryId = null,
+                TerrariumId = null,
+                TerrariumVariantId = null,
+                AccessoryQuantity = 0,
+                TerrariumVariantQuantity = 0,
+                Quantity = 1, // Combo quantity = 1
+                UnitPrice = combo.ComboPrice,
+                ItemType = "Combo",
+                TotalPrice = combo.ComboPrice,
+                ParentOrderItemId = null // ✅ Item chính
+            };
 
-                orderItems.Add(new OrderItem
-                {
-                    AccessoryId = null,
-                    TerrariumId = reqItem.TerrariumId,
-                    TerrariumVariantId = reqItem.TerrariumVariantId,
-                    AccessoryQuantity = 0,
-                    TerrariumVariantQuantity = qty,
-                    Quantity = qty,
-                    UnitPrice = unit,
-                    ItemType = reqItem.ItemType,
-                    TotalPrice = line
-                });
-            }
-            if (request.ComboId.HasValue && (request.ComboId ?? 0) > 0)
+            orderItems.Add(comboMainItem);
+
+            // ✅ 2. TẠO ORDER ITEMS CHI TIẾT CHO TỪNG ITEM TRONG COMBO
+            foreach (var comboItem in combo.ComboItems)
             {
-                var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId ?? 0);
-                if(combo == null) { throw new ArgumentException("Combo chưa tồn tại"); };
-                foreach (var com in combo.ComboItems)
+                if (comboItem.AccessoryId.HasValue)
                 {
                     orderItems.Add(new OrderItem
                     {
                         ComboId = request.ComboId,
-                        AccessoryId = com.AccessoryId,
+                        AccessoryId = comboItem.AccessoryId,
+                        TerrariumId = comboItem.TerrariumId,
+                        TerrariumVariantId = null,
+                        AccessoryQuantity = comboItem.Quantity,
+                        TerrariumVariantQuantity = 0,
+                        Quantity = comboItem.Quantity,
+                        UnitPrice = 0, // ✅ Giá = 0 vì đã tính trong combo chính
+                        ItemType = "ComboDetail",
+                        TotalPrice = 0, // ✅ TotalPrice = 0 để không double count
+                        ParentOrderItemId = null // ✅ Sẽ set sau khi save
+                    });
+                }
+
+                if (comboItem.TerrariumVariantId.HasValue)
+                {
+                    orderItems.Add(new OrderItem
+                    {
+                        ComboId = request.ComboId,
+                        AccessoryId = null,
+                        TerrariumId = comboItem.TerrariumId,
+                        TerrariumVariantId = comboItem.TerrariumVariantId,
+                        AccessoryQuantity = 0,
+                        TerrariumVariantQuantity = comboItem.Quantity,
+                        Quantity = comboItem.Quantity,
+                        UnitPrice = 0, // ✅ Giá = 0 
+                        ItemType = "ComboDetail",
+                        TotalPrice = 0, // ✅ TotalPrice = 0
+                        ParentOrderItemId = null // ✅ Sẽ set sau
+                    });
+                }
+            }
+        }
+        else
+        {
+            // ========= XỬ LÝ ITEMS RIÊNG LẺ (CHỈ KHI KHÔNG CÓ COMBO) =========
+            foreach (var reqItem in request.Items)
+            {
+                // ✅ ACCESSORY - Kiểm tra stock
+                if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
+                {
+                    var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+                    if (acc == null)
+                        throw new ArgumentException($"Accessory {reqItem.AccessoryId} không tồn tại");
+
+                    int qty = reqItem.AccessoryQuantity ?? 0;
+
+                    // ✅ CHECK STOCK ACCESSORY
+                    if (acc.StockQuantity < qty)
+                        throw new ArgumentException($"Accessory '{acc.Name}' không đủ hàng. Còn lại: {acc.StockQuantity}, yêu cầu: {qty}");
+
+                    decimal unit = acc.Price;
+                    decimal line = unit * qty;
+
+                    orderItems.Add(new OrderItem
+                    {
+                        AccessoryId = reqItem.AccessoryId,
                         TerrariumId = reqItem.TerrariumId,
-                        TerrariumVariantId = com.TerrariumVariantId,
-                        AccessoryQuantity = 1,
-                        TerrariumVariantQuantity = 1,
-                        Quantity = 1,
-                        UnitPrice = 0,
+                        TerrariumVariantId = null,
+                        AccessoryQuantity = qty,
+                        TerrariumVariantQuantity = 0,
+                        Quantity = qty,
+                        UnitPrice = unit,
                         ItemType = reqItem.ItemType,
-                        TotalPrice = request.TotalAmount
+                        TotalPrice = line,
+                        ParentOrderItemId = null
+                    });
+                }
+
+                // ✅ TERRARIUM VARIANT - Kiểm tra stock và AI
+                if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
+                {
+                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+                    if (variant == null)
+                        throw new ArgumentException($"TerrariumVariant {reqItem.TerrariumVariantId} không tồn tại");
+
+                    // ✅ CHECK TERRARIUM AI STATUS
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                    if (terrarium == null)
+                        throw new ArgumentException($"Terrarium {variant.TerrariumId} không tồn tại");
+
+                    int qty = reqItem.TerrariumVariantQuantity ?? 0;
+
+                    // ✅ CHECK STOCK TERRARIUM VARIANT (chỉ check nếu không phải AI)
+                    if (!terrarium.GeneratedByAI && variant.StockQuantity < qty)
+                        throw new ArgumentException($"Terrarium '{terrarium.TerrariumName}' không đủ hàng. Còn lại: {variant.StockQuantity}, yêu cầu: {qty}");
+
+                    decimal unit = variant.Price;
+                    decimal line = unit * qty;
+
+                    orderItems.Add(new OrderItem
+                    {
+                        AccessoryId = null,
+                        TerrariumId = reqItem.TerrariumId,
+                        TerrariumVariantId = reqItem.TerrariumVariantId,
+                        AccessoryQuantity = 0,
+                        TerrariumVariantQuantity = qty,
+                        Quantity = qty,
+                        UnitPrice = unit,
+                        ItemType = reqItem.ItemType,
+                        TotalPrice = line,
+                        ParentOrderItemId = null
                     });
                 }
             }
         }
 
-        totalAmount -= discountAmount;
-        if (totalAmount < 0) totalAmount = 0; // tránh âm
-
         var order = new Order
         {
             UserId = userId,
-            VoucherId = safeVoucherId,     // chỉ set khi hợp lệ
+            VoucherId = safeVoucherId,
             AddressId = request.AddressId,
             Deposit = request.Deposit,
-            TotalAmount = totalAmount,
+            OriginalAmount = originalAmount,
+            TotalAmount = finalAmount,
+            DiscountAmount = discountAmount,
             OrderDate = DateTime.UtcNow,
             Status = OrderStatusData.Pending,
             PaymentStatus = "Unpaid",
@@ -752,14 +1111,160 @@ public class OrderService : IOrderService
         try
         {
             await _unitOfWork.Order.CreateAsync(order);
-            //await _unitOfWork.SaveAsync();            // <-- cần commit để lấy ID
+
+            // ✅ CẬP NHẬT ParentOrderItemId CHO COMBO DETAILS (NẾU CÓ COMBO)
+            if (request.ComboId.HasValue)
+            {
+                await UpdateComboItemParentIds(order.OrderId, request.ComboId.Value);
+            }
+
+            // ✅ CONSUME VOUCHER SAU KHI TẠO ORDER THÀNH CÔNG
+            if (safeVoucherId.HasValue)
+            {
+                await ConsumeVoucher(safeVoucherId.Value, userId.ToString(), originalAmount);
+            }
+
             return order.OrderId;
         }
         catch (Exception ex)
         {
             var msg = ex.Message + (ex.InnerException != null ? " | INNER: " + ex.InnerException.Message : "");
-            _logger?.LogError(ex, $"Order creation failed: {msg}");
             throw new Exception("Order create error: " + msg, ex);
+        }
+    }
+
+    // ✅ Helper method cập nhật ParentOrderItemId cho combo details
+    private async Task UpdateComboItemParentIds(int orderId, int comboId)
+    {
+        try
+        {
+            var orderItems = await _unitOfWork.OrderItem.FindByOrderIdAsync(orderId);
+
+            // Tìm combo main item
+            var comboMainItem = orderItems.FirstOrDefault(x =>
+                x.ItemType == "Combo" &&
+                x.ComboId == comboId);
+
+            if (comboMainItem == null)
+            {
+                _logger?.LogWarning($"Combo main item not found for order {orderId}, combo {comboId}");
+                return;
+            }
+
+            // Tìm tất cả combo detail items
+            var comboDetailItems = orderItems.Where(x =>
+                x.ItemType == "ComboDetail" &&
+                x.ComboId == comboId &&
+                x.ParentOrderItemId == null).ToList();
+
+            // Cập nhật ParentOrderItemId
+            foreach (var detailItem in comboDetailItems)
+            {
+                detailItem.ParentOrderItemId = comboMainItem.OrderItemId;
+                await _unitOfWork.OrderItem.UpdateAsync(detailItem);
+            }
+
+            await _unitOfWork.SaveAsync();
+
+            _logger?.LogInformation($"Updated {comboDetailItems.Count} combo detail items for order {orderId}");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, $"Failed to update combo parent IDs for order {orderId}: {ex.Message}");
+            // Không throw exception để không ảnh hưởng đến việc tạo order
+        }
+    }
+
+    // ✅ VALIDATE STOCK AVAILABILITY (cập nhật để handle combo)
+    private async Task ValidateStockAvailability(OrderCreateRequest request)
+    {
+        // Check combo stock trước
+        if (request.ComboId.HasValue && request.ComboId.Value > 0)
+        {
+            var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId.Value);
+            if (combo != null)
+            {
+                await ValidateComboStock(combo);
+            }
+            return; // ✅ Nếu có combo, không check items riêng lẻ
+        }
+
+        // Check accessories riêng lẻ
+        foreach (var item in request.Items.Where(i => i.AccessoryId.HasValue))
+        {
+            var acc = await _unitOfWork.Accessory.GetByIdAsync(item.AccessoryId.Value);
+            if (acc == null)
+                throw new ArgumentException($"Accessory {item.AccessoryId} không tồn tại");
+
+            int requiredQty = item.AccessoryQuantity ?? 0;
+            if (acc.StockQuantity < requiredQty)
+                throw new ArgumentException($"'{acc.Name}' không đủ hàng. Còn: {acc.StockQuantity}, cần: {requiredQty}");
+        }
+
+        // Check terrarium variants riêng lẻ
+        foreach (var item in request.Items.Where(i => i.TerrariumVariantId.HasValue))
+        {
+            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+            if (variant == null)
+                throw new ArgumentException($"TerrariumVariant {item.TerrariumVariantId} không tồn tại");
+
+            var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+            if (terrarium == null)
+                throw new ArgumentException($"Terrarium không tồn tại");
+
+            // ✅ CHỈ CHECK STOCK NÕU KHÔNG PHẢI AI
+            if (!terrarium.GeneratedByAI)
+            {
+                int requiredQty = item.TerrariumVariantQuantity ?? 0;
+                if (variant.StockQuantity < requiredQty)
+                    throw new ArgumentException($"'{terrarium.TerrariumName}' không đủ hàng. Còn: {variant.StockQuantity}, cần: {requiredQty}");
+            }
+        }
+    }
+
+    // ✅ VALIDATE COMBO STOCK
+    private async Task ValidateComboStock(Combo combo)
+    {
+        foreach (var comboItem in combo.ComboItems)
+        {
+            if (comboItem.AccessoryId.HasValue)
+            {
+                var acc = await _unitOfWork.Accessory.GetByIdAsync(comboItem.AccessoryId.Value);
+                if (acc == null || acc.StockQuantity < 1)
+                    throw new ArgumentException($"Combo '{combo.Name}' - Accessory không đủ hàng");
+            }
+
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                if (variant == null)
+                    throw new ArgumentException($"Combo '{combo.Name}' - TerrariumVariant không tồn tại");
+
+                var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                if (terrarium != null && !terrarium.GeneratedByAI && variant.StockQuantity < 1)
+                    throw new ArgumentException($"Combo '{combo.Name}' - Terrarium không đủ hàng");
+            }
+        }
+    }
+
+    // ✅ CONSUME VOUCHER
+    private async Task ConsumeVoucher(int voucherId, string userId, decimal orderAmount)
+    {
+        try
+        {
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(voucherId);
+            if (voucher != null)
+            {
+                var result = await _unitOfWork.Voucher.ConsumeAsync(voucher.Code, userId, orderAmount);
+                if (!result.ok)
+                {
+                    _logger?.LogWarning($"Failed to consume voucher {voucherId}: {result.message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, $"Error consuming voucher {voucherId}: {ex.Message}");
         }
     }
 

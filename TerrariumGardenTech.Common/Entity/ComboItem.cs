@@ -12,6 +12,7 @@ public class ComboItem
     public int Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public int ParentOrderItemId { get; set; }
 
     // Navigation Properties
     public virtual Combo Combo { get; set; } = null!;
