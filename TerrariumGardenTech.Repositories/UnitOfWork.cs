@@ -47,6 +47,7 @@ public class UnitOfWork
     private ComboCategoryRepository _comboCategoryRepository;
     private ComboItemRepository _comboItemRepository;
     private TerrariumLayoutRepository _terrariumLayoutRepository;
+    private TerrariumVariantAccessoryRepository _terrariumVariantAccessoryRepository;
 
     public UnitOfWork()
     {
@@ -198,6 +199,10 @@ public class UnitOfWork
     {
         get { return _cartItemRepository ??= new CartItemRepository(_unitOfWorkContext); }
     }
+    public TerrariumVariantAccessoryRepository TerrariumVariantAccessory
+    {
+        get { return _terrariumVariantAccessoryRepository ??= new TerrariumVariantAccessoryRepository(_unitOfWorkContext); }
+    }
 
     public async Task<int> SaveAsync()
     {
@@ -246,5 +251,9 @@ public class UnitOfWork
     public TerrariumLayoutRepository TerrariumLayout
     {
         get => _terrariumLayoutRepository ??= new TerrariumLayoutRepository(_unitOfWorkContext);
+    }
+    public TerrariumVariantAccessoryRepository TerrariumVariantAccessoryRepository
+    {
+        get => _terrariumVariantAccessoryRepository ??= new TerrariumVariantAccessoryRepository(_unitOfWorkContext);
     }
 }

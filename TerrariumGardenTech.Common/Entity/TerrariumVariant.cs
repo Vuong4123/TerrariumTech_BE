@@ -2,6 +2,7 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
+using TerrariumGardenTech.Common.Entity;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -21,7 +22,7 @@ public partial class TerrariumVariant
 
     public DateTime? UpdatedAt { get; set; } = DateTime.Now;
 
-
+    public virtual ICollection<TerrariumVariantAccessory> TerrariumVariantAccessories { get; set; } = new List<TerrariumVariantAccessory>();
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public virtual ICollection<PromotionTerrariumVariant> PromotionTerrariumVariants { get; set; } = new List<PromotionTerrariumVariant>();

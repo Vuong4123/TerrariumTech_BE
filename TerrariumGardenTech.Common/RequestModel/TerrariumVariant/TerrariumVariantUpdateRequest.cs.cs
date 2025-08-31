@@ -15,5 +15,8 @@ public class TerrariumVariantUpdateRequest
     public IFormFile? ImageFile { get; set; } // Thay UrlImage bằng file upload
     public int StockQuantity { get; set; }
 
+    public int AccessoryId { get; set; }
+    public int Quantity { get; set; } = 1;
+    //public List<VariantAccessoryRequest> Accessories { get; set; } = new List<VariantAccessoryRequest>();
     public DateTime? UpdatedAt { get; set; }
 }

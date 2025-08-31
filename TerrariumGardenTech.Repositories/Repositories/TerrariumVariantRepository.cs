@@ -12,6 +12,10 @@ public class TerrariumVariantRepository : GenericRepository<TerrariumVariant>
     {
         _dbContext = dbContext;
     }
+    public async Task<List<TerrariumVariant>> GetAllAsync2()
+    {
+        return _context.TerrariumVariants.Include(c => c.TerrariumVariantAccessories).ToList();
+    }
     public async Task RestoreStockAsync(int variantId, int quantity)
     {
         var affected = await _dbContext.TerrariumVariants
@@ -24,6 +28,7 @@ public class TerrariumVariantRepository : GenericRepository<TerrariumVariant>
     public async Task<IEnumerable<TerrariumVariant>> GetAllByTerrariumIdAsync(int terrariumId)
     {
         return await _context.TerrariumVariants
+            .Include(a => a.TerrariumVariantAccessories)
             .Where(ti => ti.TerrariumId == terrariumId)
             .ToListAsync();
     }
@@ -31,5 +36,9 @@ public class TerrariumVariantRepository : GenericRepository<TerrariumVariant>
     {
         _context.TerrariumVariants.RemoveRange(entities);
         await _context.SaveChangesAsync();
+    }
+    public async Task<TerrariumVariant> GetByIdAsync2(int id)
+    {
+        return _context.TerrariumVariants.Include(c => c.TerrariumVariantAccessories).FirstOrDefault(x => x.TerrariumVariantId == id);
     }
 }

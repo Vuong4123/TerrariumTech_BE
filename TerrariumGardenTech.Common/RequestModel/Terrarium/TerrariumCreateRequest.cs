@@ -10,7 +10,7 @@ public class TerrariumCreateRequest
     public int EnvironmentId { get; set; }
     public int ShapeId { get; set; }
     public int TankMethodId { get; set; }
-    public List<string> AccessoryNames { get; set; } = [];
+    //public List<string> AccessoryNames { get; set; } = [];
     public string TerrariumName { get; set; } = default!;
     public List<string> TerrariumImages { get; set; }
     public int Stock { get; set; }
