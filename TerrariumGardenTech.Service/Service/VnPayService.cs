@@ -112,16 +112,10 @@ public class VnPayService : IVnPayService
             return new BusinessResult(Const.ERROR_EXCEPTION, "Fail", e.ToString());
         }
     }
-
     public async Task<IBusinessResult> PaymentExecute(IQueryCollection collections)
     {
         try
         {
-            //// ===== 0) TẮT VNPAY BẰNG CONFIG =====
-            //var enabled = _configuration.GetValue<bool?>("Vnpay:Enabled") ?? false;
-            //if (!enabled)
-            //    return new BusinessResult(Const.FAIL_READ_CODE, "VNPAY đang được tắt qua cấu hình.");
-
             // ===== 1) ĐỌC & KIỂM TRA CẤU HÌNH =====
             var secret = _configuration["Vnpay:HashSecret"];
             if (string.IsNullOrWhiteSpace(secret))
@@ -162,34 +156,125 @@ public class VnPayService : IVnPayService
             if (paid != expected)
                 return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
 
-            // ===== 4) CẬP NHẬT ĐƠN =====
-            order.PaymentStatus = "Paid";
-            order.TransactionId = response.TransactionId;
-
-            if (isPayAll)
-                order.DiscountAmount = baseAmount - fullAfter10;
-
-            await _unitOfWork.Order.UpdateAsync(order);
-
-            order.Payment ??= new System.Collections.Generic.List<Payment>();
-            order.Payment.Add(new Payment
+            try
             {
-                OrderId = order.OrderId,
-                PaymentMethod = "VNPAY",
-                PaymentAmount = paid,
-                Status = "Paid",
-                PaymentDate = response.PaymentDate ?? DateTime.UtcNow
-            });
+                order.PaymentStatus = "Paid";
+                order.TransactionId = response.TransactionId;
 
-            await _unitOfWork.SaveAsync();
+                if (isPayAll)
+                    order.DiscountAmount = baseAmount - fullAfter10;
 
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment success");
+                await _unitOfWork.Order.UpdateAsync(order);
+
+                order.Payment ??= new System.Collections.Generic.List<Payment>();
+                order.Payment.Add(new Payment
+                {
+                    OrderId = order.OrderId,
+                    PaymentMethod = "VNPAY",
+                    PaymentAmount = paid,
+                    Status = "Paid",
+                    PaymentDate = response.PaymentDate ?? DateTime.UtcNow
+                });
+
+                // ✅ TRỪ STOCK KHI PAYMENT SUCCESS
+                await ReduceStockForPaidOrder(order);
+
+                await _unitOfWork.SaveAsync();
+
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment success");
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.ToString());
         }
     }
+
+    #region Helper methods
+    // ✅ METHOD TRỪ STOCK CHO PAID ORDER
+    private async Task ReduceStockForPaidOrder(Order order)
+    {
+        if (order.OrderItems == null || !order.OrderItems.Any())
+            return;
+
+        foreach (var item in order.OrderItems)
+        {
+            // ✅ 1. ACCESSORY RIÊNG LẺ: Luôn trừ stock
+            if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
+            {
+                await _unitOfWork.Accessory.ReduceStockAsync(item.AccessoryId.Value, item.AccessoryQuantity ?? 0);
+            }
+
+            // ✅ 2. TERRARIUM: CHỈ TRỪ KHI GeneratedByAI = TRUE
+            if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+
+                    // ✅ CHỈ AI TERRARIUM mới trừ accessories, Non-AI không trừ gì
+                    if (terrarium != null && terrarium.GeneratedByAI)
+                    {
+                        await ReduceStockForAITerrarium(terrarium.TerrariumId, item.TerrariumVariantQuantity ?? 0);
+                    }
+                    // ❌ Non-AI terrarium (GeneratedByAI = false): KHÔNG trừ stock
+                }
+            }
+
+            // ✅ 3. COMBO: Check từng item trong combo
+            if (item.ComboId.HasValue)
+            {
+                await ReduceStockForComboItem(item);
+            }
+        }
+    }
+
+    // ✅ TRỪ STOCK CHO AI TERRARIUM - trừ accessories
+    private async Task ReduceStockForAITerrarium(int terrariumId, int terrariumQuantity)
+    {
+        var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetByTerrariumIdAsync(terrariumId);
+
+        foreach (var ta in terrariumAccessories)
+        {
+            // Trừ stock accessories (nguyên liệu để tạo AI terrarium)
+            await _unitOfWork.Accessory.ReduceStockAsync(ta.AccessoryId, terrariumQuantity);
+        }
+    }
+
+    // ✅ TRỪ STOCK CHO COMBO
+    private async Task ReduceStockForComboItem(OrderItem comboOrderItem)
+    {
+        if (!comboOrderItem.ComboId.HasValue) return;
+
+        var combo = await _unitOfWork.Combo.GetByIdAsync(comboOrderItem.ComboId.Value);
+        if (combo?.ComboItems == null) return;
+
+        foreach (var comboItem in combo.ComboItems)
+        {
+            // Accessory trong combo: Luôn trừ
+            if (comboItem.AccessoryId.HasValue)
+            {
+                await _unitOfWork.Accessory.ReduceStockAsync(comboItem.AccessoryId.Value, 1);
+            }
+
+            // Terrarium trong combo: CHỈ trừ khi AI
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                        await ReduceStockForAITerrarium(terrarium.TerrariumId, 1);
+                }
+            }
+        }
+    }
+    #endregion
 
 
 

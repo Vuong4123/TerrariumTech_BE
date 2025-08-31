@@ -20,7 +20,7 @@ public class UpdateVoucherRequest
     // --- Bổ sung theo yêu cầu ---
     public bool IsPersonal { get; set; } = false;
     public string? TargetUserId { get; set; }
-
+    public decimal? MinOrderAmount { get; set; }
     [Range(0, int.MaxValue)] public int TotalUsage { get; set; } = 0;
     [Range(0, int.MaxValue)] public int RemainingUsage { get; set; } = 0;  // cho phép chỉnh tay khi update
     public int? PerUserUsageLimit { get; set; }

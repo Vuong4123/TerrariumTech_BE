@@ -28,7 +28,8 @@ public partial class Voucher
     public bool IsPersonal { get; set; }        // Voucher cá nhân?
     public string? TargetUserId { get; set; }   // User đích (nếu cá nhân)
     public int? PerUserUsageLimit { get; set; } // Giới hạn mỗi user
-
+    // Số tiền tối thiểu để áp dụng voucher
+    public decimal? MinOrderAmount { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     public virtual ICollection<VoucherUsage> VoucherUsages { get; set; } = new List<VoucherUsage>();

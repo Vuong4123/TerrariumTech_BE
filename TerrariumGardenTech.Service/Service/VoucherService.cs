@@ -61,4 +61,11 @@ public class VoucherService : IVoucherService
             && (v.ValidTo == null || v.ValidTo.Value.Date >= today)
             && v.RemainingUsage > 0;
     }
+    public async Task<(bool ok, string reason, Voucher? voucher, int userUsed)> CanUseWithOrderAmountAsync(
+       string code, string userId, decimal orderAmount, CancellationToken ct = default)
+       => await _unitOfWork.Voucher.CanUserUseAsync(code, userId, orderAmount);
+
+    public async Task<(bool ok, string message, int remaining, int userUsed)> ConsumeWithOrderAmountAsync(
+        string code, string userId, decimal orderAmount, CancellationToken ct = default)
+        => await _unitOfWork.Voucher.ConsumeAsync(code, userId, orderAmount);
 }

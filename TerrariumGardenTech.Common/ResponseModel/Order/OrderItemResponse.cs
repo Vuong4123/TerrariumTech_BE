@@ -14,4 +14,10 @@ public class OrderItemResponse
     public int? Quantity { get; set; }
     public decimal? UnitPrice { get; set; }
     public decimal? TotalPrice { get; set; }
+    public int? ParentOrderItemId { get; set; }
+    public List<OrderItemResponse> ChildItems { get; set; } = new List<OrderItemResponse>();
+
+    // ✅ THÊM: Product details
+    public string? ProductName { get; set; }
+    public string? ImageUrl { get; set; }
 }

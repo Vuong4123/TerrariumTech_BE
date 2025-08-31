@@ -64,7 +64,7 @@ public class AddCartItemRequest
 /// </summary>
 public class AddCartItemMultipleRequest
 {
-    public int TerrariumId { get; set; }
+    public int TerrariumVarientId { get; set; }
     public int TotalPrice { get; set; }
     /// <summary>
     /// Danh sách phụ kiện kèm theo bể (chỉ có giá trị khi mua bể)

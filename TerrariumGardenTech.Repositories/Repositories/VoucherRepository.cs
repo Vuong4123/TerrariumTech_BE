@@ -79,18 +79,16 @@ public class VoucherRepository : GenericRepository<Voucher>
 
     // ========== VALIDATE DÙNG VOUCHER ==========
     public async Task<(bool ok, string reason, Voucher? v, int userUsed)> CanUserUseAsync(
-        string code, string userId, DateTime? now = null)
+        string code, string userId, decimal? orderAmount = null, DateTime? now = null)
     {
         now ??= DateTime.UtcNow.Date;
         code = code?.Trim() ?? string.Empty;
         userId = userId?.Trim() ?? string.Empty;
 
-        // Lấy voucher còn hiệu lực (status, thời gian)
         var v = await _db.Vouchers
             .AsNoTracking()
             .FirstOrDefaultAsync(x =>
                 x.Code == code &&
-                // So sánh status khớp enum, không phân biệt hoa-thường
                 string.Equals(x.Status, VoucherStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase) &&
                 (x.ValidFrom == null || x.ValidFrom <= now) &&
                 (x.ValidTo == null || x.ValidTo >= now));
@@ -98,39 +96,37 @@ public class VoucherRepository : GenericRepository<Voucher>
         if (v == null)
             return (false, "Voucher không tồn tại/không còn hiệu lực.", null, 0);
 
-        // Voucher cá nhân nhưng user không khớp
+        // ✅ KIỂM TRA MIN ORDER AMOUNT
+        if (orderAmount.HasValue && v.MinOrderAmount.HasValue && orderAmount.Value < v.MinOrderAmount.Value)
+            return (false, $"Đơn hàng tối thiểu {v.MinOrderAmount.Value:N0}đ để sử dụng voucher này.", v, 0);
+
         if (v.IsPersonal && !string.Equals(v.TargetUserId, userId, StringComparison.OrdinalIgnoreCase))
             return (false, "Voucher chỉ dành cho user được tặng.", v, 0);
 
-        // Hết lượt tổng
         if (v.RemainingUsage <= 0)
             return (false, "Voucher đã hết lượt sử dụng.", v, 0);
 
-        // Đếm số lần user đã dùng
         var usage = await _db.Set<VoucherUsage>().FindAsync(v.VoucherId, userId);
         var used = usage?.UsedCount ?? 0;
 
-        // Giới hạn mỗi user
         if (v.PerUserUsageLimit.HasValue && used >= v.PerUserUsageLimit.Value)
             return (false, "Bạn đã dùng tối đa số lần cho phép.", v, used);
 
         return (true, "", v, used);
     }
 
-    // ========== CONSUME (giảm Remaining + tăng UsedCount per user) ==========
     public async Task<(bool ok, string message, int remaining, int userUsed)> ConsumeAsync(
-        string code, string userId, DateTime? now = null)
+        string code, string userId, decimal? orderAmount = null, DateTime? now = null)
     {
         using var tx = await _db.Database.BeginTransactionAsync();
         try
         {
-            var check = await CanUserUseAsync(code, userId, now);
+            var check = await CanUserUseAsync(code, userId, orderAmount, now);
             if (!check.ok)
                 return (false, check.reason, check.v?.RemainingUsage ?? 0, check.userUsed);
 
             var voucherId = check.v!.VoucherId;
 
-            // ❗ Giảm RemainingUsage một cách atomically (EF Core 7+)
             var affected = await _db.Vouchers
                 .Where(x => x.VoucherId == voucherId && x.RemainingUsage > 0)
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.RemainingUsage, x => x.RemainingUsage - 1));
@@ -141,7 +137,6 @@ public class VoucherRepository : GenericRepository<Voucher>
                 return (false, "Voucher đã hết lượt sử dụng.", check.v.RemainingUsage, check.userUsed);
             }
 
-            // Cập nhật/khởi tạo usage cho user
             var usage = await _db.Set<VoucherUsage>().FindAsync(voucherId, userId);
             if (usage == null)
             {
@@ -160,7 +155,6 @@ public class VoucherRepository : GenericRepository<Voucher>
 
             await _db.SaveChangesAsync();
 
-            // Lấy lại remaining hiện tại để trả về
             var currentRemaining = await _db.Vouchers
                 .AsNoTracking()
                 .Where(x => x.VoucherId == voucherId)
@@ -168,7 +162,6 @@ public class VoucherRepository : GenericRepository<Voucher>
                 .FirstAsync();
 
             await tx.CommitAsync();
-
             return (true, "Sử dụng voucher thành công.", currentRemaining, usage.UsedCount);
         }
         catch

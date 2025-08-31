@@ -12,7 +12,16 @@ public sealed class OrderRepository : GenericRepository<Order>
         : base(context)
     {
     }
-
+    // ✅ OrderRepository.cs - Include đầy đủ
+    public async Task<Order?> GetOrderWithItemsAsync(int orderId)
+    {
+        return await _context.Orders
+            .Include(o => o.OrderItems)
+            .Include(o => o.Payment)
+            .Include(o => o.User)
+            .Include(o => o.Voucher)
+            .FirstOrDefaultAsync(o => o.OrderId == orderId);
+    }
     /// <summary>Lấy tất cả đơn của một user.</summary>
     public async Task<List<Order>> FindByUserAsync(
         int userId,

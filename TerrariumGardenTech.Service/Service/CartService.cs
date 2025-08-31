@@ -213,19 +213,71 @@ namespace TerrariumGardenTech.Service.Service
                         {
                             return new BusinessResult(Const.FAIL_CREATE_CODE, "Variant không hợp lệ");
                         }
+
+                        // ✅ CHECK STOCK CHO TERRARIUM
+                        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
+                        if (terrarium == null)
+                            return new BusinessResult(Const.FAIL_CREATE_CODE, "Terrarium không tồn tại");
+
+                        var quantityToAdd = request.VariantQuantity ?? 1;
+
+                        // ✅ CHECK STOCK THEO LOẠI TERRARIUM
+                        if (terrarium.GeneratedByAI)
+                        {
+                            var stockCheck = await ValidateAITerrariumStockAsync(terrarium.TerrariumId, quantityToAdd);
+                            if (!stockCheck.IsValid)
+                                return new BusinessResult(Const.FAIL_CREATE_CODE, stockCheck.ErrorMessage);
+                        }
+                        else
+                        {
+                            if (variant.StockQuantity < quantityToAdd)
+                                return new BusinessResult(Const.FAIL_CREATE_CODE, $"Terrarium '{terrarium.TerrariumName}' không đủ hàng. Còn lại: {variant.StockQuantity}, yêu cầu: {quantityToAdd}");
+                        }
                     }
 
-                    // ✅ Kiểm tra item tồn tại với cả TerrariumId VÀ VariantId
+                    // ✅ PHÂN BIỆT ĐƠN LẺ VS BUNDLE
+                    bool hasAccessories = (request.AccessoryQuantity ?? 0) > 0;
+
+                    // ✅ Kiểm tra item tồn tại với phân biệt loại
                     var existingItem = await _unitOfWork.CartItem.GetExistingTerrariumItemAsync(
                         cart.CartId,
-                        request.TerrariumId,
-                        request.TerrariumVariantId
+                        request.TerrariumVariantId,
+                        hasAccessories // ✅ Phân biệt đơn lẻ vs bundle
                     );
 
                     if (existingItem != null)
                     {
-                        // Cập nhật số lượng item hiện có
+                        // ✅ CHỈ MERGE NẾU CÙNG LOẠI (đơn lẻ với đơn lẻ, bundle với bundle)
                         var quantityToAdd = request.VariantQuantity ?? 1;
+
+                        // CHECK TỔNG STOCK SAU KHI CỘNG
+                        var totalQuantityAfterAdd = (existingItem.TerrariumVariantQuantity ?? 0) + quantityToAdd;
+                        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
+
+                        if (terrarium != null)
+                        {
+                            if (terrarium.GeneratedByAI)
+                            {
+                                var stockCheck = await ValidateAITerrariumStockAsync(terrarium.TerrariumId, totalQuantityAfterAdd);
+                                if (!stockCheck.IsValid)
+                                    return new BusinessResult(Const.FAIL_CREATE_CODE, $"Tổng số lượng trong giỏ vượt quá tồn kho. {stockCheck.ErrorMessage}");
+                            }
+                            else
+                            {
+                                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(existingItem.TerrariumVariantId ?? 0);
+                                if (variant != null && variant.StockQuantity < totalQuantityAfterAdd)
+                                    return new BusinessResult(Const.FAIL_CREATE_CODE, $"Tổng số lượng trong giỏ vượt quá tồn kho. '{terrarium.TerrariumName}' còn: {variant.StockQuantity}, tổng yêu cầu: {totalQuantityAfterAdd}");
+                            }
+                        }
+
+                        // ✅ CẬP NHẬT EXISTING ITEM (CÙNG LOẠI)
+                        if (hasAccessories)
+                        {
+                            // Bundle: cộng cả accessory
+                            existingItem.AccessoryQuantity = (existingItem.AccessoryQuantity ?? 0) + (request.AccessoryQuantity ?? 0);
+                        }
+                        // Else: đơn lẻ không có accessory, không cần cộng
+
                         existingItem.TerrariumVariantQuantity += quantityToAdd;
                         existingItem.Quantity = existingItem.TerrariumVariantQuantity ?? 0;
 
@@ -239,13 +291,12 @@ namespace TerrariumGardenTech.Service.Service
                     }
                     else
                     {
-                        // ✅ Tạo mới cart item
+                        // ✅ TẠO MỚI CART ITEM (KHÁC LOẠI HOẶC CHƯA CÓ)
                         var quantity = request.VariantQuantity ?? 1;
                         decimal unitPrice = 0;
 
                         if (request.TerrariumVariantId.HasValue)
                         {
-                            // Có variant cụ thể
                             var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(request.TerrariumVariantId.Value);
                             unitPrice = variant.Price;
 
@@ -255,6 +306,7 @@ namespace TerrariumGardenTech.Service.Service
                                 CartId = cart.CartId,
                                 TerrariumVariantId = request.TerrariumVariantId.Value,
                                 TerrariumVariantQuantity = quantity,
+                                AccessoryQuantity = request.AccessoryQuantity, // ✅ Để phân biệt bundle/đơn lẻ
                                 Quantity = quantity,
                                 UnitPrice = unitPrice,
                                 TotalPrice = unitPrice * quantity,
@@ -269,7 +321,6 @@ namespace TerrariumGardenTech.Service.Service
                         }
                         else
                         {
-                            // Không có variant - thêm terrarium với giá base
                             var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(request.TerrariumId);
                             unitPrice = terrarium?.MinPrice ?? 0;
 
@@ -279,6 +330,7 @@ namespace TerrariumGardenTech.Service.Service
                                 CartId = cart.CartId,
                                 TerrariumVariantId = null,
                                 TerrariumVariantQuantity = quantity,
+                                AccessoryQuantity = request.AccessoryQuantity, // ✅ Để phân biệt
                                 Quantity = quantity,
                                 UnitPrice = unitPrice,
                                 TotalPrice = unitPrice * quantity,
@@ -292,12 +344,28 @@ namespace TerrariumGardenTech.Service.Service
                             addedItem = cartItem;
                         }
                     }
-
-                    //bundleResponse.MainItem = await BuildCartItemResponseAsync(addedIte m);
                 }
                 else if (request.AccessoryId.HasValue)
                 {
                     // === TRƯỜNG HỢP 2: THÊM PHỤ KIỆN ĐƠN LẺ ===
+
+                    var accessory = await _unitOfWork.Accessory.GetByIdAsync(request.AccessoryId.Value);
+                    if (accessory == null)
+                        return new BusinessResult(Const.FAIL_CREATE_CODE, "Accessory không tồn tại");
+
+                    var quantityToAdd = request.AccessoryQuantity ?? 1;
+
+                    if (accessory.StockQuantity < quantityToAdd)
+                        return new BusinessResult(Const.FAIL_CREATE_CODE, $"'{accessory.Name}' không đủ hàng. Còn lại: {accessory.StockQuantity}, yêu cầu: {quantityToAdd}");
+
+                    var existingAccessoryInCart = await _unitOfWork.CartItem.GetExistingSingleAccessoryItemAsync(cart.CartId, request.AccessoryId.Value);
+                    if (existingAccessoryInCart != null)
+                    {
+                        var totalAfterAdd = (existingAccessoryInCart.AccessoryQuantity ?? 0) + quantityToAdd;
+                        if (accessory.StockQuantity < totalAfterAdd)
+                            return new BusinessResult(Const.FAIL_CREATE_CODE, $"Tổng số lượng trong giỏ vượt quá tồn kho. '{accessory.Name}' còn: {accessory.StockQuantity}, tổng yêu cầu: {totalAfterAdd}");
+                    }
+
                     var singleItem = await AddSingleAccessoryToCartAsync(cart, request);
                     bundleResponse.MainItem = await BuildCartItemResponseAsync(singleItem);
                 }
@@ -308,7 +376,6 @@ namespace TerrariumGardenTech.Service.Service
 
                 await _unitOfWork.SaveAsync();
 
-                // Tính tổng
                 bundleResponse.UpdateTotals();
                 return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Thêm sản phẩm vào giỏ hàng thành công", bundleResponse);
             }
@@ -317,6 +384,55 @@ namespace TerrariumGardenTech.Service.Service
                 _logger.LogError(ex, "Error adding item to cart for user {UserId}", userId);
                 return new BusinessResult(Const.FAIL_CREATE_CODE, $"Lỗi khi thêm sản phẩm vào giỏ hàng: {ex.Message}");
             }
+        }
+
+        // ✅ Helper method kiểm tra stock terrarium
+        private async Task<StockValidationResult> ValidateAITerrariumStockAsync(int terrariumId, int quantity)
+        {
+            var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetByTerrariumIdAsync(terrariumId);
+
+            if (!terrariumAccessories.Any())
+            {
+                return new StockValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Terrarium chưa có accessories được định nghĩa"
+                };
+            }
+
+            foreach (var ta in terrariumAccessories)
+            {
+                var accessory = await _unitOfWork.Accessory.GetByIdAsync(ta.AccessoryId);
+                if (accessory == null)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Accessory {ta.AccessoryId} cho terrarium không tồn tại"
+                    };
+                }
+
+                // 1 terrarium = 1 accessory (đơn giản)
+                int requiredQty = quantity;
+
+                if (accessory.StockQuantity < requiredQty)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Terrarium: '{accessory.Name}' không đủ hàng. Còn: {accessory.StockQuantity}, cần: {requiredQty}"
+                    };
+                }
+            }
+
+            return new StockValidationResult { IsValid = true };
+        }
+
+        // ✅ Result class
+        public class StockValidationResult
+        {
+            public bool IsValid { get; set; }
+            public string ErrorMessage { get; set; } = string.Empty;
         }
         public async Task<IBusinessResult> ChangeVariantAsync(int userId, int cartItemId, ChangeVariantRequest request)
         {
@@ -420,7 +536,7 @@ namespace TerrariumGardenTech.Service.Service
             // Kiểm tra đã có bể này trong giỏ chưa
             var existingItem = await _unitOfWork.CartItem.GetExistingTerrariumItemAsync(
                 cart.CartId,
-                request.TerrariumId
+                request.TerrariumVarientId
             );
 
             CartItem mainCartItem;
@@ -440,7 +556,7 @@ namespace TerrariumGardenTech.Service.Service
                 // Tạo mới bể chính
                 mainCartItem = new CartItem
                 {
-                    TerrariumId = request.TerrariumId,
+                    TerrariumVariantId = request.TerrariumVarientId,
                     CartId = cart.CartId,
                     Quantity = 1,
                     UnitPrice = 0,
@@ -462,8 +578,8 @@ namespace TerrariumGardenTech.Service.Service
                     // Kiểm tra phụ kiện đã tồn tại với terrarium cụ thể
                     var existingAccessory = await _unitOfWork.CartItem.GetExistingItemAsync(
                         cart.CartId,
-                        request.TerrariumId, // ✅ Thêm TerrariumId để liên kết chính xác
-                        item.AccessoryId
+                        item.AccessoryId,
+                        request.TerrariumVarientId
                     );
 
                     if (existingAccessory != null && existingAccessory.ItemType == CartItemType.BUNDLE_ACCESSORY)
@@ -485,7 +601,7 @@ namespace TerrariumGardenTech.Service.Service
                         var bundleAccessory = new CartItem
                         {
                             CartId = cart.CartId,
-                            TerrariumId = request.TerrariumId, // ✅ Liên kết với terrarium
+                            TerrariumVariantId = request.TerrariumVarientId, // ✅ Liên kết với terrarium
                             AccessoryId = item.AccessoryId, // ✅ Thêm AccessoryId
                             AccessoryQuantity = item.Quantity, // ✅ Thêm AccessoryQuantity
                             Quantity = item.Quantity, // ✅ Sửa từ request.Quantity thành item.Quantity
@@ -662,11 +778,11 @@ namespace TerrariumGardenTech.Service.Service
 
                     var terrariumDetail = new CartItemDetail
                     {
-                        ProductName = $"Terrarium {variant.VariantName}",
+                        ProductName = variant.VariantName,
                         Quantity = request.VariantQuantity.Value,
                         Price = unitPrice,
                         TotalPrice = unitPrice * request.VariantQuantity.Value,
-                        ImageUrl = variant.UrlImage, // This should be string already
+                        ImageUrl = variant.UrlImage, 
                         ProductType = "Terrarium"
                     };
 
@@ -845,7 +961,7 @@ namespace TerrariumGardenTech.Service.Service
                                 Quantity = cartItem.Quantity,
                                 UnitPrice = combo.ComboPrice,
                                 TotalPrice = combo.ComboPrice * cartItem.Quantity,
-                                ItemType = "Combo"
+                                ItemType = CommonData.CartItemType.COMBO
                             });
 
                             totalCartPrice += combo.ComboPrice * cartItem.Quantity;
@@ -874,7 +990,7 @@ namespace TerrariumGardenTech.Service.Service
                                 Quantity = quantity,
                                 UnitPrice = unitPrice,
                                 TotalPrice = totalPrice,
-                                ItemType = "Single"
+                                ItemType = CommonData.CartItemType.SINGLE
                             });
 
                             totalCartPrice += totalPrice;
@@ -902,7 +1018,7 @@ namespace TerrariumGardenTech.Service.Service
                                 Quantity = quantity,
                                 UnitPrice = unitPrice,
                                 TotalPrice = totalPrice,
-                                ItemType = "Single"
+                                ItemType = CommonData.CartItemType.SINGLE
                             });
 
                             totalCartPrice += totalPrice;
@@ -1151,7 +1267,7 @@ namespace TerrariumGardenTech.Service.Service
                             Quantity = qty,
                             UnitPrice = unitPrice,
                             TotalPrice = lineTotal,
-                            ItemType = "Single"
+                            ItemType = CommonData.CartItemType.SINGLE
                         });
 
                         totalCartPrice += lineTotal;
@@ -1219,67 +1335,6 @@ namespace TerrariumGardenTech.Service.Service
 
         #region Private Helper Methods
 
-        //private async Task<CartItem> AddTerrariumToCartAsync(Cart cart, AddCartItemRequest request)
-        //{
-        //    // Kiểm tra đã có bể này trong giỏ chưa
-        //    var existingItem = await _unitOfWork.CartItem.GetExistingTerrariumItemAsync(
-        //        cart.CartId,
-        //        request.TerrariumId
-        //    );
-
-        //    if (existingItem != null && existingItem.ItemType == CartItemType.MAIN_ITEM)
-        //    {
-        //        // Cập nhật số lượng bể hiện có
-        //        existingItem.TerrariumVariantQuantity += request.VariantQuantity ?? 1;
-        //        existingItem.Quantity = existingItem.TerrariumVariantQuantity ?? 0;
-
-        //        var unitPrice = await GetUnitPriceAsync(null, existingItem.TerrariumVariantId);
-        //        existingItem.TotalPrice = unitPrice * existingItem.Quantity;
-        //        existingItem.UpdatedAt = DateTime.UtcNow;
-
-        //        await _unitOfWork.CartItem.UpdateAsync(existingItem);
-        //        return existingItem;
-        //    }
-
-        //    // Tạo mới bể
-        //    var quantity = request.VariantQuantity ?? 1;
-        //    foreach(var item in request.TerrariumVariants)
-        //    {
-        //        _unitOfWork.TerrariumVariant.Create(new TerrariumVariant
-        //        {
-        //            TerrariumId = request.TerrariumId,
-        //            VariantName = item.VariantName,
-        //            Price = item.Price,
-        //            StockQuantity = item.StockQuantity,
-        //            UrlImage = item.UrlImage,
-        //            CreatedAt = DateTime.UtcNow,
-        //            UpdatedAt = DateTime.UtcNow
-        //        });
-        //    }
-        //    var terrariumVariant = await _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(request.TerrariumId);
-        //    foreach (var variant in terrariumVariant)
-        //    {
-        //        var cartItem = new CartItem
-        //        {
-        //            TerrariumId = request.TerrariumId,
-        //            CartId = cart.CartId,
-        //            TerrariumVariantId = variant.TerrariumVariantId,
-        //            TerrariumVariantQuantity = quantity,
-        //            Quantity = quantity,
-        //            UnitPrice = variant.Price,
-        //            TotalPrice = variant.Price * quantity,
-        //            ItemType = CartItemType.MAIN_ITEM,
-        //            ParentCartItemId = null,
-        //            CreatedAt = DateTime.UtcNow,
-        //            UpdatedAt = DateTime.UtcNow
-        //        };
-        //        await _unitOfWork.CartItem.CreateAsync(cartItem);
-        //        return cartItem;
-        //    }
-           
-
-        //}
-
         private async Task<CartItem> AddSingleAccessoryToCartAsync(Cart cart, AddCartItemRequest request)
         {
             // Kiểm tra đã có phụ kiện này trong giỏ chưa (loại SINGLE)
@@ -1336,7 +1391,6 @@ namespace TerrariumGardenTech.Service.Service
                 ? _unitOfWork.TerrariumVariant.GetAllByTerrariumIdAsync(cartItem.TerrariumId)
                 : Task.FromResult<IEnumerable<TerrariumVariant>>(new List<TerrariumVariant>());
 
-            // ✅ Get accessory images if accessory exists
             var accessoryImagesTask = cartItem.AccessoryId.HasValue
                 ? _unitOfWork.AccessoryImage.GetAllByAccessoryIdAsync(cartItem.AccessoryId.Value)
                 : Task.FromResult<IEnumerable<AccessoryImage>>(new List<AccessoryImage>());
@@ -1347,7 +1401,7 @@ namespace TerrariumGardenTech.Service.Service
             var terrariumVariants = await terrariumVariantsTask;
             var accessoryImages = await accessoryImagesTask;
 
-            // ✅ Build variants list properly
+            // ✅ Build variants list
             var variants = new List<TerrariumVariantResponse>();
             if (terrariumVariants?.Any() == true)
             {
@@ -1364,11 +1418,10 @@ namespace TerrariumGardenTech.Service.Service
                 }).ToList();
             }
 
+            // ✅ Build item details (optional - nếu cần)
             var itemDetails = new List<CartItemDetail>();
-            decimal totalPrice = 0m;
-            int totalQuantity = 0;
 
-            // ✅ Build detail cho Terrarium với ALL images
+            // Build detail cho Terrarium
             if (cartItem.TerrariumId > 0)
             {
                 var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(cartItem.TerrariumId);
@@ -1377,25 +1430,21 @@ namespace TerrariumGardenTech.Service.Service
                     var qty = cartItem.TerrariumVariantQuantity ?? cartItem.Quantity;
                     var price = cartItem.UnitPrice;
 
-                    var terrariumDetail = new CartItemDetail
+                    itemDetails.Add(new CartItemDetail
                     {
                         ProductName = terrarium.TerrariumName,
                         Quantity = qty,
                         Price = price,
                         TotalPrice = price * qty,
-                        ImageUrl = terrariumImages?.FirstOrDefault()?.ImageUrl, // Primary image
-                        ImageUrls = terrariumImages?.Select(img => img.ImageUrl).ToList() ?? new List<string>(), // ✅ ALL images
+                        ImageUrl = terrariumImages?.FirstOrDefault()?.ImageUrl,
+                        ImageUrls = terrariumImages?.Select(img => img.ImageUrl).ToList() ?? new List<string>(),
                         ProductType = "Terrarium",
                         TerrariumVariants = variants
-                    };
-                    itemDetails.Add(terrariumDetail);
-
-                    totalPrice += price * qty;
-                    totalQuantity += qty;
+                    });
                 }
             }
 
-            // ✅ Build detail cho Accessory với ALL accessory images
+            // Build detail cho Accessory
             if (cartItem.AccessoryId.HasValue && (cartItem.AccessoryQuantity ?? 0) > 0)
             {
                 var accessory = await _unitOfWork.Accessory.GetByIdAsync(cartItem.AccessoryId.Value);
@@ -1410,36 +1459,29 @@ namespace TerrariumGardenTech.Service.Service
                         Quantity = qty,
                         Price = price,
                         TotalPrice = price * qty,
-                        ImageUrl = accessoryImages?.FirstOrDefault()?.ImageUrl, // ✅ Primary image from AccessoryImages
-                        ImageUrls = accessoryImages?.Select(img => img.ImageUrl).ToList() ?? new List<string>(), // ✅ ALL accessory images
+                        ImageUrl = accessoryImages?.FirstOrDefault()?.ImageUrl,
+                        ImageUrls = accessoryImages?.Select(img => img.ImageUrl).ToList() ?? new List<string>(),
                         ProductType = "Accessory"
                     });
-
-                    totalPrice += price * qty;
-                    totalQuantity += qty;
                 }
             }
 
-            var response = new CartItemResponse
+            // ✅ Đơn giản: Chỉ dùng dữ liệu từ cartItem
+            return new CartItemResponse
             {
                 TerrariumId = cartItem.TerrariumId,
                 CartItemId = cartItem.CartItemId,
                 CartId = cartItem.CartId,
                 AccessoryId = cartItem.AccessoryId,
                 TerrariumVariantId = cartItem.TerrariumVariantId,
-                //Item = itemDetails,
-                //TotalCartPrice = totalPrice,
-                //TotalCartQuantity = totalQuantity,
-                TotalCartPrice = cartItem.TotalPrice,
-                TotalCartQuantity = cartItem.Quantity,
+                Item = itemDetails, // ✅ Include details nếu cần
+                TotalCartPrice = cartItem.TotalPrice,     // ✅ Chỉ gán 1 lần
+                TotalCartQuantity = cartItem.Quantity,    // ✅ Chỉ gán 1 lần
                 ItemType = cartItem.ItemType,
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt
             };
-            response.TotalCartPrice = totalPrice;
-            response.TotalCartQuantity = cartItem.Quantity;
-            return response;
-
+            // ❌ BỎ: Không gán lại lần nữa
         }
 
         public async Task<IBusinessResult> ValidateCartAsync(int userId)
@@ -1912,7 +1954,7 @@ namespace TerrariumGardenTech.Service.Service
                 {
                     response.Item.Add(new CartItemDetail
                     {
-                        ProductName = $"Combo: {combo.Name}",
+                        ProductName = combo.Name,
                         Quantity = cartItem.Quantity,
                         Price = combo.ComboPrice,
                         TotalPrice = combo.ComboPrice * cartItem.Quantity
