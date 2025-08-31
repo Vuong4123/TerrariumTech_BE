@@ -734,10 +734,10 @@ public partial class TerrariumGardenTechDBContext : DbContext
             //    .HasColumnName("status");
             entity.Property(e => e.Status)
     .IsRequired()
-    .HasConversion(new ValueConverter<OrderStatusEnum, string>(
-        v => v.ToString(),
-        v => Enum.Parse<OrderStatusEnum>(v, /*ignoreCase=*/ true)
-    ))
+    //.HasConversion(new ValueConverter<s, string>(
+    //    v => v.ToString(),
+    //    v => Enum.Parse<OrderStatusEnum>(v, /*ignoreCase=*/ true)
+    //))
     .HasMaxLength(50)
     .HasColumnName("status");
 
@@ -780,6 +780,23 @@ public partial class TerrariumGardenTechDBContext : DbContext
             entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__3724BD5293DBCE99");
 
             entity.ToTable("OrderItem");
+            // ✅ Configure self-referencing relationship
+            entity
+                .HasOne(oi => oi.ParentOrderItem)
+                .WithMany(oi => oi.ChildOrderItems)
+                .HasForeignKey(oi => oi.ParentOrderItemId)
+                .OnDelete(DeleteBehavior.Restrict); // Không cho xóa parent khi còn children
+
+            // ✅ Configure other relationships
+            entity
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId);
+
+            entity
+                .HasOne(oi => oi.Combo)
+                .WithMany(c => c.OrderItems)
+                .HasForeignKey(oi => oi.ComboId);
 
             entity.Property(e => e.OrderItemId).HasColumnName("orderItemId");
             entity.Property(e => e.AccessoryId).HasColumnName("accessoryId");

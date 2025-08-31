@@ -678,3 +678,55 @@ public class ChurnRiskFactor
 }
 
 #endregion
+
+public class AdminMembershipStatisticsDto
+{
+    // Thống kê tổng quan
+    public int TotalMemberships { get; set; }
+    public int ActiveMemberships { get; set; }
+    public int ExpiredMemberships { get; set; }
+    public int CancelledMemberships { get; set; }
+
+    // Thống kê doanh thu
+    public decimal TotalRevenue { get; set; }
+    public decimal CurrentMonthRevenue { get; set; }
+    public decimal LastMonthRevenue { get; set; }
+    public double RevenueGrowthPercent { get; set; }
+
+    // Thống kê theo gói
+    public List<PackageSummaryDto> PackageSummary { get; set; }
+
+    // Thống kê theo thời gian
+    public List<MonthlyStatDto> Last12MonthsStats { get; set; }
+
+    // Top users
+    public List<TopUserDto> TopUsers { get; set; }
+}
+
+public class PackageSummaryDto
+{
+    public int PackageId { get; set; }
+    public string PackageType { get; set; }
+    public int DurationDays { get; set; }
+    public decimal Price { get; set; }
+    public int TotalSold { get; set; }
+    public decimal Revenue { get; set; }
+    public double MarketSharePercent { get; set; }
+}
+
+public class MonthlyStatDto
+{
+    public string Month { get; set; } // "2024-01"
+    public int NewMemberships { get; set; }
+    public decimal Revenue { get; set; }
+}
+
+public class TopUserDto
+{
+    public int UserId { get; set; }
+    public string Username { get; set; }
+    public string Email { get; set; }
+    public int TotalPurchases { get; set; }
+    public decimal TotalSpent { get; set; }
+    public string CurrentPackage { get; set; }
+}

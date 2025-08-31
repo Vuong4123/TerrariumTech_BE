@@ -160,15 +160,13 @@ public class OrderController : ControllerBase
     }
 
 
-
-
     /// <summary>
     ///     Cập nhật trạng thái đơn hàng
     /// </summary>
     [HttpPut("{id:int}/status")]
-    [Authorize(Policy = "Order.UpdateStatus")]
+    [Authorize(Roles = "Admin,Manager,Staff")]
 
-    public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatusEnum status)
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
     {
         try
         {
@@ -251,7 +249,6 @@ public class OrderController : ControllerBase
     ///     Xóa đơn hàng
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = "Order.Delete")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -284,9 +281,8 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost("{id:int}/Refund")]
-    public async Task<IActionResult> RequestRefund(int id, int userId, [FromBody] CreateRefundRequest request)
+    public async Task<IActionResult> RequestRefund(int userId, [FromBody] RefundRequest request)
     {
-        request.OrderId = id;
         var (success, message) = await _svc.RequestRefundAsync(request, userId);
         if (success)
             return Ok(new { message });
@@ -328,7 +324,6 @@ public class OrderController : ControllerBase
     /// Lấy danh sách tất cả đơn hàng với phân trang (quyền Order.ReadAll)
     /// </summary>
     [HttpGet("paginated")]
-    [Authorize(Policy = "Order.ReadAll")]
     public async Task<IActionResult> GetAllPaginated([FromQuery] PaginationRequest request)
     {
         try

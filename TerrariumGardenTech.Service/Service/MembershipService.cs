@@ -4,6 +4,7 @@ using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.IService;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -72,7 +73,7 @@ public class MembershipService : IMembershipService
             UserId = userId,
             TotalAmount = package.Price,
             OrderDate = DateTime.UtcNow,
-            Status = OrderStatusEnum.Pending,
+            Status = OrderStatusData.Pending,
             PaymentStatus = "Unpaid",
         };
         await _unitOfWork.Order.CreateAsync(order);

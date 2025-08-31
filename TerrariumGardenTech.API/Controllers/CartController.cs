@@ -187,7 +187,7 @@ namespace TerrariumGardenTech.API.Controllers
 
                 var result = await _cartService.UpdateItemAsync(userId, itemId, request);
 
-                if (result.Status == Const.SUCCESS_UPDATE_CODE || result.Status == Const.SUCCESS_DELETE_CODE)
+                if (result.Status == Const.SUCCESS_UPDATE_CODE)
                     return Ok(result);
 
                 if (result.Status == Const.WARNING_NO_DATA_CODE || result.Status == Const.FAIL_READ_CODE)

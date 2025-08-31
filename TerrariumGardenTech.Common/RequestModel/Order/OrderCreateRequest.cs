@@ -23,7 +23,8 @@ public class OrderCreateRequest
     public int? AddressId { get; set; }
     public int? ComboId { get; set; }
     public List<OrderItemCreateRequest> Items { get; set; } = new();
-    public int TotalAmount { get; set; } // Tổng số tiền đơn hàng, có thể tính toán từ Items
+    public decimal TotalAmountOld { get; set; }  // Tổng tiền gốc (trước giảm giá)
+    public decimal TotalAmountNew { get; set; }  // Tổng tiền sau giảm giá
 }
 public class CancelOrderRequest
 {
@@ -49,4 +50,6 @@ public class RefundRequestDto
     public string RefundStatus { get; set; }
     public DateTime RequestDate { get; set; }
     public string OrderStatus { get; set; }
+
+    public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
 }

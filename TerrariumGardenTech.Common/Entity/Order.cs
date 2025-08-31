@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 
 using TerrariumGardenTech.Common.Enums;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Entity;
 
@@ -16,14 +17,14 @@ public partial class Order
     public int UserId { get; set; }
     public int? AddressId { get; set; }
     public int? VoucherId { get; set; }
-
+    public decimal? OriginalAmount { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal? DiscountAmount { get; set; }
     public decimal? Deposit { get; set; }
 
     public DateTime? OrderDate { get; set; }
 
-    public OrderStatusEnum Status { get; set; }
+    public string Status { get; set; }
 
     public string PaymentStatus { get; set; }
     

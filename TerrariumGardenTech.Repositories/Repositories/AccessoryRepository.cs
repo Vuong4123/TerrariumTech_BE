@@ -3,6 +3,7 @@ using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Accessory;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Repositories.Repositories;
 
@@ -15,8 +16,29 @@ public class AccessoryRepository : GenericRepository<Accessory>
     {
         _dbContext = dbContext;
     }
-    // Add any specific methods for AccessoryRepository here
+    public async Task RestoreStockAsync(int accessoryId, int quantity)
+    {
+        var affected = await _dbContext.Accessories
+            .Where(x => x.AccessoryId == accessoryId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.StockQuantity, x => x.StockQuantity + quantity));
 
+        if (affected == 0)
+            throw new InvalidOperationException($"Không thể hoàn stock accessory {accessoryId}");
+    }
+    // Add any specific methods for AccessoryRepository here
+    public async Task ReduceStockAsync(int accessoryId, int quantity)
+    {
+        var affected = await _dbContext.Accessories
+            .Where(x => x.AccessoryId == accessoryId && x.StockQuantity >= quantity)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.StockQuantity, x => x.StockQuantity - quantity));
+
+        if (affected == 0)
+        {
+            var acc = await _dbContext.Accessories.FindAsync(accessoryId);
+            var currentStock = acc?.StockQuantity ?? 0;
+            throw new InvalidOperationException($"Không thể trừ stock accessory {accessoryId}. Hiện tại: {currentStock}, yêu cầu: {quantity}");
+        }
+    }
     public async Task<List<Accessory?>> GetByName(List<string?> name)
     {
         return await _dbContext.Set<Accessory>()
@@ -101,7 +123,7 @@ public class AccessoryRepository : GenericRepository<Accessory>
 
         var dict = await _context.OrderItems
             .Where(oi => oi.AccessoryId.HasValue && idList.Contains(oi.AccessoryId.Value))
-            .Where(oi => oi.Order.Status == OrderStatusEnum.Completed) // chỉ tính đơn đã hoàn tất
+            .Where(oi => oi.Order.Status == OrderStatusData.Completed) // chỉ tính đơn đã hoàn tất
             .GroupBy(oi => oi.AccessoryId!.Value)
             .Select(g => new
             {

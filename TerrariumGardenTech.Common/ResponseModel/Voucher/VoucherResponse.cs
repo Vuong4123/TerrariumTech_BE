@@ -12,7 +12,7 @@ public class VoucherResponse
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
     public VoucherStatus Status { get; set; }
-
+    public decimal? MinOrderAmount { get; set; }
     // --- Bổ sung ---
     public bool IsPersonal { get; set; }
     public string? TargetUserId { get; set; }

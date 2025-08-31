@@ -3,6 +3,7 @@
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Order;
 
@@ -18,11 +19,12 @@ public class OrderResponse
     public decimal? Deposit { get; set; }
 
 
+    public decimal? OriginalAmount { get; set; }
     public decimal? DiscountAmount { get; set; }
     public DateTime? OrderDate { get; set; }
 
 
-    public OrderStatusEnum Status { get; set; }
+    public string Status { get; set; }
 
 
     public string PaymentStatus { get; set; } = string.Empty;
@@ -51,6 +53,10 @@ public class AcceptRefundResponse
     public int ProcessedBy { get; set; }
     public bool IsApproved { get; set; }
     public string Message { get; set; }
+}
+public class RefundResponse {
+    public int OrderId { get; set; }
+    public IEnumerable<int> RefundId {get; set; }
 }
 public class MembershipCreationResult
 {

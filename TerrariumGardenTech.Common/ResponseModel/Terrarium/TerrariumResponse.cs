@@ -29,6 +29,7 @@ public class TerrariumResponse
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string BodyHTML { get; set; } = string.Empty;
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
     // Thêm thuộc tính mới để chứa danh sách ảnh
     public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
 }

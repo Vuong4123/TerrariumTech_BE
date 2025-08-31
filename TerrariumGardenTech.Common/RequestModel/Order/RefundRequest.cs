@@ -4,10 +4,17 @@ using TerrariumGardenTech.Common.Enums;
 
 namespace TerrariumGardenTech.Common.RequestModel.Order
 {
+    public class RefundRequest
+    {
+        public int OrderId { get; set; }
+        public string Reason { get; set; } = "";
+        public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
+    }
     public class CreateRefundRequest
     {
         public int OrderId { get; set; }
         public string Reason { get; set; } = "";
+        public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
         public IEnumerable<RefundItem> RefundItems { get; set; } = Enumerable.Empty<RefundItem>();
     }
 

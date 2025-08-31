@@ -179,7 +179,7 @@ namespace TerrariumGardenTech.Service.Service
                 // Idempotent: nếu đã có Membership Active tương ứng thì coi như thành công
                 var existed = await _unitOfWork.MemberShip.FindAsync(m =>
                     m.UserId == userId && m.PackageId == packageId &&
-                    m.StartDate == startDate && m.StatusEnum == MembershipStatus.Active);
+                    m.StartDate == startDate && m.Status == CommonData.AccountStatus.Active);
 
                 int membershipId;
                 if (existed.Any())

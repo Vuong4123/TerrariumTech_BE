@@ -16,6 +16,15 @@ public class TerrariumVariantRepository : GenericRepository<TerrariumVariant>
     {
         return _context.TerrariumVariants.Include(c => c.TerrariumVariantAccessories).ToList();
     }
+    public async Task RestoreStockAsync(int variantId, int quantity)
+    {
+        var affected = await _dbContext.TerrariumVariants
+            .Where(x => x.TerrariumVariantId == variantId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.StockQuantity, x => x.StockQuantity + quantity));
+
+        if (affected == 0)
+            throw new InvalidOperationException($"Không thể hoàn stock terrarium variant {variantId}");
+    }
     public async Task<IEnumerable<TerrariumVariant>> GetAllByTerrariumIdAsync(int terrariumId)
     {
         return await _context.TerrariumVariants

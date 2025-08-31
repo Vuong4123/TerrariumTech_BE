@@ -25,7 +25,8 @@ namespace TerrariumGardenTech.Common.Entity
         /// <summary>
         /// Trạng thái của yêu cầu hoàn tiền
         /// </summary>
-        public string Status { get; set; } = CommonData.OrderRequestRefundStatus.Pending;
+        public string Status { get; set; } = CommonData.OrderStatusData.Pending;
+        public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
         /// <summary>
         /// Lý do sửa đổi yêu cầu hoàn tiền - quản lý điền lý do
         /// </summary>

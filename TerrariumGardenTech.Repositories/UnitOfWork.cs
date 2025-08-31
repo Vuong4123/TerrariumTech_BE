@@ -21,6 +21,7 @@ public class UnitOfWork
     private MemberShipRepository _memberShipRepository;
     private NotificationRepository _notificationRepository;
     private OrderRepository _orderRepository;
+    private OrderItemRepository _orderItemRepository;
     private PaymentRepository _paymentRepository;
     private PersonalizeRepository _personalizeRepository;
     private RoleRepository _roleRepository;
@@ -170,6 +171,10 @@ public class UnitOfWork
     public OrderRepository Order
     {
         get { return _orderRepository ??= new OrderRepository(_unitOfWorkContext); }
+    }
+    public OrderItemRepository OrderItem
+    {
+        get { return _orderItemRepository ??= new OrderItemRepository(_unitOfWorkContext); }
     }
 
     public CartRepository Cart
