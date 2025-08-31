@@ -22,13 +22,13 @@ public static class TerrariumMapper
             CreatedAt = terrarium.CreatedAt ?? DateTime.MinValue,
             UpdatedAt = terrarium.UpdatedAt ?? DateTime.MinValue,
             BodyHTML = terrarium.bodyHTML ?? string.Empty,
-            Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
-            {
-                AccessoryId = a.Accessory.AccessoryId,
-                Name = a.Accessory.Name,
-                Description = a.Accessory.Description,
-                Price = a.Accessory.Price
-            }).ToList() ?? [],
+            //Accessories = terrarium.TerrariumAccessory.Select(a => new TerrariumAccessoryResponse
+            //{
+            //    AccessoryId = a.Accessory.AccessoryId,
+            //    Name = a.Accessory.Name,
+            //    Description = a.Accessory.Description,
+            //    Price = a.Accessory.Price
+            //}).ToList() ?? [],
             TerrariumImages = terrarium.TerrariumImages?.Select(i => new TerrariumImageResponse
             {
                 TerrariumImageId = i.TerrariumImageId,

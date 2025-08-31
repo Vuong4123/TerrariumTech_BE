@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common.ResponseModel.Combo;
+using TerrariumGardenTech.Common.ResponseModel.TerrariumVariant;
 using TerrariumGardenTech.Repositories.Entity;
 
 //public class CartItemDetail
@@ -72,7 +73,8 @@ public class TerrariumVariantResponse
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
-    }
+    public List<VariantAccessoryResponse> Accessories { get; set; } = new();
+}
     /// <summary>
     /// Response cho một bundle (bể + phụ kiện kèm theo)
     /// </summary>

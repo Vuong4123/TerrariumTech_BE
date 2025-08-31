@@ -316,6 +316,65 @@ public class OrderService : IOrderService
             return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi hủy đơn hàng: {ex.Message}");
         }
     }
+    // Đổi tên từ ValidateAITerrariumStockAsync thành ValidateVariantAccessoryStockAsync
+    private async Task<StockValidationResult> ValidateVariantAccessoryStockAsync(int terrariumVariantId, int quantity)
+    {
+        try
+        {
+            // Lấy danh sách accessories của variant này
+            var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+                .GetByTerrariumVariantIdAsync(terrariumVariantId);
+
+            if (!variantAccessories.Any())
+            {
+                return new StockValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Terrarium variant chưa có accessories được định nghĩa"
+                };
+            }
+
+            // Kiểm tra stock của từng accessory trong variant
+            foreach (var va in variantAccessories)
+            {
+                var accessory = await _unitOfWork.Accessory.GetByIdAsync(va.AccessoryId);
+                if (accessory == null)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Accessory ID {va.AccessoryId} không tồn tại"
+                    };
+                }
+
+                // Tính số lượng accessory cần cho order
+                int requiredQty = va.Quantity * quantity;
+
+                // Kiểm tra stock
+                if (accessory.StockQuantity < requiredQty)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Accessory '{accessory.Name}' trong variant không đủ hàng. " +
+                                     $"Còn lại: {accessory.StockQuantity}, " +
+                                     $"Cần: {requiredQty} (cho {quantity} terrarium variant)"
+                    };
+                }
+            }
+
+            return new StockValidationResult { IsValid = true };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error validating variant accessory stock for variant {VariantId}", terrariumVariantId);
+            return new StockValidationResult
+            {
+                IsValid = false,
+                ErrorMessage = "Lỗi khi kiểm tra tồn kho variant accessories"
+            };
+        }
+    }
     #region Helper
     // Xử lý hoàn tiền vào ví
     private async Task<decimal> ProcessRefundToWalletAsync(Order order, int userId, CancelOrderRequest request)
@@ -385,7 +444,7 @@ public class OrderService : IOrderService
 
         foreach (var item in order.OrderItems)
         {
-            // Hoàn stock cho accessory
+            // Hoàn stock cho accessory riêng lẻ (không thuộc variant)
             if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
             {
                 var accessory = await _unitOfWork.Accessory.GetByIdAsync(item.AccessoryId.Value);
@@ -396,19 +455,44 @@ public class OrderService : IOrderService
                 }
             }
 
-            // Hoàn stock cho terrarium variant
+            // ✅ THAY ĐỔI: Hoàn stock cho variant và accessories của variant
             if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
             {
                 var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
                 if (variant != null)
                 {
-                    variant.StockQuantity += item.TerrariumVariantQuantity.Value;
-                    await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                    // Hoàn stock variant (nếu cần)
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                    if (terrarium != null && !terrarium.GeneratedByAI)
+                    {
+                        variant.StockQuantity += item.TerrariumVariantQuantity.Value;
+                        await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                    }
+
+                    // ✅ HOÀN STOCK CHO ACCESSORIES CỦA VARIANT
+                    await RestoreVariantAccessoryStockAsync(variant.TerrariumVariantId, item.TerrariumVariantQuantity.Value);
                 }
             }
         }
     }
 
+    // ✅ THÊM METHOD MỚI
+    private async Task RestoreVariantAccessoryStockAsync(int terrariumVariantId, int variantQuantity)
+    {
+        var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+            .GetByTerrariumVariantIdAsync(terrariumVariantId);
+
+        foreach (var va in variantAccessories)
+        {
+            var accessory = await _unitOfWork.Accessory.GetByIdAsync(va.AccessoryId);
+            if (accessory != null)
+            {
+                int accessoryQtyToRestore = va.Quantity * variantQuantity;
+                accessory.StockQuantity += accessoryQtyToRestore;
+                await _unitOfWork.Accessory.UpdateAsync(accessory);
+            }
+        }
+    }
     // Gửi notification
     private async Task SendCancelNotificationAsync(Order order, string reason)
     {
@@ -666,21 +750,28 @@ public class OrderService : IOrderService
 
         foreach (var reqItem in request.Items)
         {
-            if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
+            // ✅ CHỈ XỬ LÝ TERRARIUM VARIANTS (accessories thuộc về variants)
+            if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
             {
-                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
-                int qty = reqItem.AccessoryQuantity ?? 0;
-                decimal unit = acc.Price;
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
+                if (variant == null)
+                    throw new ArgumentException($"TerrariumVariant {reqItem.TerrariumVariantId} không tồn tại");
+
+                int qty = reqItem.TerrariumVariantQuantity ?? 0;
+
+                // ✅ VALIDATE STOCK CỦA VARIANT VÀ ACCESSORIES
+                var stockCheck = await ValidateVariantAccessoryStockAsync(variant.TerrariumVariantId, qty);
+                if (!stockCheck.IsValid)
+                    throw new ArgumentException(stockCheck.ErrorMessage);
+
+                decimal unit = variant.Price;
                 decimal line = unit * qty;
                 totalAmount += line;
 
                 orderItems.Add(new OrderItem
                 {
-                    AccessoryId = reqItem.AccessoryId,
-                    TerrariumId = reqItem.TerrariumId,
-                    TerrariumVariantId = null,
-                    AccessoryQuantity = qty,
-                    TerrariumVariantQuantity = 0,
+                    TerrariumVariantId = reqItem.TerrariumVariantId,
+                    TerrariumVariantQuantity = qty,
                     Quantity = qty,
                     UnitPrice = unit,
                     ItemType = reqItem.ItemType,
@@ -688,21 +779,27 @@ public class OrderService : IOrderService
                 });
             }
 
-            if (reqItem.TerrariumVariantId.HasValue && (reqItem.TerrariumVariantQuantity ?? 0) > 0)
+            // ✅ XỬ LÝ ACCESSORIES RIÊNG LẺ (nếu không thuộc variant nào)
+            if (reqItem.AccessoryId.HasValue && (reqItem.AccessoryQuantity ?? 0) > 0)
             {
-                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(reqItem.TerrariumVariantId.Value);
-                int qty = reqItem.TerrariumVariantQuantity ?? 0;
-                decimal unit = variant.Price;
+                var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
+                if (acc == null)
+                    throw new ArgumentException($"Accessory {reqItem.AccessoryId} không tồn tại");
+
+                int qty = reqItem.AccessoryQuantity ?? 0;
+
+                // Check stock
+                if (acc.StockQuantity < qty)
+                    throw new ArgumentException($"Accessory '{acc.Name}' không đủ hàng. Còn: {acc.StockQuantity}, cần: {qty}");
+
+                decimal unit = acc.Price;
                 decimal line = unit * qty;
                 totalAmount += line;
 
                 orderItems.Add(new OrderItem
                 {
-                    AccessoryId = null,
-                    TerrariumId = reqItem.TerrariumId,
-                    TerrariumVariantId = reqItem.TerrariumVariantId,
-                    AccessoryQuantity = 0,
-                    TerrariumVariantQuantity = qty,
+                    AccessoryId = reqItem.AccessoryId,
+                    AccessoryQuantity = qty,
                     Quantity = qty,
                     UnitPrice = unit,
                     ItemType = reqItem.ItemType,
@@ -761,7 +858,159 @@ public class OrderService : IOrderService
             throw new Exception("Order create error: " + msg, ex);
         }
     }
+    private async Task<StockValidationResult> ValidateAITerrariumStockAsync(int terrariumId, int terrariumVariantId, int quantity)
+    {
+        try
+        {
+            // Lấy danh sách accessories của variant này
+            var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+                .GetByTerrariumVariantIdAsync(terrariumVariantId);
 
+            if (!variantAccessories.Any())
+            {
+                return new StockValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Terrarium variant chưa có phụ kiện được định nghĩa"
+                };
+            }
+
+            // Kiểm tra stock của từng accessory
+            foreach (var va in variantAccessories)
+            {
+                var accessory = await _unitOfWork.Accessory.GetByIdAsync(va.AccessoryId);
+                if (accessory == null)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Phụ kiện ID {va.AccessoryId} không tồn tại"
+                    };
+                }
+
+                // Tính số lượng accessory cần cho order
+                int requiredQty = va.Quantity * quantity;
+
+                // Kiểm tra stock
+                if (accessory.StockQuantity < requiredQty)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Phụ kiện '{accessory.Name}' không đủ hàng. " +
+                                     $"Còn lại: {accessory.StockQuantity}, " +
+                                     $"Cần: {requiredQty} (cho {quantity} terrarium)"
+                    };
+                }
+            }
+
+            return new StockValidationResult
+            {
+                IsValid = true,
+                ErrorMessage = string.Empty
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error validating AI terrarium stock for variant {VariantId}", terrariumVariantId);
+            return new StockValidationResult
+            {
+                IsValid = false,
+                ErrorMessage = "Lỗi khi kiểm tra tồn kho"
+            };
+        }
+    }
+    // ✅ VALIDATE STOCK AVAILABILITY (cho toàn bộ order)
+    private async Task ValidateStockAvailability(OrderCreateRequest request)
+    {
+        // Check combo stock trước
+        if (request.ComboId.HasValue && request.ComboId.Value > 0)
+        {
+            var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId.Value);
+            if (combo != null)
+            {
+                await ValidateComboStock(combo);
+            }
+            return;
+        }
+
+        // Check accessories riêng lẻ (không thuộc variant)
+        foreach (var item in request.Items.Where(i => i.AccessoryId.HasValue))
+        {
+            var acc = await _unitOfWork.Accessory.GetByIdAsync(item.AccessoryId.Value);
+            if (acc == null)
+                throw new ArgumentException($"Accessory {item.AccessoryId} không tồn tại");
+
+            int requiredQty = item.AccessoryQuantity ?? 0;
+            if (acc.StockQuantity < requiredQty)
+                throw new ArgumentException($"'{acc.Name}' không đủ hàng. Còn: {acc.StockQuantity}, cần: {requiredQty}");
+        }
+
+        // ✅ THAY ĐỔI: Check terrarium variants và accessories của chúng
+        foreach (var item in request.Items.Where(i => i.TerrariumVariantId.HasValue))
+        {
+            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+            if (variant == null)
+                throw new ArgumentException($"TerrariumVariant {item.TerrariumVariantId} không tồn tại");
+
+            int requiredQty = item.TerrariumVariantQuantity ?? 0;
+
+            // Check accessories của variant
+            var stockCheck = await ValidateVariantAccessoryStockAsync(variant.TerrariumVariantId, requiredQty);
+            if (!stockCheck.IsValid)
+                throw new ArgumentException(stockCheck.ErrorMessage);
+
+            // Check variant stock (nếu không phải AI)
+            var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+            if (terrarium != null && !terrarium.GeneratedByAI)
+            {
+                if (variant.StockQuantity < requiredQty)
+                    throw new ArgumentException($"'{terrarium.TerrariumName}' variant không đủ hàng. Còn: {variant.StockQuantity}, cần: {requiredQty}");
+            }
+        }
+    }
+
+    // ✅ VALIDATE COMBO STOCK
+    private async Task ValidateComboStock(Combo combo)
+    {
+        if (combo.StockQuantity < 1)
+            throw new ArgumentException($"Combo '{combo.Name}' đã hết hàng");
+
+        foreach (var comboItem in combo.ComboItems)
+        {
+            if (comboItem.AccessoryId.HasValue)
+            {
+                var acc = await _unitOfWork.Accessory.GetByIdAsync(comboItem.AccessoryId.Value);
+                if (acc == null || acc.StockQuantity < comboItem.Quantity)
+                    throw new ArgumentException($"Combo '{combo.Name}' - Phụ kiện '{acc?.Name ?? "Unknown"}' không đủ hàng");
+            }
+
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                if (variant == null)
+                    throw new ArgumentException($"Combo '{combo.Name}' - TerrariumVariant không tồn tại");
+
+                var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                if (terrarium != null)
+                {
+                    if (terrarium.GeneratedByAI)
+                    {
+                        // AI Terrarium trong combo: Check accessories
+                        var stockCheck = await ValidateAITerrariumStockAsync(terrarium.TerrariumId, variant.TerrariumVariantId, comboItem.Quantity);
+                        if (!stockCheck.IsValid)
+                            throw new ArgumentException($"Combo '{combo.Name}' - {stockCheck.ErrorMessage}");
+                    }
+                    else
+                    {
+                        // Non-AI trong combo: Check variant stock
+                        if (variant.StockQuantity < comboItem.Quantity)
+                            throw new ArgumentException($"Combo '{combo.Name}' - Terrarium '{terrarium.TerrariumName}' không đủ hàng");
+                    }
+                }
+            }
+        }
+    }
     public async Task<bool> UpdateStatusAsync(int id, OrderStatusEnum status)
     {
         if (id <= 0)
@@ -1355,4 +1604,9 @@ public class OrderService : IOrderService
         };
     }
     #endregion
+}
+public class StockValidationResult
+{
+    public bool IsValid { get; set; }
+    public string ErrorMessage { get; set; } = string.Empty;
 }

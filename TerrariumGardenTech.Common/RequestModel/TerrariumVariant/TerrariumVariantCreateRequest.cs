@@ -17,4 +17,12 @@ public class TerrariumVariantCreateRequest
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+    public int AccessoryId { get; set; }
+    public int Quantity { get; set; } = 1;
+    //public List<VariantAccessoryRequest> Accessories { get; set; } = new List<VariantAccessoryRequest>();
+}
+public class VariantAccessoryRequest
+{
+    public int AccessoryId { get; set; }
+    public int Quantity { get; set; } = 1;
 }

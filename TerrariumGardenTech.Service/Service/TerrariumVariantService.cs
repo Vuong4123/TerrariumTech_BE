@@ -1,5 +1,7 @@
 ﻿using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.TerrariumVariant;
+using TerrariumGardenTech.Common.ResponseModel.TerrariumVariant;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
@@ -38,26 +40,55 @@ public class TerrariumVariantService : ITerrariumVariantService
 
     public async Task<IBusinessResult?> GetTerrariumVariantByIdAsync(int id)
     {
-        var terrariumVariants = await _unitOfWork.TerrariumVariant.GetByIdAsync(id);
-        if (terrariumVariants == null) return new BusinessResult(Const.FAIL_READ_CODE, "No terrarium variants found.");
-        return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variants retrieved successfully.",
-            terrariumVariants);
-    }
+        try
+        {
+            var terrariumVariant = await _unitOfWork.TerrariumVariant.GetByIdAsync(id);
+            if (terrariumVariant == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "No terrarium variant found.");
 
+            // ✅ LẤY ACCESSORIES CHO VARIANT
+            var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+                .GetByTerrariumVariantIdAsync(id);
+
+            var response = new TerrariumVariantResponse
+            {
+                TerrariumVariantId = terrariumVariant.TerrariumVariantId,
+                TerrariumId = terrariumVariant.TerrariumId,
+                VariantName = terrariumVariant.VariantName,
+                Price = terrariumVariant.Price,
+                StockQuantity = terrariumVariant.StockQuantity,
+                UrlImage = terrariumVariant.UrlImage,
+                CreatedAt = terrariumVariant.CreatedAt,
+                UpdatedAt = terrariumVariant.UpdatedAt,
+                Accessories = variantAccessories.Select(va => new VariantAccessoryResponse
+                {
+                    AccessoryId = va.AccessoryId,
+                    Name = va.Accessory.Name,
+                    Description = va.Accessory.Description,
+                    Price = va.Accessory.Price,
+                    Quantity = va.Quantity
+                }).ToList()
+            };
+
+            return new BusinessResult(Const.SUCCESS_READ_CODE, "Terrarium variant retrieved successfully.", response);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
+    }
     public async Task<IBusinessResult> CreateTerrariumVariantAsync(
-        TerrariumVariantCreateRequest terrariumVariantCreateRequest)
+     TerrariumVariantCreateRequest terrariumVariantCreateRequest)
     {
         try
         {
-            // Lấy thông tin Terrarium
             var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(terrariumVariantCreateRequest.TerrariumId);
-
             if (terrarium == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium not found.");
 
             string? uploadedImageUrl = null;
 
-            // Nếu có ảnh thì upload
+            // Upload ảnh nếu có
             if (terrariumVariantCreateRequest.ImageFile != null)
             {
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
@@ -75,30 +106,41 @@ public class TerrariumVariantService : ITerrariumVariantService
                 }
             }
 
-            // Tạo mới TerrariumVariant
+                    var accessory = await _unitOfWork.Accessory.GetByIdAsync(terrariumVariantCreateRequest.AccessoryId);
+                    if (accessory == null)
+                        return new BusinessResult(Const.FAIL_READ_CODE, $"Accessory {terrariumVariantCreateRequest.AccessoryId} not found.");
+
+            // Tạo TerrariumVariant
             var terrariumVariant = new TerrariumVariant
             {
                 TerrariumId = terrariumVariantCreateRequest.TerrariumId,
                 VariantName = terrariumVariantCreateRequest.VariantName,
                 Price = terrariumVariantCreateRequest.Price,
                 StockQuantity = terrariumVariantCreateRequest.StockQuantity,
-                UrlImage = uploadedImageUrl
+                UrlImage = uploadedImageUrl,
+                CreatedAt = DateTime.UtcNow
             };
 
-            // Lưu TerrariumVariant vào cơ sở dữ liệu
             var result = await _unitOfWork.TerrariumVariant.CreateAsync(terrariumVariant);
-
             if (result == 0)
                 return new BusinessResult(Const.FAIL_CREATE_CODE, "Terrarium variant could not be created.");
 
-            // Cập nhật lại số lượng tồn kho của Terrarium sau khi tạo mới variant
+            // ✅ TẠO ACCESSORIES CHO VARIANT
+            
+                    var variantAccessory = new TerrariumVariantAccessory
+                    {
+                        TerrariumVariantId = terrariumVariant.TerrariumVariantId,
+                        AccessoryId = terrariumVariantCreateRequest.AccessoryId,
+                        Quantity = terrariumVariantCreateRequest.Quantity
+                    };
+
+                    await _unitOfWork.TerrariumVariantAccessory.CreateAsync(variantAccessory);
+
+            // Cập nhật Terrarium stock và prices
             await UpdateTerrariumStockAsync(terrariumVariantCreateRequest.TerrariumId);
-            // Cập nhật lại giá của Terrarium sau khi thêm variant
             await UpdateTerrariumPricesAsync(terrariumVariantCreateRequest.TerrariumId);
 
-            // Trả về kết quả thành công kèm theo dữ liệu TerrariumVariant đã tạo
-            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Terrarium variant created successfully.",
-                terrariumVariant);
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Terrarium variant created successfully.", terrariumVariant);
         }
         catch (Exception ex)
         {
@@ -111,25 +153,20 @@ public class TerrariumVariantService : ITerrariumVariantService
     {
         try
         {
-            // Lấy thông tin TerrariumVariant
-            var terrariumVariant =
-                await _unitOfWork.TerrariumVariant.GetByIdAsync(terrariumVariantUpdateRequest.TerrariumVariantId);
+            var terrariumVariant = await _unitOfWork.TerrariumVariant.GetByIdAsync(terrariumVariantUpdateRequest.TerrariumVariantId);
             if (terrariumVariant == null)
                 return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium variant not found.");
 
-            var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(terrariumVariant.TerrariumId);
-            if (terrarium == null)
-                return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium not found.");
-
-            // Kiểm tra tồn kho của Terrarium
-            var availableStock = terrarium.Stock;
-
-            // Cập nhật số lượng tồn kho variant nếu số lượng variant thay đổi
-            var stockDifference = terrariumVariantUpdateRequest.StockQuantity - terrariumVariant.StockQuantity;
-
-            // Kiểm tra nếu số lượng tồn kho variant không vượt quá số lượng tồn kho của Terrarium
-            if (stockDifference > availableStock)
-                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Insufficient stock in Terrarium.");
+            // ✅ VALIDATE ACCESSORIES
+            if (terrariumVariantUpdateRequest.Accessories?.Any() == true)
+            {
+                foreach (var accReq in terrariumVariantUpdateRequest.Accessories)
+                {
+                    var accessory = await _unitOfWork.Accessory.GetByIdAsync(accReq.AccessoryId);
+                    if (accessory == null)
+                        return new BusinessResult(Const.FAIL_READ_CODE, $"Accessory {accReq.AccessoryId} not found.");
+                }
+            }
 
             // Cập nhật thông tin variant
             terrariumVariant.VariantName = terrariumVariantUpdateRequest.VariantName;
@@ -137,12 +174,9 @@ public class TerrariumVariantService : ITerrariumVariantService
             terrariumVariant.StockQuantity = terrariumVariantUpdateRequest.StockQuantity;
             terrariumVariant.UpdatedAt = DateTime.UtcNow;
 
-            // Kiểm tra nếu có ảnh mới
-            string? uploadedImageUrl = terrariumVariant.UrlImage; // Giữ lại UrlImage cũ nếu không có ảnh mới
-
+            // Upload ảnh mới nếu có
             if (terrariumVariantUpdateRequest.ImageFile != null)
             {
-                // Upload ảnh mới nếu có
                 var uploadResult = await _cloudinaryService.UploadImageAsync(
                     terrariumVariantUpdateRequest.ImageFile,
                     folder: "terrariumVariant_images"
@@ -150,7 +184,7 @@ public class TerrariumVariantService : ITerrariumVariantService
 
                 if (uploadResult.Status == Const.SUCCESS_CREATE_CODE)
                 {
-                    uploadedImageUrl = uploadResult.Data.ToString(); // Cập nhật UrlImage mới
+                    terrariumVariant.UrlImage = uploadResult.Data.ToString();
                 }
                 else
                 {
@@ -158,22 +192,41 @@ public class TerrariumVariantService : ITerrariumVariantService
                 }
             }
 
-            // Cập nhật UrlImage cho TerrariumVariant
-            terrariumVariant.UrlImage = uploadedImageUrl;
-
-            // Lưu thay đổi variant
             var result = await _unitOfWork.TerrariumVariant.UpdateAsync(terrariumVariant);
-
             if (result == 0)
                 return new BusinessResult(Const.FAIL_UPDATE_CODE, "Terrarium variant could not be updated.");
 
-            // Cập nhật lại số lượng tồn kho của Terrarium sau khi cập nhật variant
+            // ✅ CẬP NHẬT ACCESSORIES CHO VARIANT
+            // Xóa accessories cũ
+            var existingAccessories = await _unitOfWork.TerrariumVariantAccessory
+                .FindAsync(tva => tva.TerrariumVariantId == terrariumVariant.TerrariumVariantId);
+
+            foreach (var existing in existingAccessories)
+            {
+                await _unitOfWork.TerrariumVariantAccessory.RemoveAsync(existing);
+            }
+
+            // Thêm accessories mới
+            if (terrariumVariantUpdateRequest.Accessories?.Any() == true)
+            {
+                foreach (var accReq in terrariumVariantUpdateRequest.Accessories)
+                {
+                    var variantAccessory = new TerrariumVariantAccessory
+                    {
+                        TerrariumVariantId = terrariumVariant.TerrariumVariantId,
+                        AccessoryId = accReq.AccessoryId,
+                        Quantity = accReq.Quantity
+                    };
+
+                    await _unitOfWork.TerrariumVariantAccessory.CreateAsync(variantAccessory);
+                }
+            }
+
+            // Cập nhật Terrarium stock và prices
             await UpdateTerrariumStockAsync(terrariumVariant.TerrariumId);
-            // Cập nhật lại giá của Terrarium sau khi cập nhật variant
             await UpdateTerrariumPricesAsync(terrariumVariant.TerrariumId);
 
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Terrarium variant updated successfully.",
-                terrariumVariant);
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Terrarium variant updated successfully.", terrariumVariant);
         }
         catch (Exception ex)
         {
@@ -183,16 +236,36 @@ public class TerrariumVariantService : ITerrariumVariantService
 
     public async Task<IBusinessResult> DeleteTerrariumVariantAsync(int id)
     {
-        var terrariumVariant = _unitOfWork.TerrariumVariant.GetById(id);
-        if (terrariumVariant != null)
+        try
         {
-            var result = await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
-            if (result)
-                return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Terrarium variant deleted successfully.", result);
-            return new BusinessResult(Const.FAIL_DELETE_CODE, "Terrarium variant could not be deleted.");
-        }
+            var terrariumVariant = await _unitOfWork.TerrariumVariant.GetByIdAsync(id);
+            if (terrariumVariant == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium variant not found.");
 
-        return new BusinessResult(Const.FAIL_READ_CODE, "Terrarium variant not found.");
+            // ✅ XÓA ACCESSORIES LIÊN QUAN
+            var relatedAccessories = await _unitOfWork.TerrariumVariantAccessory
+                .FindAsync(tva => tva.TerrariumVariantId == id);
+
+            foreach (var accessory in relatedAccessories)
+            {
+                await _unitOfWork.TerrariumVariantAccessory.RemoveAsync(accessory);
+            }
+
+            // Xóa variant
+            var result = await _unitOfWork.TerrariumVariant.RemoveAsync(terrariumVariant);
+            if (!result)
+                return new BusinessResult(Const.FAIL_DELETE_CODE, "Terrarium variant could not be deleted.");
+
+            // Cập nhật lại Terrarium stock và prices
+            await UpdateTerrariumStockAsync(terrariumVariant.TerrariumId);
+            await UpdateTerrariumPricesAsync(terrariumVariant.TerrariumId);
+
+            return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Terrarium variant deleted successfully.", result);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
 
 
