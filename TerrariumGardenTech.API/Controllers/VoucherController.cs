@@ -46,7 +46,8 @@ public class VoucherController : ControllerBase
             TargetUserId = v.TargetUserId,
             TotalUsage = v.TotalUsage,
             RemainingUsage = v.RemainingUsage,
-            PerUserUsageLimit = v.PerUserUsageLimit
+            PerUserUsageLimit = v.PerUserUsageLimit,
+            MinOrderAmount = v.MinOrderAmount
         });
         return Ok(resp);
     }
@@ -79,7 +80,8 @@ public class VoucherController : ControllerBase
             TargetUserId = v.TargetUserId,
             TotalUsage = v.TotalUsage,
             RemainingUsage = v.RemainingUsage,
-            PerUserUsageLimit = v.PerUserUsageLimit
+            PerUserUsageLimit = v.PerUserUsageLimit,
+            MinOrderAmount = v.MinOrderAmount
         };
         return Ok(resp);
     }
@@ -105,7 +107,8 @@ public class VoucherController : ControllerBase
             TargetUserId = req.TargetUserId,
             TotalUsage = req.TotalUsage,
             RemainingUsage = req.TotalUsage,
-            PerUserUsageLimit = req.PerUserUsageLimit
+            PerUserUsageLimit = req.PerUserUsageLimit,
+            MinOrderAmount = req.MinOrderAmount
         };
 
         var created = await _voucherService.CreateAsync(v, ct);
@@ -135,13 +138,41 @@ public class VoucherController : ControllerBase
             TargetUserId = req.TargetUserId,
             TotalUsage = req.TotalUsage,
             RemainingUsage = req.RemainingUsage,
-            PerUserUsageLimit = req.PerUserUsageLimit
+            PerUserUsageLimit = req.PerUserUsageLimit,
+            MinOrderAmount = req.MinOrderAmount
         };
 
         await _voucherService.UpdateAsync(v, ct);
         return NoContent();
     }
 
+    // Validate voucher với order amount
+    [HttpGet("validate/{code}/order-amount/{orderAmount}")]
+    public async Task<IActionResult> ValidateVoucherWithOrderAmount(string code, decimal orderAmount, CancellationToken ct)
+    {
+        var v = await _voucherService.GetByCodeAsync(code, ct);
+        if (v == null) return BadRequest(new { valid = false, reason = "Voucher không tồn tại." });
+
+        var now = DateTime.UtcNow.Date;
+        var active = Enum.TryParse<VoucherStatus>(v.Status, true, out var st) && st == VoucherStatus.Active
+                     && (v.ValidFrom == null || v.ValidFrom <= now)
+                     && (v.ValidTo == null || v.ValidTo >= now)
+                     && v.RemainingUsage > 0;
+
+        if (!active) return BadRequest(new { valid = false, reason = "Voucher không còn hiệu lực." });
+
+        // ✅ KIỂM TRA MIN ORDER AMOUNT
+        if (v.MinOrderAmount.HasValue && orderAmount < v.MinOrderAmount.Value)
+            return BadRequest(new { valid = false, reason = $"Đơn hàng tối thiểu {v.MinOrderAmount.Value:N0}đ để sử dụng voucher này." });
+
+        if (v.IsPersonal && !IsAdminOrManager)
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUserId) || !string.Equals(v.TargetUserId, CurrentUserId, StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { valid = false, reason = "Voucher cá nhân, không thuộc về bạn." });
+        }
+
+        return Ok(new { valid = true });
+    }
     // ========= DELETE =========
     [HttpDelete("delete-voucher/{id}")]
     [Authorize(Roles = "Admin,Manager")]

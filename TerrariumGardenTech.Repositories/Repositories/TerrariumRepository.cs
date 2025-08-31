@@ -15,7 +15,6 @@ public class TerrariumRepository : GenericRepository<Terrarium>
     {
         _dbContext = dbContext;
     }
-
     public async Task<IEnumerable<Terrarium>> FilterTerrariumsAsync(int? environmentId, int? shapeId, int? tankMethodId)
     {
         var query = _context.Terrariums.AsQueryable();

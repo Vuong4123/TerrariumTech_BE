@@ -20,7 +20,7 @@ public class CreateVoucherRequest
     // --- Bổ sung theo yêu cầu ---
     public bool IsPersonal { get; set; } = false;
     public string? TargetUserId { get; set; }  // nếu IsPersonal = true
-
+    public decimal? MinOrderAmount { get; set; }
     [Range(0, int.MaxValue)] public int TotalUsage { get; set; } = 0;      // tổng lượt cấp phát
     [Range(0, int.MaxValue)] public int? PerUserUsageLimit { get; set; }   // null => không giới hạn mỗi user
 }

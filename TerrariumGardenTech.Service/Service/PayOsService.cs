@@ -155,43 +155,138 @@ public class PayOsService : IPayOsService
             bool success = request.StatusReturn == PaymentReturnModelStatus.Success
                         || string.Equals(request.Code, "00", StringComparison.OrdinalIgnoreCase);
 
-            // ===== CẬP NHẬT ĐƠN =====
-            order.PaymentStatus = success ? "Paid" : "Failed";
-            order.TransactionId = request.TransactionId;
-
-            // Chỉ lưu DiscountAmount khi payAll thành công
-            if (success && isPayAll)
+            try
             {
-                order.DiscountAmount = baseAmount - fullAfter10; // đúng 10% đã giảm
+                // ===== CẬP NHẬT ĐƠN =====
+                order.PaymentStatus = success ? "Paid" : "Failed";
+                order.TransactionId = request.TransactionId;
+
+                // Chỉ lưu DiscountAmount khi payAll thành công
+                if (success && isPayAll)
+                {
+                    order.DiscountAmount = baseAmount - fullAfter10; // đúng 10% đã giảm
+                }
+
+                await _unitOfWork.Order.UpdateAsync(order);
+
+                // Thêm bản ghi Payment
+                if (order.Payment == null)
+                    order.Payment = new List<Payment>();
+
+                order.Payment.Add(new Payment
+                {
+                    OrderId = order.OrderId,
+                    PaymentMethod = "PAYOS",
+                    PaymentAmount = paid,
+                    Status = success ? "Paid" : "Failed",
+                    PaymentDate = DateTime.UtcNow
+                });
+
+                // ✅ TRỪ STOCK KHI PAYMENT SUCCESS
+                if (success)
+                {
+                    await ReduceStockForPaidOrder(order);
+                }
+
+                await _unitOfWork.SaveAsync();
+
+                return new BusinessResult(
+                    success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+                    success ? "Payment success" : "Payment failed"
+                );
             }
-
-            await _unitOfWork.Order.UpdateAsync(order);
-
-            // Thêm bản ghi Payment
-            if (order.Payment == null)
-                order.Payment = new List<Payment>();
-
-            order.Payment.Add(new Payment
+            catch (Exception ex)
             {
-                OrderId = order.OrderId,
-                PaymentMethod = "PAYOS",
-                PaymentAmount = paid,
-                Status = success ? "Paid" : "Failed",
-                PaymentDate = DateTime.UtcNow
-            });
-
-            await _unitOfWork.SaveAsync();
-
-            return new BusinessResult(
-                success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-                success ? "Payment success" : "Payment failed"
-            );
+                throw;
+            }
         }
         catch (Exception ex)
         {
             return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
         }
     }
+
+
+    #region Helper methods
+    // ✅ METHOD TRỪ STOCK CHO PAID ORDER
+    private async Task ReduceStockForPaidOrder(Order order)
+    {
+        if (order.OrderItems == null || !order.OrderItems.Any())
+            return;
+
+        foreach (var item in order.OrderItems)
+        {
+            // ✅ 1. ACCESSORY RIÊNG LẺ: Luôn trừ stock
+            if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
+            {
+                await _unitOfWork.Accessory.ReduceStockAsync(item.AccessoryId.Value, item.AccessoryQuantity ?? 0);
+            }
+
+            // ✅ 2. TERRARIUM: CHỈ TRỪ KHI GeneratedByAI = TRUE
+            if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+
+                    // ✅ CHỈ AI TERRARIUM mới trừ accessories, Non-AI không trừ gì
+                    if (terrarium != null && terrarium.GeneratedByAI)
+                    {
+                        await ReduceStockForAITerrarium(terrarium.TerrariumId, item.TerrariumVariantQuantity ?? 0);
+                    }
+                    // ❌ Non-AI terrarium (GeneratedByAI = false): KHÔNG trừ stock
+                }
+            }
+
+            // ✅ 3. COMBO: Check từng item trong combo
+            if (item.ComboId.HasValue)
+            {
+                await ReduceStockForComboItem(item);
+            }
+        }
+    }
+
+    // ✅ TRỪ STOCK CHO AI TERRARIUM - trừ accessories
+    private async Task ReduceStockForAITerrarium(int terrariumId, int terrariumQuantity)
+    {
+        var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetByTerrariumIdAsync(terrariumId);
+
+        foreach (var ta in terrariumAccessories)
+        {
+            // Trừ stock accessories (nguyên liệu để tạo AI terrarium)
+            await _unitOfWork.Accessory.ReduceStockAsync(ta.AccessoryId, terrariumQuantity);
+        }
+    }
+
+    // ✅ TRỪ STOCK CHO COMBO
+    private async Task ReduceStockForComboItem(OrderItem comboOrderItem)
+    {
+        if (!comboOrderItem.ComboId.HasValue) return;
+
+        var combo = await _unitOfWork.Combo.GetByIdAsync(comboOrderItem.ComboId.Value);
+        if (combo?.ComboItems == null) return;
+
+        foreach (var comboItem in combo.ComboItems)
+        {
+            // Accessory trong combo: Luôn trừ
+            if (comboItem.AccessoryId.HasValue)
+            {
+                await _unitOfWork.Accessory.ReduceStockAsync(comboItem.AccessoryId.Value, 1);
+            }
+
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                    await ReduceStockForAITerrarium(terrarium.TerrariumId, 1);
+                }
+            }
+        }
+    }
+    #endregion
 
     #region Helper methods
     private static string CreateHmacSha256(string data, string? key)

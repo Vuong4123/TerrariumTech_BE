@@ -25,7 +25,27 @@ public class CartItemRepository : GenericRepository<CartItem>
             .Include(ci => ci.Cart)
             .FirstOrDefaultAsync(ci => ci.CartItemId == itemId);
     }
+    //Thêm parameter phân biệt bundle
+    public async Task<CartItem?> GetExistingTerrariumItemAsync(int cartId, int? variantId, bool isBundle = false)
+    {
+        var query = _context.CartItems
+            .Where(ci => ci.CartId == cartId &&
+                        ci.TerrariumVariantId == variantId &&
+                        ci.ItemType == CartItemType.MAIN_ITEM);
 
+        if (isBundle)
+        {
+            // Bundle: có accessories đi kèm (có children)
+            query = query.Where(ci => _context.CartItems.Any(child => child.ParentCartItemId == ci.CartItemId));
+        }
+        else
+        {
+            // Đơn lẻ: không có accessories đi kèm (không có children)
+            query = query.Where(ci => !_context.CartItems.Any(child => child.ParentCartItemId == ci.CartItemId));
+        }
+
+        return await query.FirstOrDefaultAsync();
+    }
     // Kiểm tra sản phẩm có trong giỏ hàng chưa (chỉ có Accessory hoặc chỉ có Terrarium)
     public async Task<CartItem?> GetExistingItemAsync(int cartId, int? accessoryId, int? terrariumVariantId)
     {
@@ -41,27 +61,31 @@ public class CartItemRepository : GenericRepository<CartItem>
     // Method cho terrarium
     public async Task<CartItem?> GetExistingTerrariumItemAsync(
         int cartId,
-        int terrariumId,
         int? terrariumVariantId)
     {
         return await _context.CartItems.FirstOrDefaultAsync(ci =>
             ci.CartId == cartId &&
-            ci.TerrariumId == terrariumId &&
             ci.TerrariumVariantId == terrariumVariantId &&
             ci.ItemType == CartItemType.MAIN_ITEM);
     }
 
-    // Method cho accessory (giữ lại nếu cần)
-    public async Task<CartItem?> GetExistingAccessoryItemAsync(
-        int cartId,
-        int accessoryId)
+    // ✅ Riêng cho single accessory
+    public async Task<CartItem?> GetExistingSingleAccessoryItemAsync(int cartId, int accessoryId)
     {
-        return await _context.CartItems.FirstOrDefaultAsync(ci =>
-            ci.CartId == cartId &&
-            ci.AccessoryId == accessoryId &&
-            ci.ItemType == CartItemType.SINGLE);
+        return await _context.CartItems
+            .FirstOrDefaultAsync(ci => ci.CartId == cartId &&
+                                      ci.AccessoryId == accessoryId &&
+                                      ci.ItemType == CartItemType.SINGLE);
     }
 
+    // ✅ Cho accessory trong bundle/main item
+    public async Task<CartItem?> GetExistingAccessoryInBundleAsync(int cartId, int accessoryId)
+    {
+        return await _context.CartItems
+            .FirstOrDefaultAsync(ci => ci.CartId == cartId &&
+                                      ci.AccessoryId == accessoryId &&
+                                      ci.ItemType == CartItemType.MAIN_ITEM);
+    }
     public async Task<CartItem> GetExistingItemMAIN_ITEMAsync(int cartId, int terrariumId, int? variantId)
     {
         return await _context.CartItems
@@ -85,11 +109,11 @@ public class CartItemRepository : GenericRepository<CartItem>
             ci.TerrariumVariantId == terrariumVariantId);
     }
     // Kiểm tra sản phẩm có trong giỏ hàng chưa (chỉ có Accessory hoặc chỉ có Terrarium)
-    public async Task<CartItem?> GetExistingTerrariumItemAsync(int cartId, int terrariumId)
+    public async Task<CartItem?> GetExistingTerrariumItemAsync(int cartId, int TerrariumVarientId)
     {
         return await _context.CartItems.FirstOrDefaultAsync(ci =>
             ci.CartId == cartId &&
-            ci.TerrariumId == terrariumId);
+            ci.TerrariumVariantId == TerrariumVarientId);
     }
     public async Task<List<CartItem>> GetBundleAccessoriesByParentIdAsync(int parentCartItemId)
     {

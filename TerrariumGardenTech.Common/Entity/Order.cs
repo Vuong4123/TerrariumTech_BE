@@ -17,7 +17,7 @@ public partial class Order
     public int UserId { get; set; }
     public int? AddressId { get; set; }
     public int? VoucherId { get; set; }
-
+    public decimal? OriginalAmount { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal? DiscountAmount { get; set; }
     public decimal? Deposit { get; set; }

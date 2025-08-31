@@ -16,8 +16,29 @@ public class AccessoryRepository : GenericRepository<Accessory>
     {
         _dbContext = dbContext;
     }
-    // Add any specific methods for AccessoryRepository here
+    public async Task RestoreStockAsync(int accessoryId, int quantity)
+    {
+        var affected = await _dbContext.Accessories
+            .Where(x => x.AccessoryId == accessoryId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.StockQuantity, x => x.StockQuantity + quantity));
 
+        if (affected == 0)
+            throw new InvalidOperationException($"Không thể hoàn stock accessory {accessoryId}");
+    }
+    // Add any specific methods for AccessoryRepository here
+    public async Task ReduceStockAsync(int accessoryId, int quantity)
+    {
+        var affected = await _dbContext.Accessories
+            .Where(x => x.AccessoryId == accessoryId && x.StockQuantity >= quantity)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.StockQuantity, x => x.StockQuantity - quantity));
+
+        if (affected == 0)
+        {
+            var acc = await _dbContext.Accessories.FindAsync(accessoryId);
+            var currentStock = acc?.StockQuantity ?? 0;
+            throw new InvalidOperationException($"Không thể trừ stock accessory {accessoryId}. Hiện tại: {currentStock}, yêu cầu: {quantity}");
+        }
+    }
     public async Task<List<Accessory?>> GetByName(List<string?> name)
     {
         return await _dbContext.Set<Accessory>()

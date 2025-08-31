@@ -33,7 +33,7 @@ namespace TerrariumGardenTech.API.Controllers
                 Description = aiResult.Description,
                 bodyHTML = $"<p>{aiResult.Description}</p>",
                 Status = "Active",
-                AccessoryNames = aiResult.Accessories, 
+                //AccessoryNames = aiResult.Accessories, 
                 TerrariumImages= aiResult.TerrariumImages                 
                 
             };

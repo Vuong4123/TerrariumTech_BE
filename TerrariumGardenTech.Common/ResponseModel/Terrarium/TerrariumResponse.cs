@@ -25,10 +25,11 @@ public class TerrariumResponse
     public double AverageRating { get; set; }
     public int FeedbackCount { get; set; }
     public int PurchaseCount { get; set; }
-    public List<TerrariumAccessoryResponse> Accessories { get; set; } = []; // Thông tin chi tiết phụ kiện
+    //public List<TerrariumAccessoryResponse> Accessories { get; set; } = []; // Thông tin chi tiết phụ kiện
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string BodyHTML { get; set; } = string.Empty;
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
     // Thêm thuộc tính mới để chứa danh sách ảnh
     public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
 }
