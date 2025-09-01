@@ -13,7 +13,39 @@ public class TerrariumVariantAccessoryRepository : GenericRepository<TerrariumVa
     {
         _db = dbContext;
     }
+    // ✅ HÀM MỚI - GET ACCESSORIES BY VARIANT ID
+    public async Task<List<TerrariumVariantAccessory>> GetByTerrariumVariantId(int terrariumVariantId)
+    {
+        return await _context.TerrariumVariantAccessory
+            .Include(tva => tva.Accessory) // Include accessory details
+            .Where(tva => tva.TerrariumVariantId == terrariumVariantId)
+            .ToListAsync();
+    }
 
+    // ✅ DELETE ALL ACCESSORIES FOR A VARIANT
+    public async Task DeleteByVariantIdAsync(int terrariumVariantId)
+    {
+        var accessories = await _context.TerrariumVariantAccessory
+            .Where(tva => tva.TerrariumVariantId == terrariumVariantId)
+            .ToListAsync();
+
+        _context.TerrariumVariantAccessory.RemoveRange(accessories);
+        await _context.SaveChangesAsync();
+    }
+
+    // ✅ CREATE MULTIPLE ACCESSORIES FOR VARIANT
+    public async Task CreateMultipleAsync(List<TerrariumVariantAccessory> accessories)
+    {
+        _context.TerrariumVariantAccessory.AddRange(accessories);
+        await _context.SaveChangesAsync();
+    }
+
+    // ✅ CHECK IF ACCESSORY IS USED IN VARIANT
+    public async Task<bool> ExistsAsync(int terrariumVariantId, int accessoryId)
+    {
+        return await _context.TerrariumVariantAccessory
+            .AnyAsync(tva => tva.TerrariumVariantId == terrariumVariantId && tva.AccessoryId == accessoryId);
+    }
     public async Task<List<TerrariumVariant>> GetByTerrariumVariantIdAsync(int terrariumVariantId)
     {
         return await _db.TerrariumVariants

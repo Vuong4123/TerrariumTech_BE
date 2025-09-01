@@ -19,7 +19,6 @@ public class AITerrariumRequest
     public int EnvironmentId { get; set; }
     public int ShapeId { get; set; }
     public int TankMethodId { get; set; }
-    public int AccessoryId { get; set; }
 }
 
 public class AITerrariumResponse
@@ -34,7 +33,6 @@ public class AITerrariumResponse
     public int Width { get; set; }     // cm
     public int Depth { get; set; }     // cm
     public List<string> TerrariumImages { get; set; }
-    public List<string> Accessories { get; set; }
 }
 
 public class TerrariumService : ITerrariumService
@@ -56,16 +54,14 @@ public class TerrariumService : ITerrariumService
             var environment = await _unitOfWork.Environment.GetByIdAsync(request.EnvironmentId);
             var shape = await _unitOfWork.Shape.GetByIdAsync(request.ShapeId);
             var tankMethod = await _unitOfWork.TankMethod.GetByIdAsync(request.TankMethodId);
-            var accessory = await _unitOfWork.Accessory.GetByIdAsync(request.AccessoryId);
 
             if (environment == null || shape == null || tankMethod == null)
                 throw new ArgumentException("Invalid environment, shape, or tank method ID");
 
             var terrarium = GenerateTerrarium(request, environment.EnvironmentName, shape.ShapeName,
-                tankMethod.TankMethodDescription, accessory?.Name ?? "plant");
+                tankMethod.TankMethodDescription);
 
-            var imageUrls = await GenerateTerrariumImages(environment.EnvironmentName, shape.ShapeName,
-                accessory?.Name ?? "moss");
+            var imageUrls = await GenerateTerrariumImages(environment.EnvironmentName, shape.ShapeName);
 
             terrarium.TerrariumImages = imageUrls;
             terrarium.ImageUrl = imageUrls.FirstOrDefault();
@@ -79,19 +75,18 @@ public class TerrariumService : ITerrariumService
         }
     }
 
-    private async Task<List<string>> GenerateTerrariumImages(string environment, string shape, string accessory)
+    private async Task<List<string>> GenerateTerrariumImages(string environment, string shape)
     {
         var envTranslated = await TranslateEnvironment(environment);
         var shapeTranslated = await TranslateShape(shape);
-        var accessoryTranslated = await TranslateAccessory(accessory);
-
+        
         Console.WriteLine($"🌿 Generating: {environment} -> {envTranslated}, {shape} -> {shapeTranslated}");
 
         var prompts = new[]
         {
         $"{shapeTranslated} glass terrarium {envTranslated} plants moss stones clear container",
         $"closed {shapeTranslated} terrarium {envTranslated} ecosystem miniature landscape",
-        $"{shapeTranslated} terrarium jar {envTranslated} plants {accessoryTranslated} soil layers",
+        $"{shapeTranslated} terrarium jar {envTranslated}",
         $"transparent {shapeTranslated} terrarium {envTranslated} garden botanical display"
     };
 
@@ -276,14 +271,14 @@ public class TerrariumService : ITerrariumService
     }
 
     private AITerrariumResponse GenerateTerrarium(AITerrariumRequest request, string env,
-        string shape, string method, string accessory)
+        string shape, string method)
     {
         var rnd = new Random();
 
         return new AITerrariumResponse
         {
             TerrariumName = $"Terrarium {shape} {env}",
-            Description = $"Terrarium {shape} phong cách {env}, sử dụng {method}, kết hợp {accessory}. " +
+            Description = $"Terrarium {shape} phong cách {env}, sử dụng {method}" +
                          $"Kích thước: {rnd.Next(15, 35)}cm(H) x {rnd.Next(15, 30)}cm(W) x {rnd.Next(10, 25)}cm(D).",
             Height = rnd.Next(15, 35),
             Width = rnd.Next(15, 30),
@@ -292,8 +287,7 @@ public class TerrariumService : ITerrariumService
             MaxPrice = rnd.Next(350, 650) * 1000,
             Stock = rnd.Next(15, 45),
             ImageUrl = "",
-            TerrariumImages = new List<string>(),
-            Accessories = new List<string> { accessory, "Đất terrarium", "Sỏi trang trí", "Rêu tự nhiên" }
+            TerrariumImages = new List<string>()
         };
     }
 
@@ -311,7 +305,7 @@ public class TerrariumService : ITerrariumService
             if (defaultEnv != null && defaultShape != null)
             {
                 images = await GenerateTerrariumImages(defaultEnv.EnvironmentName,
-                    defaultShape.ShapeName, "moss");
+                    defaultShape.ShapeName);
             }
 
             return new AITerrariumResponse
@@ -327,8 +321,7 @@ public class TerrariumService : ITerrariumService
                 MaxPrice = rnd.Next(350, 650) * 1000,
                 Stock = rnd.Next(15, 45),
                 ImageUrl = images.FirstOrDefault() ?? "",
-                TerrariumImages = images,
-                Accessories = await GetDynamicAccessories()
+                TerrariumImages = images
             };
         }
         catch (Exception ex)
@@ -344,8 +337,7 @@ public class TerrariumService : ITerrariumService
                 MaxPrice = 400000,
                 Stock = 20,
                 ImageUrl = "",
-                TerrariumImages = new List<string>(),
-                Accessories = new List<string> { "Moss", "Soil", "Small plants" }
+                TerrariumImages = new List<string>()
             };
         }
     }
@@ -792,18 +784,6 @@ public class TerrariumService : ITerrariumService
     {
         try
         {
-            // Lấy danh sách Accessory theo tên
-            //List<Accessory> accessories = new();
-            //if (terrariumCreateRequest.AccessoryNames != null && terrariumCreateRequest.AccessoryNames.Any())
-            //{
-            //    accessories = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
-            //}
-
-            //// Kiểm tra nếu không có variant, hãy gán giá trị mặc định cho MinPrice và MaxPrice
-            //decimal defaultPrice = 100; // Giá trị mặc định khi không có variant
-            //decimal minPrice = terrariumCreateRequest.MinPrice ?? defaultPrice;
-            //decimal maxPrice = terrariumCreateRequest.MaxPrice ?? defaultPrice;
-
             // Tạo mới Terrarium
             var newTerrarium = new Terrarium
             {
