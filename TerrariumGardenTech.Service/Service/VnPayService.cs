@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Config;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Repositories;
@@ -194,8 +195,10 @@ public class VnPayService : IVnPayService
         }
     }
 
+
     #region Helper methods
-    // ✅ METHOD TRỪ STOCK CHO PAID ORDER
+
+    // ✅ METHOD TRỪ STOCK CHO PAID ORDER - CHỈ CHO AI TERRARIUM
     private async Task ReduceStockForPaidOrder(Order order)
     {
         if (order.OrderItems == null || !order.OrderItems.Any())
@@ -203,50 +206,93 @@ public class VnPayService : IVnPayService
 
         foreach (var item in order.OrderItems)
         {
-            // ✅ 1. ACCESSORY RIÊNG LẺ: Luôn trừ stock
+            // ✅ 1. ACCESSORY RIÊNG LẺ: CHỈ TRỪ KHI THUỘC VỀ AI TERRARIUM
             if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
             {
-                await _unitOfWork.Accessory.ReduceStockAsync(item.AccessoryId.Value, item.AccessoryQuantity ?? 0);
+                // ✅ Check xem accessory này có thuộc về AI terrarium không
+                bool shouldReduceAccessoryStock = await ShouldReduceStockForAccessory(item);
+                if (shouldReduceAccessoryStock)
+                {
+                    await _unitOfWork.Accessory.ReduceStockAsync(item.AccessoryId.Value, item.AccessoryQuantity ?? 0);
+                }
             }
 
-            // ✅ 2. TERRARIUM: CHỈ TRỪ KHI GeneratedByAI = TRUE
+            // ✅ 2. TERRARIUM VARIANT: CHỈ TRỪ KHI LÀ AI TERRARIUM
             if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
             {
                 var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
                 if (variant != null)
                 {
                     var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
-
-                    // ✅ CHỈ AI TERRARIUM mới trừ accessories, Non-AI không trừ gì
                     if (terrarium != null && terrarium.GeneratedByAI)
                     {
-                        await ReduceStockForAITerrarium(terrarium.TerrariumId, item.TerrariumVariantQuantity ?? 0);
+                        // ✅ CHỈ AI TERRARIUM MỚI TRỪ STOCK ACCESSORIES
+                        await ReduceStockForAITerrariumVariant(variant.TerrariumVariantId, item.TerrariumVariantQuantity ?? 0);
                     }
-                    // ❌ Non-AI terrarium (GeneratedByAI = false): KHÔNG trừ stock
+                    // ❌ NON-AI TERRARIUM: KHÔNG TRỪ GÌ CẢ
                 }
             }
 
-            // ✅ 3. COMBO: Check từng item trong combo
-            if (item.ComboId.HasValue)
+            // ✅ 3. COMBO: CHỈ TRỪ KHI CÓ AI TERRARIUM TRONG COMBO
+            if (item.ComboId.HasValue && item.ItemType == "Combo")
             {
                 await ReduceStockForComboItem(item);
             }
         }
     }
 
-    // ✅ TRỪ STOCK CHO AI TERRARIUM - trừ accessories
-    private async Task ReduceStockForAITerrarium(int terrariumId, int terrariumQuantity)
+    // ✅ KIỂM TRA XEM ACCESSORY CÓ NÊN TRỪ STOCK KHÔNG
+    private async Task<bool> ShouldReduceStockForAccessory(OrderItem item)
     {
-        var terrariumAccessories = await _unitOfWork.TerrariumAccessory.GetByTerrariumIdAsync(terrariumId);
-
-        foreach (var ta in terrariumAccessories)
+        // Nếu accessory đi kèm với terrarium variant
+        if (item.TerrariumVariantId.HasValue)
         {
-            // Trừ stock accessories (nguyên liệu để tạo AI terrarium)
-            await _unitOfWork.Accessory.ReduceStockAsync(ta.AccessoryId, terrariumQuantity);
+            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+            if (variant != null)
+            {
+                var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                // CHỈ TRỪ KHI LÀ AI TERRARIUM
+                return terrarium != null && terrarium.GeneratedByAI;
+            }
+        }
+
+        // Nếu là accessory standalone (không thuộc terrarium nào)
+        if (!item.TerrariumVariantId.HasValue && !item.ComboId.HasValue)
+        {
+            // ❌ ACCESSORY STANDALONE: KHÔNG TRỪ
+            return false;
+        }
+
+        // Nếu thuộc combo
+        if (item.ComboId.HasValue)
+        {
+            var combo = await _unitOfWork.Combo.GetByIdAsync(item.ComboId.Value);
+            if (combo != null)
+            {
+                return await ComboContainsAITerrarium(combo);
+            }
+        }
+
+        return false;
+    }
+
+    // ✅ TRỪ STOCK CHO AI TERRARIUM VARIANT - chỉ trừ accessories của variant
+    private async Task ReduceStockForAITerrariumVariant(int terrariumVariantId, int variantQuantity)
+    {
+        // ✅ BÂY GIỜ SẼ RETURN List<TerrariumVariantAccessory> THAY VÌ List<TerrariumVariant>
+        var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+            .GetByTerrariumVariantId(terrariumVariantId);
+
+        foreach (var va in variantAccessories) // va là TerrariumVariantAccessory
+        {
+            // ✅ BÂY GIỜ va.Quantity VÀ va.AccessoryId SẼ WORK
+            int accessoryQtyToReduce = va.Quantity * variantQuantity;
+            await _unitOfWork.Accessory.ReduceStockAsync(va.AccessoryId, accessoryQtyToReduce);
         }
     }
 
-    // ✅ TRỪ STOCK CHO COMBO
+
+    // ✅ TRỪ STOCK CHO COMBO - CHỈ TRỪ KHI CÓ AI TERRARIUM
     private async Task ReduceStockForComboItem(OrderItem comboOrderItem)
     {
         if (!comboOrderItem.ComboId.HasValue) return;
@@ -256,25 +302,57 @@ public class VnPayService : IVnPayService
 
         foreach (var comboItem in combo.ComboItems)
         {
-            // Accessory trong combo: Luôn trừ
+            // ✅ ACCESSORY trong combo: CHỈ TRỪ KHI COMBO CÓ AI TERRARIUM
             if (comboItem.AccessoryId.HasValue)
             {
-                await _unitOfWork.Accessory.ReduceStockAsync(comboItem.AccessoryId.Value, 1);
+                bool comboHasAITerrarium = await ComboContainsAITerrarium(combo);
+                if (comboHasAITerrarium)
+                {
+                    await _unitOfWork.Accessory.ReduceStockAsync(comboItem.AccessoryId.Value, comboItem.Quantity);
+                }
             }
 
-            // Terrarium trong combo: CHỈ trừ khi AI
+            // ✅ TERRARIUM VARIANT trong combo: CHỈ TRỪ KHI LÀ AI
             if (comboItem.TerrariumVariantId.HasValue)
             {
                 var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
                 if (variant != null)
                 {
                     var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
-                        await ReduceStockForAITerrarium(terrarium.TerrariumId, 1);
+                    if (terrarium != null && terrarium.GeneratedByAI)
+                    {
+                        // ✅ CHỈ AI TERRARIUM MỚI TRỪ ACCESSORIES
+                        await ReduceStockForAITerrariumVariant(variant.TerrariumVariantId, comboItem.Quantity);
+                    }
+                    // ❌ NON-AI TERRARIUM: KHÔNG TRỪ GÌ CẢ
                 }
             }
         }
     }
+
+    // ✅ KIỂM TRA COMBO CÓ CHỨA AI TERRARIUM KHÔNG
+    private async Task<bool> ComboContainsAITerrarium(Combo combo)
+    {
+        foreach (var comboItem in combo.ComboItems)
+        {
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                    if (terrarium != null && terrarium.GeneratedByAI)
+                    {
+                        return true; // Combo có chứa AI terrarium
+                    }
+                }
+            }
+        }
+        return false; // Combo không có AI terrarium
+    }
+
     #endregion
+
 
 
 
