@@ -23,13 +23,13 @@ namespace TerrariumGardenTech.Service.Service
         private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
         private readonly UnitOfWork _unitOfWork;
-        
+
         public MomoServices(IConfiguration config, IHttpClientFactory httpClientFactory, UnitOfWork unitOfWork)
         {
             _config = config;
             _httpClient = httpClientFactory.CreateClient();
             _unitOfWork = unitOfWork;
-            
+
         }
 
         public async Task<MomoQrResponse> CreateMomoMembershipDirectPaymentUrl(DirectPaymentRequest req)
@@ -286,9 +286,12 @@ namespace TerrariumGardenTech.Service.Service
                 ? order.TotalAmount
                 : order.OrderItems.Sum(i => i.TotalPrice ?? 0);
 
+            //decimal payable = req.PayAll
+            //    ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
+            //    : (order.Deposit ?? baseAmount);
             decimal payable = req.PayAll
-                ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
-                : (order.Deposit ?? baseAmount);
+    ? baseAmount
+    : (order.Deposit ?? baseAmount);
 
             if (payable <= 0) throw new Exception("Invalid amount");
 
@@ -375,7 +378,7 @@ namespace TerrariumGardenTech.Service.Service
             };
         }
 
-        
+
 
         // NEW: Create MoMo link for Wallet Top-up with metadata (userId + random orderId)
         public async Task<MomoQrResponse> CreateMomoWalletTopupUrl(MomoWalletTopupRequest req)
