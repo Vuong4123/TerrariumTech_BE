@@ -27,6 +27,8 @@ public partial class Accessory
 
     public string Status { get; set; }
 
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
+
     public virtual ICollection<AccessoryImage> AccessoryImages { get; set; } = [];
     public virtual Category Category { get; set; }
 

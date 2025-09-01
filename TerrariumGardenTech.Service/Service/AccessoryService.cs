@@ -56,6 +56,7 @@ public class AccessoryService : IAccessoryService
             StockQuantity = a.StockQuantity,
             Status = a.Status,
             CategoryId = a.CategoryId,
+            Quantitative = a.Quantitative,
             CreatedAt = a.CreatedAt ?? DateTime.MinValue,
             UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,
             AccessoryImages = a.AccessoryImages.Select(ai => new AccessoryImageResponse
@@ -100,6 +101,7 @@ public class AccessoryService : IAccessoryService
             StockQuantity = accessory.StockQuantity,
             Status = accessory.Status,
             CategoryId = accessory.CategoryId,
+            Quantitative = accessory.Quantitative,
             CreatedAt = accessory.CreatedAt ?? DateTime.MinValue,
             UpdatedAt = accessory.UpdatedAt ?? DateTime.MinValue,
             AccessoryImages = accessory.AccessoryImages.Select(ai => new AccessoryImageResponse
@@ -148,6 +150,7 @@ public class AccessoryService : IAccessoryService
             StockQuantity = a.StockQuantity,
             Status = a.Status,
             CategoryId = a.CategoryId,
+            Quantitative = a.Quantitative,
             CreatedAt = a.CreatedAt ?? DateTime.MinValue,
             UpdatedAt = a.UpdatedAt ?? DateTime.MinValue,
             AccessoryImages = (a.AccessoryImages ?? new List<AccessoryImage>())
@@ -205,6 +208,7 @@ public class AccessoryService : IAccessoryService
             Size = accessoryCreateRequest.Size,
             Description = accessoryCreateRequest.Description,
             Price = accessoryCreateRequest.Price,
+            Quantitative = accessoryCreateRequest.Quantitative,
             StockQuantity = accessoryCreateRequest.StockQuantity,
             CategoryId = accessoryCreateRequest.CategoryId,
             CreatedAt = accessoryCreateRequest.CreatedAt ?? DateTime.Now,
@@ -239,6 +243,7 @@ public class AccessoryService : IAccessoryService
                 access.Size = accessoryUpdateRequest.Size;
                 access.Description = accessoryUpdateRequest.Description;
                 access.Price = accessoryUpdateRequest.Price;
+                access.Quantitative = accessoryUpdateRequest.Quantitative;
                 access.StockQuantity = accessoryUpdateRequest.StockQuantity;
                 access.CategoryId = accessoryUpdateRequest.CategoryId;
                 access.Status = accessoryUpdateRequest.Status;
@@ -343,6 +348,7 @@ public class AccessoryService : IAccessoryService
                 Price = a.Price,
                 StockQuantity = a.StockQuantity ?? 0,
                 Status = a.Status,
+                Quantitative = a.Quantitative,
                 CategoryId = a.CategoryId,
                 AccessoryImages = a.AccessoryImages.Select(ti => new AccessoryImageResponse
                 {

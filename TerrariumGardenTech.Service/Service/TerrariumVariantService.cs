@@ -122,7 +122,7 @@ public class TerrariumVariantService : ITerrariumVariantService
                 if (accessory == null)
                     return new BusinessResult(Const.FAIL_READ_CODE, $"Accessory {accessoryRequest.AccessoryId} not found.");
             }
-
+            terrariumVariant.VariantName = terrariumVariantUpdateRequest.VariantName;
             terrariumVariant.Price = terrariumVariantUpdateRequest.Price;
             terrariumVariant.StockQuantity = terrariumVariantUpdateRequest.StockQuantity;
             terrariumVariant.UrlImage = terrariumVariantUpdateRequest.UrlImage;
