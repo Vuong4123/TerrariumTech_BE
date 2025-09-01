@@ -19,5 +19,6 @@ namespace TerrariumGardenTech.Service.IService
         Task<decimal> GetBalanceAsync(int userId);
         Task<Wallet> GetOrCreateUserWallet(int userId);
         Task<WalletBalanceHistoryDto> GetWalletBalanceHistoryAsync(int userId, DateTime? fromDate = null, DateTime? toDate = null);
+        Task<AdminAllWalletHistoryDto> GetAllWalletHistoryForAdminAsync(DateTime? fromDate = null, DateTime? toDate = null);
     }
 }
