@@ -950,14 +950,6 @@ public class TerrariumService : ITerrariumService
             {
                 return new BusinessResult(Const.WARNING_INVALID_CODE, "Phương pháp bể không tồn tại.");
             }
-
-            //// Nếu có AccessoryNames thì mới tìm
-            //List<Accessory> accessories = new();
-            //if (terrariumCreateRequest.AccessoryNames != null && terrariumCreateRequest.AccessoryNames.Any())
-            //{
-            //    accessories = await _unitOfWork.Accessory.GetByName(terrariumCreateRequest.AccessoryNames);
-            //}
-
             // Tạo mới Terrarium
             var newTerrarium = new Terrarium
             {
@@ -974,27 +966,7 @@ public class TerrariumService : ITerrariumService
             // Tạo Terrarium vào cơ sở dữ liệu
             var result = await _unitOfWork.Terrarium.CreateAsync(newTerrarium);
 
-            //if (result > 0)
-            //{
-            //    // Nếu có accessories thì gán
-            //    if (accessories != null && accessories.Any())
-            //    {
-            //        foreach (var accessory in accessories)
-            //        {
-            //            var terrariumAccessory = new TerrariumAccessory
-            //            {
-            //                AccessoryId = accessory.AccessoryId,
-            //                TerrariumId = newTerrarium.TerrariumId
-            //            };
-            //            _unitOfWork.TerrariumAccessory.Context().Add(terrariumAccessory);
-            //        }
-            //        await _unitOfWork.TerrariumAccessory.SaveChangesAsync();
-            //    }
-
-            //    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, newTerrarium);
-            //}
-
-            return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.FAIL_CREATE_MSG);
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG);
         }
         catch (Exception ex)
         {
