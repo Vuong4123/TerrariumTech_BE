@@ -15,10 +15,13 @@ public class PaymentController : ControllerBase
 {
     // FE domain của bạn
     private const string FE_BASE = "https://terra-tech-garden.vercel.app";
-
-    
     private const string FE_SUCCESS_PATH = "/payment-success";
     private const string FE_FAIL_PATH = "/payment-fail"; // nếu muốn tách trang fail
+
+    private const string FE_BASE_MEMBERSHIP = "https://terra-tech-garden.vercel.app"; // dev local
+    private const string FE_SUCCESS_MEMBERSHIP_PATH = "/membership-success";
+    private const string FE_FAIL_MEMBERSHIP_PATH = "/membership-fali"; // nếu muốn tách trang fail
+
     private readonly IPayOsService _payOsService;
     private readonly IVnPayService _vnPayService;
     private readonly IMomoServices _momoServices;
@@ -38,7 +41,7 @@ public class PaymentController : ControllerBase
         var result = await _momoServices.MomoMembershipReturnExecute(Request.Query);
         var isSuccess = result.Status == Const.SUCCESS_UPDATE_CODE;
 
-        var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
+        var baseUrl = $"{FE_BASE_MEMBERSHIP}{(isSuccess ? FE_SUCCESS_MEMBERSHIP_PATH : FE_FAIL_MEMBERSHIP_PATH)}";
         var feUrl = $"{baseUrl}?status={(isSuccess ? "success" : "fail")}&type=membership";
         return Content(BuildRedirectHtml(feUrl), "text/html");
     }
