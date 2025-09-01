@@ -122,6 +122,7 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IComboService, ComboService>();
 builder.Services.AddScoped<IComboCategoryService, ComboCategoryService>();
+builder.Services.AddScoped<IRevenueService, RevenueService>();
 
 // Đăng ký SignalR cho real-time chat
 builder.Services.AddSignalR();
