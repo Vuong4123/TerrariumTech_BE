@@ -447,53 +447,53 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
-        
+
 
         // NEW: xử lý return URL (user được redirect về)
         public async Task<IBusinessResult> MomoReturnExecute(IQueryCollection query)
         {
             try
             {
-                var accessKey = _config["Momo:AccessKey"];   // BẮT BUỘC có trong raw
+                var accessKey = _config["Momo:AccessKey"];
                 var secretKey = _config["Momo:SecretKey"];
 
                 string Get(string k) => query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
 
-                // MoMo yêu cầu thứ tự CỐ ĐỊNH (không dùng SortedDictionary)
+                // MoMo yêu cầu thứ tự CỐ ĐỊNH
                 var raw = string.Join("&", new[]
                 {
-                    $"accessKey={accessKey}",
-                    $"amount={Get("amount")}",
-                    $"extraData={Get("extraData")}",
-                    $"message={Get("message")}",
-                    $"orderId={Get("orderId")}",
-                    $"orderInfo={Get("orderInfo")}",
-                    $"orderType={Get("orderType")}",       // có thể rỗng
-                    $"partnerCode={Get("partnerCode")}",
-                    $"payType={Get("payType")}",           // có thể rỗng
-                    $"requestId={Get("requestId")}",
-                    $"responseTime={Get("responseTime")}", // có thể rỗng
-                    $"resultCode={Get("resultCode")}",
-                    $"transId={Get("transId")}"
-                });
+            $"accessKey={accessKey}",
+            $"amount={Get("amount")}",
+            $"extraData={Get("extraData")}",
+            $"message={Get("message")}",
+            $"orderId={Get("orderId")}",
+            $"orderInfo={Get("orderInfo")}",
+            $"orderType={Get("orderType")}",
+            $"partnerCode={Get("partnerCode")}",
+            $"payType={Get("payType")}",
+            $"requestId={Get("requestId")}",
+            $"responseTime={Get("responseTime")}",
+            $"resultCode={Get("resultCode")}",
+            $"transId={Get("transId")}"
+        });
 
-                var calcSig = CreateSignature(secretKey, raw); // HMACSHA256 UTF8 -> hex lowercase
+                var calcSig = CreateSignature(secretKey, raw);
                 var signature = Get("signature");
 
                 if (!string.Equals(calcSig, signature, StringComparison.OrdinalIgnoreCase))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
 
-                // ---- từ đây trở xuống giữ logic của bạn ----
                 var orderIdRaw = Get("orderId");
                 var idStr = orderIdRaw?.Split('-').FirstOrDefault();
                 if (!int.TryParse(idStr, out var orderId))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid orderId");
 
                 var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
-                if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
+                if (order == null)
+                    return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
 
                 decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
-                   
+
                 var baseAmount = order.TotalAmount > 0
                     ? order.TotalAmount
                     : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
@@ -512,25 +512,53 @@ namespace TerrariumGardenTech.Service.Service
                     return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
 
                 var success = Get("resultCode") == "0";
-                order.PaymentStatus = success ? "Paid" : "Failed";
-                order.TransactionId = Get("transId");
-                // *** CÁCH 3: Chỉ áp dụng discount khi thanh toán đủ (isPayAll) ***
-                if (success && isPayAll)
-                {
-                    order.DiscountAmount = RoundVnd(baseAmount * 0.1m); // luôn đúng 10% và làm tròn VND
-                }
 
-                await _unitOfWork.Order.UpdateAsync(order);
-                order.Payment ??= new List<Payment>();
-                order.Payment.Add(new Payment
+                // ✅ CHỈ XỬ LÝ KHI PAYMENT SUCCESS
+                if (success)
                 {
-                    OrderId = order.OrderId,
-                    PaymentMethod = "MOMO",
-                    PaymentAmount = paid,
-                    Status = success ? "Paid" : "Failed",
-                    PaymentDate = DateTime.UtcNow
-                });
-                await _unitOfWork.SaveAsync();
+                    order.PaymentStatus = "Paid";
+                    order.TransactionId = Get("transId");
+
+                    if (isPayAll)
+                    {
+                        order.DiscountAmount = RoundVnd(baseAmount * 0.1m);
+                    }
+
+                    await _unitOfWork.Order.UpdateAsync(order);
+
+                    order.Payment ??= new List<Payment>();
+                    order.Payment.Add(new Payment
+                    {
+                        OrderId = order.OrderId,
+                        PaymentMethod = "MOMO",
+                        PaymentAmount = paid,
+                        Status = "Paid",
+                        PaymentDate = DateTime.UtcNow
+                    });
+
+                    // ✅ TRỪ STOCK KHI MOMO PAYMENT SUCCESS - CHỈ CHO AI TERRARIUM
+                    await ReduceStockForPaidOrder(order);
+
+                    await _unitOfWork.SaveAsync();
+                }
+                else
+                {
+                    order.PaymentStatus = "Failed";
+                    order.TransactionId = Get("transId");
+                    await _unitOfWork.Order.UpdateAsync(order);
+
+                    order.Payment ??= new List<Payment>();
+                    order.Payment.Add(new Payment
+                    {
+                        OrderId = order.OrderId,
+                        PaymentMethod = "MOMO",
+                        PaymentAmount = paid,
+                        Status = "Failed",
+                        PaymentDate = DateTime.UtcNow
+                    });
+
+                    await _unitOfWork.SaveAsync();
+                }
 
                 return new BusinessResult(
                     success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
@@ -542,6 +570,7 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
+
 
         // NEW: xử lý IPN (server→server)
         public async Task<IBusinessResult> MomoIpnExecute(MomoIpnModel body)
@@ -572,12 +601,13 @@ namespace TerrariumGardenTech.Service.Service
                 if (!string.Equals(calcSig, body.signature, StringComparison.OrdinalIgnoreCase))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
 
-                var idStr = body.orderId?.Split('_').FirstOrDefault();
+                var idStr = body.orderId?.Split('-').FirstOrDefault();
                 if (!int.TryParse(idStr, out var orderId))
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid orderId");
 
                 var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
-                if (order == null) return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
+                if (order == null)
+                    return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
 
                 var expected = ComputeExpectedPayable(order);
 
@@ -589,30 +619,48 @@ namespace TerrariumGardenTech.Service.Service
                     return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
 
                 var success = body.resultCode == "0";
-                order.PaymentStatus = success ? "Paid" : "Failed";
-                order.TransactionId = body.transId;
-                await _unitOfWork.Order.UpdateAsync(order);
 
-                if (order.Payment == null) order.Payment = new List<Payment>();
-                order.Payment.Add(new Payment
+                // ✅ PREVENT DOUBLE PROCESSING - CHỈ XỬ LÝ NẾU CHƯA PAID
+                if (order.PaymentStatus != "Paid" && success)
                 {
-                    OrderId = order.OrderId,
-                    PaymentMethod = "MOMO",
-                    PaymentAmount = paid,
-                    Status = success ? "Paid" : "Failed",
-                    PaymentDate = DateTime.UtcNow
-                });
+                    order.PaymentStatus = "Paid";
+                    order.TransactionId = body.transId;
+                    await _unitOfWork.Order.UpdateAsync(order);
 
-                await _unitOfWork.SaveAsync();
+                    if (order.Payment == null) order.Payment = new List<Payment>();
+                    order.Payment.Add(new Payment
+                    {
+                        OrderId = order.OrderId,
+                        PaymentMethod = "MOMO",
+                        PaymentAmount = paid,
+                        Status = "Paid",
+                        PaymentDate = DateTime.UtcNow
+                    });
 
-                return new BusinessResult(success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-                                          success ? "Payment success (IPN)" : "Payment failed (IPN)");
+                    // ✅ TRỪ STOCK KHI IPN SUCCESS - CHỈ CHO AI TERRARIUM
+                    await ReduceStockForPaidOrder(order);
+
+                    await _unitOfWork.SaveAsync();
+                }
+                else if (!success)
+                {
+                    order.PaymentStatus = "Failed";
+                    order.TransactionId = body.transId;
+                    await _unitOfWork.Order.UpdateAsync(order);
+                    await _unitOfWork.SaveAsync();
+                }
+
+                return new BusinessResult(
+                    success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+                    success ? "Payment success (IPN)" : "Payment failed (IPN)"
+                );
             }
             catch (Exception ex)
             {
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
+
 
         // NEW: IPN for Wallet top-up. Verify signature; DO NOT credit to avoid double-processing; rely on Return callback per requirement.
         public async Task<IBusinessResult> MomoWalletIpnExecute(MomoIpnModel body)
@@ -736,6 +784,144 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
+        #region Stock Reduction Helper Methods
+
+        // ✅ METHOD TRỪ STOCK CHO PAID ORDER - CHỈ CHO AI TERRARIUM
+        private async Task ReduceStockForPaidOrder(Order order)
+        {
+            if (order.OrderItems == null || !order.OrderItems.Any())
+                return;
+
+            foreach (var item in order.OrderItems)
+            {
+                // ✅ 1. ACCESSORY RIÊNG LẺ: CHỈ TRỪ KHI THUỘC VỀ AI TERRARIUM
+                if (item.AccessoryId.HasValue && item.AccessoryQuantity > 0)
+                {
+                    bool shouldReduceAccessoryStock = await ShouldReduceStockForAccessory(item);
+                    if (shouldReduceAccessoryStock)
+                    {
+                        await _unitOfWork.Accessory.ReduceStockAsync(item.AccessoryId.Value, item.AccessoryQuantity ?? 0);
+                    }
+                }
+
+                // ✅ 2. TERRARIUM VARIANT: CHỈ TRỪ KHI LÀ AI TERRARIUM
+                if (item.TerrariumVariantId.HasValue && item.TerrariumVariantQuantity > 0)
+                {
+                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                    if (variant != null)
+                    {
+                        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                        if (terrarium != null && terrarium.GeneratedByAI)
+                        {
+                            await ReduceStockForAITerrariumVariant(variant.TerrariumVariantId, item.TerrariumVariantQuantity ?? 0);
+                        }
+                    }
+                }
+
+                // ✅ 3. COMBO: CHỈ TRỪ KHI CÓ AI TERRARIUM TRONG COMBO
+                if (item.ComboId.HasValue && item.ItemType == "Combo")
+                {
+                    await ReduceStockForComboItem(item);
+                }
+            }
+        }
+
+        private async Task<bool> ShouldReduceStockForAccessory(OrderItem item)
+        {
+            if (item.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(item.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                    return terrarium != null && terrarium.GeneratedByAI;
+                }
+            }
+
+            if (!item.TerrariumVariantId.HasValue && !item.ComboId.HasValue)
+            {
+                return false;
+            }
+
+            if (item.ComboId.HasValue)
+            {
+                var combo = await _unitOfWork.Combo.GetByIdAsync(item.ComboId.Value);
+                if (combo != null)
+                {
+                    return await ComboContainsAITerrarium(combo);
+                }
+            }
+
+            return false;
+        }
+
+        private async Task ReduceStockForAITerrariumVariant(int terrariumVariantId, int variantQuantity)
+        {
+            var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+                .GetByTerrariumVariantId(terrariumVariantId);
+
+            foreach (var va in variantAccessories)
+            {
+                int accessoryQtyToReduce = va.Quantity * variantQuantity;
+                await _unitOfWork.Accessory.ReduceStockAsync(va.AccessoryId, accessoryQtyToReduce);
+            }
+        }
+
+        private async Task ReduceStockForComboItem(OrderItem comboOrderItem)
+        {
+            if (!comboOrderItem.ComboId.HasValue) return;
+
+            var combo = await _unitOfWork.Combo.GetByIdAsync(comboOrderItem.ComboId.Value);
+            if (combo?.ComboItems == null) return;
+
+            foreach (var comboItem in combo.ComboItems)
+            {
+                if (comboItem.AccessoryId.HasValue)
+                {
+                    bool comboHasAITerrarium = await ComboContainsAITerrarium(combo);
+                    if (comboHasAITerrarium)
+                    {
+                        await _unitOfWork.Accessory.ReduceStockAsync(comboItem.AccessoryId.Value, comboItem.Quantity);
+                    }
+                }
+
+                if (comboItem.TerrariumVariantId.HasValue)
+                {
+                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                    if (variant != null)
+                    {
+                        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                        if (terrarium != null && terrarium.GeneratedByAI)
+                        {
+                            await ReduceStockForAITerrariumVariant(variant.TerrariumVariantId, comboItem.Quantity);
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task<bool> ComboContainsAITerrarium(Combo combo)
+        {
+            foreach (var comboItem in combo.ComboItems)
+            {
+                if (comboItem.TerrariumVariantId.HasValue)
+                {
+                    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                    if (variant != null)
+                    {
+                        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                        if (terrarium != null && terrarium.GeneratedByAI)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        #endregion
+
         #region Helper Methods
 
         // NEW: build raw data để verify chữ ký (sort key asc, bỏ "signature")
