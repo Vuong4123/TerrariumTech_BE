@@ -8,15 +8,10 @@ public class TerrariumVariantUpdateRequest
 
     public int TerrariumId { get; set; }
 
-    public string VariantName { get; set; } = string.Empty;
-
     public decimal Price { get; set; }
-    [FromForm]
-    public IFormFile? ImageFile { get; set; } // Thay UrlImage bằng file upload
+    public string? UrlImage { get; set; } = string.Empty;
     public int StockQuantity { get; set; }
 
-    public int AccessoryId { get; set; }
-    public int Quantity { get; set; } = 1;
-    //public List<VariantAccessoryRequest> Accessories { get; set; } = new List<VariantAccessoryRequest>();
+    public List<VariantAccessoryRequest> Accessories { get; set; } = new List<VariantAccessoryRequest>();
     public DateTime? UpdatedAt { get; set; }
 }
