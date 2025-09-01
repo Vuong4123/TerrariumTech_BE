@@ -98,6 +98,27 @@ namespace TerrariumGardenTech.API.Controllers
             }
         }
 
+        [HttpPut("update-combo")]
+        [Authorize]
+        public async Task<IActionResult> UpdateComboQuantity([FromBody] UpdateComboQuantityRequest request)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var result = await _cartService.UpdateComboQuantityAsync(userId, request);
+
+                if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                    return Ok(result);
+
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating combo quantity in cart");
+                return StatusCode(500, new { message = "Lỗi server khi cập nhật số lượng combo" });
+            }
+        }
+
         /// <summary>
         /// Thêm nhiều sản phẩm vào giỏ hàng
         /// </summary>

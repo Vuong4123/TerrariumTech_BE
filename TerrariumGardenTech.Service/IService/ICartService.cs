@@ -22,6 +22,7 @@ namespace TerrariumGardenTech.Service.IService
         // Combo operations
         Task<IBusinessResult> AddComboToCartAsync(int userId, AddComboToCartRequest request);
         Task<IBusinessResult> UpdateComboQuantityAsync(int userId, int cartId, int quantity);
+        Task<IBusinessResult> UpdateComboQuantityAsync(int userId, UpdateComboQuantityRequest request);
 
         // Checkout
         Task<IBusinessResult> CheckoutAsync(int userId);

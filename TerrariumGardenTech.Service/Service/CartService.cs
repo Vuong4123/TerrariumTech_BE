@@ -634,10 +634,11 @@ namespace TerrariumGardenTech.Service.Service
                     return new BusinessResult(Const.FAIL_CREATE_CODE, "Combo không tồn tại hoặc đã bị vô hiệu hóa");
                 }
 
-                // Check stock
-                if (combo.StockQuantity < request.Quantity)
+                // ✅ VALIDATE COMBO STOCK INCLUDING ACCESSORIES
+                var stockValidation = await ValidateComboStockAsync(request.ComboId, request.Quantity);
+                if (!stockValidation.IsValid)
                 {
-                    return new BusinessResult(Const.FAIL_CREATE_CODE, $"Chỉ còn {combo.StockQuantity} combo trong kho");
+                    return new BusinessResult(Const.FAIL_CREATE_CODE, stockValidation.ErrorMessage);
                 }
 
                 var cart = await GetOrCreateCartAsync(userId);
@@ -649,9 +650,12 @@ namespace TerrariumGardenTech.Service.Service
                 if (existingCartItem != null)
                 {
                     var newQuantity = existingCartItem.Quantity + request.Quantity;
-                    if (combo.StockQuantity < newQuantity)
+
+                    // ✅ VALIDATE NEW TOTAL QUANTITY
+                    var newStockValidation = await ValidateComboStockAsync(request.ComboId, newQuantity);
+                    if (!newStockValidation.IsValid)
                     {
-                        return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Tổng số lượng vượt quá tồn kho (còn {combo.StockQuantity})");
+                        return new BusinessResult(Const.FAIL_UPDATE_CODE, newStockValidation.ErrorMessage);
                     }
 
                     existingCartItem.Quantity = newQuantity;
@@ -685,6 +689,185 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.FAIL_CREATE_CODE, $"Lỗi khi thêm combo vào giỏ hàng: {ex.Message}");
             }
         }
+
+        // ✅ NEW: UPDATE COMBO QUANTITY
+        public async Task<IBusinessResult> UpdateComboQuantityAsync(int userId, UpdateComboQuantityRequest request)
+        {
+            try
+            {
+                if (request.NewQuantity <= 0)
+                {
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE, "Số lượng phải lớn hơn 0");
+                }
+
+                var cart = await GetOrCreateCartAsync(userId);
+                var cartItem = cart.CartItems
+                    .FirstOrDefault(ci => ci.ComboId == request.ComboId && ci.ItemType == CartItemType.COMBO);
+
+                if (cartItem == null)
+                {
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Combo không có trong giỏ hàng");
+                }
+
+                // Validate combo still exists and is active
+                var combo = await _unitOfWork.Combo.GetByIdAsync(request.ComboId);
+                if (combo == null || !combo.IsActive)
+                {
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE, "Combo không tồn tại hoặc đã bị vô hiệu hóa");
+                }
+
+                // ✅ VALIDATE STOCK FOR NEW QUANTITY
+                var stockValidation = await ValidateComboStockAsync(request.ComboId, request.NewQuantity);
+                if (!stockValidation.IsValid)
+                {
+                    return new BusinessResult(Const.FAIL_UPDATE_CODE, stockValidation.ErrorMessage);
+                }
+
+                // Update cart item
+                cartItem.Quantity = request.NewQuantity;
+                cartItem.TotalPrice = combo.ComboPrice * request.NewQuantity;
+                cartItem.UpdatedAt = DateTime.UtcNow;
+
+                await _unitOfWork.CartItem.UpdateAsync(cartItem);
+                await _unitOfWork.SaveAsync();
+
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Đã cập nhật số lượng combo");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating combo quantity for user {UserId}", userId);
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi cập nhật số lượng combo: {ex.Message}");
+            }
+        }
+
+        // ✅ NEW: REMOVE COMBO FROM CART
+        public async Task<IBusinessResult> RemoveComboFromCartAsync(int userId, int comboId)
+        {
+            try
+            {
+                var cart = await GetOrCreateCartAsync(userId);
+                var cartItem = cart.CartItems
+                    .FirstOrDefault(ci => ci.ComboId == comboId && ci.ItemType == CartItemType.COMBO);
+
+                if (cartItem == null)
+                {
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Combo không có trong giỏ hàng");
+                }
+
+                await _unitOfWork.CartItem.RemoveAsync(cartItem);
+                await _unitOfWork.SaveAsync();
+
+                return new BusinessResult(Const.SUCCESS_DELETE_CODE, "Đã xóa combo khỏi giỏ hàng");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing combo from cart for user {UserId}", userId);
+                return new BusinessResult(Const.FAIL_DELETE_CODE, $"Lỗi khi xóa combo khỏi giỏ hàng: {ex.Message}");
+            }
+        }
+
+        // ✅ HELPER: VALIDATE COMBO STOCK (including accessories)
+        private async Task<StockValidationResult> ValidateComboStockAsync(int comboId, int quantity)
+        {
+            try
+            {
+                var combo = await _unitOfWork.Combo.GetByIdAsync(comboId);
+                if (combo == null)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = "Combo không tồn tại"
+                    };
+                }
+
+                // Check combo stock
+                if (combo.StockQuantity < quantity)
+                {
+                    return new StockValidationResult
+                    {
+                        IsValid = false,
+                        ErrorMessage = $"Chỉ còn {combo.StockQuantity} combo trong kho"
+                    };
+                }
+
+                // Check accessories/variants in combo
+                if (combo.ComboItems != null)
+                {
+                    foreach (var comboItem in combo.ComboItems)
+                    {
+                        // Check accessory stock
+                        if (comboItem.AccessoryId.HasValue)
+                        {
+                            var accessory = await _unitOfWork.Accessory.GetByIdAsync(comboItem.AccessoryId.Value);
+                            if (accessory == null)
+                            {
+                                return new StockValidationResult
+                                {
+                                    IsValid = false,
+                                    ErrorMessage = $"Phụ kiện trong combo không tồn tại"
+                                };
+                            }
+
+                            int requiredAccessoryQty = comboItem.Quantity * quantity;
+                            if (accessory.StockQuantity < requiredAccessoryQty)
+                            {
+                                return new StockValidationResult
+                                {
+                                    IsValid = false,
+                                    ErrorMessage = $"Phụ kiện '{accessory.Name}' trong combo không đủ hàng. Còn: {accessory.StockQuantity}, cần: {requiredAccessoryQty}"
+                                };
+                            }
+                        }
+
+                        // Check terrarium variant stock (chỉ cho AI terrarium)
+                        if (comboItem.TerrariumVariantId.HasValue)
+                        {
+                            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                            if (variant != null)
+                            {
+                                var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+                                if (terrarium != null && terrarium.GeneratedByAI)
+                                {
+                                    // Check accessories của AI terrarium variant
+                                    var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+                                        .GetByTerrariumVariantId(variant.TerrariumVariantId);
+
+                                    foreach (var va in variantAccessories)
+                                    {
+                                        var accessory = await _unitOfWork.Accessory.GetByIdAsync(va.AccessoryId);
+                                        if (accessory != null)
+                                        {
+                                            int requiredQty = va.Quantity * comboItem.Quantity * quantity;
+                                            if (accessory.StockQuantity < requiredQty)
+                                            {
+                                                return new StockValidationResult
+                                                {
+                                                    IsValid = false,
+                                                    ErrorMessage = $"'{accessory.Name}' cho terrarium trong combo không đủ. Còn: {accessory.StockQuantity}, cần: {requiredQty}"
+                                                };
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return new StockValidationResult { IsValid = true };
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error validating combo stock for combo {ComboId}", comboId);
+                return new StockValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Lỗi khi kiểm tra tồn kho combo"
+                };
+            }
+        }
+
 
         #endregion
 
