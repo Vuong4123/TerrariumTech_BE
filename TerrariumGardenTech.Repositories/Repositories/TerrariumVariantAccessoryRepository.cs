@@ -14,10 +14,10 @@ public class TerrariumVariantAccessoryRepository : GenericRepository<TerrariumVa
         _db = dbContext;
     }
 
-    public async Task<List<TerrariumVariantAccessory>> GetByTerrariumVariantIdAsync(int terrariumVariantId)
+    public async Task<List<TerrariumVariant>> GetByTerrariumVariantIdAsync(int terrariumVariantId)
     {
-        return await _db.TerrariumVariantAccessory
-            .Include(tva => tva.Accessory)
+        return await _db.TerrariumVariants
+            .Include(tva => tva.TerrariumVariantAccessories)
             .Where(x => x.TerrariumVariantId == terrariumVariantId)
             .ToListAsync();
     }

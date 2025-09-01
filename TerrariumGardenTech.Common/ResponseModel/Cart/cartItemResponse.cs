@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.ResponseModel.Combo;
 using TerrariumGardenTech.Common.ResponseModel.TerrariumVariant;
 using TerrariumGardenTech.Repositories.Entity;
@@ -73,12 +74,19 @@ public class TerrariumVariantResponse
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
-    public List<VariantAccessoryResponse> Accessories { get; set; } = new();
+    public List<TerrariumVariantAccessoryResponse> TerrariumVariantAccessories { get; set; } = new();
 }
-    /// <summary>
-    /// Response cho một bundle (bể + phụ kiện kèm theo)
-    /// </summary>
-    public class CartBundleResponse
+public class TerrariumVariantAccessoryResponse
+    {
+        public int TerrariumVariantAccessoryId { get; set; }
+        public int TerrariumVariantId { get; set; }
+        public int AccessoryId { get; set; }
+        public int Quantity { get; set; } = 1; // Số lượng accessory cần cho variant này
+}
+/// <summary>
+/// Response cho một bundle (bể + phụ kiện kèm theo)
+/// </summary>
+public class CartBundleResponse
     {
         /// <summary>
         /// Thông tin bể thủy sinh chính
