@@ -11,7 +11,6 @@ public class TerrariumAccessory
     public int TerrariumId { get; set; }
     public int AccessoryId { get; set; }
 
-    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
 
     [ForeignKey(nameof(TerrariumId))] public Terrarium Terrarium { get; set; } = null!;
 
