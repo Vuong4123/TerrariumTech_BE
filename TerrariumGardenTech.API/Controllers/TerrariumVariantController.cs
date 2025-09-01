@@ -44,7 +44,7 @@ public class TerrariumVariantController : ControllerBase
     // POST api/<TerrariumVariantController>
     [HttpPost("create-terrariumVariant")]
     [Authorize(Roles = "Admin,Staff,Manager")]
-    public async Task<IBusinessResult> Post([FromForm] TerrariumVariantCreateRequest terrariumVariantCreateRequest)
+    public async Task<IBusinessResult> Post([FromBody] TerrariumVariantCreateRequest terrariumVariantCreateRequest)
     {
         return await _terrariumVariantService.CreateTerrariumVariantAsync(terrariumVariantCreateRequest);
     }
@@ -52,7 +52,7 @@ public class TerrariumVariantController : ControllerBase
     // PUT api/<TerrariumVariantController>/5
     [HttpPut("update-terrariumVariant/{id}")]
     [Authorize(Roles = "Admin,Staff,Manager")]
-    public async Task<IBusinessResult> Put([FromForm] TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
+    public async Task<IBusinessResult> Put([FromBody] TerrariumVariantUpdateRequest terrariumVariantUpdateRequest)
     {
         return await _terrariumVariantService.UpdateTerrariumVariantAsync(terrariumVariantUpdateRequest);
     }
