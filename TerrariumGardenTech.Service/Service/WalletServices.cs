@@ -126,6 +126,88 @@ namespace TerrariumGardenTech.Service.Service
                 Statistics = statistics
             };
         }
+        // ✅ ADMIN METHOD - TẤT CẢ GIAO DỊCH CỦA TẤT CẢ USER
+        public async Task<AdminAllWalletHistoryDto> GetAllWalletHistoryForAdminAsync(DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            var from = fromDate ?? DateTime.UtcNow.AddMonths(-3);
+            var to = toDate ?? DateTime.UtcNow;
+
+            // ✅ LẤY TẤT CẢ GIAO DỊCH - KHÔNG FILTER GÌ CẢ (ngoại trừ date)
+            var allSystemTransactions = await _unitOfWork.Wallet.GetAllTransactionsByWalletIdAndDateRangeAsync(from, to);
+
+            // ✅ LẤY TẤT CẢ WALLET ĐỂ MAP USER INFO
+            var allWallets = await _unitOfWork.Wallet.GetAllAsync();
+            var walletDict = allWallets.ToDictionary(w => w.WalletId, w => w);
+
+            // Convert to admin DTOs với thông tin user
+            var adminTransactionDtos = allSystemTransactions.Select(t => new AdminWalletTransactionDto
+            {
+                TransactionId = t.TransactionId,
+                WalletId = t.WalletId,
+                UserId = walletDict.ContainsKey(t.WalletId) ? walletDict[t.WalletId].UserId : 0,
+                UserWalletType = walletDict.ContainsKey(t.WalletId) ? walletDict[t.WalletId].WalletType : "Unknown",
+                Amount = t.Amount,
+                Type = t.Type,
+                CreatedDate = t.CreatedDate,
+                OrderId = t.OrderId,
+                Description = GetTransactionDescription(t)
+            }).OrderByDescending(t => t.CreatedDate).ToList();
+
+            // Tính thống kê tổng thể
+            var adminStatistics = CalculateAdminStatistics(allSystemTransactions);
+
+            // Tóm tắt các ví
+            var walletSummaries = allWallets.Select(w => new WalletSummaryDto
+            {
+                WalletId = w.WalletId,
+                UserId = w.UserId,
+                Balance = w.Balance,
+                WalletType = w.WalletType,
+                TransactionCount = allSystemTransactions.Count(t => t.WalletId == w.WalletId)
+            }).ToList();
+
+            return new AdminAllWalletHistoryDto
+            {
+                FromDate = from,
+                ToDate = to,
+                TotalTransactions = allSystemTransactions.Count,
+                TotalWallets = allWallets.Count,
+                SystemTotalBalance = allWallets.Sum(w => w.Balance),
+                AllTransactions = adminTransactionDtos, // ✅ TẤT CẢ GIAO DỊCH
+                Statistics = adminStatistics
+            };
+        }
+
+        private AdminStatisticsDto CalculateAdminStatistics(List<WalletTransaction> allTransactions)
+        {
+            var deposits = allTransactions.Where(t => t.Amount > 0).ToList();
+            var withdrawals = allTransactions.Where(t => t.Amount < 0).ToList();
+            var uniqueWallets = allTransactions.Select(t => t.WalletId).Distinct().Count();
+
+            return new AdminStatisticsDto
+            {
+                TotalSystemTransactions = allTransactions.Count,
+                TotalSystemDeposits = deposits.Sum(t => t.Amount),
+                TotalSystemWithdrawals = Math.Abs(withdrawals.Sum(t => t.Amount)),
+                TotalDepositTransactions = deposits.Count,
+                TotalWithdrawalTransactions = withdrawals.Count,
+                ActiveWalletsWithTransactions = uniqueWallets,
+                SystemNetFlow = deposits.Sum(t => t.Amount) + withdrawals.Sum(t => t.Amount),
+                AverageTransactionAmount = allTransactions.Any() ? allTransactions.Average(t => Math.Abs(t.Amount)) : 0
+            };
+        }
+
+        private string GetTransactionDescription(WalletTransaction transaction)
+        {
+            return transaction.Type switch
+            {
+                "Deposit" => "Nạp tiền",
+                "Payment" => transaction.OrderId.HasValue ? $"Thanh toán đơn hàng #{transaction.OrderId}" : "Thanh toán",
+                "MembershipPayment" => "Thanh toán membership",
+                "Refund" => transaction.OrderId.HasValue ? $"Hoàn tiền đơn hàng #{transaction.OrderId}" : "Hoàn tiền",
+                _ => transaction.Type
+            };
+        }
 
         private List<WalletTransactionDto> CalculateRunningBalance(
             List<WalletTransaction> allTransactions,
@@ -193,11 +275,11 @@ namespace TerrariumGardenTech.Service.Service
             };
         }
 
-        private WalletStatistics CalculateStatistics(List<WalletTransaction> transactions)
+        private WalletStatisticsDto CalculateStatistics(List<WalletTransaction> transactions)
         {
             if (!transactions.Any())
             {
-                return new WalletStatistics();
+                return new WalletStatisticsDto();
             }
 
             var income = transactions
@@ -208,7 +290,7 @@ namespace TerrariumGardenTech.Service.Service
                 .Where(t => !IsIncomeTransaction(t.Type))
                 .Sum(t => Math.Abs(t.Amount));
 
-            return new WalletStatistics
+            return new WalletStatisticsDto
             {
                 TotalIncome = income,
                 TotalExpense = expense,

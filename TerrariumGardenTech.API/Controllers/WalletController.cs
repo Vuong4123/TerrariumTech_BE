@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common;
@@ -71,6 +72,27 @@ namespace TerrariumGardenTech.API.Controllers
             catch (Exception ex)
             {
                 return NotFound(new BusinessResult(Const.ERROR_EXCEPTION, ex.Message));
+            }
+        }
+        [HttpGet("admin/all-history")]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> GetAllWalletHistoryForAdmin(
+       [FromQuery] DateTime? fromDate = null,
+       [FromQuery] DateTime? toDate = null)
+        {
+            try
+            {
+                var result = await _walletService.GetAllWalletHistoryForAdminAsync(fromDate, toDate);
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Lấy được {result.TotalTransactions} giao dịch từ {result.TotalWallets} ví",
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
     }

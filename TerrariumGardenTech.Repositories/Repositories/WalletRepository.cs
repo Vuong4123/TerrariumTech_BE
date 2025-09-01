@@ -43,10 +43,26 @@ namespace TerrariumGardenTech.Repositories.Repositories
                 .ToListAsync();
         }
 
+        // WalletTransactionRepository
+        public async Task<List<WalletTransaction>> GetAllTransactionsByWalletIdAndDateRangeAsync(DateTime fromDate, DateTime toDate)
+        {
+            return await _dbContext.WalletTransaction
+                .Where(t => t.CreatedDate >= fromDate &&
+                           t.CreatedDate <= toDate)
+                .OrderBy(t => t.CreatedDate)
+                .ToListAsync();
+        }
+
         public async Task<List<WalletTransaction>> GetAllTransactionsByWalletIdAsync(int walletId)
         {
             return await _dbContext.WalletTransaction
                 .Where(t => t.WalletId == walletId)
+                .OrderBy(t => t.CreatedDate)
+                .ToListAsync();
+        }
+        public async Task<List<WalletTransaction>> GetAllTransactionsByWalletAsync()
+        {
+            return await _dbContext.WalletTransaction
                 .OrderBy(t => t.CreatedDate)
                 .ToListAsync();
         }
