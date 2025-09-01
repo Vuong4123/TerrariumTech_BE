@@ -9,4 +9,5 @@ public class AccessoryDetailResponse
     public string Description { get; set; } = string.Empty;
 
     public decimal Price { get; set; }
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
 }

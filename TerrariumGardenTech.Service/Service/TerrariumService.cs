@@ -397,7 +397,7 @@ public class TerrariumService : ITerrariumService
             MaxPrice = t.MaxPrice,
             Stock = t.Stock,
             Status = t.Status,
-            Quantitative = t.Quantitative,
+            
             GeneratedByAI = t.GeneratedByAI,
             TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
             {
@@ -436,7 +436,7 @@ public class TerrariumService : ITerrariumService
             Stock = t.Stock,
             Status = t.Status,
             GeneratedByAI = t.GeneratedByAI,
-            Quantitative = t.Quantitative,
+            
             TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
             {
                 TerrariumImageId = ti.TerrariumImageId,
@@ -470,7 +470,6 @@ public class TerrariumService : ITerrariumService
             var terrariumResponse = new TerrariumResponse
             {
                 TerrariumId = terrarium.TerrariumId,
-                Quantitative = terrarium.Quantitative,
                 EnvironmentId = terrarium.EnvironmentId,
                 ShapeId = terrarium.ShapeId,
                 TankMethodId = terrarium.TankMethodId,
@@ -614,7 +613,7 @@ public class TerrariumService : ITerrariumService
             {
                 TerrariumId = t.TerrariumId,
                 TerrariumName = t.TerrariumName,
-                Quantitative = t.Quantitative,
+                
                 Description = t.Description,
                 MinPrice = t.MinPrice,
                 MaxPrice = t.MaxPrice,
@@ -660,7 +659,7 @@ public class TerrariumService : ITerrariumService
                 ShapeId = t.ShapeId,
                 TankMethodId = t.TankMethodId,
                 TerrariumName = t.TerrariumName,
-                Quantitative = t.Quantitative,
+                
                 Description = t.Description,
                 MinPrice = t.MinPrice,
                 MaxPrice = t.MaxPrice,
@@ -713,7 +712,7 @@ public class TerrariumService : ITerrariumService
                 ShapeId = t.ShapeId,
                 TankMethodId = t.TankMethodId,
                 TerrariumName = t.TerrariumName,
-                Quantitative = t.Quantitative,
+                
                 Description = t.Description,
                 MinPrice = (decimal)t.MinPrice,
                 MaxPrice = (decimal)t.MaxPrice,
@@ -775,7 +774,7 @@ public class TerrariumService : ITerrariumService
         {
             TerrariumId = t.TerrariumId,
             TerrariumName = t.TerrariumName,
-            Quantitative = t.Quantitative,
+            
             ThumbnailUrl = t.TerrariumImages?.FirstOrDefault()?.ImageUrl,
             MinPrice = t.MinPrice,
             MaxPrice = t.MaxPrice,
@@ -820,7 +819,6 @@ public class TerrariumService : ITerrariumService
                 Description = terrariumCreateRequest.Description,
                 Status = terrariumCreateRequest.Status,
                 GeneratedByAI = true,
-                Quantitative = terrariumCreateRequest.Quantitative,
                 CreatedAt = DateTime.Now
             };
 
@@ -904,7 +902,6 @@ public class TerrariumService : ITerrariumService
             terra.Description = terrariumUpdateRequest.Description;
             terra.Status = terrariumUpdateRequest.Status;
             terra.bodyHTML = terrariumUpdateRequest.bodyHTML ?? string.Empty;
-            terra.Quantitative = terrariumUpdateRequest.Quantitative;
             terra.UpdatedAt = DateTime.UtcNow;
 
             // ✅ CHỈ CẬP NHẬT TERRARIUM, KHÔNG XỬ LÝ ACCESSORY
@@ -971,7 +968,6 @@ public class TerrariumService : ITerrariumService
                 bodyHTML = terrariumCreateRequest.bodyHTML,
                 Description = terrariumCreateRequest.Description,
                 Status = terrariumCreateRequest.Status,
-                Quantitative = terrariumCreateRequest.Quantitative,
                 CreatedAt = DateTime.Now
             };
 
@@ -998,7 +994,7 @@ public class TerrariumService : ITerrariumService
             //    return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.SUCCESS_CREATE_MSG, newTerrarium);
             //}
 
-            return new BusinessResult(Const.FAIL_CREATE_CODE, Const.FAIL_CREATE_MSG);
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, Const.FAIL_CREATE_MSG);
         }
         catch (Exception ex)
         {
@@ -1062,7 +1058,7 @@ public class TerrariumService : ITerrariumService
             list.Add(new TerrariumCardResponse
             {
                 TerrariumId = t.TerrariumId,
-                Quantitative = t.Quantitative,
+                
                 TerrariumName = t.TerrariumName,
                 ThumbnailUrl = t.TerrariumImages?.FirstOrDefault()?.ImageUrl,
                 MinPrice = t.MinPrice,
