@@ -62,5 +62,15 @@ public class MembershipCreationResult
 {
     public int MembershipId { get; set; }
     public int OrderId { get; set; }
-    public MomoQrResponse MomoQrResponse { get; set; } // URL để người dùng thanh toán
+    public string PaymentMethod { get; set; }
+    public MomoQrResponse? MomoQrResponse { get; set; } // Chỉ có khi PaymentMethod = "Momo"
+    public WalletPaymentInfo? WalletPaymentInfo { get; set; } // Khi PaymentMethod = "Wallet"
+}
+public class WalletPaymentInfo
+{
+    public int WalletId { get; set; }
+    public decimal PreviousBalance { get; set; }
+    public decimal NewBalance { get; set; }
+    public decimal AmountPaid { get; set; }
+    public string Status { get; set; }
 }

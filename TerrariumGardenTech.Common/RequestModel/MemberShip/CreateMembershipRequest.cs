@@ -9,4 +9,5 @@ public class CreateMembershipRequest
     [Required] public int PackageId { get; set; } // Đảm bảo kiểu int
 
     [Required] public DateTime StartDate { get; set; }
+    [Required] public string PaymentMethod { get; set; } = "Momo"; // "Momo" hoặc "Wallet"
 }

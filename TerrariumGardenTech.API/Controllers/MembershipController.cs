@@ -7,6 +7,7 @@ using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using TerrariumGardenTech.Service.Service;
 using static Google.Cloud.Firestore.V1.StructuredQuery.Types;
 
 namespace TerrariumGardenTech.API.Controllers;
@@ -18,14 +19,17 @@ public class MembershipController : ControllerBase
     private readonly IMembershipPackageService _membershipPackageService;
     private readonly IMembershipService _membershipService;
     private readonly IMomoServices _momoServices;
+    private readonly IWalletServices _walletService;
 
     public MembershipController(IMembershipService membershipService,
         IMembershipPackageService membershipPackageService,
-        IMomoServices momoServices)
+        IMomoServices momoServices,
+        IWalletServices walletService)
     {
         _membershipService = membershipService;
         _membershipPackageService = membershipPackageService;
         _momoServices = momoServices;
+        _walletService = walletService;
     }
 
     [HttpPost("momo/create-direct")]
@@ -46,42 +50,40 @@ public class MembershipController : ControllerBase
         return Ok(rsp);
     }
 
-    // Người dùng tự mua membership
     [HttpPost("purchase")]
     [Authorize]
     public async Task<IBusinessResult> PurchaseMembership([FromBody] CreateMembershipRequest request)
     {
         try
         {
+            // ✅ Validate payment method
+            if (!new[] { "Momo", "Wallet" }.Contains(request.PaymentMethod))
+            {
+                return new BusinessResult(Const.BAD_REQUEST_CODE, "Phương thức thanh toán không hợp lệ. Chỉ hỗ trợ 'Momo' hoặc 'Wallet'.");
+            }
+
             // Kiểm tra xem package có tồn tại không
-            var package =
-                await _membershipPackageService.GetByIdAsync(request.PackageId); // Dùng _membershipPackageService
+            var package = await _membershipPackageService.GetByIdAsync(request.PackageId);
             if (package == null)
                 return new BusinessResult(Const.NOT_FOUND_CODE, "Gói membership không tồn tại.");
-            var activeMembership = _membershipService.IsMembershipExpired(new Membership() { UserId = request.UserId});
+
+            var activeMembership = _membershipService.IsMembershipExpired(new Membership() { UserId = request.UserId });
             if (!activeMembership)
             {
                 return new BusinessResult(Const.BAD_REQUEST_CODE, "Không thể đăng ký gói mới vì gói hiện tại chưa hết hạn.");
             }
-            // Tạo membership cho người dùng
-            var membershipId =
-                await _membershipService.CreateMembershipForUserAsync(request.UserId, request.PackageId,
-                    request.StartDate);
 
-            var momo = new MomoRequest
+            // ✅ Xử lý theo payment method
+            if (request.PaymentMethod == "Wallet")
             {
-                OrderId = membershipId.OrderId,
-                PayAll = true
-            };
-            var rsp = await _momoServices.CreateMomoPaymentUrl(momo);
-            var responseData = new MembershipCreationResult
+                // ✅ THANH TOÁN BẰNG VÍ
+                return await ProcessWalletPayment(request, package);
+            }
+            else
             {
-                MembershipId = membershipId.MembershipId,
-                OrderId = membershipId.OrderId,
-                MomoQrResponse = rsp
-            };
-            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership cho người dùng thành công",
-                responseData);
+                // ✅ THANH TOÁN BẰNG MOMO (Logic cũ)
+                return await ProcessMomoPayment(request, package);
+            }
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -91,7 +93,71 @@ public class MembershipController : ControllerBase
         {
             return new BusinessResult(Const.BAD_REQUEST_CODE, ex.Message);
         }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        }
     }
+
+    // ✅ XỬ LÝ THANH TOÁN BẰNG VÍ
+    private async Task<IBusinessResult> ProcessWalletPayment(CreateMembershipRequest request, dynamic package)
+    {
+        try
+        {
+            // Tạo membership và order
+            var membershipResult = await _membershipService.CreateMembershipForUserAsync(
+                request.UserId, request.PackageId, request.StartDate);
+
+            // Xử lý thanh toán ví
+            var walletPaymentResult = await _walletService.ProcessMembershipPaymentAsync(
+                request.UserId, membershipResult.OrderId, package.Price);
+
+            if (!walletPaymentResult.Success)
+            {
+                return new BusinessResult(Const.BAD_REQUEST_CODE, walletPaymentResult.Message);
+            }
+            await _membershipService.ActivateMembershipAsync(membershipResult.MembershipId);
+            var responseData = new MembershipCreationResult
+            {
+                MembershipId = membershipResult.MembershipId,
+                OrderId = membershipResult.OrderId,
+                PaymentMethod = "Wallet",
+                WalletPaymentInfo = walletPaymentResult.WalletInfo
+            };
+
+            return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Thanh toán membership bằng ví thành công", responseData);
+        }
+        catch (Exception ex)
+        {
+            return new BusinessResult(Const.ERROR_EXCEPTION, $"Lỗi thanh toán ví: {ex.Message}");
+        }
+    }
+
+    // ✅ XỬ LÝ THANH TOÁN BẰNG MOMO (Logic cũ)
+    private async Task<IBusinessResult> ProcessMomoPayment(CreateMembershipRequest request, dynamic package)
+    {
+        // Tạo membership cho người dùng
+        var membershipId = await _membershipService.CreateMembershipForUserAsync(
+            request.UserId, request.PackageId, request.StartDate);
+
+        var momo = new MomoRequest
+        {
+            OrderId = membershipId.OrderId,
+            PayAll = true
+        };
+        var rsp = await _momoServices.CreateMomoPaymentUrl(momo);
+
+        var responseData = new MembershipCreationResult
+        {
+            MembershipId = membershipId.MembershipId,
+            OrderId = membershipId.OrderId,
+            PaymentMethod = "Momo",
+            MomoQrResponse = rsp
+        };
+
+        return new BusinessResult(Const.SUCCESS_CREATE_CODE, "Tạo membership cho người dùng thành công", responseData);
+    }
+
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin,Manager")]

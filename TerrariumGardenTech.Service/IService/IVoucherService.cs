@@ -17,4 +17,5 @@ public interface IVoucherService
 
     Task<(bool ok, string reason, Voucher? voucher, int userUsed)> CanUseAsync(string code, string userId, CancellationToken ct = default);
     Task<(bool ok, string message, int remaining, int userUsed)> ConsumeAsync(string code, string userId, CancellationToken ct = default);
+    Task<bool> IsCodeExistAsync(string code, int? excludeVoucherId = null);
 }

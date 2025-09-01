@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.ResponseModel.Wallet;
 using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.Service;
 
 namespace TerrariumGardenTech.Service.IService
 {
     public interface IWalletServices
     {
+        Task<WalletPaymentResult> ProcessMembershipPaymentAsync(int userId, int orderId, decimal amount);
         Task<IBusinessResult> DepositAsync(int userId, decimal amount, string method, int? orderId = null);
         Task<IBusinessResult> PayAsync(int userId, decimal amount, int orderId);
         Task<IBusinessResult> RefundAsync(int userId, decimal amount, int orderId);
