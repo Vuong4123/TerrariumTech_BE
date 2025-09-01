@@ -20,4 +20,5 @@ public class AccessoryUpdateRequest
     public DateTime? UpdatedAt { get; set; }
 
     public string Status { get; set; } = string.Empty;
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
 }

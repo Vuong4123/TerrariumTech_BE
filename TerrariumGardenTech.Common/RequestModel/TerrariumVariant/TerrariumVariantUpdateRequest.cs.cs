@@ -8,6 +8,7 @@ public class TerrariumVariantUpdateRequest
 
     public int TerrariumId { get; set; }
 
+    public string VariantName { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string? UrlImage { get; set; } = string.Empty;
     public int StockQuantity { get; set; }

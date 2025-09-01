@@ -23,5 +23,6 @@ public class AccessoryResponse
     public int FeedbackCount { get; set; }
     // ✅ mới
     public int PurchaseCount { get; set; }
+    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
     public List<AccessoryImageResponse> AccessoryImages { get; set; } = [];
 }

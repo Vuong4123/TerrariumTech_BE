@@ -19,5 +19,4 @@ public class TerrariumCreateRequest
     public string Description { get; set; } = string.Empty;
     public string Status { get; set; } = "Active"; // Default status is "Available"
     public string bodyHTML { get; set; } = string.Empty;
-    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
 }

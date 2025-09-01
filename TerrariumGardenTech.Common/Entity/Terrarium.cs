@@ -30,7 +30,6 @@ public partial class Terrarium
     public decimal MinPrice { get; set; }  // Giá thấp nhất
     public decimal MaxPrice { get; set; }  // Giá cao nhất
     public bool GeneratedByAI { get; set; } = false; // Trạng thái tạo bởi AI
-    public string Quantitative { get; set; } // Đơn vị tính (ví dụ: "bộ", "cái", "chậu")
 
     public virtual ICollection<TerrariumAccessory> TerrariumAccessory { get; set; } = [];
     public virtual ICollection<TerrariumImage> TerrariumImages { get; set; } = [];
