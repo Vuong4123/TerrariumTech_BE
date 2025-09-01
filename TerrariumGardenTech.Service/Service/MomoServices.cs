@@ -266,117 +266,7 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
-        public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
-        {
-            var momoSection = _config.GetSection("Momo");
-
-            string endpoint = momoSection["PaymentUrl"]!;
-            string partnerCode = momoSection["PartnerCode"]!;
-            string accessKey = momoSection["AccessKey"]!;
-            string secretKey = momoSection["SecretKey"]!;
-            string returnUrl = momoSection["ReturnUrl"]!;
-            string ipnUrl = momoSection["IpnUrl"]!;
-            string requestType = "captureWallet";
-
-            // 1) Tính tiền phải trả
-            var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(req.OrderId)
-                         ?? throw new Exception("Order not found");
-
-            decimal baseAmount = order.TotalAmount > 0
-                ? order.TotalAmount
-                : order.OrderItems.Sum(i => i.TotalPrice ?? 0);
-
-            //decimal payable = req.PayAll
-            //    ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
-            //    : (order.Deposit ?? baseAmount);
-            decimal payable = req.PayAll
-    ? baseAmount
-    : (order.Deposit ?? baseAmount);
-
-            if (payable <= 0) throw new Exception("Invalid amount");
-
-            // 2) amount phải là số nguyên (VND) – KHÔNG ToString theo culture
-            long amount = (long)payable;
-
-            // 3) orderId/requestId tuyệt đối duy nhất
-            string orderId = $"{req.OrderId}-{Guid.NewGuid():N}";
-            string requestId = Guid.NewGuid().ToString("N");
-
-            // 4) orderInfo an toàn – loại bỏ ký tự phá vỡ chuỗi ký
-            string orderInfoRaw = $"{req.OrderInfo} {(req.PayAll ? "(Full -10%)" : "(Partial)")}";
-            string orderInfo = SanitizeOrderInfo(orderInfoRaw); // bỏ &, =, \r\n,…
-
-            // 5) extraData base64 (có thể để rỗng)
-            string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes("stk=0329126894"));
-
-            // 6) raw signature – đúng thứ tự và giá trị
-            var fields = new (string k, string v)[]
-            {
-                ("accessKey",   accessKey),
-                ("amount",      amount.ToString(CultureInfo.InvariantCulture)),
-                ("extraData",   extraData),
-                ("ipnUrl",      ipnUrl),
-                ("orderId",     orderId),
-                ("orderInfo",   orderInfo),
-                ("partnerCode", partnerCode),
-                ("redirectUrl", returnUrl),
-                ("requestId",   requestId),
-                ("requestType", requestType),
-            };
-            string rawHash = string.Join("&", fields.Select(p => $"{p.k}={p.v}"));
-
-            string signature = HmacSha256(secretKey, rawHash);
-
-            // 7) Gửi payload – để amount là số, không phải string
-            var payload = new
-            {
-                partnerCode,
-                accessKey,
-                requestId,
-                amount,
-                orderId,
-                orderInfo,
-                redirectUrl = returnUrl,
-                ipnUrl,
-                extraData,
-                requestType,
-                signature,
-                lang = "vi"
-            };
-
-            using var reqMsg = new HttpRequestMessage(HttpMethod.Post, endpoint)
-            {
-                Content = JsonContent.Create(payload)
-            };
-
-            // timeout phòng kẹt
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
-
-            var httpRes = await _httpClient.SendAsync(reqMsg);
-            var body = await httpRes.Content.ReadAsStringAsync();
-
-            if (!httpRes.IsSuccessStatusCode)
-                throw new Exception($"MoMo HTTP {(int)httpRes.StatusCode}: {body}");
-
-            var momo = JsonSerializer.Deserialize<MomoCreateResponse>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? throw new Exception("Cannot parse MoMo response");
-
-            // 8) Kiểm tra resultCode
-            if (momo.ResultCode != 0)
-                throw new Exception($"MoMo error {momo.ResultCode}: {momo.Message ?? "Unknown"}");
-
-            var payUrl = momo.PayUrl ?? momo.Deeplink ?? momo.QrCodeUrl;
-            if (string.IsNullOrWhiteSpace(payUrl))
-                throw new Exception("MoMo response missing payUrl");
-
-            return new MomoQrResponse
-            {
-                PayUrl = payUrl!,
-                QrImageBase64 = GenerateBase64QrCode(payUrl!)
-            };
-        }
+   
 
 
 
@@ -450,9 +340,125 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
+        public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
+        {
+            var momoSection = _config.GetSection("Momo");
 
+            string endpoint = momoSection["PaymentUrl"]!;
+            string partnerCode = momoSection["PartnerCode"]!;
+            string accessKey = momoSection["AccessKey"]!;
+            string secretKey = momoSection["SecretKey"]!;
+            string returnUrl = momoSection["ReturnUrl"]!;
+            string ipnUrl = momoSection["IpnUrl"]!;
+            string requestType = "captureWallet";
 
-        // NEW: xử lý return URL (user được redirect về)
+            // 1) Lấy đơn hàng
+            var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(req.OrderId)
+                         ?? throw new Exception("Order not found");
+
+            // Base (phòng khi FE không gửi FinalAmount)
+            decimal baseAmount = order.TotalAmount > 0
+                ? order.TotalAmount
+                : order.OrderItems.Sum(i => i.TotalPrice ?? 0m);
+
+            // 2) Số tiền thanh toán: ưu tiên dùng số FE đã tính (FinalAmount)
+            decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+
+            decimal fallback = req.PayAll ? baseAmount : (order.Deposit ?? baseAmount);
+            decimal payableDec = RoundVnd(req.FinalAmount.HasValue && req.FinalAmount.Value > 0
+                                          ? req.FinalAmount.Value
+                                          : fallback);
+
+            if (payableDec <= 0) throw new Exception("Invalid amount");
+
+            // 3) amount phải là số nguyên (VND)
+            long amount = (long)payableDec;
+
+            // 4) orderId/requestId duy nhất
+            string orderId = $"{req.OrderId}-{Guid.NewGuid():N}";
+            string requestId = Guid.NewGuid().ToString("N");
+
+            // 5) orderInfo gọn, không đề cập 10% ở BE
+            string orderInfoRaw = $"{SanitizeOrderInfo(req.OrderInfo)} {(req.PayAll ? "(Full)" : "(Partial)")}";
+            string orderInfo = orderInfoRaw;
+
+            // 6) extraData: nhúng thông tin để BE đối soát (voucherId, finalAmount từ FE)
+            // -> BE sẽ đọc ở return và kiểm tra khớp với policy.
+            var extraObj = new
+            {
+                voucherId = req.VoucherId,
+                finalAmount = payableDec, // FE đã tính
+                client = "web",      // tuỳ bạn thích log
+                ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+            string extraJson = JsonSerializer.Serialize(extraObj);
+            string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes(extraJson));
+
+            // 7) raw signature – đúng thứ tự Momo (tuỳ phiên bản API của bạn)
+            var fields = new (string k, string v)[]
+            {
+        ("accessKey",   accessKey),
+        ("amount",      amount.ToString(CultureInfo.InvariantCulture)),
+        ("extraData",   extraData),
+        ("ipnUrl",      ipnUrl),
+        ("orderId",     orderId),
+        ("orderInfo",   orderInfo),
+        ("partnerCode", partnerCode),
+        ("redirectUrl", returnUrl),
+        ("requestId",   requestId),
+        ("requestType", requestType),
+            };
+            string rawHash = string.Join("&", fields.Select(p => $"{p.k}={p.v}"));
+            string signature = HmacSha256(secretKey, rawHash);
+
+            // 8) Payload
+            var payload = new
+            {
+                partnerCode,
+                accessKey,
+                requestId,
+                amount,
+                orderId,
+                orderInfo,
+                redirectUrl = returnUrl,
+                ipnUrl,
+                extraData,
+                requestType,
+                signature,
+                lang = "vi"
+            };
+
+            using var reqMsg = new HttpRequestMessage(HttpMethod.Post, endpoint)
+            {
+                Content = JsonContent.Create(payload)
+            };
+
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            var httpRes = await _httpClient.SendAsync(reqMsg);
+            var body = await httpRes.Content.ReadAsStringAsync();
+
+            if (!httpRes.IsSuccessStatusCode)
+                throw new Exception($"MoMo HTTP {(int)httpRes.StatusCode}: {body}");
+
+            var momo = JsonSerializer.Deserialize<MomoCreateResponse>(body, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? throw new Exception("Cannot parse MoMo response");
+
+            if (momo.ResultCode != 0)
+                throw new Exception($"MoMo error {momo.ResultCode}: {momo.Message ?? "Unknown"}");
+
+            var payUrl = momo.PayUrl ?? momo.Deeplink ?? momo.QrCodeUrl
+                         ?? throw new Exception("MoMo response missing payUrl");
+
+            return new MomoQrResponse
+            {
+                PayUrl = payUrl,
+                QrImageBase64 = GenerateBase64QrCode(payUrl)
+            };
+        }
+
         public async Task<IBusinessResult> MomoReturnExecute(IQueryCollection query)
         {
             try
@@ -495,28 +501,137 @@ namespace TerrariumGardenTech.Service.Service
                 if (order == null)
                     return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
 
+                // ===== Helpers =====
                 decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+                DateTime UtcNow() => DateTime.UtcNow;
 
-                var baseAmount = order.TotalAmount > 0
-                    ? order.TotalAmount
-                    : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
+                // Base gốc để tính giảm
+                decimal original =
+    (order.OriginalAmount.HasValue && order.OriginalAmount.Value > 0)
+        ? RoundVnd(order.OriginalAmount.Value)   // <-- dùng .Value
+        : RoundVnd(
+            (order.TotalAmount > 0
+                ? order.TotalAmount
+                : (order.OrderItems?.Sum(i => i.TotalPrice ?? 0m) ?? 0m)  // Sum trả về decimal? => ?? 0m
+            )
+          );
 
-                baseAmount = RoundVnd(baseAmount);
-                var fullAfter10 = RoundVnd(baseAmount);
-
+                // MoMo amount
                 if (!long.TryParse(Get("amount"), out var amt) || amt <= 0)
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
-
                 var paid = RoundVnd(amt);
-                var isPayAll = (paid == fullAfter10);
-                var expected = isPayAll ? fullAfter10 : RoundVnd(order.Deposit ?? baseAmount);
 
-                if (paid != expected)
-                    return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
+                // Partial vs Full
+                decimal depositAmount = RoundVnd(order.Deposit ?? 0m);
+                bool isPartial = (depositAmount > 0) && (paid == depositAmount);
+                bool isPayAll = !isPartial;
+
+                // Lấy voucherId
+                int? voucherId = order.VoucherId;
+                if (!voucherId.HasValue || voucherId.Value <= 0)
+                {
+                    var vStr = Get("voucherId");
+                    if (int.TryParse(vStr, out var vid) && vid > 0) voucherId = vid;
+                }
+
+                // Validate & tính giảm từ voucher (CHỈ áp khi FULL). KHÔNG tính 10% ở BE.
+                async Task<(decimal discount, string reason, bool ok, Voucher voucher)> GetVoucherDiscountAndValidateAsync(
+                    int? vid, decimal baseForCalc, int userId)
+                {
+                    if (!vid.HasValue || vid.Value <= 0)
+                        return (0m, "No voucher", true, null);
+
+                    var voucher = await _unitOfWork.Voucher.GetByIdAsync(vid.Value);
+                    if (voucher == null)
+                        return (0m, "Voucher not found", false, null);
+
+                    var now = UtcNow();
+
+                    // Trạng thái
+                    if (!string.Equals(voucher.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                        return (0m, "Voucher inactive", false, voucher);
+
+                    // Thời gian hiệu lực
+                    if (voucher.ValidFrom.HasValue && now < voucher.ValidFrom.Value.ToUniversalTime())
+                        return (0m, "Voucher not started", false, voucher);
+                    if (voucher.ValidTo.HasValue && now > voucher.ValidTo.Value.ToUniversalTime())
+                        return (0m, "Voucher expired", false, voucher);
+
+                    // Hạn mức usage tổng
+                    if (voucher.TotalUsage > 0 && voucher.RemainingUsage <= 0)
+                        return (0m, "Voucher out of stock", false, voucher);
+
+                    // Min order
+                    if (voucher.MinOrderAmount.HasValue && baseForCalc < voucher.MinOrderAmount.Value)
+                        return (0m, "Order below min amount", false, voucher);
+
+                    // Voucher cá nhân
+                    if (voucher.IsPersonal)
+                    {
+                        // so sánh string với int: đổi int -> string
+                        if (string.IsNullOrWhiteSpace(voucher.TargetUserId) || voucher.TargetUserId != userId.ToString())
+                            return (0m, "Voucher not for this user", false, voucher);
+
+                        // Giới hạn mỗi user (nếu có)
+                        if (voucher.PerUserUsageLimit.HasValue && voucher.PerUserUsageLimit.Value > 0)
+                        {
+                            // Không dùng VoucherUsage ở đây vì schema chưa rõ → coi như pass
+                            // Nếu bạn cần check thật, gửi schema VoucherUsage mình gắn lại.
+                        }
+                    }
+
+                    // Tính giảm: Percent + Amount (nullable → dùng GetValueOrDefault)
+                    decimal percent = voucher.DiscountPercent.GetValueOrDefault(0m);
+                    decimal amount = voucher.DiscountAmount.GetValueOrDefault(0m);
+
+                    decimal discount = 0m;
+                    if (percent > 0) discount += RoundVnd(baseForCalc * (percent / 100m));
+                    if (amount > 0) discount += RoundVnd(amount);
+
+                    if (discount > baseForCalc) discount = baseForCalc;
+                    if (discount <= 0) return (0m, "Voucher discount is zero", false, voucher);
+
+                    return (discount, null, true, voucher);
+                }
+
+                var (voucherDiscount, voucherReason, voucherOk, voucherEntity) =
+                    await GetVoucherDiscountAndValidateAsync(voucherId, original, order.UserId);
+
+                // Chỉ áp voucher khi FULL (nếu muốn áp cả partial, đổi điều kiện tại đây)
+                decimal voucherApplied = (isPayAll && voucherOk) ? RoundVnd(voucherDiscount) : 0m;
+
+                // KHÔNG tính 10% ở BE (FE xử lý). 
+                // Để đối soát linh hoạt, vẫn cho phép paid = original - voucher  hoặc original - voucher - 10%.
+                decimal expectedFull_VoucherOnly = RoundVnd(original - voucherApplied);
+                decimal expectedFull_VoucherAnd10 = RoundVnd(original - (voucherApplied + RoundVnd(original * 0.10m)));
+                decimal expectedPartial = depositAmount > 0 ? depositAmount : RoundVnd(original);
+
+                bool amountOk;
+                if (isPayAll)
+                {
+                    // LINH HOẠT: chấp nhận 1 trong 2 (tuỳ FE có trừ 10% không)
+                    amountOk = (paid == expectedFull_VoucherOnly) || (paid == expectedFull_VoucherAnd10);
+
+                    // --- KHẮT KHE (chọn một, bỏ dòng trên) ---
+                    // amountOk = (paid == expectedFull_VoucherOnly);   // chỉ voucher
+                    // amountOk = (paid == expectedFull_VoucherAnd10);  // bắt buộc FE trừ 10%
+                }
+                else
+                {
+                    amountOk = (paid == expectedPartial);
+                }
+
+                if (!amountOk)
+                {
+                    var expStr = isPayAll
+                        ? $"{expectedFull_VoucherOnly} or {expectedFull_VoucherAnd10}"
+                        : $"{expectedPartial}";
+                    return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expStr}");
+                }
 
                 var success = Get("resultCode") == "0";
 
-                // ✅ CHỈ XỬ LÝ KHI PAYMENT SUCCESS
+                // ===== Ghi nhận =====
                 if (success)
                 {
                     order.PaymentStatus = "Paid";
@@ -524,7 +639,24 @@ namespace TerrariumGardenTech.Service.Service
 
                     if (isPayAll)
                     {
-                        order.DiscountAmount = RoundVnd(baseAmount * 0.1m);
+                        // LƯU CHỈ tiền voucher (không bao gồm 10%)
+                        order.DiscountAmount = voucherApplied;
+
+                        // Phản ánh đúng số KH đã trả (bao gồm case FE có/không trừ 10%)
+                        order.TotalAmount = paid;
+
+                        // Trừ RemainingUsage nếu có
+                        if (voucherEntity != null && voucherId.HasValue && voucherId.Value > 0 && voucherApplied > 0)
+                        {
+                            if (voucherEntity.TotalUsage > 0 && voucherEntity.RemainingUsage > 0)
+                            {
+                                voucherEntity.RemainingUsage -= 1;
+                                await _unitOfWork.Voucher.UpdateAsync(voucherEntity);
+                            }
+
+                            // BỎ ghi VoucherUsage vì schema chưa có các field báo lỗi ở hình.
+                            // Khi bạn cung cấp class VoucherUsage (property nào có), mình thêm lại đoạn AddAsync.
+                        }
                     }
 
                     await _unitOfWork.Order.UpdateAsync(order);
@@ -536,13 +668,13 @@ namespace TerrariumGardenTech.Service.Service
                         PaymentMethod = "MOMO",
                         PaymentAmount = paid,
                         Status = "Paid",
-                        PaymentDate = DateTime.UtcNow
+                        PaymentDate = UtcNow()
                     });
 
-                    // ✅ TRỪ STOCK KHI MOMO PAYMENT SUCCESS - CHỈ CHO AI TERRARIUM
                     await ReduceStockForPaidOrder(order);
-
                     await _unitOfWork.SaveAsync();
+
+                    return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment success");
                 }
                 else
                 {
@@ -557,23 +689,254 @@ namespace TerrariumGardenTech.Service.Service
                         PaymentMethod = "MOMO",
                         PaymentAmount = paid,
                         Status = "Failed",
-                        PaymentDate = DateTime.UtcNow
+                        PaymentDate = UtcNow()
                     });
 
                     await _unitOfWork.SaveAsync();
+                    return new BusinessResult(Const.FAIL_READ_CODE, "Payment failed");
                 }
-
-                return new BusinessResult(
-                    success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
-                    success ? "Payment success" : "Payment failed"
-                );
             }
             catch (Exception ex)
             {
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
         }
+        #region backup
 
+        //    public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
+        //    {
+        //        var momoSection = _config.GetSection("Momo");
+
+        //        string endpoint = momoSection["PaymentUrl"]!;
+        //        string partnerCode = momoSection["PartnerCode"]!;
+        //        string accessKey = momoSection["AccessKey"]!;
+        //        string secretKey = momoSection["SecretKey"]!;
+        //        string returnUrl = momoSection["ReturnUrl"]!;
+        //        string ipnUrl = momoSection["IpnUrl"]!;
+        //        string requestType = "captureWallet";
+
+        //        // 1) Tính tiền phải trả
+        //        var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(req.OrderId)
+        //                     ?? throw new Exception("Order not found");
+
+        //        decimal baseAmount = order.TotalAmount > 0
+        //            ? order.TotalAmount
+        //            : order.OrderItems.Sum(i => i.TotalPrice ?? 0);
+
+        //        //decimal payable = req.PayAll
+        //        //    ? Math.Round(baseAmount * 0.9m, 0, MidpointRounding.AwayFromZero)
+        //        //    : (order.Deposit ?? baseAmount);
+        //        decimal payable = req.PayAll
+        //? baseAmount
+        //: (order.Deposit ?? baseAmount);
+
+        //        if (payable <= 0) throw new Exception("Invalid amount");
+
+        //        // 2) amount phải là số nguyên (VND) – KHÔNG ToString theo culture
+        //        long amount = (long)payable;
+
+        //        // 3) orderId/requestId tuyệt đối duy nhất
+        //        string orderId = $"{req.OrderId}-{Guid.NewGuid():N}";
+        //        string requestId = Guid.NewGuid().ToString("N");
+
+        //        // 4) orderInfo an toàn – loại bỏ ký tự phá vỡ chuỗi ký
+        //        string orderInfoRaw = $"{req.OrderInfo} {(req.PayAll ? "(Full -10%)" : "(Partial)")}";
+        //        string orderInfo = SanitizeOrderInfo(orderInfoRaw); // bỏ &, =, \r\n,…
+
+        //        // 5) extraData base64 (có thể để rỗng)
+        //        string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes("stk=0329126894"));
+
+        //        // 6) raw signature – đúng thứ tự và giá trị
+        //        var fields = new (string k, string v)[]
+        //        {
+        //            ("accessKey",   accessKey),
+        //            ("amount",      amount.ToString(CultureInfo.InvariantCulture)),
+        //            ("extraData",   extraData),
+        //            ("ipnUrl",      ipnUrl),
+        //            ("orderId",     orderId),
+        //            ("orderInfo",   orderInfo),
+        //            ("partnerCode", partnerCode),
+        //            ("redirectUrl", returnUrl),
+        //            ("requestId",   requestId),
+        //            ("requestType", requestType),
+        //        };
+        //        string rawHash = string.Join("&", fields.Select(p => $"{p.k}={p.v}"));
+
+        //        string signature = HmacSha256(secretKey, rawHash);
+
+        //        // 7) Gửi payload – để amount là số, không phải string
+        //        var payload = new
+        //        {
+        //            partnerCode,
+        //            accessKey,
+        //            requestId,
+        //            amount,
+        //            orderId,
+        //            orderInfo,
+        //            redirectUrl = returnUrl,
+        //            ipnUrl,
+        //            extraData,
+        //            requestType,
+        //            signature,
+        //            lang = "vi"
+        //        };
+
+        //        using var reqMsg = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        //        {
+        //            Content = JsonContent.Create(payload)
+        //        };
+
+        //        // timeout phòng kẹt
+        //        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+        //        var httpRes = await _httpClient.SendAsync(reqMsg);
+        //        var body = await httpRes.Content.ReadAsStringAsync();
+
+        //        if (!httpRes.IsSuccessStatusCode)
+        //            throw new Exception($"MoMo HTTP {(int)httpRes.StatusCode}: {body}");
+
+        //        var momo = JsonSerializer.Deserialize<MomoCreateResponse>(body, new JsonSerializerOptions
+        //        {
+        //            PropertyNameCaseInsensitive = true
+        //        }) ?? throw new Exception("Cannot parse MoMo response");
+
+        //        // 8) Kiểm tra resultCode
+        //        if (momo.ResultCode != 0)
+        //            throw new Exception($"MoMo error {momo.ResultCode}: {momo.Message ?? "Unknown"}");
+
+        //        var payUrl = momo.PayUrl ?? momo.Deeplink ?? momo.QrCodeUrl;
+        //        if (string.IsNullOrWhiteSpace(payUrl))
+        //            throw new Exception("MoMo response missing payUrl");
+
+        //        return new MomoQrResponse
+        //        {
+        //            PayUrl = payUrl!,
+        //            QrImageBase64 = GenerateBase64QrCode(payUrl!)
+        //        };
+        //    }
+
+        //// NEW: xử lý return URL (user được redirect về)
+        //public async Task<IBusinessResult> MomoReturnExecute(IQueryCollection query)
+        //{
+        //    try
+        //    {
+        //        var accessKey = _config["Momo:AccessKey"];
+        //        var secretKey = _config["Momo:SecretKey"];
+
+        //        string Get(string k) => query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
+
+        //        // MoMo yêu cầu thứ tự CỐ ĐỊNH
+        //        var raw = string.Join("&", new[]
+        //        {
+        //    $"accessKey={accessKey}",
+        //    $"amount={Get("amount")}",
+        //    $"extraData={Get("extraData")}",
+        //    $"message={Get("message")}",
+        //    $"orderId={Get("orderId")}",
+        //    $"orderInfo={Get("orderInfo")}",
+        //    $"orderType={Get("orderType")}",
+        //    $"partnerCode={Get("partnerCode")}",
+        //    $"payType={Get("payType")}",
+        //    $"requestId={Get("requestId")}",
+        //    $"responseTime={Get("responseTime")}",
+        //    $"resultCode={Get("resultCode")}",
+        //    $"transId={Get("transId")}"
+        //});
+
+        //        var calcSig = CreateSignature(secretKey, raw);
+        //        var signature = Get("signature");
+
+        //        if (!string.Equals(calcSig, signature, StringComparison.OrdinalIgnoreCase))
+        //            return new BusinessResult(Const.FAIL_READ_CODE, "Invalid signature");
+
+        //        var orderIdRaw = Get("orderId");
+        //        var idStr = orderIdRaw?.Split('-').FirstOrDefault();
+        //        if (!int.TryParse(idStr, out var orderId))
+        //            return new BusinessResult(Const.FAIL_READ_CODE, "Invalid orderId");
+
+        //        var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
+        //        if (order == null)
+        //            return new BusinessResult(Const.NOT_FOUND_CODE, "Order not found");
+
+        //        decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+
+        //        var baseAmount = order.TotalAmount > 0
+        //            ? order.TotalAmount
+        //            : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
+
+        //        baseAmount = RoundVnd(baseAmount);
+        //        var fullAfter10 = RoundVnd(baseAmount);
+
+        //        if (!long.TryParse(Get("amount"), out var amt) || amt <= 0)
+        //            return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
+
+        //        var paid = RoundVnd(amt);
+        //        var isPayAll = (paid == fullAfter10);
+        //        var expected = isPayAll ? fullAfter10 : RoundVnd(order.Deposit ?? baseAmount);
+
+        //        if (paid != expected)
+        //            return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expected}");
+
+        //        var success = Get("resultCode") == "0";
+
+        //        // ✅ CHỈ XỬ LÝ KHI PAYMENT SUCCESS
+        //        if (success)
+        //        {
+        //            order.PaymentStatus = "Paid";
+        //            order.TransactionId = Get("transId");
+
+        //            if (isPayAll)
+        //            {
+        //                order.DiscountAmount = RoundVnd(baseAmount * 0.1m);
+        //            }
+
+        //            await _unitOfWork.Order.UpdateAsync(order);
+
+        //            order.Payment ??= new List<Payment>();
+        //            order.Payment.Add(new Payment
+        //            {
+        //                OrderId = order.OrderId,
+        //                PaymentMethod = "MOMO",
+        //                PaymentAmount = paid,
+        //                Status = "Paid",
+        //                PaymentDate = DateTime.UtcNow
+        //            });
+
+        //            // ✅ TRỪ STOCK KHI MOMO PAYMENT SUCCESS - CHỈ CHO AI TERRARIUM
+        //            await ReduceStockForPaidOrder(order);
+
+        //            await _unitOfWork.SaveAsync();
+        //        }
+        //        else
+        //        {
+        //            order.PaymentStatus = "Failed";
+        //            order.TransactionId = Get("transId");
+        //            await _unitOfWork.Order.UpdateAsync(order);
+
+        //            order.Payment ??= new List<Payment>();
+        //            order.Payment.Add(new Payment
+        //            {
+        //                OrderId = order.OrderId,
+        //                PaymentMethod = "MOMO",
+        //                PaymentAmount = paid,
+        //                Status = "Failed",
+        //                PaymentDate = DateTime.UtcNow
+        //            });
+
+        //            await _unitOfWork.SaveAsync();
+        //        }
+
+        //        return new BusinessResult(
+        //            success ? Const.SUCCESS_UPDATE_CODE : Const.FAIL_READ_CODE,
+        //            success ? "Payment success" : "Payment failed"
+        //        );
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
+        //    }
+        //}
+        #endregion
 
         // NEW: xử lý IPN (server→server)
         public async Task<IBusinessResult> MomoIpnExecute(MomoIpnModel body)

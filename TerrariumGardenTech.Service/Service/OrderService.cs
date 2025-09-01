@@ -49,6 +49,7 @@ public class OrderService : IOrderService
                 OrderId = order.OrderId,
                 UserId = order.UserId,
                 AddressId = order.AddressId,
+                VoucherId = order.VoucherId,
                 TotalAmount = order.TotalAmount,
                 OriginalAmount = order.OriginalAmount, // ✅ THÊM
                 DiscountAmount = order.DiscountAmount,   // ✅ THÊM
@@ -87,6 +88,7 @@ public class OrderService : IOrderService
         {
             OrderId = order.OrderId,
             UserId = order.UserId,
+            VoucherId = order.VoucherId,
             AddressId = order.AddressId,
             TotalAmount = order.TotalAmount,
             OriginalAmount = order.OriginalAmount, // ✅ THÊM
