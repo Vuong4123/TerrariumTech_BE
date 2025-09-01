@@ -19,4 +19,6 @@ public class OrderItemCreateRequest
     public int? TerrariumVariantId { get; set; }
     public int? AccessoryQuantity { get; set; }
     public int? TerrariumVariantQuantity { get; set; }
+    public int? ComboId { get; set; }
+    public int? ComboQuantity { get; set; }
 }

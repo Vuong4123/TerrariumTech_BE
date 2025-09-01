@@ -21,7 +21,6 @@ public class OrderCreateRequest
     public int? VoucherId { get; set; }
     public decimal? Deposit { get; set; }
     public int? AddressId { get; set; }
-    public int? ComboId { get; set; }
     public List<OrderItemCreateRequest> Items { get; set; } = new();
     public decimal TotalAmountOld { get; set; }  // Tổng tiền gốc (trước giảm giá)
     public decimal TotalAmountNew { get; set; }  // Tổng tiền sau giảm giá
