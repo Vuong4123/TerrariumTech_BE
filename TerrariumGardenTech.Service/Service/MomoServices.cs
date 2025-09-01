@@ -499,7 +499,7 @@ namespace TerrariumGardenTech.Service.Service
                     : RoundVnd(order.OrderItems?.Sum(i => i.TotalPrice ?? 0) ?? 0);
 
                 baseAmount = RoundVnd(baseAmount);
-                var fullAfter10 = RoundVnd(baseAmount * 0.9m);
+                var fullAfter10 = RoundVnd(baseAmount);
 
                 if (!long.TryParse(Get("amount"), out var amt) || amt <= 0)
                     return new BusinessResult(Const.FAIL_READ_CODE, "Invalid amount");
