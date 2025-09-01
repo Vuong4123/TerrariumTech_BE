@@ -46,6 +46,11 @@ public class AddComboToCartRequest
     public int ComboId { get; set; }
     public int Quantity { get; set; } = 1;
 }
+public class UpdateComboQuantityRequest
+{
+    public int ComboId { get; set; }
+    public int NewQuantity { get; set; }
+}
 public class GetCombosRequest
 {
     public int? CategoryId { get; set; }
