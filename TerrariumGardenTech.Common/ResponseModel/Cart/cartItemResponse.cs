@@ -17,33 +17,33 @@ using TerrariumGardenTech.Repositories.Entity;
 //}
 
 public class CartItemResponse
-    {
-        public int CartItemId { get; set; }
-        public int CartId { get; set; }
-        public int TerrariumId { get; set; }
+{
+    public int CartItemId { get; set; }
+    public int CartId { get; set; }
+    public int TerrariumId { get; set; }
 
-        // Single product fields
-        public int? AccessoryId { get; set; }
-        public int? TerrariumVariantId { get; set; }
+    // Single product fields
+    public int? AccessoryId { get; set; }
+    public int? TerrariumVariantId { get; set; }
 
-        // Combo fields
-        public int? ComboId { get; set; }
-        public string? ComboName { get; set; }
-        public decimal? ComboPrice { get; set; }
-        public decimal? ComboOriginalPrice { get; set; }
-        public decimal? ComboDiscountPercent { get; set; }
-        public List<ComboItemResponse>? ComboItems { get; set; }
+    // Combo fields
+    public int? ComboId { get; set; }
+    public string? ComboName { get; set; }
+    public decimal? ComboPrice { get; set; }
+    public decimal? ComboOriginalPrice { get; set; }
+    public decimal? ComboDiscountPercent { get; set; }
+    public List<ComboItemResponse>? ComboItems { get; set; }
 
-        public List<CartItemDetail> Item { get; set; } = new();
-        public int TotalCartQuantity { get; set; }
-        public decimal TotalCartPrice { get; set; }
-        public string ItemType { get; set; } = string.Empty;
-        public bool IsInStock { get; set; } = true;
-        public int MaxQuantity { get; set; }
+    public List<CartItemDetail> Item { get; set; } = new();
+    public int TotalCartQuantity { get; set; }
+    public decimal TotalCartPrice { get; set; }
+    public string ItemType { get; set; } = string.Empty;
+    public bool IsInStock { get; set; } = true;
+    public int MaxQuantity { get; set; }
 
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-    }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
 
 public class CartItemDetail
 {
@@ -60,104 +60,111 @@ public class CartItemDetail
     public List<TerrariumVariantResponse>? TerrariumVariants { get; set; } // ✅ Fix property name
 }
 public class TerrariumVariantResponse
-    {
-        public int TerrariumVariantId { get; set; }
+{
+    public int TerrariumVariantId { get; set; }
 
-        public int TerrariumId { get; set; }
+    public int TerrariumId { get; set; }
 
-        public string VariantName { get; set; }
+    public string VariantName { get; set; }
 
-        public decimal Price { get; set; }
+    public decimal Price { get; set; }
 
-        public int StockQuantity { get; set; }
-        public string UrlImage { get; set; }
-        public DateTime? CreatedAt { get; set; }
+    public int StockQuantity { get; set; }
+    public string UrlImage { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
-        public DateTime? UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public List<TerrariumVariantAccessoryResponse> TerrariumVariantAccessories { get; set; } = new();
 }
 public class TerrariumVariantAccessoryResponse
-    {
-        public int TerrariumVariantAccessoryId { get; set; }
-        public int TerrariumVariantId { get; set; }
-        public int AccessoryId { get; set; }
-        public int Quantity { get; set; } = 1; // Số lượng accessory cần cho variant này
+{
+    public int TerrariumVariantAccessoryId { get; set; }
+    public int TerrariumVariantId { get; set; }
+    public int AccessoryId { get; set; }
+    public string AccessoryName { get; set; } = string.Empty;
+    public string AccessoryDescription { get; set; } = string.Empty;
+    public decimal AccessoryPrice { get; set; }
+    public int AccessoryStockQuantity { get; set; } // ✅ THÊM STOCK QUANTITY CỦA ACCESSORY
+    public string AccessorySize { get; set; } = string.Empty;
+    public string AccessoryQuantitative { get; set; } = string.Empty; // Đơn vị tính
+    public int Quantity { get; set; } = 1; // Số lượng accessory cần cho variant này
 }
+
 /// <summary>
 /// Response cho một bundle (bể + phụ kiện kèm theo)
 /// </summary>
 public class CartBundleResponse
-    {
-        /// <summary>
-        /// Thông tin bể thủy sinh chính
-        /// </summary>
-        public CartItemResponse MainItem { get; set; }
-
-        /// <summary>
-        /// Danh sách phụ kiện kèm theo bể
-        /// </summary>
-        public List<CartItemResponse> BundleAccessories { get; set; } = new();
-
-        /// <summary>
-        /// Tổng tiền của cả bundle (bể + tất cả phụ kiện)
-        /// </summary>
-        public decimal TotalBundlePrice { get; set; }
-
-        /// <summary>
-        /// Tổng số lượng sản phẩm trong bundle
-        /// </summary>
-        public int TotalBundleQuantity { get; set; }
-
-        /// <summary>
-        /// Tự động tính toán tổng tiền và số lượng
-        /// </summary>
-        public void UpdateTotals()
-        {
-            TotalBundlePrice = (MainItem?.TotalCartPrice ?? 0) +
-                              BundleAccessories.Sum(x => x.TotalCartPrice);
-
-            TotalBundleQuantity = (MainItem?.TotalCartQuantity ?? 0) +
-                                 BundleAccessories.Sum(x => x.TotalCartQuantity);
-        }
-    }
+{
+    /// <summary>
+    /// Thông tin bể thủy sinh chính
+    /// </summary>
+    public CartItemResponse MainItem { get; set; }
 
     /// <summary>
-    /// Response cho toàn bộ giỏ hàng
+    /// Danh sách phụ kiện kèm theo bể
     /// </summary>
-    public class CartResponse
+    public List<CartItemResponse> BundleAccessories { get; set; } = new();
+
+    /// <summary>
+    /// Tổng tiền của cả bundle (bể + tất cả phụ kiện)
+    /// </summary>
+    public decimal TotalBundlePrice { get; set; }
+
+    /// <summary>
+    /// Tổng số lượng sản phẩm trong bundle
+    /// </summary>
+    public int TotalBundleQuantity { get; set; }
+
+    /// <summary>
+    /// Tự động tính toán tổng tiền và số lượng
+    /// </summary>
+    public void UpdateTotals()
     {
-        public int CartId { get; set; }
-        public int UserId { get; set; }
-        public string User { get; set; }
+        TotalBundlePrice = (MainItem?.TotalCartPrice ?? 0) +
+                          BundleAccessories.Sum(x => x.TotalCartPrice);
 
-        /// <summary>
-        /// Danh sách các bundle (bể + phụ kiện kèm theo)
-        /// </summary>
-        public List<CartBundleResponse> BundleItems { get; set; } = new();
-
-        /// <summary>
-        /// Danh sách sản phẩm mua riêng lẻ (không thuộc bundle nào)
-        /// </summary>
-        public List<CartItemResponse> SingleItems { get; set; } = new();
-
-        /// <summary>
-        /// Tổng tiền toàn bộ giỏ hàng
-        /// </summary>
-        public decimal TotalCartPrice { get; set; }
-
-        /// <summary>
-        /// Tổng số lượng sản phẩm trong giỏ
-        /// </summary>
-        public int TotalCartQuantity { get; set; }
-
-        /// <summary>
-        /// Tổng số loại sản phẩm khác nhau
-        /// </summary>
-        public int TotalCartItem { get; set; }
-
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        TotalBundleQuantity = (MainItem?.TotalCartQuantity ?? 0) +
+                             BundleAccessories.Sum(x => x.TotalCartQuantity);
     }
+}
+
+/// <summary>
+/// Response cho toàn bộ giỏ hàng
+/// </summary>
+public class CartResponse
+{
+    public int CartId { get; set; }
+    public int UserId { get; set; }
+    public string User { get; set; }
+
+    /// <summary>
+    /// Danh sách các bundle (bể + phụ kiện kèm theo)
+    /// </summary>
+    public List<CartBundleResponse> BundleItems { get; set; } = new();
+
+    /// <summary>
+    /// Danh sách sản phẩm mua riêng lẻ (không thuộc bundle nào)
+    /// </summary>
+    public List<CartItemResponse> SingleItems { get; set; } = new();
+
+    /// <summary>
+    /// Tổng tiền toàn bộ giỏ hàng
+    /// </summary>
+    public decimal TotalCartPrice { get; set; }
+
+    /// <summary>
+    /// Tổng số lượng sản phẩm trong giỏ
+    /// </summary>
+    public int TotalCartQuantity { get; set; }
+
+    /// <summary>
+    /// Tổng số loại sản phẩm khác nhau
+    /// </summary>
+    public int TotalCartItem { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
 
 
 

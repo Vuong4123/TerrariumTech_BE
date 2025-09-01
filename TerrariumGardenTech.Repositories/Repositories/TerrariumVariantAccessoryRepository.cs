@@ -50,6 +50,7 @@ public class TerrariumVariantAccessoryRepository : GenericRepository<TerrariumVa
     {
         return await _db.TerrariumVariants
             .Include(tva => tva.TerrariumVariantAccessories)
+            .ThenInclude(c => c.Accessory)
             .Where(x => x.TerrariumVariantId == terrariumVariantId)
             .ToListAsync();
     }
@@ -58,6 +59,7 @@ public class TerrariumVariantAccessoryRepository : GenericRepository<TerrariumVa
     {
         return await _db.TerrariumVariantAccessory
             .Include(tva => tva.TerrariumVariant)
+            .Include(c => c.Accessory)
             .Where(x => x.AccessoryId == accessoryId)
             .ToListAsync();
     }

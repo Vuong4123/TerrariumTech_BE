@@ -54,34 +54,54 @@ public class MembershipService : IMembershipService
 
     public async Task<MembershipCreationResult> CreateMembershipForUserAsync(int userId, int packageId, DateTime startDate)
     {
-        var package = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
-        if (package == null)
-            throw new ArgumentException("Gói membership không tồn tại.");
+        try
+        {
+            var package = await _unitOfWork.MembershipPackageRepository.GetByIdAsync(packageId);
+            if (package == null)
+                throw new ArgumentException("Gói membership không tồn tại.");
 
-        var membership = new Membership
+            var membership = new Membership
+            {
+                UserId = userId,
+                PackageId = packageId,
+                Price = package.Price,
+                StartDate = startDate,
+                EndDate = startDate.AddDays(package.DurationDays),
+                StatusEnum = MembershipStatus.Expired // Mặc định là Expired, chờ kích hoạt sau khi thanh toán thành công
+            };
+            await _unitOfWork.MemberShip.CreateAsync(membership);
+
+            var order = new Order
+            {
+                UserId = userId,
+                TotalAmount = package.Price,
+                OrderDate = DateTime.UtcNow,
+                Status = OrderStatusData.Pending,
+                PaymentStatus = "Unpaid",
+            };
+            await _unitOfWork.Order.CreateAsync(order);
+
+            return new MembershipCreationResult
+            {
+                MembershipId = membership.MembershipId,
+                OrderId = order.OrderId
+            };
+        }catch(Exception e)
         {
-            UserId = userId,
-            PackageId = packageId,
-            Price = package.Price,
-            StartDate = startDate,
-            EndDate = startDate.AddDays(package.DurationDays),
-            StatusEnum = MembershipStatus.Active
-        };
-        await _unitOfWork.MemberShip.CreateAsync(membership);
-        var order = new Order
+            throw;
+        }
+    }
+
+    // ✅ ACTIVATE MEMBERSHIP AFTER SUCCESSFUL PAYMENT
+    public async Task ActivateMembershipAsync(int membershipId)
+    {
+        var membership = await _unitOfWork.MemberShip.GetByIdAsync(membershipId);
+        if (membership != null)
         {
-            UserId = userId,
-            TotalAmount = package.Price,
-            OrderDate = DateTime.UtcNow,
-            Status = OrderStatusData.Pending,
-            PaymentStatus = "Unpaid",
-        };
-        await _unitOfWork.Order.CreateAsync(order);
-        return new MembershipCreationResult
-        {
-            MembershipId = membership.MembershipId,
-            OrderId = order.OrderId
-        };
+            membership.StatusEnum = MembershipStatus.Active;
+            await _unitOfWork.MemberShip.UpdateAsync(membership);
+            await _unitOfWork.SaveAsync();
+        }
     }
 
     public async Task<List<Membership>> GetAllMembershipsAsync()

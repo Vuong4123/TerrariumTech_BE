@@ -92,7 +92,10 @@ public class VoucherController : ControllerBase
     public async Task<IActionResult> AddVoucher([FromBody] CreateVoucherRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-
+        if (await _voucherService.IsCodeExistAsync(req.Code))
+        {
+            return BadRequest(new { message = $"Mã voucher '{req.Code}' đã tồn tại" });
+        }
         var v = new Voucher
         {
             Code = req.Code,
@@ -121,6 +124,10 @@ public class VoucherController : ControllerBase
     public async Task<IActionResult> UpdateVoucher(int id, [FromBody] UpdateVoucherRequest req, CancellationToken ct)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (await _voucherService.IsCodeExistAsync(req.Code, id))
+        {
+            return BadRequest(new { message = $"Mã voucher '{req.Code}' đã được sử dụng bởi voucher khác" });
+        }
         if (id != req.VoucherId) return BadRequest("Voucher ID mismatch.");
 
         var v = new Voucher

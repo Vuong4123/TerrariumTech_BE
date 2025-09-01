@@ -15,4 +15,5 @@ public interface IMembershipService
     Task<int> UpdateExpiredMembershipsByUserIdAsync(int userId); // Updates expired memberships for a user
     bool IsMembershipExpired(Membership membership); // Checks if a membership is expired
     Task<MembershipCreationResult> CreateMembershipForUserAsync(int userId, int packageId, DateTime startDate);
+    Task ActivateMembershipAsync(int membershipId);
 }

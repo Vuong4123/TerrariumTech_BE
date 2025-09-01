@@ -68,4 +68,14 @@ public class VoucherService : IVoucherService
     public async Task<(bool ok, string message, int remaining, int userUsed)> ConsumeWithOrderAmountAsync(
         string code, string userId, decimal orderAmount, CancellationToken ct = default)
         => await _unitOfWork.Voucher.ConsumeAsync(code, userId, orderAmount);
+    public async Task<bool> IsCodeExistAsync(string code, int? excludeVoucherId = null)
+    {
+        var existingVoucher = await GetByCodeAsync(code);
+        if (existingVoucher == null) return false;
+
+        if (excludeVoucherId.HasValue && existingVoucher.VoucherId == excludeVoucherId.Value)
+            return false;
+
+        return true;
+    }
 }

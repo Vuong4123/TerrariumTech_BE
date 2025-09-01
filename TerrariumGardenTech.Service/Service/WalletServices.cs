@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Entity;
+using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Wallet;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.Base;
@@ -241,5 +242,110 @@ namespace TerrariumGardenTech.Service.Service
             await _unitOfWork.SaveAsync();
             return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Hoàn tiền thành công", wallet.Balance);
         }
+        public async Task<WalletPaymentResult> ProcessMembershipPaymentAsync(int userId, int orderId, decimal amount)
+        {
+            try
+            {
+                // Lấy hoặc tạo ví
+                var wallet = await GetOrCreateWalletAsync(userId);
+
+                // Kiểm tra số dư
+                if (wallet.Balance < amount)
+                {
+                    return new WalletPaymentResult
+                    {
+                        Success = false,
+                        Message = $"Số dư không đủ. Cần: {amount:N0}đ, Có: {wallet.Balance:N0}đ",
+                        WalletInfo = null
+                    };
+                }
+
+                decimal previousBalance = wallet.Balance;
+
+                // Trừ tiền từ ví
+                wallet.Balance -= amount;
+                await _unitOfWork.Wallet.UpdateAsync(wallet);
+
+                // Tạo transaction history
+                var transaction = new WalletTransaction
+                {
+                    WalletId = wallet.WalletId,
+                    Amount = -amount, // Số âm vì là trừ tiền
+                    Type = "Payment",
+                    CreatedDate = DateTime.UtcNow,
+                    OrderId = orderId
+                };
+                await _unitOfWork.WalletTransactionRepository.CreateAsync(transaction);
+
+                // Cập nhật trạng thái order thành paid
+                var order = await _unitOfWork.Order.GetByIdAsync(orderId);
+                if (order != null)
+                {
+                    order.PaymentStatus = "Paid";
+                    order.TransactionId = transaction.TransactionId.ToString();
+                    await _unitOfWork.Order.UpdateAsync(order);
+                }
+
+                await _unitOfWork.SaveAsync();
+
+                return new WalletPaymentResult
+                {
+                    Success = true,
+                    Message = "Thanh toán thành công",
+                    WalletInfo = new WalletPaymentInfo
+                    {
+                        WalletId = wallet.WalletId,
+                        PreviousBalance = previousBalance,
+                        NewBalance = wallet.Balance,
+                        AmountPaid = amount,
+                        Status = "Paid"
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new WalletPaymentResult
+                {
+                    Success = false,
+                    Message = $"Lỗi xử lý thanh toán: {ex.Message}",
+                    WalletInfo = null
+                };
+            }
+        }
+
+        public async Task<Wallet> GetOrCreateWalletAsync(int userId)
+        {
+            var wallet = await _unitOfWork.Wallet.GetByUserIdAndTypeAsync(userId, "User");
+            if (wallet == null)
+            {
+                wallet = new Wallet
+                {
+                    UserId = userId,
+                    Balance = 0,
+                    WalletType = "User"
+                };
+                await _unitOfWork.Wallet.CreateAsync(wallet);
+                await _unitOfWork.SaveAsync();
+            }
+            return wallet;
+        }
+
+        public async Task<decimal> GetBalanceAsync2(int userId)
+        {
+            var wallet = await _unitOfWork.Wallet.GetByUserIdAndTypeAsync(userId, "User");
+            return wallet?.Balance ?? 0;
+        }
+
+        public async Task<bool> HasSufficientBalanceAsync(int userId, decimal amount)
+        {
+            var balance = await GetBalanceAsync2(userId);
+            return balance >= amount;
+        }
+    }
+    public class WalletPaymentResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public WalletPaymentInfo? WalletInfo { get; set; }
     }
 }

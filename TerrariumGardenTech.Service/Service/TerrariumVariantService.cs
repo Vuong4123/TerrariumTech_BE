@@ -223,6 +223,12 @@ public class TerrariumVariantService : ITerrariumVariantService
                         TerrariumVariantAccessoryId = va.TerrariumVariantAccessoryId,
                         TerrariumVariantId = va.TerrariumVariantId,
                         AccessoryId = va.AccessoryId,
+                        AccessoryName = va.Accessory?.Name ?? "",
+                        AccessoryDescription = va.Accessory?.Description ?? "",
+                        AccessoryPrice = va.Accessory?.Price ?? 0,
+                        AccessoryStockQuantity = va.Accessory?.StockQuantity ?? 0, 
+                        AccessorySize = va.Accessory?.Size ?? "",
+                        AccessoryQuantitative = va.Accessory?.Quantitative ?? "",
                         Quantity = va.Quantity
                     }).ToList()
                 };
@@ -265,6 +271,12 @@ public class TerrariumVariantService : ITerrariumVariantService
                         TerrariumVariantAccessoryId = va.TerrariumVariantAccessoryId,
                         TerrariumVariantId = va.TerrariumVariantId,
                         AccessoryId = va.AccessoryId,
+                        AccessoryName = va.Accessory?.Name ?? "",
+                        AccessoryDescription = va.Accessory?.Description ?? "",
+                        AccessoryPrice = va.Accessory?.Price ?? 0,
+                        AccessoryStockQuantity = va.Accessory?.StockQuantity ?? 0, 
+                        AccessorySize = va.Accessory?.Size ?? "",
+                        AccessoryQuantitative = va.Accessory?.Quantitative ?? "",
                         Quantity = va.Quantity
                     }).ToList()
                 };
@@ -303,6 +315,12 @@ public class TerrariumVariantService : ITerrariumVariantService
                     TerrariumVariantAccessoryId = va.TerrariumVariantAccessoryId,
                     TerrariumVariantId = va.TerrariumVariantId,
                     AccessoryId = va.AccessoryId,
+                    AccessoryName = va.Accessory?.Name ?? "",
+                    AccessoryDescription = va.Accessory?.Description ?? "",
+                    AccessoryPrice = va.Accessory?.Price ?? 0,
+                    AccessoryStockQuantity = va.Accessory?.StockQuantity ?? 0, 
+                    AccessorySize = va.Accessory?.Size ?? "",
+                    AccessoryQuantitative = va.Accessory?.Quantitative ?? "",
                     Quantity = va.Quantity
                 }).ToList()
             };
