@@ -2125,6 +2125,7 @@ namespace TerrariumGardenTech.Service.Service
                 CartItemId = cartItem.CartItemId,
                 CartId = cartItem.CartId,
                 ComboId = cartItem.ComboId,
+                ItemType = cartItem.ItemType,
                 Item = new List<CartItemDetail>(),
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt
