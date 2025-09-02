@@ -2,52 +2,62 @@
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
 
-namespace TerrariumGardenTech.Repositories.Repositories;
-
-/// <summary>Repository chuyên Order, kế thừa CRUD từ GenericRepository&lt;Order&gt;.</summary>
 public sealed class OrderRepository : GenericRepository<Order>
 {
-    /// <summary>DI DbContext và truyền về lớp cha.</summary>
-    public OrderRepository(TerrariumGardenTechDBContext context)
-        : base(context)
+    public OrderRepository(TerrariumGardenTechDBContext context) : base(context)
     {
     }
-    // ✅ OrderRepository.cs - Include đầy đủ
+
+    // ✅ FIXED - Add missing TerrariumVariant include
     public async Task<Order?> GetOrderWithItemsAsync(int orderId)
     {
         return await _context.Orders
             .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.TerrariumVariant) // ✅ THÊM
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Accessory) // ✅ THÊM
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM
             .Include(o => o.Payment)
             .Include(o => o.User)
             .Include(o => o.Voucher)
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
     }
-    /// <summary>Lấy tất cả đơn của một user.</summary>
-    public async Task<List<Order>> FindByUserAsync(
-        int userId,
-        CancellationToken ct = default)
-    {
-        return await _context.Orders
-            .Include(o => o.OrderItems)
-            .Include(o => o.Payment)
-            .Where(o => o.UserId == userId)
-            .ToListAsync(ct);
-    }
 
-    public async Task<Order>GetOrderbyIdAsync(int id)
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
+    public async Task<List<Order>> FindByUserAsync(int userId, CancellationToken ct = default)
     {
         return await _context.Orders
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.TerrariumVariant)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
-            //.Include(o => o.ReturnExchangeRequests)
-            .Include(o => o.Payment)        
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
+            .ToListAsync(ct);
+    }
+
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
+    public async Task<Order> GetOrderbyIdAsync(int id)
+    {
+        return await _context.Orders
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.TerrariumVariant)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
+            .Include(o => o.Payment)
+            .Include(o => o.User) // ✅ THÊM USER INFO
+            .Include(o => o.Address) // ✅ THÊM ADDRESS INFO
+            .Include(o => o.Voucher) // ✅ THÊM VOUCHER INFO
             .FirstOrDefaultAsync(o => o.OrderId == id);
     }
 
-    // get all order 
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
     public async Task<List<Order>> GetAllAsync2()
     {
         return await _context.Orders
@@ -55,11 +65,16 @@ public sealed class OrderRepository : GenericRepository<Order>
                 .ThenInclude(oi => oi.TerrariumVariant)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
-            //.Include(o => o.ReturnExchangeRequests)
-            .Include(o => o.Payment)           
+            .Include(o => o.User) // ✅ THÊM USER INFO
+            .Include(o => o.Address) // ✅ THÊM ADDRESS INFO
+            .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
             .ToListAsync();
     }
+
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
     public async Task<List<Order>> GetAllWithStatus(string status)
     {
         return await _context.Orders
@@ -67,43 +82,59 @@ public sealed class OrderRepository : GenericRepository<Order>
                 .ThenInclude(oi => oi.TerrariumVariant)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
-            //.Include(o => o.ReturnExchangeRequests)
+            .Include(o => o.User) // ✅ THÊM USER INFO
             .Where(o => o.Status.ToString() == status)
+            .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
             .ToListAsync();
     }
 
-    public async Task<int> SaveAsync()
-    {
-        return await _context.SaveChangesAsync();
-    }
-
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
     public async Task<Order?> GetByIdWithOrderItemsAsync(int id)
     {
         return await _context.Set<Order>()
-            .Include(m => m.OrderItems)
-                .ThenInclude(m => m.TerrariumVariant)
-            .Include(m => m.OrderItems)
-                .ThenInclude(m => m.Accessory)
-            .Where(m => m.OrderId == id).SingleOrDefaultAsync();
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.TerrariumVariant)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
+            .Include(o => o.Payment)
+            .Where(o => o.OrderId == id)
+            .SingleOrDefaultAsync();
     }
 
-
+    // ✅ FIXED - Add missing includes
     public async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
     {
         return await _context.Orders
-            .Where(a => a.UserId == userId) // Bạn có thể thay thế "Contains" bằng cách tìm chính xác tên nếu cần
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.TerrariumVariant) // ✅ THÊM
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Accessory) // ✅ THÊM
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM
+            .Include(o => o.Payment) // ✅ THÊM
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
             .ToListAsync();
     }
+
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
     public async Task<(IEnumerable<Order> orders, int totalCount)> GetAllWithPaginationAsync(int page, int pageSize)
     {
         var query = _context.Orders
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Accessory)
+                .ThenInclude(oi => oi.TerrariumVariant)
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.TerrariumVariant)
+                .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.User)
             .Include(o => o.Address)
+            .Include(o => o.Voucher) // ✅ THÊM VOUCHER
             .OrderByDescending(o => o.OrderDate);
 
         var totalCount = await query.CountAsync();
@@ -116,16 +147,20 @@ public sealed class OrderRepository : GenericRepository<Order>
         return (orders, totalCount);
     }
 
+    // ✅ ALREADY GOOD - Has TerrariumVariant include
     public async Task<(IEnumerable<Order> orders, int totalCount)> GetByUserWithPaginationAsync(int userId, int page, int pageSize)
     {
         var query = _context.Orders
             .Where(o => o.UserId == userId)
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Accessory)
+                .ThenInclude(oi => oi.TerrariumVariant)
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.TerrariumVariant)
+                .ThenInclude(oi => oi.Accessory)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.User)
             .Include(o => o.Address)
+            .Include(o => o.Voucher) // ✅ THÊM VOUCHER
             .OrderByDescending(o => o.OrderDate);
 
         var totalCount = await query.CountAsync();
@@ -136,5 +171,10 @@ public sealed class OrderRepository : GenericRepository<Order>
             .ToListAsync();
 
         return (orders, totalCount);
+    }
+
+    public async Task<int> SaveAsync()
+    {
+        return await _context.SaveChangesAsync();
     }
 }
