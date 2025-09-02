@@ -1284,9 +1284,6 @@ public class OrderService : IOrderService
         if (orderItems.Any(x => !order.OrderItems.Any(i => i.OrderItemId == x.OrderItemId)))
             return (false, "Danh sách sản phẩm cần hoàn tiền không chính xác!");
 
-        if (orderItems.Any(x => order.OrderItems.Any(i => x.OrderItemId == x.OrderItemId && i.Quantity < x.Quantity)))
-            return (false, "Số lượng sản phẩm yêu cầu hoàn tiền vượt quá số lượng đã đặt trong đơn hàng!");
-        
         if(order.Refunds.Count() > 0)
             return (false, "Đơn hàng này đang xử lý hoàn tiền !");
         var existedRefundItems = await _unitOfWork.OrderRequestRefund.DbSet()
