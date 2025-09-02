@@ -307,7 +307,7 @@ namespace TerrariumGardenTech.Service.Service
             wallet.Balance += amount;
 
             // Trừ tiền ví ProcessingRevenue
-            var processingWallet = await _unitOfWork.Wallet.FindOneAsync(w => w.WalletType == "ProcessingRevenue");
+            var processingWallet = await _unitOfWork.Wallet.FindOneAsync(w => w.WalletType == "User");
             if (processingWallet != null)
                 processingWallet.Balance -= amount;
 
