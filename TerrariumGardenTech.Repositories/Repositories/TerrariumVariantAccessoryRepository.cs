@@ -64,6 +64,13 @@ public class TerrariumVariantAccessoryRepository : GenericRepository<TerrariumVa
             .ToListAsync();
     }
 
+    public async Task<TerrariumVariantAccessory> GetByAccessoryId(int accessoryId)
+    {
+        return await _db.TerrariumVariantAccessory
+            .Include(tva => tva.TerrariumVariant)
+            .Include(c => c.Accessory)
+            .FirstOrDefaultAsync(x => x.AccessoryId == accessoryId);
+    }
     public async Task RemoveByTerrariumVariantIdAsync(int terrariumVariantId)
     {
         var items = await _db.TerrariumVariantAccessory

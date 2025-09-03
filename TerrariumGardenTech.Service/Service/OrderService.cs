@@ -59,6 +59,11 @@ public class OrderService : IOrderService
                 TransactionId = order.TransactionId,
                 Note = order.Note,
                 IsPayFull = order.IsPayFull,
+                Refunds = new List<RefundResponseOrder>(order.Refunds?.Select(r => new RefundResponseOrder
+                {
+                    Status = r.Status,
+                    Reason = r.Reason
+                }) ?? Enumerable.Empty<RefundResponseOrder>()).ToList(),
                 OrderItems = new List<OrderItemResponse>()
             };
 
@@ -100,6 +105,11 @@ public class OrderService : IOrderService
             PaymentStatus = order.PaymentStatus ?? string.Empty,
             TransactionId = order.TransactionId,
             IsPayFull = order.IsPayFull,
+            Refunds = new List<RefundResponseOrder>(order.Refunds?.Select(r => new RefundResponseOrder
+            {
+                Status = r.Status,
+                Reason = r.Reason
+            }) ?? Enumerable.Empty<RefundResponseOrder>()).ToList(),
             OrderItems = new List<OrderItemResponse>()
         };
 
@@ -140,6 +150,11 @@ public class OrderService : IOrderService
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
                 IsPayFull = order.IsPayFull,
+                Refunds = new List<RefundResponseOrder>(order.Refunds?.Select(r => new RefundResponseOrder
+                {
+                    Status = r.Status,
+                    Reason = r.Reason
+                }) ?? Enumerable.Empty<RefundResponseOrder>()).ToList(),
                 OrderItems = new List<OrderItemResponse>()
             };
 
@@ -1280,6 +1295,7 @@ public class OrderService : IOrderService
         if (acc.StockQuantity < qty)
             throw new ArgumentException($"Accessory '{acc.Name}' không đủ hàng. Còn lại: {acc.StockQuantity}, yêu cầu: {qty}");
 
+        var terrariumVariant = _unitOfWork.TerrariumVariantAccessory.GetByAccessoryId(reqItem.AccessoryId ?? 0);
         decimal unit = acc.Price;
         decimal line = unit * qty;
 
@@ -1287,7 +1303,7 @@ public class OrderService : IOrderService
         {
             AccessoryId = reqItem.AccessoryId,
             TerrariumId = reqItem.TerrariumId,
-            TerrariumVariantId = null,
+            TerrariumVariantId = terrariumVariant.Result.TerrariumVariantId,
             AccessoryQuantity = qty,
             TerrariumVariantQuantity = 0,
             Quantity = qty,
