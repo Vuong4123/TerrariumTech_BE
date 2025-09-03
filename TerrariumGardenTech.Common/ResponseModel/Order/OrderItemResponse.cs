@@ -15,6 +15,8 @@ public class OrderItemResponse
     public decimal? UnitPrice { get; set; }
     public decimal? TotalPrice { get; set; }
     public int? ParentOrderItemId { get; set; }
+
+    public bool IsFeedBack { get; set; }
     public List<OrderItemResponse> ChildItems { get; set; } = new List<OrderItemResponse>();
 
     // ✅ THÊM: Product details

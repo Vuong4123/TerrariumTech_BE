@@ -13,9 +13,9 @@ namespace TerrariumGardenTech.Service.IService
     public interface IWalletServices
     {
         Task<WalletPaymentResult> ProcessMembershipPaymentAsync(int userId, int orderId, decimal amount);
-        Task<IBusinessResult> DepositAsync(int userId, decimal amount, string method, int? orderId = null);
-        Task<IBusinessResult> PayAsync(int userId, decimal amount, int orderId);
-        Task<IBusinessResult> RefundAsync(int userId, decimal amount, int orderId);
+        Task<IBusinessResult> DepositAsync(int userId, int amount, string method, int? orderId = null);
+        Task<IBusinessResult> PayAsync(int userId, int amount, int orderId);
+        Task<IBusinessResult> RefundAsync(int userId, int amount, int orderId);
         Task<decimal> GetBalanceAsync(int userId);
         Task<Wallet> GetOrCreateUserWallet(int userId);
         Task<WalletBalanceHistoryDto> GetWalletBalanceHistoryAsync(int userId, DateTime? fromDate = null, DateTime? toDate = null);

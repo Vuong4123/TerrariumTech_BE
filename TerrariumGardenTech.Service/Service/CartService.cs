@@ -220,19 +220,8 @@ namespace TerrariumGardenTech.Service.Service
                             return new BusinessResult(Const.FAIL_CREATE_CODE, "Terrarium không tồn tại");
 
                         var quantityToAdd = request.VariantQuantity ?? 1;
-
-                        // ✅ CHECK STOCK THEO LOẠI TERRARIUM
-                        if (terrarium.GeneratedByAI)
-                        {
-                            var stockCheck = await ValidateAITerrariumStockAsync(terrarium.TerrariumId, quantityToAdd);
-                            if (!stockCheck.IsValid)
-                                return new BusinessResult(Const.FAIL_CREATE_CODE, stockCheck.ErrorMessage);
-                        }
-                        else
-                        {
-                            if (variant.StockQuantity < quantityToAdd)
+                        if (variant.StockQuantity < quantityToAdd)
                                 return new BusinessResult(Const.FAIL_CREATE_CODE, $"Terrarium '{terrarium.TerrariumName}' không đủ hàng. Còn lại: {variant.StockQuantity}, yêu cầu: {quantityToAdd}");
-                        }
                     }
 
                     // ✅ PHÂN BIỆT ĐƠN LẺ VS BUNDLE
@@ -257,12 +246,6 @@ namespace TerrariumGardenTech.Service.Service
                         if (terrarium != null)
                         {
                             if (terrarium.GeneratedByAI)
-                            {
-                                var stockCheck = await ValidateAITerrariumStockAsync(terrarium.TerrariumId, totalQuantityAfterAdd);
-                                if (!stockCheck.IsValid)
-                                    return new BusinessResult(Const.FAIL_CREATE_CODE, $"Tổng số lượng trong giỏ vượt quá tồn kho. {stockCheck.ErrorMessage}");
-                            }
-                            else
                             {
                                 var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(existingItem.TerrariumVariantId ?? 0);
                                 if (variant != null && variant.StockQuantity < totalQuantityAfterAdd)

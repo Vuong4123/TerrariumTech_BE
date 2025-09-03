@@ -10,6 +10,7 @@ using TerrariumGardenTech.Common.ResponseModel.Wallet;
 using TerrariumGardenTech.Repositories;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Service.Service
 {
@@ -38,11 +39,11 @@ namespace TerrariumGardenTech.Service.Service
             }
             return wallet;
         }
-        public async Task<IBusinessResult> DepositAsync(int userId, decimal amount, string method, int? orderId = null)
+        public async Task<IBusinessResult> DepositAsync(int userId, int amount, string method, int? orderId = null)
         {
             var wallet = await GetOrCreateUserWallet(userId);
             wallet.Balance += amount;
-
+            await _unitOfWork.Wallet.UpdateAsync(wallet);
             await _unitOfWork.WalletTransactionRepository.CreateAsync(new WalletTransaction
             {
                 WalletId = wallet.WalletId,
@@ -63,32 +64,72 @@ namespace TerrariumGardenTech.Service.Service
             return wallet.Balance;
         }
 
-        public async Task<IBusinessResult> PayAsync(int userId, decimal amount, int orderId)
+        public async Task<IBusinessResult> PayAsync(int userId, int amount, int orderId)
         {
+            // Validate order exists và thuộc về user
+            var order = await _unitOfWork.Order.GetByIdAsync(orderId);
+            if (order == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Đơn hàng không tồn tại");
+
+            if (order.UserId != userId)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Đơn hàng không thuộc về bạn");
+
+            // Kiểm tra order status hợp lệ để thanh toán
+            if (order.Status != OrderStatusData.Pending)
+                return new BusinessResult(Const.FAIL_READ_CODE, $"Không thể thanh toán đơn hàng ở trạng thái {order.Status}");
+
+            // Kiểm tra ví
             var wallet = await GetOrCreateUserWallet(userId);
             if (wallet.Balance < amount)
                 return new BusinessResult(Const.FAIL_READ_CODE, "Số dư không đủ");
 
-            wallet.Balance -= amount;
-
-            // Cộng vào ví doanh thu đang xử lý
-            var processingWallet = await _unitOfWork.Wallet.FindOneAsync(w => w.WalletType == "ProcessingRevenue");
-            if (processingWallet != null)
-                processingWallet.Balance += amount;
-
-            await _unitOfWork.WalletTransactionRepository.CreateAsync(new WalletTransaction
+            try
             {
-                WalletId = wallet.WalletId,
-                Amount = -amount,
-                Type = "Payment",
-                CreatedDate=DateTime.UtcNow,
-                OrderId=orderId
-               
-            });
+                // 1. Trừ tiền khỏi ví user
+                wallet.Balance -= amount;
+                await _unitOfWork.Wallet.UpdateAsync(wallet);
 
-            await _unitOfWork.SaveAsync();
-            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Thanh toán thành công", wallet.Balance);
+                // 2. Cộng vào ví doanh thu đang xử lý
+                var processingWallet = await _unitOfWork.Wallet.FindOneAsync(w => w.WalletType == "ProcessingRevenue");
+                if (processingWallet != null)
+                {
+                    processingWallet.Balance += amount;
+                    await _unitOfWork.Wallet.UpdateAsync(processingWallet);
+                }
+
+                // 3. Tạo transaction history
+                await _unitOfWork.WalletTransactionRepository.CreateAsync(new WalletTransaction
+                {
+                    WalletId = wallet.WalletId,
+                    Amount = -amount,
+                    Type = "Payment",
+                    CreatedDate = DateTime.UtcNow,
+                    OrderId = orderId
+                });
+
+                // 4. ✅ CẬP NHẬT ORDER STATUS VÀ PAYMENT STATUS
+                order.PaymentStatus = "Paid";
+                order.Status = OrderStatusData.Processing; // Chuyển sang Processing
+
+                await _unitOfWork.Order.UpdateAsync(order);
+
+                return new BusinessResult(
+                    Const.SUCCESS_UPDATE_CODE,
+                    "Thanh toán thành công",
+                    new
+                    {
+                        WalletBalance = wallet.Balance,
+                        OrderStatus = order.Status,
+                        PaymentStatus = order.PaymentStatus
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                return new BusinessResult(Const.ERROR_EXCEPTION, "Lỗi khi thanh toán: " + ex.Message);
+            }
         }
+
         public async Task<WalletBalanceHistoryDto> GetWalletBalanceHistoryAsync(
         int userId, DateTime? fromDate = null, DateTime? toDate = null)
         {
@@ -300,7 +341,7 @@ namespace TerrariumGardenTech.Service.Service
                 LowestTransaction = transactions.Min(t => Math.Abs(t.Amount))
             };
         }
-        public async Task<IBusinessResult> RefundAsync(int userId, decimal amount, int orderId)
+        public async Task<IBusinessResult> RefundAsync(int userId, int amount, int orderId)
         {
             var wallet = await GetOrCreateUserWallet(userId);
 

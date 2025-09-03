@@ -651,8 +651,6 @@ namespace TerrariumGardenTech.Service.Service
                         Status = "Paid",
                         PaymentDate = UtcNow()
                     });
-
-                    await ReduceStockForPaidOrder(order);
                     await _unitOfWork.SaveAsync();
 
                     return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Payment success");

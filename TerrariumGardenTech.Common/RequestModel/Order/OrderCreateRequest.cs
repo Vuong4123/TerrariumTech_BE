@@ -21,6 +21,9 @@ public class OrderCreateRequest
     public int? VoucherId { get; set; }
     public decimal? Deposit { get; set; }
     public int? AddressId { get; set; }
+    public string Note { get; set; }
+
+    public bool IsPayFull { get; set; }
     public List<OrderItemCreateRequest> Items { get; set; } = new();
     public decimal TotalAmountOld { get; set; }  // Tổng tiền gốc (trước giảm giá)
     public decimal TotalAmountNew { get; set; }  // Tổng tiền sau giảm giá
@@ -51,4 +54,10 @@ public class RefundRequestDto
     public string OrderStatus { get; set; }
 
     public IEnumerable<string>? Images { get; set; } = Enumerable.Empty<string>();
+}
+// Request model
+public class RejectOrderRequest
+{
+    public string RejectReason { get; set; }
+    public string? InternalNote { get; set; } // Note nội bộ (optional)
 }
