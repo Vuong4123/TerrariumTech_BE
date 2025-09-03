@@ -28,6 +28,7 @@ public class TerrariumResponse
     //public List<TerrariumAccessoryResponse> Accessories { get; set; } = []; // Thông tin chi tiết phụ kiện
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool GeneratedByAI {  get; set; }   
     public string BodyHTML { get; set; } = string.Empty;
     // Thêm thuộc tính mới để chứa danh sách ảnh
     public List<TerrariumImageResponse> TerrariumImages { get; set; } = [];
