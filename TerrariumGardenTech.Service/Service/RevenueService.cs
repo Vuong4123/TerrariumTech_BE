@@ -26,20 +26,66 @@ public class RevenueService : IRevenueService
     /// <summary>
     /// Tổng quan doanh thu - Dashboard chính
     /// </summary>
+    //public async Task<IBusinessResult> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null)
+    //{
+    //    var fromDate = from ?? DateTime.Now.AddMonths(-12);
+    //    var toDate = to ?? DateTime.Now;
+
+    //    var orders = await _unitOfWork.Order.GetAllAsync2();
+    //    var completedOrders = orders.Where(o =>
+    //        o.Status == OrderStatusData.Completed &&
+    //        o.OrderDate >= fromDate &&
+    //        o.OrderDate <= toDate).ToList();
+
+    //    var previousPeriodFrom = fromDate.AddDays(-(toDate - fromDate).Days);
+    //    var previousPeriodOrders = orders.Where(o =>
+    //        o.Status == OrderStatusData.Completed &&
+    //        o.OrderDate >= previousPeriodFrom &&
+    //        o.OrderDate < fromDate).ToList();
+
+    //    var currentRevenue = completedOrders.Sum(o => o.TotalAmount);
+    //    var previousRevenue = previousPeriodOrders.Sum(o => o.TotalAmount);
+    //    var revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+
+    //    var result = new RevenueOverviewResponse
+    //    {
+    //        TotalRevenue = currentRevenue,
+    //        PreviousPeriodRevenue = previousRevenue,
+    //        RevenueGrowthPercent = Math.Round(revenueGrowth, 2),
+    //        TotalOrders = completedOrders.Count,
+    //        AverageOrderValue = completedOrders.Count > 0 ? currentRevenue / completedOrders.Count : 0,
+    //        TotalCustomers = completedOrders.Select(o => o.UserId).Distinct().Count(),
+    //        RevenueByMonth = GetRevenueByMonth(completedOrders, fromDate, toDate),
+    //        RevenueByPaymentStatus = completedOrders
+    //            .GroupBy(o => o.PaymentStatus ?? "Unknown")
+    //            .Select(g => new RevenueByCategory
+    //            {
+    //                Category = g.Key,
+    //                Revenue = g.Sum(o => o.TotalAmount),
+    //                OrderCount = g.Count(),
+    //                Percentage = Math.Round((g.Sum(o => o.TotalAmount) / currentRevenue) * 100, 2)
+    //            }).ToList()
+    //    };
+
+    //    return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy tổng quan doanh thu thành công", result);
+    //}
     public async Task<IBusinessResult> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null)
     {
         var fromDate = from ?? DateTime.Now.AddMonths(-12);
         var toDate = to ?? DateTime.Now;
 
+        // Lọc đơn hàng hoàn thành và đã trả tiền (PaymentStatus == "Paid")
         var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            o.Status == OrderStatusData.Completed &&
+            //o.Status == OrderStatusData.Completed &&
+            o.PaymentStatus == "Paid" &&   // Thêm check PaymentStatus == "Paid"
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
 
         var previousPeriodFrom = fromDate.AddDays(-(toDate - fromDate).Days);
         var previousPeriodOrders = orders.Where(o =>
-            o.Status == OrderStatusData.Completed &&
+            //o.Status == OrderStatusData.Completed &&
+            o.PaymentStatus == "Paid" &&   // Thêm check PaymentStatus == "Paid"
             o.OrderDate >= previousPeriodFrom &&
             o.OrderDate < fromDate).ToList();
 
@@ -69,7 +115,6 @@ public class RevenueService : IRevenueService
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy tổng quan doanh thu thành công", result);
     }
-
     /// <summary>
     /// Doanh thu theo kỳ (ngày, tuần, tháng, năm)
     /// </summary>
