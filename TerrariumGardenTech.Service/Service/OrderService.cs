@@ -25,7 +25,7 @@ public class OrderService : IOrderService
 
     //private readonly IUserContextService _userContextService;
 
-    public OrderService(UnitOfWork unitOfWork,IUserContextService userContextService, ILogger<OrderService> logger, IWalletServices walletServices)
+    public OrderService(UnitOfWork unitOfWork, IUserContextService userContextService, ILogger<OrderService> logger, IWalletServices walletServices)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -645,6 +645,10 @@ public class OrderService : IOrderService
                     {
                         variant.StockQuantity += item.TerrariumVariantQuantity.Value;
                         await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+
+                        // Hoàn stock cho terrarium
+                        terrarium.Stock += item.TerrariumVariantQuantity.Value;
+                        await _unitOfWork.Terrarium.UpdateAsync(terrarium);  // Cập nhật terrarium
                     }
 
                     // ✅ HOÀN STOCK CHO ACCESSORIES CỦA VARIANT
@@ -742,7 +746,7 @@ public class OrderService : IOrderService
                             $"Lỗi khi hoàn tiền: {refundResult.Message}");
                     }
 
-                        order.Status = OrderStatusData.Refunded;
+                    order.Status = OrderStatusData.Refunded;
 
                     // Gửi notification cho user
                     await SendRefundApprovedNotificationAsync(order, refundRequest);
@@ -815,7 +819,7 @@ public class OrderService : IOrderService
                 {
                     var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
 
-                        await RestoreStockForAITerrarium(terrarium.TerrariumId, item.TerrariumVariantQuantity ?? 0);
+                    await RestoreStockForAITerrarium(terrarium.TerrariumId, item.TerrariumVariantQuantity ?? 0);
                     // Non-AI terrarium: Không cần hoàn vì không bị trừ
                 }
             }
@@ -1049,7 +1053,8 @@ public class OrderService : IOrderService
             .Where(x => x.AccessoryId.HasValue &&
                         x.ItemType != CommonData.CartItemType.COMBO) // ✅ Loại trừ items trong combo
             .GroupBy(x => x.AccessoryId.Value)
-            .Select(g => new {
+            .Select(g => new
+            {
                 AccessoryId = g.Key,
                 TotalQuantity = g.Sum(x => x.AccessoryQuantity ?? x.Quantity) // ✅ Ưu tiên AccessoryQuantity
             });
@@ -1067,13 +1072,13 @@ public class OrderService : IOrderService
                 await _unitOfWork.Accessory.UpdateAsync(accessory);
             }
         }
-
         // 2. ✅ TRỪ STOCK TERRARIUM VARIANTS (chỉ lấy variants riêng lẻ, không trong combo)
         var variantGroups = orderItems
             .Where(x => x.TerrariumVariantId.HasValue &&
                         x.ItemType != CommonData.CartItemType.COMBO) // ✅ Loại trừ items trong combo
             .GroupBy(x => x.TerrariumVariantId.Value)
-            .Select(g => new {
+            .Select(g => new
+            {
                 VariantId = g.Key,
                 TotalQuantity = g.Sum(x => x.TerrariumVariantQuantity ?? x.Quantity) // ✅ Ưu tiên TerrariumVariantQuantity
             });
@@ -1088,12 +1093,22 @@ public class OrderService : IOrderService
                 // Chỉ trừ stock cho non-AI terrariums
                 if (terrarium != null && !terrarium.GeneratedByAI)
                 {
+                    // Trừ stock của variant
                     variant.StockQuantity -= (int)group.TotalQuantity;
                     if (variant.StockQuantity < 0)
                     {
                         throw new InvalidOperationException($"Stock không đủ cho terrarium variant {variant.TerrariumVariantId}");
                     }
                     await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+
+                    // Trừ stock của terrarium
+                    terrarium.Stock -= (int)group.TotalQuantity;
+                    if (terrarium.Stock < 0)
+                    {
+                        throw new InvalidOperationException($"Stock không đủ cho terrarium {terrarium.TerrariumId}");
+                    }
+                    await _unitOfWork.Terrarium.UpdateAsync(terrarium);  // Cập nhật terrarium
+
                 }
                 // Nếu là AI terrarium, trừ stock của các accessories trong variant
                 else if (terrarium?.GeneratedByAI == true)
@@ -1102,6 +1117,41 @@ public class OrderService : IOrderService
                 }
             }
         }
+        //// 2. ✅ TRỪ STOCK TERRARIUM VARIANTS (chỉ lấy variants riêng lẻ, không trong combo)
+        //var variantGroups = orderItems
+        //    .Where(x => x.TerrariumVariantId.HasValue &&
+        //                x.ItemType != CommonData.CartItemType.COMBO) // ✅ Loại trừ items trong combo
+        //    .GroupBy(x => x.TerrariumVariantId.Value)
+        //    .Select(g => new {
+        //        VariantId = g.Key,
+        //        TotalQuantity = g.Sum(x => x.TerrariumVariantQuantity ?? x.Quantity) // ✅ Ưu tiên TerrariumVariantQuantity
+        //    });
+
+        //foreach (var group in variantGroups)
+        //{
+        //    var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(group.VariantId);
+        //    if (variant != null)
+        //    {
+        //        var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+
+        //        // Chỉ trừ stock cho non-AI terrariums
+        //        if (terrarium != null && !terrarium.GeneratedByAI)
+        //        {
+        //            variant.StockQuantity -= (int)group.TotalQuantity;
+        //            if (variant.StockQuantity < 0)
+        //            {
+        //                throw new InvalidOperationException($"Stock không đủ cho terrarium variant {variant.TerrariumVariantId}");
+        //            }
+        //            await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+
+        //        }
+        //        // Nếu là AI terrarium, trừ stock của các accessories trong variant
+        //        else if (terrarium?.GeneratedByAI == true)
+        //        {
+        //            await DeductVariantAccessoryStockAsync(variant.TerrariumVariantId, (int)group.TotalQuantity);
+        //        }
+        //    }
+        //}
 
         // 3. ✅ TRỪ STOCK COMBOS VÀ ITEMS BÊN TRONG
         var comboGroups = orderItems
@@ -1109,7 +1159,8 @@ public class OrderService : IOrderService
                         x.ItemType == CommonData.CartItemType.COMBO &&
                         x.UnitPrice > 0) // Chỉ lấy main combo items
             .GroupBy(x => x.ComboId.Value)
-            .Select(g => new {
+            .Select(g => new
+            {
                 ComboId = g.Key,
                 TotalQuantity = g.Sum(x => x.Quantity)
             });
@@ -1169,6 +1220,8 @@ public class OrderService : IOrderService
                     if (terrarium != null && !terrarium.GeneratedByAI)
                     {
                         var requiredQty = comboItem.Quantity * comboQuantity;
+
+                        // Trừ stock của terrarium variant
                         variant.StockQuantity -= requiredQty;
 
                         if (variant.StockQuantity < 0)
@@ -1177,6 +1230,15 @@ public class OrderService : IOrderService
                         }
 
                         await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+
+                        // Trừ stock của terrarium
+                        terrarium.Stock -= requiredQty;
+                        if (terrarium.Stock < 0)
+                        {
+                            throw new InvalidOperationException($"Stock không đủ cho terrarium {terrarium.TerrariumId}");
+                        }
+
+                        await _unitOfWork.Terrarium.UpdateAsync(terrarium);  // Cập nhật terrarium
                     }
                     else if (terrarium?.GeneratedByAI == true)
                     {
@@ -1288,24 +1350,43 @@ public class OrderService : IOrderService
     // ✅ XỬ LÝ ACCESSORY ITEM
     private async Task ProcessAccessoryItem(OrderItemCreateRequest reqItem, List<OrderItem> orderItems)
     {
+        // Lấy thông tin phụ kiện từ database
         var acc = await _unitOfWork.Accessory.GetByIdAsync(reqItem.AccessoryId.Value);
         if (acc == null)
+        {
             throw new ArgumentException($"Accessory {reqItem.AccessoryId} không tồn tại");
+        }
 
+        // Kiểm tra số lượng phụ kiện yêu cầu
         int qty = reqItem.AccessoryQuantity ?? 0;
 
+        // Kiểm tra số lượng trong kho
         if (acc.StockQuantity < qty)
+        {
             throw new ArgumentException($"Accessory '{acc.Name}' không đủ hàng. Còn lại: {acc.StockQuantity}, yêu cầu: {qty}");
+        }
 
+        // Lấy TerrariumVariantId liên quan đến phụ kiện
         var terrariumVariant = _unitOfWork.TerrariumVariantAccessory.GetByAccessoryId(reqItem.AccessoryId ?? 0);
-        decimal unit = acc.Price;
+        if (terrariumVariant == null || terrariumVariant.Result == null)
+        {
+            throw new ArgumentException($"Không tìm thấy terrarium variant cho phụ kiện {reqItem.AccessoryId}");
+        }
+
+        // Tính giá trị của món hàng
+        decimal unit = acc.Price; // Nếu giá trị null, sử dụng 0m
+        if (unit <= 0)
+        {
+            throw new ArgumentException($"Giá của phụ kiện {acc.Name} không hợp lệ.");
+        }
         decimal line = unit * qty;
 
+        // Thêm vào danh sách orderItems
         orderItems.Add(new OrderItem
         {
             AccessoryId = reqItem.AccessoryId,
             TerrariumId = reqItem.TerrariumId,
-            TerrariumVariantId = terrariumVariant.Result.TerrariumVariantId,
+            TerrariumVariantId = reqItem.TerrariumVariantId,
             AccessoryQuantity = qty,
             TerrariumVariantQuantity = 0,
             Quantity = qty,
@@ -1646,7 +1727,7 @@ public class OrderService : IOrderService
         if (orderItems.Any(x => !order.OrderItems.Any(i => i.OrderItemId == x.OrderItemId)))
             return (false, "Danh sách sản phẩm cần hoàn tiền không chính xác!");
 
-        if(order.Refunds.Count() > 0)
+        if (order.Refunds.Count() > 0)
             return (false, "Đơn hàng này đang xử lý hoàn tiền !");
         var existedRefundItems = await _unitOfWork.OrderRequestRefund.DbSet()
             .Include(x => x.Items).Where(x => x.OrderId == order.OrderId && x.Status == CommonData.OrderStatusData.Approved)
@@ -1678,7 +1759,7 @@ public class OrderService : IOrderService
             Reason = request.Reason,
             Status = OrderStatusData.Pending,
             UserModified = currentUserId,
-            RequestDate = System.DateTime.Today            
+            RequestDate = System.DateTime.Today
         };
         order.Status = OrderStatusData.RequestRefund;
         await _unitOfWork.OrderRequestRefund.CreateAsync(refundRequest);
@@ -1700,13 +1781,13 @@ public class OrderService : IOrderService
         };
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy danh sách yêu cầu hoàn tiền thành công!", res);
     }
-    
+
     public async Task<IBusinessResult> GetRefundDetailAsync(int refundId)
     {
         var refund = await _unitOfWork.OrderRequestRefund.DbSet().Include(x => x.Items).AsNoTracking().FirstOrDefaultAsync(x => x.RequestRefundId == refundId);
         if (refund == null)
             return new BusinessResult(Const.NOT_FOUND_CODE, "Không tìm thấy yêu cầu hoàn tiền!", null);
-        
+
         refund.Items = null;
         var orderItems = (await _unitOfWork.Order.DbSet().AsNoTracking()
                 .Include(x => x.OrderItems).ThenInclude(x => x.Combo)
@@ -1714,7 +1795,8 @@ public class OrderService : IOrderService
                 .Include(x => x.OrderItems).ThenInclude(x => x.TerrariumVariant)
                 .FirstOrDefaultAsync(x => x.OrderId == refund.OrderId))
                 ?.OrderItems;
-        refund.Items = refund.Items?.Select(item => {
+        refund.Items = refund.Items?.Select(item =>
+        {
             item.OrderRefund = null;
 
             var orderItem = orderItems?.FirstOrDefault(oi => oi.OrderItemId == item.OrderItemId);
@@ -1842,7 +1924,7 @@ public class OrderService : IOrderService
                 else
                     await trans.CommitAsync();
             }
-        }    
+        }
         refund.Order = null;
         refund.Items = refund.Items.Select(x => { x.OrderRefund = null; return x; }).ToList();
         return (true, "Cập nhật yêu cầu hoàn tiền thành công!", refund);
@@ -1989,8 +2071,8 @@ public class OrderService : IOrderService
                 result.Add(orderResponse);
             }
 
-    
-   
+
+
 
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
