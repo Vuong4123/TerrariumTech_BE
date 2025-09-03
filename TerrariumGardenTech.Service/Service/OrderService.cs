@@ -1674,6 +1674,7 @@ public class OrderService : IOrderService
                 OrderItemId = x.OrderItemId,
                 Quantity = x.Quantity ?? 0
             }).ToList(),
+            RefundAmount = order.DiscountAmount,
             Reason = request.Reason,
             Status = OrderStatusData.Pending,
             UserModified = currentUserId,
