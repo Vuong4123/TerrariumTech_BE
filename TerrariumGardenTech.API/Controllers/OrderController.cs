@@ -171,12 +171,12 @@ public class OrderController : ControllerBase
     {
         try
         {
-            // gọi service với enum, không cần trim
             var updated = await _svc.UpdateStatusAsync(id, status);
             if (!updated)
                 return NotFound(new { message = $"Không tìm thấy đơn hàng ({id}) để cập nhật." });
 
-            return NoContent();
+            // ✅ Trả về 200 kèm message
+            return Ok(new { message = $"Đã cập nhật trạng thái đơn hàng {id} thành công.", status });
         }
         catch (ArgumentException ae)
         {

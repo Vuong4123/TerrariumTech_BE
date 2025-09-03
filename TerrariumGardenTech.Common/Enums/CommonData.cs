@@ -30,6 +30,8 @@ public static class CommonData
         public const string Cancel = "Cancel";           // Đã hủy
         public const string Confirmed = "Confirmed";     // Đã xác nhận
 
+        public const string AdminReject = "AdminReject"; // Bị từ chối bởi Admin
+
         public const string Processing = "Processing";   // Đang xử lý
         public const string Shipping = "Shipping";       // Đang giao hàng
         public const string Completed = "Completed";     // Hoàn thành
