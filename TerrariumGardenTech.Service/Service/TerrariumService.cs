@@ -474,6 +474,7 @@ public class TerrariumService : ITerrariumService
                 BodyHTML = terrarium.bodyHTML,
                 CreatedAt = terrarium.CreatedAt ?? DateTime.UtcNow,
                 UpdatedAt = terrarium.UpdatedAt ?? DateTime.UtcNow,
+                GeneratedByAI = terrarium.GeneratedByAI,
                 TerrariumImages = terrarium.TerrariumImages.Select(ti => new TerrariumImageResponse
                 {
                     TerrariumImageId = ti.TerrariumImageId,
