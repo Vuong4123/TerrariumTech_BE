@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FirebaseAdmin.Messaging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OpenAI.Responses;
+using Org.BouncyCastle.Asn1.X9;
 using System.Web;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.RequestModel.Payment;
 using TerrariumGardenTech.Common.ResponseModel.Payment;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
+using VNPAY.NET.Enums;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -243,7 +247,12 @@ public class PaymentController : ControllerBase
         // Chỉ đính kèm thông tin hiển thị được (KHÔNG gửi chữ ký)
         var amount = Get("amount");     // VND (không *100)
         var transId = Get("transId");   // Mã giao dịch MoMo để hiển thị
-
+        var payType = Get("payType");
+        var bankCode = Get("bankCode");
+        var responseTime = Get("responseTime");
+        var message = Get("message");
+        var orderInfo = Get("orderInfo");
+        var resultCode = Get("resultCode");
         var basePath = ok ? FE_SUCCESS_PATH : FE_FAIL_PATH;
         var url =
             $"{FE_BASE}{basePath}" +
@@ -251,7 +260,14 @@ public class PaymentController : ControllerBase
 
         $"&status={(ok ? "success" : "fail")}" +
             $"&transId={Uri.EscapeDataString(transId ?? "")}" +
-            $"&amount={Uri.EscapeDataString(amount ?? "")}";
+            $"&amount={Uri.EscapeDataString(amount)}" +
+        $"&transId={Uri.EscapeDataString(transId)}" +
+        $"&payType={Uri.EscapeDataString(payType)}" +
+        $"&bank={Uri.EscapeDataString(bankCode)}" +
+        $"&message={Uri.EscapeDataString(message)}" +
+        $"&orderInfo={Uri.EscapeDataString(orderInfo)}" +
+        $"&resultCode={Uri.EscapeDataString(resultCode)}" +
+        $"&responseTime={Uri.EscapeDataString(responseTime)}";
 
         // Nếu fail, gửi thêm reason từ BE (nếu có)
         if (!ok && !string.IsNullOrWhiteSpace(result.Message))
