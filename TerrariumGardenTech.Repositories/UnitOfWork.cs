@@ -54,6 +54,8 @@ public class UnitOfWork
     {
         _unitOfWorkContext = new TerrariumGardenTechDBContext();
     }
+
+    
     public WalletTransactionRepository WalletTransactionRepository
     {
         get { return _walletTransactionRepository ??= new WalletTransactionRepository(_unitOfWorkContext); }
@@ -261,4 +263,6 @@ public class UnitOfWork
     {
         get => _terrariumVariantAccessoryRepository ??= new TerrariumVariantAccessoryRepository(_unitOfWorkContext);
     }
+
+    
 }
