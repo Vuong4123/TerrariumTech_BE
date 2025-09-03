@@ -23,13 +23,15 @@ public class OrderResponse
     public decimal? DiscountAmount { get; set; }
     public DateTime? OrderDate { get; set; }
 
-
     public string Status { get; set; }
 
 
     public string PaymentStatus { get; set; } = string.Empty;
     public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
+
+    public bool IsPayFull { get; set; }
+    public string Note { get; set; }
 
     public List<OrderItemResponse> OrderItems { get; set; } = new();
 }
@@ -73,4 +75,17 @@ public class WalletPaymentInfo
     public decimal NewBalance { get; set; }
     public decimal AmountPaid { get; set; }
     public string Status { get; set; }
+}
+
+// Response model
+public class RejectOrderResponse
+{
+    public int OrderId { get; set; }
+    public string Status { get; set; }
+    public DateTime RejectedAt { get; set; }
+    public string RejectReason { get; set; }
+    public string RejectedBy { get; set; }
+    public decimal RefundAmount { get; set; }
+    public string RefundStatus { get; set; }
+    public string Message { get; set; }
 }

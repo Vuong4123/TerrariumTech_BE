@@ -14,6 +14,12 @@ public class TerrariumAccessoryRepository : GenericRepository<TerrariumAccessory
         _dbContext = dbContext;
     }
 
+    public async Task<List<Terrarium>> GetByTerrariumId(int terrariumId)
+    {
+        return await _dbContext.Terrariums
+            .Where(x => x.TerrariumId == terrariumId)
+            .ToListAsync();
+    }
     public async Task<List<TerrariumAccessory>> GetByTerrariumIdAsync(int terrariumId)
     {
         return await _dbContext.TerrariumAccessory

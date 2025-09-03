@@ -29,7 +29,8 @@ public partial class Order
     public string PaymentStatus { get; set; }
     
     public string TransactionId { get; set; }
-
+    public string Note { get; set; }
+    public bool IsPayFull { get; set; }
     //public string ShippingStatus { get; set; }
     //// Thêm thuộc tính PaymentMethod để lưu phương thức thanh toán
     //public string PaymentMethod { get; set; }

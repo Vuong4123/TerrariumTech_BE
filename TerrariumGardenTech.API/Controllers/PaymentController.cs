@@ -220,7 +220,7 @@ public class PaymentController : ControllerBase
         var amount = Get("amount");
         try { await _momoServices.MomoWalletReturnExecute(Request.Query); } catch { }
 
-        var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
+        var baseUrl = $"{"https://terra-tech-garden.vercel.app/wallet-deposit"}";
         var feUrl = $"{baseUrl}?status={(isSuccess ? "success" : "fail")}&amount={Uri.EscapeDataString(amount)}";
         return Content(BuildRedirectHtml(feUrl), "text/html");
     }

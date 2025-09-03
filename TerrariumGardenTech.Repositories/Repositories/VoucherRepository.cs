@@ -89,7 +89,7 @@ public class VoucherRepository : GenericRepository<Voucher>
             .AsNoTracking()
             .FirstOrDefaultAsync(x =>
                 x.Code == code &&
-                string.Equals(x.Status, VoucherStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.Status, VoucherStatus.Active.ToString()) &&
                 (x.ValidFrom == null || x.ValidFrom <= now) &&
                 (x.ValidTo == null || x.ValidTo >= now));
 

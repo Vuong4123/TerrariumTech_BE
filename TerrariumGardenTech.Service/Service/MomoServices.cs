@@ -537,7 +537,7 @@ namespace TerrariumGardenTech.Service.Service
                     });
 
                     // ✅ TRỪ STOCK KHI MOMO PAYMENT SUCCESS - CHỈ CHO AI TERRARIUM
-                    await ReduceStockForPaidOrder(order);
+                    //await ReduceStockForPaidOrder(order);
 
                     await _unitOfWork.SaveAsync();
                 }

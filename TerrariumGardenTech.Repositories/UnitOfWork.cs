@@ -48,6 +48,7 @@ public class UnitOfWork
     private ComboItemRepository _comboItemRepository;
     private TerrariumLayoutRepository _terrariumLayoutRepository;
     private TerrariumVariantAccessoryRepository _terrariumVariantAccessoryRepository;
+    private VoucherUsageRepository _voucherUsageRepository;
 
     public UnitOfWork()
     {
@@ -202,6 +203,10 @@ public class UnitOfWork
     public TerrariumVariantAccessoryRepository TerrariumVariantAccessory
     {
         get { return _terrariumVariantAccessoryRepository ??= new TerrariumVariantAccessoryRepository(_unitOfWorkContext); }
+    }
+    public VoucherUsageRepository VoucherUsageRepository
+    {
+        get { return _voucherUsageRepository ??= new VoucherUsageRepository(_unitOfWorkContext); }
     }
 
     public async Task<int> SaveAsync()

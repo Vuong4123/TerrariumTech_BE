@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TerrariumGardenTech.API.Extensions;
 using TerrariumGardenTech.Common;
 using TerrariumGardenTech.Common.Enums;
@@ -405,6 +406,26 @@ public class OrderController : ControllerBase
             return StatusCode(500, new { message = "Lỗi server khi hủy đơn hàng" });
         }
     }
+    [HttpPut("{orderId}/reject")]
+    [Authorize(Roles = "Admin,Staff")] // Chỉ admin/staff mới được reject
+    public async Task<IActionResult> RejectOrder(int orderId, [FromBody] RejectOrderRequest request)
+    {
+        try
+        {
+            var staffId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var result = await _svc.RejectOrderAsync(orderId, staffId, request);
+
+            if (result.Status == Const.SUCCESS_UPDATE_CODE)
+                return Ok(result);
+
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi server khi từ chối đơn hàng" });
+        }
+    }
+
     [HttpPut("refund/{refundId}/accept")]
     [Authorize(Roles = "Admin,Manager,Staff")]
     public async Task<IActionResult> AcceptRefundRequest(int refundId, [FromBody] AcceptRefundRequest request)

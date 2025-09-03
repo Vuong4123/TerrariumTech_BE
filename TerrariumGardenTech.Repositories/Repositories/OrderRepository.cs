@@ -21,6 +21,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.Payment)
             .Include(o => o.User)
             .Include(o => o.Voucher)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
     }
 
@@ -35,6 +37,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
+            .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks) // ✅ THÊM FEEDBACKS
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
             .ToListAsync(ct);
@@ -51,6 +55,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Include(o => o.User) // ✅ THÊM USER INFO
             .Include(o => o.Address) // ✅ THÊM ADDRESS INFO
             .Include(o => o.Voucher) // ✅ THÊM VOUCHER INFO
@@ -68,6 +74,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Include(o => o.User) // ✅ THÊM USER INFO
             .Include(o => o.Address) // ✅ THÊM ADDRESS INFO
             .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
@@ -85,6 +93,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Include(o => o.User) // ✅ THÊM USER INFO
             .Where(o => o.Status.ToString() == status)
             .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
@@ -102,6 +112,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.Payment)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Where(o => o.OrderId == id)
             .SingleOrDefaultAsync();
     }
@@ -117,6 +129,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM
             .Include(o => o.Payment) // ✅ THÊM
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
             .ToListAsync();
@@ -133,6 +147,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.User)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Include(o => o.Address)
             .Include(o => o.Voucher) // ✅ THÊM VOUCHER
             .OrderByDescending(o => o.OrderDate);
@@ -160,6 +176,8 @@ public sealed class OrderRepository : GenericRepository<Order>
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.User)
             .Include(o => o.Address)
+              .Include(o => o.OrderItems)
+                .ThenInclude(f => f.Feedbacks)
             .Include(o => o.Voucher) // ✅ THÊM VOUCHER
             .OrderByDescending(o => o.OrderDate);
 

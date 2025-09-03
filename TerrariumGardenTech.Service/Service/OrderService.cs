@@ -57,6 +57,8 @@ public class OrderService : IOrderService
                 Status = order.Status,
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
+                Note = order.Note,
+                IsPayFull = order.IsPayFull,
                 OrderItems = new List<OrderItemResponse>()
             };
 
@@ -94,8 +96,10 @@ public class OrderService : IOrderService
             Deposit = order.Deposit,
             OrderDate = order.OrderDate,
             Status = order.Status,
+            Note = order.Note,
             PaymentStatus = order.PaymentStatus ?? string.Empty,
             TransactionId = order.TransactionId,
+            IsPayFull = order.IsPayFull,
             OrderItems = new List<OrderItemResponse>()
         };
 
@@ -131,9 +135,11 @@ public class OrderService : IOrderService
                 DiscountAmount = order.DiscountAmount,   // ✅ THÊM
                 Deposit = order.Deposit,
                 OrderDate = order.OrderDate,
+                Note = order.Note,
                 Status = order.Status,
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
+                IsPayFull = order.IsPayFull,
                 OrderItems = new List<OrderItemResponse>()
             };
 
@@ -188,6 +194,7 @@ public class OrderService : IOrderService
                     ComboId = childItem.ComboId ?? 0,
                     ItemType = childItem.ItemType,
                     TerrariumId = childItem.TerrariumId,
+                    IsFeedBack = childItem.Feedbacks != null && childItem.Feedbacks.Any(),
                     AccessoryId = childItem.AccessoryId,
                     TerrariumVariantId = childItem.TerrariumVariantId,
                     AccessoryQuantity = childItem.AccessoryQuantity,
@@ -312,6 +319,161 @@ public class OrderService : IOrderService
             return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi hủy đơn hàng: {ex.Message}");
         }
     }
+    public async Task<IBusinessResult> RejectOrderAsync(int orderId, int staffId, RejectOrderRequest request)
+    {
+        using var transaction = await _unitOfWork.Order.BeginTransactionAsync();
+
+        try
+        {
+            // 1. Lấy thông tin đơn hàng
+            var order = await _unitOfWork.Order.GetOrderbyIdAsync(orderId);
+            if (order == null)
+                return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy đơn hàng");
+
+            // 2. Validate trạng thái có thể reject
+            var rejectableStatuses = new[] {
+            OrderStatusData.Pending,
+            OrderStatusData.Processing
+        };
+
+            if (!rejectableStatuses.Contains(order.Status))
+            {
+                return new BusinessResult(Const.FAIL_UPDATE_CODE,
+                    $"Không thể từ chối đơn hàng ở trạng thái {order.Status}");
+            }
+
+            // 3. Validate lý do từ chối
+            if (string.IsNullOrWhiteSpace(request.RejectReason))
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập lý do từ chối");
+
+            // 4. Cập nhật trạng thái đơn hàng
+            order.Status = OrderStatusData.Rejected;
+            // 6. Xử lý hoàn tiền vào ví (nếu đã thanh toán)
+            decimal refundAmount = 0;
+            if (order.PaymentStatus == "Paid" || order.Deposit > 0)
+            {
+                refundAmount = await ProcessRefundForRejectedOrderAsync(order, request.RejectReason);
+            }
+
+            // 7. Hoàn lại stock cho sản phẩm
+            await RestoreStockForOrderItemsAsync(orderId);
+
+            // 8. Hoàn lại voucher (nếu có)
+            if (order.VoucherId.HasValue)
+            {
+                await RestoreVoucherUsageAsync(order.VoucherId.Value, order.UserId);
+            }
+
+            // 10. Save changes
+            await _unitOfWork.Order.UpdateAsync(order);
+            await _unitOfWork.SaveAsync();
+            await transaction.CommitAsync();
+
+            var response = new RejectOrderResponse
+            {
+                OrderId = orderId,
+                Status = order.Status,
+                RejectedAt = DateTime.UtcNow,
+                RejectReason = request.RejectReason,
+                RejectedBy = staffId.ToString(),
+                RefundAmount = refundAmount,
+                RefundStatus = refundAmount > 0 ? "Đã hoàn tiền vào ví" : "Không có tiền cần hoàn",
+                Message = "Từ chối đơn hàng thành công"
+            };
+
+            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, "Từ chối đơn hàng thành công", response);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error rejecting order {OrderId} by staff {StaffId}", orderId, staffId);
+            return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi từ chối đơn hàng: {ex.Message}");
+        }
+    }
+
+    // Helper method để hoàn tiền cho rejected order
+    private async Task<decimal> ProcessRefundForRejectedOrderAsync(Order order, string rejectReason)
+    {
+        decimal refundAmount = 0;
+
+        // Tính toán số tiền hoàn trả
+        if (order.PaymentStatus == "Paid")
+        {
+            refundAmount = order.TotalAmount;
+        }
+        else if (order.Deposit > 0)
+        {
+            refundAmount = order.Deposit.Value;
+        }
+
+        if (refundAmount > 0)
+        {
+            // Lấy ví của user
+            var userWallet = await _unitOfWork.Wallet.FindOneAsync(w =>
+                w.UserId == order.UserId && w.WalletType == "User");
+
+            if (userWallet != null)
+            {
+                // Cộng tiền vào ví user
+                userWallet.Balance += refundAmount;
+                await _unitOfWork.Wallet.UpdateAsync(userWallet);
+
+                // Trừ tiền từ ví processing revenue
+                var processingWallet = await _unitOfWork.Wallet.FindOneAsync(w =>
+                    w.WalletType == "ProcessingRevenue");
+                if (processingWallet != null && processingWallet.Balance >= refundAmount)
+                {
+                    processingWallet.Balance -= refundAmount;
+                    await _unitOfWork.Wallet.UpdateAsync(processingWallet);
+                }
+
+                // Tạo transaction history
+                await _unitOfWork.WalletTransactionRepository.CreateAsync(new WalletTransaction
+                {
+                    WalletId = userWallet.WalletId,
+                    Amount = refundAmount,
+                    Type = "Refund",
+                    CreatedDate = DateTime.UtcNow,
+                    OrderId = order.OrderId
+                });
+
+                // Cập nhật payment status
+                order.PaymentStatus = OrderStatusData.Refunded;
+            }
+        }
+
+        return refundAmount;
+    }
+
+    // Helper method để restore voucher usage
+    private async Task RestoreVoucherUsageAsync(int voucherId, int userId)
+    {
+        try
+        {
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(voucherId);
+            if (voucher != null)
+            {
+                // Tăng lại remaining usage
+                voucher.RemainingUsage += 1;
+                await _unitOfWork.Voucher.UpdateAsync(voucher);
+
+                // Giảm user usage count
+                var voucherUsage = await _unitOfWork.VoucherUsageRepository
+                    .FindOneAsync(vu => vu.VoucherId == voucherId && vu.UserId == userId.ToString());
+
+                if (voucherUsage != null && voucherUsage.UsedCount > 0)
+                {
+                    voucherUsage.UsedCount -= 1;
+                    await _unitOfWork.VoucherUsageRepository.UpdateAsync(voucherUsage);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring voucher {VoucherId} for user {UserId}", voucherId, userId);
+        }
+    }
+
     // Đổi tên từ ValidateAITerrariumStockAsync thành ValidateVariantAccessoryStockAsync
     private async Task<StockValidationResult> ValidateVariantAccessoryStockAsync(int terrariumVariantId, int quantity)
     {
@@ -563,11 +725,7 @@ public class OrderService : IOrderService
                             $"Lỗi khi hoàn tiền: {refundResult.Message}");
                     }
 
-                    // Cập nhật trạng thái order nếu cần
-                    if (order.Status == OrderStatusData.Cancel)
-                    {
                         order.Status = OrderStatusData.Refunded;
-                    }
 
                     // Gửi notification cho user
                     await SendRefundApprovedNotificationAsync(order, refundRequest);
@@ -797,7 +955,7 @@ public class OrderService : IOrderService
                     throw new ArgumentException($"Đơn hàng tối thiểu {voucher.MinOrderAmount.Value:N0}đ để sử dụng voucher này.");
                 }
 
-                if (isValid && voucher.IsPersonal && !string.Equals(voucher.TargetUserId, userId.ToString(), StringComparison.OrdinalIgnoreCase))
+                if (isValid && voucher.IsPersonal)
                 {
                     throw new ArgumentException("Voucher cá nhân, không thuộc về bạn.");
                 }
@@ -839,6 +997,8 @@ public class OrderService : IOrderService
             OriginalAmount = originalAmount,
             TotalAmount = finalAmount,
             DiscountAmount = discountAmount,
+            Note = request.Note,
+            IsPayFull = request.IsPayFull,
             OrderDate = DateTime.UtcNow,
             Status = OrderStatusData.Pending,
             PaymentStatus = "Unpaid",
@@ -848,7 +1008,8 @@ public class OrderService : IOrderService
         try
         {
             await _unitOfWork.Order.CreateAsync(order);
-
+            await DeductStockAsync(orderItems);
+            await _unitOfWork.SaveAsync();
             // ✅ CONSUME VOUCHER SAU KHI TẠO ORDER THÀNH CÔNG
             if (safeVoucherId.HasValue)
             {
@@ -863,6 +1024,178 @@ public class OrderService : IOrderService
             throw new Exception("Order create error: " + msg, ex);
         }
     }
+
+    private async Task DeductStockAsync(List<OrderItem> orderItems)
+    {
+        // 1. ✅ TRỪ STOCK ACCESSORIES (chỉ lấy accessories riêng lẻ, không trong combo)
+        var accessoryGroups = orderItems
+            .Where(x => x.AccessoryId.HasValue &&
+                        x.ItemType != CommonData.CartItemType.COMBO) // ✅ Loại trừ items trong combo
+            .GroupBy(x => x.AccessoryId.Value)
+            .Select(g => new {
+                AccessoryId = g.Key,
+                TotalQuantity = g.Sum(x => x.AccessoryQuantity ?? x.Quantity) // ✅ Ưu tiên AccessoryQuantity
+            });
+
+        foreach (var group in accessoryGroups)
+        {
+            var accessory = await _unitOfWork.Accessory.GetByIdAsync(group.AccessoryId);
+            if (accessory != null)
+            {
+                accessory.StockQuantity -= group.TotalQuantity;
+                if (accessory.StockQuantity < 0)
+                {
+                    throw new InvalidOperationException($"Stock không đủ cho accessory {accessory.Name}");
+                }
+                await _unitOfWork.Accessory.UpdateAsync(accessory);
+            }
+        }
+
+        // 2. ✅ TRỪ STOCK TERRARIUM VARIANTS (chỉ lấy variants riêng lẻ, không trong combo)
+        var variantGroups = orderItems
+            .Where(x => x.TerrariumVariantId.HasValue &&
+                        x.ItemType != CommonData.CartItemType.COMBO) // ✅ Loại trừ items trong combo
+            .GroupBy(x => x.TerrariumVariantId.Value)
+            .Select(g => new {
+                VariantId = g.Key,
+                TotalQuantity = g.Sum(x => x.TerrariumVariantQuantity ?? x.Quantity) // ✅ Ưu tiên TerrariumVariantQuantity
+            });
+
+        foreach (var group in variantGroups)
+        {
+            var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(group.VariantId);
+            if (variant != null)
+            {
+                var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+
+                // Chỉ trừ stock cho non-AI terrariums
+                if (terrarium != null && !terrarium.GeneratedByAI)
+                {
+                    variant.StockQuantity -= (int)group.TotalQuantity;
+                    if (variant.StockQuantity < 0)
+                    {
+                        throw new InvalidOperationException($"Stock không đủ cho terrarium variant {variant.TerrariumVariantId}");
+                    }
+                    await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                }
+                // Nếu là AI terrarium, trừ stock của các accessories trong variant
+                else if (terrarium?.GeneratedByAI == true)
+                {
+                    await DeductVariantAccessoryStockAsync(variant.TerrariumVariantId, (int)group.TotalQuantity);
+                }
+            }
+        }
+
+        // 3. ✅ TRỪ STOCK COMBOS VÀ ITEMS BÊN TRONG
+        var comboGroups = orderItems
+            .Where(x => x.ComboId.HasValue &&
+                        x.ItemType == CommonData.CartItemType.COMBO &&
+                        x.UnitPrice > 0) // Chỉ lấy main combo items
+            .GroupBy(x => x.ComboId.Value)
+            .Select(g => new {
+                ComboId = g.Key,
+                TotalQuantity = g.Sum(x => x.Quantity)
+            });
+
+        foreach (var group in comboGroups)
+        {
+            var combo = await _unitOfWork.Combo.GetByIdAsync(group.ComboId);
+            if (combo != null)
+            {
+                // Trừ stock của combo
+                combo.StockQuantity -= (int)group.TotalQuantity;
+                if (combo.StockQuantity < 0)
+                {
+                    throw new InvalidOperationException($"Stock không đủ cho combo {combo.Name}");
+                }
+                await _unitOfWork.Combo.UpdateAsync(combo);
+
+                // ✅ TRỪ STOCK CỦA ITEMS TRONG COMBO
+                await DeductComboItemsStockAsync(combo, (int)group.TotalQuantity);
+            }
+        }
+    }
+
+    // ✅ METHOD MỚI: TRỪ STOCK CHO ITEMS TRONG COMBO
+    private async Task DeductComboItemsStockAsync(Combo combo, int comboQuantity)
+    {
+        if (combo.ComboItems == null) return;
+
+        foreach (var comboItem in combo.ComboItems)
+        {
+            // Trừ stock accessories trong combo
+            if (comboItem.AccessoryId.HasValue)
+            {
+                var accessory = await _unitOfWork.Accessory.GetByIdAsync(comboItem.AccessoryId.Value);
+                if (accessory != null)
+                {
+                    var requiredQty = comboItem.Quantity * comboQuantity;
+                    accessory.StockQuantity -= requiredQty;
+
+                    if (accessory.StockQuantity < 0)
+                    {
+                        throw new InvalidOperationException($"Stock không đủ cho accessory {accessory.Name} trong combo");
+                    }
+
+                    await _unitOfWork.Accessory.UpdateAsync(accessory);
+                }
+            }
+
+            // Trừ stock terrarium variants trong combo
+            if (comboItem.TerrariumVariantId.HasValue)
+            {
+                var variant = await _unitOfWork.TerrariumVariant.GetByIdAsync(comboItem.TerrariumVariantId.Value);
+                if (variant != null)
+                {
+                    var terrarium = await _unitOfWork.Terrarium.GetByIdAsync(variant.TerrariumId);
+
+                    if (terrarium != null && !terrarium.GeneratedByAI)
+                    {
+                        var requiredQty = comboItem.Quantity * comboQuantity;
+                        variant.StockQuantity -= requiredQty;
+
+                        if (variant.StockQuantity < 0)
+                        {
+                            throw new InvalidOperationException($"Stock không đủ cho terrarium variant trong combo");
+                        }
+
+                        await _unitOfWork.TerrariumVariant.UpdateAsync(variant);
+                    }
+                    else if (terrarium?.GeneratedByAI == true)
+                    {
+                        var requiredQty = comboItem.Quantity * comboQuantity;
+                        await DeductVariantAccessoryStockAsync(variant.TerrariumVariantId, requiredQty);
+                    }
+                }
+            }
+        }
+    }
+
+
+    // ✅ METHOD TRỪ STOCK CHO AI TERRARIUM ACCESSORIES
+    private async Task DeductVariantAccessoryStockAsync(int variantId, int quantity)
+    {
+        // Sử dụng method có sẵn
+        var variantAccessories = await _unitOfWork.TerrariumVariantAccessory
+            .GetByTerrariumVariantId(variantId);
+
+        foreach (var va in variantAccessories)
+        {
+            if (va.Accessory != null)
+            {
+                var requiredQty = va.Quantity * quantity;
+                va.Accessory.StockQuantity -= requiredQty;
+
+                if (va.Accessory.StockQuantity < 0)
+                {
+                    throw new InvalidOperationException($"Stock không đủ cho accessory {va.Accessory.Name} trong AI terrarium");
+                }
+
+                await _unitOfWork.Accessory.UpdateAsync(va.Accessory);
+            }
+        }
+    }
+
     // ✅ XỬ LÝ COMBO ITEM
     private async Task ProcessComboItem(OrderItemCreateRequest reqItem, List<OrderItem> orderItems)
     {
@@ -1445,7 +1778,7 @@ public class OrderService : IOrderService
             refund.IsPoint = request.IsPoint;
             if (refund.Status == CommonData.OrderStatusData.Approved)
             {
-                order.Status = OrderStatusData.Refuning;
+                order.Status = OrderStatusData.Refunded;
                 refund.RefundAmount = request.RefundAmount;
             }
             else
@@ -1455,6 +1788,7 @@ public class OrderService : IOrderService
             var isRollback = false;
             try
             {
+                await _unitOfWork.Order.UpdateAsync(order);
                 if (transport != null)
                 {
                     await _unitOfWork.Transport.CreateAsync(transport);

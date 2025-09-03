@@ -21,7 +21,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPost("deposit")]
-        public async Task<IActionResult> Deposit(int userId, decimal amount, string method)
+        public async Task<IActionResult> Deposit(int userId, int amount, string method)
         {
             var currentUserId = User.GetUserId();
             var result = await _walletService.DepositAsync(currentUserId, amount, method);
@@ -29,7 +29,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPost("pay")]
-        public async Task<IActionResult> Pay(int userId, decimal amount, int orderId)
+        public async Task<IActionResult> Pay(int userId, int amount, int orderId)
         {
             var currentUserId = User.GetUserId();
             var result = await _walletService.PayAsync(currentUserId, amount, orderId);
@@ -37,7 +37,7 @@ namespace TerrariumGardenTech.API.Controllers
         }
 
         [HttpPost("refund")]
-        public async Task<IActionResult> Refund(int userId, decimal amount, int orderId)
+        public async Task<IActionResult> Refund(int userId, int amount, int orderId)
         {
             var result = await _walletService.RefundAsync(userId, amount, orderId);
             return Ok(result);
