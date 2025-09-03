@@ -58,7 +58,7 @@ public class OrderService : IOrderService
                 Status = order.Status,
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
-                OrderItems = new List<OrderItemResponse>()
+                //OrderItems = new List<OrderItemResponse>()
             };
 
             // ✅ CHỈ LẤY MAIN ITEMS (không có parent)
@@ -136,17 +136,17 @@ public class OrderService : IOrderService
                 Status = order.Status,
                 PaymentStatus = order.PaymentStatus ?? string.Empty,
                 TransactionId = order.TransactionId,
-                OrderItems = new List<OrderItemResponse>()
+                //OrderItems = new List<OrderItemResponse>()
             };
 
-            // ✅ CHỈ LẤY MAIN ITEMS
-            var mainItems = order.OrderItems.Where(x => x.ParentOrderItemId == null).ToList();
+            //// ✅ CHỈ LẤY MAIN ITEMS
+            //var mainItems = order.OrderItems.Where(x => x.ParentOrderItemId == null).ToList();
 
-            foreach (var item in mainItems)
-            {
-                var itemResponse = await BuildOrderItemResponseAsync(item, order.OrderItems);
-                orderResponse.OrderItems.Add(itemResponse);
-            }
+            //foreach (var item in mainItems)
+            //{
+            //    var itemResponse = await BuildOrderItemResponseAsync(item, order.OrderItems);
+            //    orderResponse.OrderItems.Add(itemResponse);
+            //}
 
             result.Add(orderResponse);
         }
@@ -1161,16 +1161,29 @@ public class OrderService : IOrderService
         }
     }
 
-    public async Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId)
+    public async Task<IEnumerable<OrderSummaryResponse>> GetByUserAsync(int userId)
     {
         if (userId <= 0)
             throw new ArgumentException("UserId phải là số nguyên dương.", nameof(userId));
 
-        // OrderRepository đã có sẵn phương thức FindByUserAsync
         var orders = await _unitOfWork.Order.FindByUserAsync(userId);
 
-        // Specify the type arguments explicitly to resolve CS0411
-        return orders.Select(order => ToResponse(order, _unitOfWork));
+        return orders.Select(order => new OrderSummaryResponse
+        {
+            OrderId = order.OrderId,
+            UserId = order.UserId,
+            VoucherId = order.VoucherId,
+            AddressId = order.AddressId,
+            TotalAmount = order.TotalAmount,
+            OriginalAmount = order.OriginalAmount, // ✅ THÊM
+            DiscountAmount = order.DiscountAmount,   // ✅ THÊM
+            Deposit = order.Deposit,
+            OrderDate = order.OrderDate,
+            Status = order.Status,
+            PaymentStatus = order.PaymentStatus ?? string.Empty,
+            TransactionId = order.TransactionId,
+
+        });
     }
 
 

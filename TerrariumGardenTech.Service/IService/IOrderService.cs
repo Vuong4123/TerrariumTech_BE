@@ -15,7 +15,7 @@ public interface IOrderService
     Task<bool> UpdateStatusAsync(int id, string status);
     Task<bool> DeleteAsync(int id);
     Task<IBusinessResult> CheckoutAsync(int orderId, string paymentMethod);
-    Task<IEnumerable<OrderResponse>> GetByUserAsync(int userId);
+    Task<IEnumerable<OrderSummaryResponse>> GetByUserAsync(int userId);
 
 
     Task<(bool, string)> RequestRefundAsync(RefundRequest request, int currentUserId);
