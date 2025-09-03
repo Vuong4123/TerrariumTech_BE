@@ -12,7 +12,7 @@ public class OrderResponse
 {
     public int OrderId { get; set; }
     public int UserId { get; set; }
-
+    public int? VoucherId { get; set; }
     public int? AddressId { get; set; }
     public decimal TotalAmount { get; set; }
 
@@ -34,6 +34,29 @@ public class OrderResponse
     public string Note { get; set; }
 
     public List<OrderItemResponse> OrderItems { get; set; } = new();
+}
+
+public class OrderSummaryResponse
+{
+    public int OrderId { get; set; }
+    public int UserId { get; set; }
+    public int? VoucherId { get; set; }
+    public int? AddressId { get; set; }
+    public decimal TotalAmount { get; set; }
+
+    public decimal? Deposit { get; set; }
+
+
+    public decimal? OriginalAmount { get; set; }
+    public decimal? DiscountAmount { get; set; }
+    public DateTime? OrderDate { get; set; }
+
+
+    public string Status { get; set; }
+
+
+    public string PaymentStatus { get; set; } = string.Empty;
+    public string TransactionId { get; set; }
 }
 public class CancelOrderResponse
 {

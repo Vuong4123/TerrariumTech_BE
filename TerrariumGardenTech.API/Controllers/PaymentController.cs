@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FirebaseAdmin.Messaging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OpenAI.Responses;
+using Org.BouncyCastle.Asn1.X9;
 using System.Web;
 using TerrariumGardenTech.Common;
-using TerrariumGardenTech.Common.ResponseModel.Payment;
-using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Payment;
+using TerrariumGardenTech.Service.Base;
+using TerrariumGardenTech.Service.IService;
+using VNPAY.NET.Enums;
 
 namespace TerrariumGardenTech.API.Controllers;
 
@@ -59,87 +64,87 @@ public class PaymentController : ControllerBase
 
     // ====================== PAYOS ======================
 
-    [HttpPost("pay-os")]
-    public async Task<IActionResult> CreatePayOsLink([FromBody] PaymentCreateRequest request)
-    {
-        if (!ModelState.IsValid || request.OrderId <= 0)
-            return BadRequest("Invalid order id");
+    //[HttpPost("pay-os")]
+    //public async Task<IActionResult> CreatePayOsLink([FromBody] PaymentCreateRequest request)
+    //{
+    //    if (!ModelState.IsValid || request.OrderId <= 0)
+    //        return BadRequest("Invalid order id");
 
-        var result = await _payOsService.CreatePaymentLink(
-            request.OrderId,
-            request.Description ?? string.Empty,
-            request.PayAll                       // ✅ truyền cờ xuống service
-        );
-        return Ok(result);
-    }
+    //    var result = await _payOsService.CreatePaymentLink(
+    //        request.OrderId,
+    //        request.Description ?? string.Empty,
+    //        request.PayAll                       // ✅ truyền cờ xuống service
+    //    );
+    //    return Ok(result);
+    //}
 
 
-    [AllowAnonymous]
-    [HttpGet("pay-os/callback")]
-    public async Task<IActionResult> PayOsCallback([FromQuery] PaymentReturnModel request)
+    //[AllowAnonymous]
+    //[HttpGet("pay-os/callback")]
+    //public async Task<IActionResult> PayOsCallback([FromQuery] PaymentReturnModel request)
 
-    {
-        _logger.LogInformation("PAYOS callback: {@q}",
-            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+    //{
+    //    _logger.LogInformation("PAYOS callback: {@q}",
+    //        Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
 
-        var result = await _payOsService.ProcessPaymentCallback(request);
+    //    var result = await _payOsService.ProcessPaymentCallback(request);
 
-        // Giữ nguyên query khi đẩy về FE (nếu PayOS có trả các tham số cần)
-        var feBase = $"{FE_BASE}{FE_SUCCESS_PATH}";
-        var qs = Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty;
-        var feUrl = feBase + qs;
+    //    // Giữ nguyên query khi đẩy về FE (nếu PayOS có trả các tham số cần)
+    //    var feBase = $"{FE_BASE}{FE_SUCCESS_PATH}";
+    //    var qs = Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty;
+    //    var feUrl = feBase + qs;
 
-        // (hoặc) nếu FE chỉ cần alias:
-        var orderId = request.OrderId;
-        var status = result.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
-        feUrl = $"{FE_BASE}{FE_SUCCESS_PATH}?orderId={orderId}&status={status}";
+    //    // (hoặc) nếu FE chỉ cần alias:
+    //    var orderId = request.OrderId;
+    //    var status = result.Status == Const.SUCCESS_UPDATE_CODE ? "success" : "fail";
+    //    feUrl = $"{FE_BASE}{FE_SUCCESS_PATH}?orderId={orderId}&status={status}";
 
-        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
-        <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
-        return Content(html, "text/html");
-    }
+    //    var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
+    //    <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
+    //    return Content(html, "text/html");
+    //}
 
     // ====================== VNPAY ======================
 
-    [HttpPost("vn-pay")]
-    public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentInformationModel model)
-    {
-        if (!ModelState.IsValid || model.OrderId <= 0)
-            return BadRequest("Invalid order id");
+    //[HttpPost("vn-pay")]
+    //public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentInformationModel model)
+    //{
+    //    if (!ModelState.IsValid || model.OrderId <= 0)
+    //        return BadRequest("Invalid order id");
 
-        var result = await _vnPayService.CreatePaymentUrl(model, HttpContext);
-        return StatusCode(result.Status, result);
-    }
+    //    var result = await _vnPayService.CreatePaymentUrl(model, HttpContext);
+    //    return StatusCode(result.Status, result);
+    //}
 
 
 
-    [AllowAnonymous]
-    [HttpGet("vn-pay/callback")]
-    public async Task<IActionResult> VnPayCallback()
-    {
-        // Log toàn bộ params VNPAY trả về
-        _logger.LogInformation("VNPAY callback: {@q}",
-            Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+    //[AllowAnonymous]
+    //[HttpGet("vn-pay/callback")]
+    //public async Task<IActionResult> VnPayCallback()
+    //{
+    //    // Log toàn bộ params VNPAY trả về
+    //    _logger.LogInformation("VNPAY callback: {@q}",
+    //        Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
 
-        // 1) xử lý & lưu DB
-        var result = await _vnPayService.PaymentExecute(Request.Query);
+    //    // 1) xử lý & lưu DB
+    //    var result = await _vnPayService.PaymentExecute(Request.Query);
 
-        // 2) redirect về FE, giữ nguyên toàn bộ vnp_* đúng như VNPAY trả
-        var feBase = $"{FE_BASE}{FE_SUCCESS_PATH}";
-        var qs = Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty;
-        var feUrl = feBase + qs;
+    //    // 2) redirect về FE, giữ nguyên toàn bộ vnp_* đúng như VNPAY trả
+    //    var feBase = $"{FE_BASE}{FE_SUCCESS_PATH}";
+    //    var qs = Request.QueryString.HasValue ? Request.QueryString.Value : string.Empty;
+    //    var feUrl = feBase + qs;
 
-        // (tuỳ chọn) thêm alias cho FE:
-        var orderId = Request.Query["vnp_TxnRef"].ToString();
-        var amountRaw = Request.Query["vnp_Amount"].ToString();
-        var amountVnd = int.TryParse(amountRaw, out var a) ? a / 100 : 0;
-        var success = result.Status == Const.SUCCESS_UPDATE_CODE;
-        feUrl += $"&orderId={orderId}&amount={amountVnd}&status={(success ? "success" : "fail")}";
+    //    // (tuỳ chọn) thêm alias cho FE:
+    //    var orderId = Request.Query["vnp_TxnRef"].ToString();
+    //    var amountRaw = Request.Query["vnp_Amount"].ToString();
+    //    var amountVnd = int.TryParse(amountRaw, out var a) ? a / 100 : 0;
+    //    var success = result.Status == Const.SUCCESS_UPDATE_CODE;
+    //    feUrl += $"&orderId={orderId}&amount={amountVnd}&status={(success ? "success" : "fail")}";
 
-        var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
-        <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
-        return Content(html, "text/html");
-    }
+    //    var html = $@"<html><head><meta http-equiv='refresh' content='0;url={feUrl}'/></head>
+    //    <body><script>window.location.replace('{feUrl}');</script>Đang chuyển hướng…</body></html>";
+    //    return Content(html, "text/html");
+    //}
 
     // Tạo link thanh toán MoMo (trả URL + QR base64)
     [HttpPost("momo/create")]
@@ -167,46 +172,108 @@ public class PaymentController : ControllerBase
     }
 
     // MoMo redirect về (ReturnUrl) — chỉ điều hướng UI
+    //[HttpGet("momo/callback")]
+    //public async Task<IActionResult> MomoCallback()
+    //{
+    //    string Get(string k) => Request.Query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
+
+    //    var resultCode = Get("resultCode");
+    //    var isSuccess = resultCode == "0";
+    //    var orderIdRaw = Get("orderId");                  // "{orderId}_{ticks}"
+    //    var internalId = (orderIdRaw ?? "").Split('-').FirstOrDefault() ?? orderIdRaw;
+
+    //    // Gọi service để log/khớp nhẹ, nhưng đừng quyết định UI theo DB ở đây
+    //    try { await _momoServices.MomoReturnExecute(Request.Query); }
+    //    catch (Exception ex) { _logger.LogWarning(ex, "ReturnExecute warn"); }
+
+    //    // Các field MoMo V2 thường có trên return
+    //    var amount = Get("amount");       // VND, KHÔNG *100
+    //    var transId = Get("transId");
+    //    var payType = Get("payType");      // ATM|QR|NAPAS|CREDIT...
+    //    var bankCode = Get("bankCode");     // có thể rỗng
+    //    var responseTime = Get("responseTime");
+    //    var message = Get("message");
+    //    var orderInfo = Get("orderInfo");
+
+    //    // TUYỆT ĐỐI không đính kèm chữ ký
+    //    // var signature = Get("signature");  // ❌ KHÔNG gửi về FE
+
+    //    var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
+    //    var feUrl =
+    //        $"{baseUrl}?orderId={Uri.EscapeDataString(internalId ?? "")}" +
+    //        $"&status={(isSuccess ? "success" : "fail")}" +
+    //        $"&amount={Uri.EscapeDataString(amount)}" +
+    //        $"&transId={Uri.EscapeDataString(transId)}" +
+    //        $"&payType={Uri.EscapeDataString(payType)}" +
+    //        $"&bank={Uri.EscapeDataString(bankCode)}" +
+    //        $"&message={Uri.EscapeDataString(message)}" +
+    //        $"&orderInfo={Uri.EscapeDataString(orderInfo)}" +
+    //        $"&resultCode={Uri.EscapeDataString(resultCode)}" +
+    //        $"&responseTime={Uri.EscapeDataString(responseTime)}";
+
+    //    return Content(BuildRedirectHtml(feUrl), "text/html");
+    //}
     [HttpGet("momo/callback")]
     public async Task<IActionResult> MomoCallback()
     {
         string Get(string k) => Request.Query.TryGetValue(k, out var v) ? v.ToString() : string.Empty;
 
-        var resultCode = Get("resultCode");
-        var isSuccess = resultCode == "0";
-        var orderIdRaw = Get("orderId");                  // "{orderId}_{ticks}"
-        var internalId = (orderIdRaw ?? "").Split('_').FirstOrDefault() ?? orderIdRaw;
+        // Parse orderId an toàn: chấp định dạng "{orderId}-{ticks}" hoặc "{orderId}_{ticks}"
+        string orderIdRaw = Get("orderId");
+        string internalId = orderIdRaw;
+        if (!string.IsNullOrEmpty(orderIdRaw))
+        {
+            var parts = orderIdRaw.Split(new[] { '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+            internalId = parts.Length > 0 ? parts[0] : orderIdRaw;
+        }
 
-        // Gọi service để log/khớp nhẹ, nhưng đừng quyết định UI theo DB ở đây
-        try { await _momoServices.MomoReturnExecute(Request.Query); }
-        catch (Exception ex) { _logger.LogWarning(ex, "ReturnExecute warn"); }
+        // GỌI BE để xác nhận & ghi nhận. UI sẽ dựa vào result này chứ KHÔNG dựa vào query MoMo.
+        IBusinessResult result;
+        try
+        {
+            result = await _momoServices.MomoReturnExecute(Request.Query);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "MomoReturnExecute exception");
+            // Nếu BE lỗi, điều hướng fail với thông báo chung
+            var failUrl = $"{FE_BASE}{FE_FAIL_PATH}?orderId={Uri.EscapeDataString(internalId ?? "")}&reason={Uri.EscapeDataString("Internal error")}";
+            return Content(BuildRedirectHtml(failUrl), "text/html");
+        }
 
-        // Các field MoMo V2 thường có trên return
-        var amount = Get("amount");       // VND, KHÔNG *100
-        var transId = Get("transId");
-        var payType = Get("payType");      // ATM|QR|NAPAS|CREDIT...
-        var bankCode = Get("bankCode");     // có thể rỗng
+        // Quyết định điều hướng theo BE
+        bool ok = result.Status == Const.SUCCESS_UPDATE_CODE;
+
+        // Chỉ đính kèm thông tin hiển thị được (KHÔNG gửi chữ ký)
+        var amount = Get("amount");     // VND (không *100)
+        var transId = Get("transId");   // Mã giao dịch MoMo để hiển thị
+        var payType = Get("payType");
+        var bankCode = Get("bankCode");
         var responseTime = Get("responseTime");
         var message = Get("message");
         var orderInfo = Get("orderInfo");
+        var resultCode = Get("resultCode");
+        var basePath = ok ? FE_SUCCESS_PATH : FE_FAIL_PATH;
+        var url =
+            $"{FE_BASE}{basePath}" +
+            $"?orderId={Uri.EscapeDataString(internalId ?? "")}" +
 
-        // TUYỆT ĐỐI không đính kèm chữ ký
-        // var signature = Get("signature");  // ❌ KHÔNG gửi về FE
-
-        var baseUrl = $"{FE_BASE}{(isSuccess ? FE_SUCCESS_PATH : FE_FAIL_PATH)}";
-        var feUrl =
-            $"{baseUrl}?orderId={Uri.EscapeDataString(internalId ?? "")}" +
-            $"&status={(isSuccess ? "success" : "fail")}" +
+        $"&status={(ok ? "success" : "fail")}" +
+            $"&transId={Uri.EscapeDataString(transId ?? "")}" +
             $"&amount={Uri.EscapeDataString(amount)}" +
-            $"&transId={Uri.EscapeDataString(transId)}" +
-            $"&payType={Uri.EscapeDataString(payType)}" +
-            $"&bank={Uri.EscapeDataString(bankCode)}" +
-            $"&message={Uri.EscapeDataString(message)}" +
-            $"&orderInfo={Uri.EscapeDataString(orderInfo)}" +
-            $"&resultCode={Uri.EscapeDataString(resultCode)}" +
-            $"&responseTime={Uri.EscapeDataString(responseTime)}";
+        $"&transId={Uri.EscapeDataString(transId)}" +
+        $"&payType={Uri.EscapeDataString(payType)}" +
+        $"&bank={Uri.EscapeDataString(bankCode)}" +
+        $"&message={Uri.EscapeDataString(message)}" +
+        $"&orderInfo={Uri.EscapeDataString(orderInfo)}" +
+        $"&resultCode={Uri.EscapeDataString(resultCode)}" +
+        $"&responseTime={Uri.EscapeDataString(responseTime)}";
 
-        return Content(BuildRedirectHtml(feUrl), "text/html");
+        // Nếu fail, gửi thêm reason từ BE (nếu có)
+        if (!ok && !string.IsNullOrWhiteSpace(result.Message))
+            url += $"&reason={Uri.EscapeDataString(result.Message)}";
+
+        return Content(BuildRedirectHtml(url), "text/html");
     }
 
     // NEW: Redirect callback for Wallet topup. Only verify signature, then redirect to FE with status & amount.
