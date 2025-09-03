@@ -567,7 +567,6 @@ namespace TerrariumGardenTech.Service.Service
                     {
                         if (string.IsNullOrWhiteSpace(voucher.TargetUserId) || voucher.TargetUserId != userId.ToString())
                             return (0m, "Voucher not for this user", false, voucher);
-                        // PerUserUsageLimit có thể check khi bạn cung cấp schema VoucherUsage cụ thể.
                     }
 
                     // Giảm = Percent + Amount (nullable-safe)
@@ -599,16 +598,22 @@ namespace TerrariumGardenTech.Service.Service
                 decimal expectedFull = RoundVnd(original - voucherApplied - discountTenPercent);
                 decimal expectedPartial = depositAmount > 0 ? depositAmount : RoundVnd(original);
 
-                bool amountOk = isPayAll ? (paid == expectedFull)
-                                         : (paid == expectedPartial);
+                // Cho phép tolerance 1 VND
+                decimal expected = isPayAll ? expectedFull : expectedPartial;
+                bool amountOk = Math.Abs(paid - expected) <= 1m;
 
+                // Kết quả trả về từ MoMo
+                bool momoOk = Get("resultCode") == "0";
+
+                // Chỉ success khi cả MoMo ok và số tiền hợp lệ
+                bool success = momoOk && amountOk;
+
+                // Lý do thất bại
+                string failReason = null;
                 if (!amountOk)
                 {
-                    var expStr = isPayAll ? $"{expectedFull}" : $"{expectedPartial}";
-                    return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expStr}");
+                    failReason = $"Amount mismatch. paid={paid}, expected={expected}";
                 }
-
-                var success = Get("resultCode") == "0";
 
                 // ===== Ghi nhận =====
                 if (success)
@@ -618,7 +623,7 @@ namespace TerrariumGardenTech.Service.Service
 
                     if (isPayAll)
                     {
-                        // LƯU: DiscountAmount = 10% sau voucher (không gồm voucher)
+                        // Lưu DiscountAmount = 10% sau voucher (không gồm voucher)
                         order.DiscountAmount = discountTenPercent;
 
                         // Phản ánh đúng số KH đã trả
@@ -632,7 +637,6 @@ namespace TerrariumGardenTech.Service.Service
                                 voucherEntity.RemainingUsage -= 1;
                                 await _unitOfWork.Voucher.UpdateAsync(voucherEntity);
                             }
-                            // Ghi VoucherUsage: thêm sau khi bạn cung cấp schema chính xác.
                         }
                     }
 
@@ -670,6 +674,10 @@ namespace TerrariumGardenTech.Service.Service
                     });
 
                     await _unitOfWork.SaveAsync();
+
+                    if (!amountOk && momoOk)
+                        return new BusinessResult(Const.FAIL_READ_CODE, failReason);
+
                     return new BusinessResult(Const.FAIL_READ_CODE, "Payment failed");
                 }
             }
