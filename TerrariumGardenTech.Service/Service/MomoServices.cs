@@ -270,74 +270,7 @@ namespace TerrariumGardenTech.Service.Service
 
 
 
-        // NEW: Create MoMo link for Wallet Top-up with metadata (userId + random orderId)
-        public async Task<MomoQrResponse> CreateMomoWalletTopupUrl(MomoWalletTopupRequest req)
-        {
-            var momoSection = _config.GetSection("Momo");
-
-            string endpoint = momoSection["PaymentUrl"];
-            string partnerCode = momoSection["PartnerCode"];
-            string accessKey = momoSection["AccessKey"];
-            string secretKey = momoSection["SecretKey"];
-            string returnUrl = momoSection["WalletReturnUrl"] ?? momoSection["ReturnUrl"];
-            string ipnUrl = momoSection["WalletIpnUrl"] ?? momoSection["IpnUrl"];
-            string requestType = "captureWallet";
-
-            long amount = req.Amount; // VND
-
-            string randomId = Guid.NewGuid().ToString("N").Substring(0, 12);
-            string orderId = $"WL_{randomId}"; // independent from Order table
-            string orderInfo = string.IsNullOrWhiteSpace(req.Description) ? "Wallet Top-up" : req.Description!;
-            string requestId = Guid.NewGuid().ToString();
-
-            var meta = new { userId = req.UserId };
-            string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(meta)));
-
-            string rawHash = $"accessKey={accessKey}&amount={amount}&extraData={extraData}" +
-                             $"&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}" +
-                             $"&partnerCode={partnerCode}&redirectUrl={returnUrl}" +
-                             $"&requestId={requestId}&requestType={requestType}";
-
-            string signature = CreateSignature(secretKey, rawHash);
-
-            var payload = new
-            {
-                partnerCode,
-                accessKey,
-                requestId,
-                amount = amount.ToString(),
-                orderId,
-                orderInfo,
-                redirectUrl = returnUrl,
-                ipnUrl,
-                extraData,
-                requestType,
-                signature,
-                lang = "vi"
-            };
-
-            var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync(endpoint, content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            using var doc = JsonDocument.Parse(responseContent);
-            if (doc.RootElement.TryGetProperty("payUrl", out var payUrlElement))
-            {
-                string payUrl = payUrlElement.GetString();
-                return new MomoQrResponse
-                {
-                    PayUrl = payUrl,
-                    QrImageBase64 = GenerateBase64QrCode(payUrl)
-                };
-            }
-
-            var message = doc.RootElement.TryGetProperty("message", out var msg)
-                ? msg.GetString()
-                : "Unknown error from Momo";
-            throw new Exception($"Momo error: {message}");
-        }
+        
 
 
         public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
@@ -1011,6 +944,8 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
+
+
         // NEW: IPN for Wallet top-up. Verify signature; DO NOT credit to avoid double-processing; rely on Return callback per requirement.
         public async Task<IBusinessResult> MomoWalletIpnExecute(MomoIpnModel body)
         {
@@ -1047,6 +982,76 @@ namespace TerrariumGardenTech.Service.Service
             {
                 return new BusinessResult(Const.ERROR_EXCEPTION, ex.Message);
             }
+        }
+
+
+        // NEW: Create MoMo link for Wallet Top-up with metadata (userId + random orderId)
+        public async Task<MomoQrResponse> CreateMomoWalletTopupUrl(MomoWalletTopupRequest req)
+        {
+            var momoSection = _config.GetSection("Momo");
+
+            string endpoint = momoSection["PaymentUrl"];
+            string partnerCode = momoSection["PartnerCode"];
+            string accessKey = momoSection["AccessKey"];
+            string secretKey = momoSection["SecretKey"];
+            string returnUrl = momoSection["WalletReturnUrl"] ?? momoSection["ReturnUrl"];
+            string ipnUrl = momoSection["WalletIpnUrl"] ?? momoSection["IpnUrl"];
+            string requestType = "captureWallet";
+
+            long amount = req.Amount; // VND
+
+            string randomId = Guid.NewGuid().ToString("N").Substring(0, 12);
+            string orderId = $"WL_{randomId}"; // independent from Order table
+            string orderInfo = string.IsNullOrWhiteSpace(req.Description) ? "Wallet Top-up" : req.Description!;
+            string requestId = Guid.NewGuid().ToString();
+
+            var meta = new { userId = req.UserId };
+            string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(meta)));
+
+            string rawHash = $"accessKey={accessKey}&amount={amount}&extraData={extraData}" +
+                             $"&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}" +
+                             $"&partnerCode={partnerCode}&redirectUrl={returnUrl}" +
+                             $"&requestId={requestId}&requestType={requestType}";
+
+            string signature = CreateSignature(secretKey, rawHash);
+
+            var payload = new
+            {
+                partnerCode,
+                accessKey,
+                requestId,
+                amount = amount.ToString(),
+                orderId,
+                orderInfo,
+                redirectUrl = returnUrl,
+                ipnUrl,
+                extraData,
+                requestType,
+                signature,
+                lang = "vi"
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(endpoint, content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(responseContent);
+            if (doc.RootElement.TryGetProperty("payUrl", out var payUrlElement))
+            {
+                string payUrl = payUrlElement.GetString();
+                return new MomoQrResponse
+                {
+                    PayUrl = payUrl,
+                    QrImageBase64 = GenerateBase64QrCode(payUrl)
+                };
+            }
+
+            var message = doc.RootElement.TryGetProperty("message", out var msg)
+                ? msg.GetString()
+                : "Unknown error from Momo";
+            throw new Exception($"Momo error: {message}");
         }
 
         // NEW: Return for Wallet top-up — verify signature, parse userId and amount, then credit wallet points (1000 VND => 1 point)
@@ -1112,7 +1117,7 @@ namespace TerrariumGardenTech.Service.Service
                     await _unitOfWork.Wallet.CreateAsync(wallet);
                 }
 
-                var points = (decimal)amt / 1000m;
+                var points = (decimal)amt;
                 wallet.Balance += points;
 
                 await _unitOfWork.WalletTransactionRepository.CreateAsync(new WalletTransaction
