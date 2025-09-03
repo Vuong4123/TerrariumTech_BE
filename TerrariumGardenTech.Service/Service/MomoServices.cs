@@ -505,16 +505,13 @@ namespace TerrariumGardenTech.Service.Service
                 decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
                 DateTime UtcNow() => DateTime.UtcNow;
 
-                // Base gốc để tính giảm
+                // Base gốc để tính giảm (ưu tiên OriginalAmount)
                 decimal original =
-    (order.OriginalAmount.HasValue && order.OriginalAmount.Value > 0)
-        ? RoundVnd(order.OriginalAmount.Value)   // <-- dùng .Value
-        : RoundVnd(
-            (order.TotalAmount > 0
-                ? order.TotalAmount
-                : (order.OrderItems?.Sum(i => i.TotalPrice ?? 0m) ?? 0m)  // Sum trả về decimal? => ?? 0m
-            )
-          );
+                    (order.OriginalAmount.HasValue && order.OriginalAmount.Value > 0)
+                        ? RoundVnd(order.OriginalAmount.Value)
+                        : RoundVnd(order.TotalAmount > 0
+                            ? order.TotalAmount
+                            : (order.OrderItems?.Sum(i => i.TotalPrice ?? 0m) ?? 0m));
 
                 // MoMo amount
                 if (!long.TryParse(Get("amount"), out var amt) || amt <= 0)
@@ -526,7 +523,7 @@ namespace TerrariumGardenTech.Service.Service
                 bool isPartial = (depositAmount > 0) && (paid == depositAmount);
                 bool isPayAll = !isPartial;
 
-                // Lấy voucherId
+                // Lấy voucherId (ưu tiên từ order; nếu không có, thử query)
                 int? voucherId = order.VoucherId;
                 if (!voucherId.HasValue || voucherId.Value <= 0)
                 {
@@ -534,7 +531,7 @@ namespace TerrariumGardenTech.Service.Service
                     if (int.TryParse(vStr, out var vid) && vid > 0) voucherId = vid;
                 }
 
-                // Validate & tính giảm từ voucher (CHỈ áp khi FULL). KHÔNG tính 10% ở BE.
+                // Validate & tính giảm từ voucher (chỉ áp khi FULL)
                 async Task<(decimal discount, string reason, bool ok, Voucher voucher)> GetVoucherDiscountAndValidateAsync(
                     int? vid, decimal baseForCalc, int userId)
                 {
@@ -561,26 +558,19 @@ namespace TerrariumGardenTech.Service.Service
                     if (voucher.TotalUsage > 0 && voucher.RemainingUsage <= 0)
                         return (0m, "Voucher out of stock", false, voucher);
 
-                    // Min order
+                    // Min order (theo original)
                     if (voucher.MinOrderAmount.HasValue && baseForCalc < voucher.MinOrderAmount.Value)
                         return (0m, "Order below min amount", false, voucher);
 
                     // Voucher cá nhân
                     if (voucher.IsPersonal)
                     {
-                        // so sánh string với int: đổi int -> string
                         if (string.IsNullOrWhiteSpace(voucher.TargetUserId) || voucher.TargetUserId != userId.ToString())
                             return (0m, "Voucher not for this user", false, voucher);
-
-                        // Giới hạn mỗi user (nếu có)
-                        if (voucher.PerUserUsageLimit.HasValue && voucher.PerUserUsageLimit.Value > 0)
-                        {
-                            // Không dùng VoucherUsage ở đây vì schema chưa rõ → coi như pass
-                            // Nếu bạn cần check thật, gửi schema VoucherUsage mình gắn lại.
-                        }
+                        // PerUserUsageLimit có thể check khi bạn cung cấp schema VoucherUsage cụ thể.
                     }
 
-                    // Tính giảm: Percent + Amount (nullable → dùng GetValueOrDefault)
+                    // Giảm = Percent + Amount (nullable-safe)
                     decimal percent = voucher.DiscountPercent.GetValueOrDefault(0m);
                     decimal amount = voucher.DiscountAmount.GetValueOrDefault(0m);
 
@@ -594,38 +584,27 @@ namespace TerrariumGardenTech.Service.Service
                     return (discount, null, true, voucher);
                 }
 
-                var (voucherDiscount, voucherReason, voucherOk, voucherEntity) =
+                var (voucherDiscount, _, voucherOk, voucherEntity) =
                     await GetVoucherDiscountAndValidateAsync(voucherId, original, order.UserId);
 
-                // Chỉ áp voucher khi FULL (nếu muốn áp cả partial, đổi điều kiện tại đây)
+                // Áp voucher chỉ khi FULL (nếu muốn áp cả PARTIAL, đổi điều kiện tại đây)
                 decimal voucherApplied = (isPayAll && voucherOk) ? RoundVnd(voucherDiscount) : 0m;
 
-                // KHÔNG tính 10% ở BE (FE xử lý). 
-                // Để đối soát linh hoạt, vẫn cho phép paid = original - voucher  hoặc original - voucher - 10%.
-                decimal expectedFull_VoucherOnly = RoundVnd(original - voucherApplied);
-                decimal expectedFull_VoucherAnd10 = RoundVnd(original - (voucherApplied + RoundVnd(original * 0.10m)));
+                // === 10% tính trên (Original - Voucher), CHỈ khi FULL ===
+                decimal percentBase = original - voucherApplied;
+                if (percentBase < 0) percentBase = 0m;
+                decimal discountTenPercent = isPayAll ? RoundVnd(percentBase * 0.10m) : 0m;
+
+                // EXPECTED
+                decimal expectedFull = RoundVnd(original - voucherApplied - discountTenPercent);
                 decimal expectedPartial = depositAmount > 0 ? depositAmount : RoundVnd(original);
 
-                bool amountOk;
-                if (isPayAll)
-                {
-                    // LINH HOẠT: chấp nhận 1 trong 2 (tuỳ FE có trừ 10% không)
-                    amountOk = (paid == expectedFull_VoucherOnly) || (paid == expectedFull_VoucherAnd10);
-
-                    // --- KHẮT KHE (chọn một, bỏ dòng trên) ---
-                    // amountOk = (paid == expectedFull_VoucherOnly);   // chỉ voucher
-                    // amountOk = (paid == expectedFull_VoucherAnd10);  // bắt buộc FE trừ 10%
-                }
-                else
-                {
-                    amountOk = (paid == expectedPartial);
-                }
+                bool amountOk = isPayAll ? (paid == expectedFull)
+                                         : (paid == expectedPartial);
 
                 if (!amountOk)
                 {
-                    var expStr = isPayAll
-                        ? $"{expectedFull_VoucherOnly} or {expectedFull_VoucherAnd10}"
-                        : $"{expectedPartial}";
+                    var expStr = isPayAll ? $"{expectedFull}" : $"{expectedPartial}";
                     return new BusinessResult(Const.FAIL_READ_CODE, $"Amount mismatch. paid={paid}, expected={expStr}");
                 }
 
@@ -639,13 +618,13 @@ namespace TerrariumGardenTech.Service.Service
 
                     if (isPayAll)
                     {
-                        // LƯU CHỈ tiền voucher (không bao gồm 10%)
-                        order.DiscountAmount = voucherApplied;
+                        // LƯU: DiscountAmount = 10% sau voucher (không gồm voucher)
+                        order.DiscountAmount = discountTenPercent;
 
-                        // Phản ánh đúng số KH đã trả (bao gồm case FE có/không trừ 10%)
+                        // Phản ánh đúng số KH đã trả
                         order.TotalAmount = paid;
 
-                        // Trừ RemainingUsage nếu có
+                        // Nếu có voucher dùng được -> trừ RemainingUsage
                         if (voucherEntity != null && voucherId.HasValue && voucherId.Value > 0 && voucherApplied > 0)
                         {
                             if (voucherEntity.TotalUsage > 0 && voucherEntity.RemainingUsage > 0)
@@ -653,9 +632,7 @@ namespace TerrariumGardenTech.Service.Service
                                 voucherEntity.RemainingUsage -= 1;
                                 await _unitOfWork.Voucher.UpdateAsync(voucherEntity);
                             }
-
-                            // BỎ ghi VoucherUsage vì schema chưa có các field báo lỗi ở hình.
-                            // Khi bạn cung cấp class VoucherUsage (property nào có), mình thêm lại đoạn AddAsync.
+                            // Ghi VoucherUsage: thêm sau khi bạn cung cấp schema chính xác.
                         }
                     }
 
