@@ -22,15 +22,18 @@ public class OrderService : IOrderService
     private readonly UnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
     private readonly IWalletServices _walletService;
+    private readonly IRevenueService _revenueService;
 
     //private readonly IUserContextService _userContextService;
 
-    public OrderService(UnitOfWork unitOfWork, IUserContextService userContextService, ILogger<OrderService> logger, IWalletServices walletServices)
+
+    public OrderService(UnitOfWork unitOfWork,IUserContextService userContextService, ILogger<OrderService> logger, IWalletServices walletServices, IRevenueService revenueService)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _userContextService = userContextService ?? throw new ArgumentNullException(nameof(userContextService));
         _walletService = walletServices ?? throw new ArgumentNullException(nameof(walletServices));
+        _revenueService = revenueService ?? throw new ArgumentNullException(nameof(revenueService));
     }
 
     public async Task<IBusinessResult> GetAllAsync()
@@ -300,12 +303,17 @@ public class OrderService : IOrderService
 
             // 5. Cập nhật trạng thái đơn hàng
             order.Status = OrderStatusData.Cancel;
-            // 7. Xử lý hoàn tiền vào ví (nếu đã thanh toán)
+
+            // 6. Xử lý hoàn tiền vào ví (nếu đã thanh toán)
             decimal refundAmount = 0;
             if (order.PaymentStatus == "Paid" || order.Deposit > 0)
             {
                 refundAmount = await ProcessRefundToWalletAsync(order, userId, request);
             }
+
+            // 7. Trừ doanh thu sau khi hoàn tiền (cập nhật doanh thu)
+            decimal currentRevenue = order.TotalAmount; // Doanh thu hiện tại
+            decimal adjustedRevenue = currentRevenue - refundAmount; // Doanh thu đã điều chỉnh sau khi trừ hoàn tiền
 
             // 8. Hoàn lại stock cho sản phẩm
             await RestoreStockForOrderItemsAsync(orderId);
@@ -325,6 +333,7 @@ public class OrderService : IOrderService
                 CancelReason = request.CancelReason,
                 RefundAmount = refundAmount,
                 RefundStatus = refundAmount > 0 ? "Đã hoàn tiền vào ví" : "Không có tiền cần hoàn",
+                AdjustedRevenue = adjustedRevenue, // Doanh thu đã điều chỉnh
                 Message = "Hủy đơn hàng thành công"
             };
 
@@ -408,7 +417,10 @@ public class OrderService : IOrderService
         }
     }
 
-    // Helper method để hoàn tiền cho rejected order
+
+
+
+    //Helper method để hoàn tiền cho rejected order
     private async Task<decimal> ProcessRefundForRejectedOrderAsync(Order order, string rejectReason)
     {
         decimal refundAmount = 0;
@@ -461,6 +473,7 @@ public class OrderService : IOrderService
 
         return refundAmount;
     }
+    
 
     // Helper method để restore voucher usage
     private async Task RestoreVoucherUsageAsync(int voucherId, int userId)
@@ -563,7 +576,7 @@ public class OrderService : IOrderService
         // Nếu đã thanh toán toàn bộ
         if (order.PaymentStatus == "Paid")
         {
-            refundAmount = order.TotalAmount - (order.DiscountAmount ?? 0);
+            refundAmount = order.TotalAmount;
         }
         // Nếu chỉ đặt cọc
         else if (order.Deposit > 0)
@@ -704,6 +717,99 @@ public class OrderService : IOrderService
     }
 
     #endregion
+    //public async Task<IBusinessResult> AcceptRefundRequestAsync(int refundId, int staffId, AcceptRefundRequest request)
+    //{
+    //    try
+    //    {
+    //        // 1. Lấy thông tin refund request
+    //        var refundRequest = await _unitOfWork.OrderRequestRefund.GetByIdAsync(refundId);
+    //        if (refundRequest == null)
+    //            return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy yêu cầu hoàn tiền");
+
+    //        // 2. Kiểm tra trạng thái
+    //        if (refundRequest.Status != OrderStatusData.Pending)
+    //        {
+    //            return new BusinessResult(Const.FAIL_UPDATE_CODE,
+    //                $"Yêu cầu hoàn tiền đã được xử lý trước đó với trạng thái: {refundRequest.Status}");
+    //        }
+
+    //        // 3. Lấy thông tin order
+    //        var order = await _unitOfWork.Order.GetOrderWithItemsAsync(refundRequest.OrderId);
+    //        if (order == null)
+    //            return new BusinessResult(Const.FAIL_READ_CODE, "Không tìm thấy đơn hàng liên quan");
+
+    //        try
+    //        {
+    //            // 4. Xử lý approve/reject
+    //            if (request.IsApproved)
+    //            {
+    //                // APPROVE - Thực hiện hoàn tiền
+    //                refundRequest.Status = OrderStatusData.Approved;
+    //                refundRequest.UserModified = staffId;
+    //                refundRequest.LastModifiedDate = DateTime.UtcNow;
+
+    //                // ✅ HOÀN LẠI STOCK KHI APPROVE REFUND
+    //                await RestoreStockForRefundedOrder(order);
+
+    //                // Thực hiện hoàn tiền vào ví
+    //                var refundResult = await ProcessActualRefundAsync(order, refundRequest);
+    //                if (!refundResult.Success)
+    //                {
+    //                    return new BusinessResult(Const.FAIL_UPDATE_CODE,
+    //                        $"Lỗi khi hoàn tiền: {refundResult.Message}");
+    //                }
+
+    //                    order.Status = OrderStatusData.Refunded;
+
+    //                // Gửi notification cho user
+    //                await SendRefundApprovedNotificationAsync(order, refundRequest);
+    //            }
+    //            else
+    //            {
+    //                // REJECT - Từ chối hoàn tiền
+    //                if (string.IsNullOrWhiteSpace(request.RejectionReason))
+    //                    return new BusinessResult(Const.FAIL_UPDATE_CODE, "Vui lòng nhập lý do từ chối");
+
+    //                refundRequest.Status = OrderStatusData.Rejected;
+    //                refundRequest.UserModified = staffId;
+    //                refundRequest.LastModifiedDate = DateTime.UtcNow;
+    //                refundRequest.Notes = request.RejectionReason;
+
+    //                // Gửi notification cho user
+    //                await SendRefundRejectedNotificationAsync(order, refundRequest, request.RejectionReason);
+    //            }
+
+    //            // 5. Save changes
+    //            await _unitOfWork.OrderRequestRefund.UpdateAsync(refundRequest);
+    //            await _unitOfWork.Order.UpdateAsync(order);
+    //            await _unitOfWork.SaveAsync();
+
+    //            var response = new AcceptRefundResponse
+    //            {
+    //                RefundId = refundId,
+    //                OrderId = order.OrderId,
+    //                RefundStatus = refundRequest.Status,
+    //                RefundAmount = refundRequest.RefundAmount ?? 0,
+    //                ProcessedAt = refundRequest.LastModifiedDate,
+    //                ProcessedBy = staffId,
+    //                IsApproved = request.IsApproved,
+    //                Message = request.RejectionReason
+    //            };
+
+    //            return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            throw;
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error accepting refund request {RefundId}", refundId);
+    //        return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi xử lý yêu cầu hoàn tiền: {ex.Message}");
+    //    }
+    //}
+
     public async Task<IBusinessResult> AcceptRefundRequestAsync(int refundId, int staffId, AcceptRefundRequest request)
     {
         try
@@ -728,6 +834,8 @@ public class OrderService : IOrderService
             try
             {
                 // 4. Xử lý approve/reject
+                decimal refundAmount = refundRequest.RefundAmount ?? 0;
+
                 if (request.IsApproved)
                 {
                     // APPROVE - Thực hiện hoàn tiền
@@ -748,8 +856,29 @@ public class OrderService : IOrderService
 
                     order.Status = OrderStatusData.Refunded;
 
+                    // Cập nhật tổng doanh thu sau khi trừ hoàn tiền
+                    decimal currentRevenue = order.TotalAmount; // Doanh thu hiện tại
+                    decimal adjustedCurrentRevenue = currentRevenue - refundAmount; // Doanh thu đã điều chỉnh
+
+
                     // Gửi notification cho user
                     await SendRefundApprovedNotificationAsync(order, refundRequest);
+
+                    // Trả về doanh thu đã điều chỉnh
+                    var response = new AcceptRefundResponse
+                    {
+                        RefundId = refundId,
+                        OrderId = order.OrderId,
+                        RefundStatus = refundRequest.Status,
+                        RefundAmount = refundAmount,
+                        AdjustedRevenue = adjustedCurrentRevenue, // Doanh thu đã điều chỉnh
+                        ProcessedAt = refundRequest.LastModifiedDate,
+                        ProcessedBy = staffId,
+                        IsApproved = request.IsApproved,
+                        Message = request.RejectionReason
+                    };
+
+                    return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
                 }
                 else
                 {
@@ -771,7 +900,7 @@ public class OrderService : IOrderService
                 await _unitOfWork.Order.UpdateAsync(order);
                 await _unitOfWork.SaveAsync();
 
-                var response = new AcceptRefundResponse
+                var responseReject = new AcceptRefundResponse
                 {
                     RefundId = refundId,
                     OrderId = order.OrderId,
@@ -783,11 +912,12 @@ public class OrderService : IOrderService
                     Message = request.RejectionReason
                 };
 
-                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
+                return new BusinessResult(Const.SUCCESS_UPDATE_CODE, responseReject.Message, responseReject);
             }
             catch (Exception ex)
             {
-                throw;
+                _logger.LogError(ex, "Error processing refund request for order {OrderId}", refundId);
+                return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi xử lý yêu cầu hoàn tiền: {ex.Message}");
             }
         }
         catch (Exception ex)
@@ -796,6 +926,8 @@ public class OrderService : IOrderService
             return new BusinessResult(Const.FAIL_UPDATE_CODE, $"Lỗi khi xử lý yêu cầu hoàn tiền: {ex.Message}");
         }
     }
+
+
 
     // ✅ HOÀN LẠI STOCK KHI REFUND
     private async Task RestoreStockForRefundedOrder(Order order)
@@ -1755,7 +1887,7 @@ public class OrderService : IOrderService
                 OrderItemId = x.OrderItemId,
                 Quantity = x.Quantity ?? 0
             }).ToList(),
-            RefundAmount = order.DiscountAmount,
+            RefundAmount = order.TotalAmount,
             Reason = request.Reason,
             Status = OrderStatusData.Pending,
             UserModified = currentUserId,

@@ -4,15 +4,17 @@
 
 public class RevenueOverviewResponse
 {
-    public decimal TotalRevenue { get; set; }
-    public decimal PreviousPeriodRevenue { get; set; }
-    public decimal RevenueGrowthPercent { get; set; }
-    public int TotalOrders { get; set; }
-    public decimal AverageOrderValue { get; set; }
-    public int TotalCustomers { get; set; }
-    public List<RevenueByMonth> RevenueByMonth { get; set; } = new();
-    public List<RevenueByCategory> RevenueByPaymentStatus { get; set; } = new();
+    public decimal TotalRevenue { get; set; } // Tổng doanh thu kỳ hiện tại
+    public decimal AdjustedRevenue { get; set; } // Doanh thu đã điều chỉnh sau khi trừ hoàn tiền
+    public decimal PreviousPeriodRevenue { get; set; } // Tổng doanh thu kỳ trước
+    public decimal RevenueGrowthPercent { get; set; } // Tỷ lệ tăng trưởng
+    public int TotalOrders { get; set; } // Số lượng đơn hàng hoàn thành
+    public decimal AverageOrderValue { get; set; } // Giá trị trung bình mỗi đơn hàng
+    public int TotalCustomers { get; set; } // Tổng số khách hàng
+    public List<RevenueByMonth> RevenueByMonth { get; set; } = new(); // Doanh thu theo tháng
+    public List<RevenueByCategory> RevenueByPaymentStatus { get; set; } = new(); // Doanh thu theo trạng thái thanh toán
 }
+
 
 public class RevenueByPeriodResponse
 {

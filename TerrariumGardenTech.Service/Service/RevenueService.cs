@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using TerrariumGardenTech.Common;
+using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.ResponseModel.Revenue;
 using TerrariumGardenTech.Repositories;
@@ -69,39 +70,55 @@ public class RevenueService : IRevenueService
 
     //    return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy tổng quan doanh thu thành công", result);
     //}
+
+    
+
     public async Task<IBusinessResult> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null)
     {
-        var fromDate = from ?? DateTime.Now.AddMonths(-12);
-        var toDate = to ?? DateTime.Now;
+        var fromDate = from ?? DateTime.Now.AddMonths(-12); // Default to 12 months ago if no 'from' date
+        var toDate = to ?? DateTime.Now; // Default to current date if no 'to' date
 
         // Lọc đơn hàng hoàn thành và đã trả tiền (PaymentStatus == "Paid")
         var orders = await _unitOfWork.Order.GetAllAsync2();
         var completedOrders = orders.Where(o =>
-            //o.Status == OrderStatusData.Completed &&
-            o.PaymentStatus == "Paid" &&   // Thêm check PaymentStatus == "Paid"
-            o.OrderDate >= fromDate &&
+            o.PaymentStatus == "Paid" &&   // Check if payment status is 'Paid'
+            o.OrderDate >= fromDate &&      // Ensure order date is within the date range
             o.OrderDate <= toDate).ToList();
 
-        var previousPeriodFrom = fromDate.AddDays(-(toDate - fromDate).Days);
+        // Tính toán cho kỳ trước
+        var previousPeriodFrom = fromDate.AddMonths(-12); // Trừ 12 tháng (hoặc 1 năm) để lấy dữ liệu kỳ trước
         var previousPeriodOrders = orders.Where(o =>
-            //o.Status == OrderStatusData.Completed &&
-            o.PaymentStatus == "Paid" &&   // Thêm check PaymentStatus == "Paid"
+            o.PaymentStatus == "Paid" &&
             o.OrderDate >= previousPeriodFrom &&
             o.OrderDate < fromDate).ToList();
 
+        // Tính tổng doanh thu của kỳ hiện tại
         var currentRevenue = completedOrders.Sum(o => o.TotalAmount);
-        var previousRevenue = previousPeriodOrders.Sum(o => o.TotalAmount);
-        var revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
+        // Tính tổng số tiền hoàn lại trong kỳ hiện tại (nếu có)
+        decimal totalRefundAmount = completedOrders.Sum(o => o.Refunds?.Sum(r => r.RefundAmount) ?? 0);
+
+        // Trừ số tiền hoàn lại từ doanh thu hiện tại để tính doanh thu đã điều chỉnh
+        decimal adjustedCurrentRevenue = currentRevenue - totalRefundAmount;
+
+        // Tính tổng doanh thu của kỳ trước
+        var previousRevenue = previousPeriodOrders.Sum(o => o.TotalAmount);
+        var revenueGrowth = previousRevenue > 0 ? ((adjustedCurrentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+
+        // Cập nhật lại tổng doanh thu (bao gồm hoàn tiền) để trả về đúng kết quả
+        decimal totalRevenue = adjustedCurrentRevenue;
+
+        // Chuẩn bị dữ liệu trả về
         var result = new RevenueOverviewResponse
         {
-            TotalRevenue = currentRevenue,
-            PreviousPeriodRevenue = previousRevenue,
-            RevenueGrowthPercent = Math.Round(revenueGrowth, 2),
-            TotalOrders = completedOrders.Count,
-            AverageOrderValue = completedOrders.Count > 0 ? currentRevenue / completedOrders.Count : 0,
-            TotalCustomers = completedOrders.Select(o => o.UserId).Distinct().Count(),
-            RevenueByMonth = GetRevenueByMonth(completedOrders, fromDate, toDate),
+            TotalRevenue = totalRevenue, // Tổng doanh thu đã điều chỉnh
+            AdjustedRevenue = adjustedCurrentRevenue, // Doanh thu đã điều chỉnh sau khi trừ hoàn tiền
+            PreviousPeriodRevenue = previousRevenue, // Tổng doanh thu kỳ trước
+            RevenueGrowthPercent = Math.Round(revenueGrowth, 2), // Tỷ lệ tăng trưởng
+            TotalOrders = completedOrders.Count, // Số lượng đơn hàng hoàn thành
+            AverageOrderValue = completedOrders.Count > 0 ? adjustedCurrentRevenue / completedOrders.Count : 0, // Giá trị trung bình mỗi đơn hàng
+            TotalCustomers = completedOrders.Select(o => o.UserId).Distinct().Count(), // Tổng số khách hàng
+            RevenueByMonth = GetRevenueByMonth(completedOrders, fromDate, toDate), // Doanh thu theo tháng
             RevenueByPaymentStatus = completedOrders
                 .GroupBy(o => o.PaymentStatus ?? "Unknown")
                 .Select(g => new RevenueByCategory
@@ -109,12 +126,15 @@ public class RevenueService : IRevenueService
                     Category = g.Key,
                     Revenue = g.Sum(o => o.TotalAmount),
                     OrderCount = g.Count(),
-                    Percentage = Math.Round((g.Sum(o => o.TotalAmount) / currentRevenue) * 100, 2)
+                    Percentage = Math.Round((g.Sum(o => o.TotalAmount) / adjustedCurrentRevenue) * 100, 2)
                 }).ToList()
         };
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy tổng quan doanh thu thành công", result);
     }
+
+
+
     /// <summary>
     /// Doanh thu theo kỳ (ngày, tuần, tháng, năm)
     /// </summary>

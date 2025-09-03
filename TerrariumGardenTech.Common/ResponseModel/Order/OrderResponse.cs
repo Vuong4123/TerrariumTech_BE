@@ -71,6 +71,7 @@ public class CancelOrderResponse
     public string CancelReason { get; set; }
     public decimal RefundAmount { get; set; }
     public string RefundStatus { get; set; }
+    public decimal AdjustedRevenue { get; set; }
     public string Message { get; set; }
 }
 public class AcceptRefundResponse
@@ -79,11 +80,13 @@ public class AcceptRefundResponse
     public int OrderId { get; set; }
     public string RefundStatus { get; set; }
     public decimal RefundAmount { get; set; }
+    public decimal AdjustedRevenue { get; set; }  // Thêm thuộc tính này
     public DateTime ProcessedAt { get; set; }
     public int ProcessedBy { get; set; }
     public bool IsApproved { get; set; }
     public string Message { get; set; }
 }
+
 public class RefundResponse {
     public int OrderId { get; set; }
     public IEnumerable<int> RefundId {get; set; }
