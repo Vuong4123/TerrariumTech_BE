@@ -175,7 +175,7 @@ public class PaymentController : ControllerBase
         var resultCode = Get("resultCode");
         var isSuccess = resultCode == "0";
         var orderIdRaw = Get("orderId");                  // "{orderId}_{ticks}"
-        var internalId = (orderIdRaw ?? "").Split('_').FirstOrDefault() ?? orderIdRaw;
+        var internalId = (orderIdRaw ?? "").Split('-').FirstOrDefault() ?? orderIdRaw;
 
         // Gọi service để log/khớp nhẹ, nhưng đừng quyết định UI theo DB ở đây
         try { await _momoServices.MomoReturnExecute(Request.Query); }
