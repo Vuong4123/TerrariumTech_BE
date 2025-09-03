@@ -32,8 +32,13 @@ public class OrderResponse
 
     public bool IsPayFull { get; set; }
     public string Note { get; set; }
-
+    public List<RefundResponseOrder> Refunds { get; set; }
     public List<OrderItemResponse> OrderItems { get; set; } = new();
+}
+public class RefundResponseOrder
+{
+    public string Status { get; set; }
+    public string Reason { get; set; }
 }
 
 public class OrderSummaryResponse
