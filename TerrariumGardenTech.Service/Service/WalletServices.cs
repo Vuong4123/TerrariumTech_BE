@@ -109,7 +109,7 @@ namespace TerrariumGardenTech.Service.Service
 
                 // 4. ✅ CẬP NHẬT ORDER STATUS VÀ PAYMENT STATUS
                 order.PaymentStatus = "Paid";
-                order.Status = OrderStatusData.Processing; // Chuyển sang Processing
+                order.Status = OrderStatusData.Pending;
 
                 await _unitOfWork.Order.UpdateAsync(order);
 

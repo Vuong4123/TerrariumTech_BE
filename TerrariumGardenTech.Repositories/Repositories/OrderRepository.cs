@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TerrariumGardenTech.Repositories.Base;
 using TerrariumGardenTech.Repositories.Entity;
+using static TerrariumGardenTech.Common.Enums.CommonData;
 
 public sealed class OrderRepository : GenericRepository<Order>
 {
@@ -201,7 +202,25 @@ public sealed class OrderRepository : GenericRepository<Order>
 
         return (orders, totalCount);
     }
+    public async Task<decimal> GetTotalRevenueAsync()
+    {
+        var orders = await _context.Orders
+        .Where(order => order.PaymentStatus == "Paid" &&
+                        order.Status != OrderStatusData.Rejected &&
+                        order.Status != OrderStatusData.Refunded &&
+                        order.Status != OrderStatusData.Cancel)
+        .ToListAsync();
 
+        decimal total = orders.Sum(order => order.TotalAmount);
+
+        // Ghi log tổng tiền của từng đơn hàng để kiểm tra
+        //foreach (var order in orders)
+        //{
+        //    _logger.LogInformation($"Order ID: {order.OrderId}, TotalAmount: {order.TotalAmount}");
+        //}
+
+        return total;
+    }
     public async Task<int> SaveAsync()
     {
         return await _context.SaveChangesAsync();

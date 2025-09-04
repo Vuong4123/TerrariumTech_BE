@@ -856,8 +856,11 @@ public class OrderService : IOrderService
 
                     order.Status = OrderStatusData.Refunded;
 
+                    // 1. Lấy tổng doanh thu của cả website
+                    var totalRevenue = await _unitOfWork.Order.GetTotalRevenueAsync(); // Giả sử bạn có phương thức này để lấy tổng doanh thu từ hệ thống
+
                     // Cập nhật tổng doanh thu sau khi trừ hoàn tiền
-                    decimal currentRevenue = order.TotalAmount; // Doanh thu hiện tại
+                    decimal currentRevenue = totalRevenue; // Doanh thu hiện tại
                     decimal adjustedCurrentRevenue = currentRevenue - refundAmount; // Doanh thu đã điều chỉnh
 
 
@@ -877,7 +880,7 @@ public class OrderService : IOrderService
                         IsApproved = request.IsApproved,
                         Message = request.RejectionReason
                     };
-
+                    await _unitOfWork.SaveAsync();
                     return new BusinessResult(Const.SUCCESS_UPDATE_CODE, response.Message, response);
                 }
                 else
@@ -911,7 +914,7 @@ public class OrderService : IOrderService
                     IsApproved = request.IsApproved,
                     Message = request.RejectionReason
                 };
-
+                await _unitOfWork.SaveAsync();
                 return new BusinessResult(Const.SUCCESS_UPDATE_CODE, responseReject.Message, responseReject);
             }
             catch (Exception ex)
@@ -927,7 +930,32 @@ public class OrderService : IOrderService
         }
     }
 
+    
+    public async Task SaveRefundResponseAsync(AcceptRefundResponse response)
+    {
+        using (var context = new TerrariumGardenTechDBContext()) // Thay YourDbContext bằng context của bạn
+        {
+            // Tạo đối tượng RefundResponse mới từ dữ liệu response
+            var refundResponse = new AcceptRefundResponse
+            {
+                RefundId = response.RefundId,
+                OrderId = response.OrderId,
+                RefundStatus = response.RefundStatus,
+                RefundAmount = response.RefundAmount,
+                AdjustedRevenue = response.AdjustedRevenue,
+                ProcessedAt = response.ProcessedAt,
+                ProcessedBy = response.ProcessedBy,
+                IsApproved = response.IsApproved,
+                Message = response.Message
+            };
 
+            // Thêm đối tượng vào DbSet
+            context.Add(refundResponse);
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            await context.SaveChangesAsync();
+        }
+    }
 
     // ✅ HOÀN LẠI STOCK KHI REFUND
     private async Task RestoreStockForRefundedOrder(Order order)
