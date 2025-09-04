@@ -19,6 +19,9 @@ public class MembershipService : IMembershipService
         _unitOfWork = unitOfWork;
     }
 
+   
+
+
     public async Task<int> CreateMembershipAsync(int packageId, DateTime startDate)
     {
         var currentUserId = userContextService.GetCurrentUser();

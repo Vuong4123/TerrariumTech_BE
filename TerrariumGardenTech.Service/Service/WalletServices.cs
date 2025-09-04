@@ -109,7 +109,7 @@ namespace TerrariumGardenTech.Service.Service
 
                 // 4. ✅ CẬP NHẬT ORDER STATUS VÀ PAYMENT STATUS
                 order.PaymentStatus = "Paid";
-                order.Status = OrderStatusData.Processing; // Chuyển sang Processing
+                order.Status = OrderStatusData.Pending; // Chuyển sang Pending
 
                 await _unitOfWork.Order.UpdateAsync(order);
 
@@ -129,6 +129,9 @@ namespace TerrariumGardenTech.Service.Service
                 return new BusinessResult(Const.ERROR_EXCEPTION, "Lỗi khi thanh toán: " + ex.Message);
             }
         }
+
+        
+
 
         public async Task<WalletBalanceHistoryDto> GetWalletBalanceHistoryAsync(
         int userId, DateTime? fromDate = null, DateTime? toDate = null)
