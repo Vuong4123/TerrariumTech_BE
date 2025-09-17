@@ -110,6 +110,7 @@ public partial class TerrariumGardenTechDBContext : DbContext
     public DbSet<ComboItem> ComboItem { get; set; }
     public DbSet<TerrariumLayout> TerrariumLayouts { get; set; }
     public DbSet<TerrariumVariantAccessory> TerrariumVariantAccessory { get; set; }
+    public DbSet<PaymentConfig> PaymentConfig { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Accessory>(entity =>

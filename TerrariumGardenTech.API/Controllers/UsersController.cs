@@ -26,6 +26,13 @@ public class UsersController : ControllerBase
     }
 
 
+    [HttpGet("getbyuserid")]
+    public async Task<IActionResult> GetUserByUserId(int userId)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        return Ok(await _userService.GetUserByUserIdAsync(userId));
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserRegisterRequest userRequest)
     {
