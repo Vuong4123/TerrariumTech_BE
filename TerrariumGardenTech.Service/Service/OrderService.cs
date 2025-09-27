@@ -1636,20 +1636,21 @@ public class OrderService : IOrderService
         else
         {
 
-        // Thêm vào danh sách orderItems
-        orderItems.Add(new OrderItem
-        {
-            AccessoryId = reqItem.AccessoryId,
-            TerrariumId = reqItem.TerrariumId,
-            TerrariumVariantId = reqItem.TerrariumVariantId == 0 ? null : reqItem.TerrariumVariantId,
-            AccessoryQuantity = qty,
-            TerrariumVariantQuantity = 0,
-            Quantity = qty,
-            UnitPrice = unit,
-            ItemType = reqItem.ItemType,
-            TotalPrice = line,
-            ParentOrderItemId = null
-        });
+            // Thêm vào danh sách orderItems
+            orderItems.Add(new OrderItem
+            {
+                AccessoryId = reqItem.AccessoryId,
+                TerrariumId = reqItem.TerrariumId,
+                TerrariumVariantId = reqItem.TerrariumVariantId == 0 ? null : reqItem.TerrariumVariantId,
+                AccessoryQuantity = qty,
+                TerrariumVariantQuantity = 0,
+                Quantity = qty,
+                UnitPrice = unit,
+                ItemType = reqItem.ItemType,
+                TotalPrice = line,
+                ParentOrderItemId = null
+            });
+        }
     }
 
     // ✅ XỬ LÝ TERRARIUM VARIANT ITEM

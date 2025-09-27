@@ -266,11 +266,11 @@ namespace TerrariumGardenTech.Service.Service
         }
 
 
-   
 
 
 
-        
+
+
 
 
         public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
@@ -391,6 +391,119 @@ namespace TerrariumGardenTech.Service.Service
                 QrImageBase64 = GenerateBase64QrCode(payUrl)
             };
         }
+        //    public async Task<MomoQrResponse> CreateMomoPaymentUrl(MomoRequest req)
+        //    {
+        //        var momoSection = _config.GetSection("Momo");
+
+        //        string endpoint = momoSection["PaymentUrl"]!;
+        //        string partnerCode = momoSection["PartnerCode"]!;
+        //        string accessKey = momoSection["AccessKey"]!;
+        //        string secretKey = momoSection["SecretKey"]!;
+        //        string returnUrl = momoSection["ReturnUrl"]!;
+        //        string ipnUrl = momoSection["IpnUrl"]!;
+        //        string requestType = "captureWallet";
+
+        //        // 1) Lấy đơn hàng
+        //        var order = await _unitOfWork.Order.GetByIdWithOrderItemsAsync(req.OrderId)
+        //                    ?? throw new Exception("Order not found");
+
+        //        decimal baseAmount = order.TotalAmount > 0
+        //            ? order.TotalAmount
+        //            : order.OrderItems.Sum(i => i.TotalPrice ?? 0m);
+
+        //        // 2) FinalAmount is now coming from frontend
+        //        decimal discountPercentage = req.DiscountPercentage.HasValue ? req.DiscountPercentage.Value : 0; // 15% or other value from frontend
+        //        decimal discountAmount = (baseAmount * discountPercentage) / 100;
+        //        decimal payableAmount = baseAmount - discountAmount;
+
+        //        // Ensure payableAmount is positive
+        //        payableAmount = payableAmount > 0 ? payableAmount : 0;
+
+        //        decimal RoundVnd(decimal v) => Math.Round(v, 0, MidpointRounding.AwayFromZero);
+        //        decimal payableDec = RoundVnd(payableAmount);
+
+        //        if (payableDec <= 0) throw new Exception("Invalid amount");
+
+        //        long amount = (long)payableDec;
+
+        //        // 3) Continue as usual for other fields...
+        //        string orderId = $"{req.OrderId}-{Guid.NewGuid():N}";
+        //        string requestId = Guid.NewGuid().ToString("N");
+        //        string orderInfo = $"{SanitizeOrderInfo(req.OrderInfo)} {(req.PayAll ? "(Full)" : "(Partial)")}";
+
+        //        var extraObj = new
+        //        {
+        //            voucherId = req.VoucherId,
+        //            finalAmount = payableDec,
+        //            client = "web",
+        //            ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        //        };
+        //        string extraJson = JsonSerializer.Serialize(extraObj);
+        //        string extraData = Convert.ToBase64String(Encoding.UTF8.GetBytes(extraJson));
+
+        //        var fields = new (string k, string v)[] {
+        //    ("accessKey", accessKey),
+        //    ("amount", amount.ToString(CultureInfo.InvariantCulture)),
+        //    ("extraData", extraData),
+        //    ("ipnUrl", ipnUrl),
+        //    ("orderId", orderId),
+        //    ("orderInfo", orderInfo),
+        //    ("partnerCode", partnerCode),
+        //    ("redirectUrl", returnUrl),
+        //    ("requestId", requestId),
+        //    ("requestType", requestType)
+        //};
+
+        //        string rawHash = string.Join("&", fields.Select(p => $"{p.k}={p.v}"));
+        //        string signature = HmacSha256(secretKey, rawHash);
+
+        //        var payload = new
+        //        {
+        //            partnerCode,
+        //            accessKey,
+        //            requestId,
+        //            amount,
+        //            orderId,
+        //            orderInfo,
+        //            redirectUrl = returnUrl,
+        //            ipnUrl,
+        //            extraData,
+        //            requestType,
+        //            signature,
+        //            lang = "vi"
+        //        };
+
+        //        using var reqMsg = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        //        {
+        //            Content = JsonContent.Create(payload)
+        //        };
+
+        //        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+        //        var httpRes = await _httpClient.SendAsync(reqMsg);
+        //        var body = await httpRes.Content.ReadAsStringAsync();
+
+        //        if (!httpRes.IsSuccessStatusCode)
+        //            throw new Exception($"MoMo HTTP {(int)httpRes.StatusCode}: {body}");
+
+        //        var momo = JsonSerializer.Deserialize<MomoCreateResponse>(body, new JsonSerializerOptions
+        //        {
+        //            PropertyNameCaseInsensitive = true
+        //        }) ?? throw new Exception("Cannot parse MoMo response");
+
+        //        if (momo.ResultCode != 0)
+        //            throw new Exception($"MoMo error {momo.ResultCode}: {momo.Message ?? "Unknown"}");
+
+        //        var payUrl = momo.PayUrl ?? momo.Deeplink ?? momo.QrCodeUrl
+        //                     ?? throw new Exception("MoMo response missing payUrl");
+
+        //        return new MomoQrResponse
+        //        {
+        //            PayUrl = payUrl,
+        //            QrImageBase64 = GenerateBase64QrCode(payUrl)
+        //        };
+        //    }
+
 
         public async Task<IBusinessResult> MomoReturnExecute(IQueryCollection query)
         {
@@ -519,16 +632,10 @@ namespace TerrariumGardenTech.Service.Service
                 var (voucherDiscount, _, voucherOk, voucherEntity) =
                     await GetVoucherDiscountAndValidateAsync(voucherId, original, order.UserId);
 
-                // Áp voucher chỉ khi FULL (nếu muốn áp cả PARTIAL, đổi điều kiện tại đây)
-                decimal voucherApplied = (isPayAll && voucherOk) ? RoundVnd(voucherDiscount) : 0m;
 
-                // === 10% tính trên (Original - Voucher), CHỈ khi FULL ===
-                decimal percentBase = original - voucherApplied;
-                if (percentBase < 0) percentBase = 0m;
-                decimal discountTenPercent = isPayAll ? RoundVnd(percentBase * 0.10m) : 0m;
-
+                
                 // EXPECTED
-                decimal expectedFull = RoundVnd(original - voucherApplied - discountTenPercent);
+                decimal expectedFull = RoundVnd(original);
                 decimal expectedPartial = depositAmount > 0 ? depositAmount : RoundVnd(original);
 
                 // Cho phép tolerance 1 VND
@@ -556,21 +663,8 @@ namespace TerrariumGardenTech.Service.Service
 
                     if (isPayAll)
                     {
-                        // Lưu DiscountAmount = 10% sau voucher (không gồm voucher)
-                        order.DiscountAmount = discountTenPercent;
-
                         // Phản ánh đúng số KH đã trả
                         order.TotalAmount = paid;
-
-                        // Nếu có voucher dùng được -> trừ RemainingUsage
-                        if (voucherEntity != null && voucherId.HasValue && voucherId.Value > 0 && voucherApplied > 0)
-                        {
-                            if (voucherEntity.TotalUsage > 0 && voucherEntity.RemainingUsage > 0)
-                            {
-                                voucherEntity.RemainingUsage -= 1;
-                                await _unitOfWork.Voucher.UpdateAsync(voucherEntity);
-                            }
-                        }
                     }
 
                     await _unitOfWork.Order.UpdateAsync(order);
