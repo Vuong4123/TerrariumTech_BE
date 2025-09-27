@@ -1622,7 +1622,7 @@ public class OrderService : IOrderService
         {
             AccessoryId = reqItem.AccessoryId,
             TerrariumId = reqItem.TerrariumId,
-            TerrariumVariantId = reqItem.TerrariumVariantId,
+            TerrariumVariantId = reqItem.TerrariumVariantId == 0 ? null : reqItem.TerrariumVariantId,
             AccessoryQuantity = qty,
             TerrariumVariantQuantity = 0,
             Quantity = qty,
