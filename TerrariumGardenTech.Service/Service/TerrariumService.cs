@@ -711,6 +711,8 @@ public class TerrariumService : ITerrariumService
                 MaxPrice = (decimal)t.MaxPrice,
                 Stock = t.Stock,
                 Status = t.Status,
+                CreatedAt = t.CreatedAt ?? DateTime.UtcNow,
+                UpdatedAt = t.UpdatedAt ?? DateTime.UtcNow,
                 TerrariumImages = t.TerrariumImages?.Select(ti => new TerrariumImageResponse
                 {
                     TerrariumImageId = ti.TerrariumImageId,
