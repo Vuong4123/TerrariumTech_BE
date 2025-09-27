@@ -22,6 +22,8 @@ public class PaymentConfigService : IPaymentConfigService
         {
             DepositPercent = x.DepositPercent,
             FullPaymentDiscountPercent = x.FullPaymentDiscountPercent,
+            FreeshipAmount = x.FreeshipAmount,
+            OrderAmount = x.OrderAmount,
             Description = x.Description,
             UpdatedAt = x.UpdatedAt
         }).ToList();
@@ -35,6 +37,8 @@ public class PaymentConfigService : IPaymentConfigService
         {
             DepositPercent = config.DepositPercent,
             FullPaymentDiscountPercent = config.FullPaymentDiscountPercent,
+            FreeshipAmount = config.FreeshipAmount,
+            OrderAmount = config.OrderAmount,
             Description = config.Description,
             UpdatedAt = config.UpdatedAt
         };
@@ -46,6 +50,8 @@ public class PaymentConfigService : IPaymentConfigService
         {
             DepositPercent = request.DepositPercent,
             FullPaymentDiscountPercent = request.FullPaymentDiscountPercent,
+            FreeshipAmount = request.FreeshipAmount,
+            OrderAmount = request.OrderAmount,
             Description = request.Description,
             UpdatedAt = DateTime.UtcNow
         };
@@ -60,6 +66,8 @@ public class PaymentConfigService : IPaymentConfigService
         if (config == null) return false;
         config.DepositPercent = request.DepositPercent;
         config.FullPaymentDiscountPercent = request.FullPaymentDiscountPercent;
+        config.FreeshipAmount = request.FreeshipAmount;
+        config.OrderAmount = request.OrderAmount;
         config.Description = request.Description;
         config.UpdatedAt = DateTime.UtcNow;
         await _unitOfWork.PaymentConfigRepository.UpdateAsync(config);
