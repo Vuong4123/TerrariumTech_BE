@@ -22,6 +22,7 @@ using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 using TerrariumGardenTech.Service.IService;
 using TerrariumGardenTech.Common.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TerrariumGardenTech.Service.Service;
 
@@ -528,5 +529,10 @@ public class UserService : IUserService
             _logger.LogError(ex, "Lỗi khi gửi lại OTP");
             return (Const.ERROR_EXCEPTION, "Lỗi hệ thống, vui lòng thử lại");
         }
+    }
+
+    public async Task<User?> GetUserByUserIdAsync(int userId)
+    {
+        return await _unitOfWork.User.FindOneAsync(u => u.UserId == userId, false);
     }
 }

@@ -49,6 +49,7 @@ public class UnitOfWork
     private TerrariumLayoutRepository _terrariumLayoutRepository;
     private TerrariumVariantAccessoryRepository _terrariumVariantAccessoryRepository;
     private VoucherUsageRepository _voucherUsageRepository;
+    private PaymentConfigRepository _paymentConfigRepository;
 
     public UnitOfWork()
     {
@@ -263,6 +264,10 @@ public class UnitOfWork
     {
         get => _terrariumVariantAccessoryRepository ??= new TerrariumVariantAccessoryRepository(_unitOfWorkContext);
     }
+    public PaymentConfigRepository PaymentConfigRepository
+    {
+        get => _paymentConfigRepository ??= new PaymentConfigRepository(_unitOfWorkContext);
+    }
 
-    
+
 }

@@ -6,6 +6,7 @@ using TerrariumGardenTech.Common.Entity;
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Order;
 using TerrariumGardenTech.Common.RequestModel.Pagination;
+using TerrariumGardenTech.Common.ResponseModel.Address;
 using TerrariumGardenTech.Common.ResponseModel.Order;
 using TerrariumGardenTech.Common.ResponseModel.Pagination;
 using TerrariumGardenTech.Repositories;
@@ -68,6 +69,31 @@ public class OrderService : IOrderService
                     Status = r.Status,
                     Reason = r.Reason
                 }) ?? Enumerable.Empty<RefundResponseOrder>()).ToList(),
+                User = new UserResponse
+                {
+                    FullName = order.User?.FullName,
+                    Email = order.User?.Email,
+                    Gender = order.User.Gender,
+                    PhoneNumber = order.User?.PhoneNumber,
+                    Address = order.User?.Addresses
+                        .Where(a => a.AddressId == order.AddressId)
+                        .Select(a => new AddressResponse
+                        {
+                            Id = a.AddressId,
+                            UserId = a.UserId,
+                            TagName = a.TagName,
+                            ReceiverName = a.ReceiverName,
+                            ReceiverPhone = a.ReceiverPhone,
+                            ReceiverAddress = a.ReceiverAddress,
+                            ProvinceCode = a.ProvinceCode,
+                            DistrictCode = a.DistrictCode,
+                            WardCode = a.WardCode,
+                            Latitude = a.Latitude,
+                            Longitude = a.Longitude,
+                            IsDefault = a.IsDefault
+                        })
+                        .FirstOrDefault()
+                },
                 OrderItems = new List<OrderItemResponse>()
             };
 
@@ -115,6 +141,31 @@ public class OrderService : IOrderService
                 Status = r.Status,
                 Reason = r.Reason
             }) ?? Enumerable.Empty<RefundResponseOrder>()).ToList(),
+            User = new UserResponse
+            {
+                FullName = order.User?.FullName,
+                Email = order.User?.Email,
+                Gender = order.User.Gender,
+                PhoneNumber = order.User?.PhoneNumber,
+                Address = order.User?.Addresses
+                        .Where(a => a.AddressId == order.AddressId)
+                        .Select(a => new AddressResponse
+                        {
+                            Id = a.AddressId,
+                            UserId = a.UserId,
+                            TagName = a.TagName,
+                            ReceiverName = a.ReceiverName,
+                            ReceiverPhone = a.ReceiverPhone,
+                            ReceiverAddress = a.ReceiverAddress,
+                            ProvinceCode = a.ProvinceCode,
+                            DistrictCode = a.DistrictCode,
+                            WardCode = a.WardCode,
+                            Latitude = a.Latitude,
+                            Longitude = a.Longitude,
+                            IsDefault = a.IsDefault
+                        })
+                        .FirstOrDefault()
+            },
             OrderItems = new List<OrderItemResponse>()
         };
 
@@ -160,6 +211,31 @@ public class OrderService : IOrderService
                     Status = r.Status,
                     Reason = r.Reason
                 }) ?? Enumerable.Empty<RefundResponseOrder>()).ToList(),
+                User = new UserResponse
+                {
+                    FullName = order.User?.FullName,
+                    Email = order.User?.Email,
+                    Gender = order.User.Gender,
+                    PhoneNumber = order.User?.PhoneNumber,
+                    Address = order.User?.Addresses
+                        .Where(a => a.AddressId == order.AddressId)
+                        .Select(a => new AddressResponse
+                        {
+                            Id = a.AddressId,
+                            UserId = a.UserId,
+                            TagName = a.TagName,
+                            ReceiverName = a.ReceiverName,
+                            ReceiverPhone = a.ReceiverPhone,
+                            ReceiverAddress = a.ReceiverAddress,
+                            ProvinceCode = a.ProvinceCode,
+                            DistrictCode = a.DistrictCode,
+                            WardCode = a.WardCode,
+                            Latitude = a.Latitude,
+                            Longitude = a.Longitude,
+                            IsDefault = a.IsDefault
+                        })
+                        .FirstOrDefault()
+                },
                 OrderItems = new List<OrderItemResponse>()
             };
 
@@ -1560,21 +1636,20 @@ public class OrderService : IOrderService
         else
         {
 
-            // Thêm vào danh sách orderItems
-            orderItems.Add(new OrderItem
-            {
-                AccessoryId = reqItem.AccessoryId,
-                TerrariumId = reqItem.TerrariumId,
-                TerrariumVariantId = terrariumVariant.Result.TerrariumVariantId,
-                AccessoryQuantity = qty,
-                TerrariumVariantQuantity = 0,
-                Quantity = qty,
-                UnitPrice = unit,
-                ItemType = reqItem.ItemType,
-                TotalPrice = line,
-                ParentOrderItemId = null
-            });
-        }
+        // Thêm vào danh sách orderItems
+        orderItems.Add(new OrderItem
+        {
+            AccessoryId = reqItem.AccessoryId,
+            TerrariumId = reqItem.TerrariumId,
+            TerrariumVariantId = reqItem.TerrariumVariantId == 0 ? null : reqItem.TerrariumVariantId,
+            AccessoryQuantity = qty,
+            TerrariumVariantQuantity = 0,
+            Quantity = qty,
+            UnitPrice = unit,
+            ItemType = reqItem.ItemType,
+            TotalPrice = line,
+            ParentOrderItemId = null
+        });
     }
 
     // ✅ XỬ LÝ TERRARIUM VARIANT ITEM

@@ -2,7 +2,9 @@
 
 using TerrariumGardenTech.Common.Enums;
 using TerrariumGardenTech.Common.RequestModel.Payment;
+using TerrariumGardenTech.Common.ResponseModel.Address;
 using TerrariumGardenTech.Common.ResponseModel.OrderItem;
+using TerrariumGardenTech.Common.ResponseModel.User;
 using static TerrariumGardenTech.Common.Enums.CommonData;
 
 namespace TerrariumGardenTech.Common.ResponseModel.Order;
@@ -29,12 +31,22 @@ public class OrderResponse
     public string PaymentStatus { get; set; } = string.Empty;
     public string TransactionId { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
+    public UserResponse User { get; set; }
 
     public bool IsPayFull { get; set; }
     public string Note { get; set; }
     public List<RefundResponseOrder> Refunds { get; set; }
     public List<OrderItemResponse> OrderItems { get; set; } = new();
 }
+public sealed class UserResponse
+{
+    public string FullName { get; init; }
+    public string Gender { get; init; }
+    public string PhoneNumber { get; init; }
+    public string Email { get; init; }
+    public AddressResponse Address { get; set; }
+}
+
 public class RefundResponseOrder
 {
     public string Status { get; set; }

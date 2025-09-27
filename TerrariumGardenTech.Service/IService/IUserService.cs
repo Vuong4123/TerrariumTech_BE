@@ -1,4 +1,5 @@
 ﻿using TerrariumGardenTech.Common.RequestModel.Auth;
+using TerrariumGardenTech.Repositories.Entity;
 using TerrariumGardenTech.Service.Base;
 
 namespace TerrariumGardenTech.Service.IService;
@@ -14,5 +15,5 @@ public interface IUserService
     Task<(int Code, string Msg)> ResendOtpAsync(string email);
     Task<(int, string, string)> RefreshTokenAsync(string refreshToken);
     Task<IBusinessResult> GoogleLoginAsync(string accessToken);
-
+    Task<User?> GetUserByUserIdAsync(int userId);
 }

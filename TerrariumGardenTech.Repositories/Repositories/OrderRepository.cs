@@ -63,6 +63,7 @@ public sealed class OrderRepository : GenericRepository<Order>
               .Include(o => o.OrderItems)
                 .ThenInclude(f => f.Feedbacks)
             .Include(o => o.User) // ✅ THÊM USER INFO
+                .ThenInclude(a => a.Addresses)
             .Include(o => o.Address) // ✅ THÊM ADDRESS INFO
             .Include(o => o.Voucher) // ✅ THÊM VOUCHER INFO
             .Include(c => c.Refunds)
@@ -82,7 +83,8 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.Payment)
               .Include(o => o.OrderItems)
                 .ThenInclude(f => f.Feedbacks)
-            .Include(o => o.User) // ✅ THÊM USER INFO
+            .Include(o => o.User)
+                .ThenInclude(a => a.Addresses)
             .Include(o => o.Address) // ✅ THÊM ADDRESS INFO
             .Include(c => c.Refunds)
             .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
@@ -103,6 +105,7 @@ public sealed class OrderRepository : GenericRepository<Order>
               .Include(o => o.OrderItems)
                 .ThenInclude(f => f.Feedbacks)
             .Include(o => o.User) // ✅ THÊM USER INFO
+                .ThenInclude(a => a.Addresses)
             .Include(c => c.Refunds)
             .Where(o => o.Status.ToString() == status)
             .OrderByDescending(o => o.OrderDate) // ✅ THÊM ORDER BY
@@ -157,6 +160,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.User)
+                .ThenInclude(a => a.Addresses)
               .Include(o => o.OrderItems)
                 .ThenInclude(f => f.Feedbacks)
             .Include(o => o.Address)
@@ -186,6 +190,7 @@ public sealed class OrderRepository : GenericRepository<Order>
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Combo) // ✅ THÊM COMBO
             .Include(o => o.User)
+                .ThenInclude(a => a.Addresses)
             .Include(o => o.Address)
               .Include(o => o.OrderItems)
                 .ThenInclude(f => f.Feedbacks)
