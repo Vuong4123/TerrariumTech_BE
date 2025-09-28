@@ -25,7 +25,10 @@ public class TerrariumRepository : GenericRepository<Terrarium>
 
         if (tankMethodId.HasValue) query = query.Where(t => t.TankMethodId == tankMethodId.Value);
 
+        // Luôn check theo GenerateAI == true
+        query = query.Where(t => t.GeneratedByAI == false);
         return await query
+                .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt ?? DateTime.MinValue)
                 .Include(t => t.TerrariumImages)  // Nạp dữ liệu TerrariumImages
                 .ToListAsync();
     }
@@ -201,6 +204,8 @@ public class TerrariumRepository : GenericRepository<Terrarium>
             .Include(t => t.TerrariumAccessory)
                 .ThenInclude(ta => ta.Accessory)
             .Where(t => t.TerrariumName.Contains(terrariumName))
+            .Where(t => t.GeneratedByAI == false)
+            .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt ?? DateTime.MinValue)
             .ToListAsync();
     }
 

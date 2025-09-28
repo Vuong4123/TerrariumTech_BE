@@ -1616,21 +1616,41 @@ public class OrderService : IOrderService
             throw new ArgumentException($"Giá của phụ kiện {acc.Name} không hợp lệ.");
         }
         decimal line = unit * qty;
-
-        // Thêm vào danh sách orderItems
-        orderItems.Add(new OrderItem
+        if (reqItem.TerrariumVariantId > 0)
         {
-            AccessoryId = reqItem.AccessoryId,
-            TerrariumId = reqItem.TerrariumId,
-            TerrariumVariantId = reqItem.TerrariumVariantId == 0 ? null : reqItem.TerrariumVariantId,
-            AccessoryQuantity = qty,
-            TerrariumVariantQuantity = 0,
-            Quantity = qty,
-            UnitPrice = unit,
-            ItemType = reqItem.ItemType,
-            TotalPrice = line,
-            ParentOrderItemId = null
-        });
+            // Thêm vào danh sách orderItems
+            orderItems.Add(new OrderItem
+            {
+                AccessoryId = reqItem.AccessoryId,
+                TerrariumId = reqItem.TerrariumId,
+                TerrariumVariantId = reqItem.TerrariumVariantId,
+                AccessoryQuantity = qty,
+                TerrariumVariantQuantity = 0,
+                Quantity = qty,
+                UnitPrice = unit,
+                ItemType = reqItem.ItemType,
+                TotalPrice = line,
+                ParentOrderItemId = null
+            });
+        }
+        else
+        {
+
+            // Thêm vào danh sách orderItems
+            orderItems.Add(new OrderItem
+            {
+                AccessoryId = reqItem.AccessoryId,
+                TerrariumId = reqItem.TerrariumId,
+                TerrariumVariantId = reqItem.TerrariumVariantId == 0 ? null : reqItem.TerrariumVariantId,
+                AccessoryQuantity = qty,
+                TerrariumVariantQuantity = 0,
+                Quantity = qty,
+                UnitPrice = unit,
+                ItemType = reqItem.ItemType,
+                TotalPrice = line,
+                ParentOrderItemId = null
+            });
+        }
     }
 
     // ✅ XỬ LÝ TERRARIUM VARIANT ITEM

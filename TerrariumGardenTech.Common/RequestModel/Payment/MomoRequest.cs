@@ -13,6 +13,7 @@ namespace TerrariumGardenTech.Common.RequestModel.Payment
         //public int Amount { get; set; }
         public decimal? FinalAmount { get; set; } // Số tiền FE đã tính (sau voucher/10%)
         public int? VoucherId { get; set; }
+        //public decimal? DiscountPercentage { get; set; }
         public bool PayAll { get; set; } = false;
     }
 }

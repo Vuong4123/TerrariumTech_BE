@@ -15,6 +15,8 @@ public class TerrariumDetailResponse
     public string Status { get; set; }
     public double AverageRating { get; set; }
     public int FeedbackCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public bool GeneratedByAI { get; set; }
     // ✅ Thêm mới
