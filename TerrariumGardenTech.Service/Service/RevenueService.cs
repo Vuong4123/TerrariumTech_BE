@@ -75,6 +75,103 @@ public class RevenueService : IRevenueService
 
     public async Task<IBusinessResult> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null)
     {
+        //var fromDate = from ?? DateTime.Now.AddMonths(-12);
+        //var toDate = to ?? DateTime.Now;
+
+        //// Lọc đơn hàng đã trả tiền
+        //var orders = await _unitOfWork.Order.GetAllAsync2();
+        //var completedOrders = orders.Where(o =>
+        //    o.PaymentStatus == "Paid" &&
+        //    o.OrderDate >= fromDate &&
+        //    o.OrderDate <= toDate).ToList();
+        //var test = completedOrders.Sum(t => t.TotalAmount);
+        //// Tính toán cho kỳ trước
+        //var previousPeriodFrom = fromDate.AddMonths(-12);
+        //var previousPeriodOrders = orders.Where(o =>
+        //    o.PaymentStatus == "Paid" &&
+        //    o.OrderDate >= previousPeriodFrom &&
+        //    o.OrderDate < fromDate).ToList();
+        //var test1 = previousPeriodOrders.Sum(t => t.TotalAmount);
+        //// ✅ TÍNH DOANH THU KỲ HIỆN TẠI
+        //decimal currentRevenue = 0;
+        //decimal totalRefundAmount = 0;
+
+        //foreach (var order in completedOrders)
+        //{
+        //    // Kiểm tra order status
+        //    if (order.Status == OrderStatusData.Cancel ||
+        //        order.Status == OrderStatusData.Rejected)
+        //    {
+        //        // Vẫn tính doanh thu
+        //        //currentRevenue = test - order.TotalAmount;
+        //        currentRevenue -= order.TotalAmount;
+        //    }
+        //    if (order.Refunds != null && order.Refunds.Any())
+        //    {
+        //        var approvedRefunds = order.Refunds
+        //            .Where(r => r.Status == "Approved")
+        //            .Sum(r => r.RefundAmount ?? 0);
+
+        //        totalRefundAmount += approvedRefunds;
+        //    }
+        //}
+
+        //// Trừ số tiền hoàn lại từ doanh thu hiện tại
+        //decimal adjustedCurrentRevenue = currentRevenue - totalRefundAmount;
+
+        //// ✅ TÍNH DOANH THU KỲ TRƯỚC
+        //decimal previousRevenue = 0;
+        //decimal previousRefundAmount = 0;
+
+        //foreach (var order in previousPeriodOrders)
+        //{
+        //    if (order.Status == OrderStatusData.Cancel ||
+        //        order.Status == OrderStatusData.Rejected)
+        //    {
+        //        currentRevenue = test - order.TotalAmount;
+        //    }
+        //    if (order.Refunds != null && order.Refunds.Any())
+        //    {
+        //        var approvedRefunds = order.Refunds
+        //            .Where(r => r.Status == "Approved")
+        //            .Sum(r => r.RefundAmount ?? 0);
+
+        //        totalRefundAmount += approvedRefunds;
+        //    }
+        //}
+
+        //decimal adjustedPreviousRevenue = previousRevenue - previousRefundAmount;
+
+        //// Tính tỷ lệ tăng trưởng
+        //var revenueGrowth = adjustedPreviousRevenue > 0 ?
+        //    ((adjustedCurrentRevenue - adjustedPreviousRevenue) / adjustedPreviousRevenue) * 100 : 0;
+
+        //// Cập nhật lại tổng doanh thu
+        //decimal totalRevenue = adjustedCurrentRevenue;
+
+        //// Chuẩn bị dữ liệu trả về
+        //var result = new RevenueOverviewResponse
+        //{
+        //    TotalRevenue = totalRevenue,
+        //    AdjustedRevenue = adjustedCurrentRevenue,
+        //    PreviousPeriodRevenue = adjustedPreviousRevenue,
+        //    RevenueGrowthPercent = Math.Round(revenueGrowth, 2),
+        //    TotalOrders = completedOrders.Count,
+        //    AverageOrderValue = completedOrders.Count > 0 ? adjustedCurrentRevenue / completedOrders.Count : 0,
+        //    TotalCustomers = completedOrders.Select(o => o.UserId).Distinct().Count(),
+        //    RevenueByMonth = GetRevenueByMonth(completedOrders, fromDate, toDate),
+        //    RevenueByPaymentStatus = completedOrders
+        //        .GroupBy(o => o.PaymentStatus ?? "Unknown")
+        //        .Select(g => new RevenueByCategory
+        //        {
+        //            Category = g.Key,
+        //            Revenue = g.Sum(o => o.TotalAmount),
+        //            OrderCount = g.Count(),
+        //            Percentage = Math.Round((g.Sum(o => o.TotalAmount) / adjustedCurrentRevenue) * 100, 2)
+        //        }).ToList()
+        //};
+
+        //return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy tổng quan doanh thu thành công", result);
         var fromDate = from ?? DateTime.Now.AddMonths(-12);
         var toDate = to ?? DateTime.Now;
 
@@ -84,34 +181,33 @@ public class RevenueService : IRevenueService
             o.PaymentStatus == "Paid" &&
             o.OrderDate >= fromDate &&
             o.OrderDate <= toDate).ToList();
-        var test = completedOrders.Sum(t => t.TotalAmount);
+
         // Tính toán cho kỳ trước
         var previousPeriodFrom = fromDate.AddMonths(-12);
         var previousPeriodOrders = orders.Where(o =>
             o.PaymentStatus == "Paid" &&
             o.OrderDate >= previousPeriodFrom &&
             o.OrderDate < fromDate).ToList();
-        var test1 = previousPeriodOrders.Sum(t => t.TotalAmount);
+
         // ✅ TÍNH DOANH THU KỲ HIỆN TẠI
         decimal currentRevenue = 0;
         decimal totalRefundAmount = 0;
 
         foreach (var order in completedOrders)
         {
-            // Kiểm tra order status
-            if (order.Status == OrderStatusData.Cancel ||
-                order.Status == OrderStatusData.Rejected)
+            // Kiểm tra order status - Loại bỏ đơn hàng hủy và hoàn tiền khỏi doanh thu
+            if (order.Status != OrderStatusData.Cancel && order.Status != OrderStatusData.Refunded)
             {
-                // Vẫn tính doanh thu
-                currentRevenue = test - order.TotalAmount;
+                currentRevenue += order.TotalAmount;  // Chỉ cộng vào doanh thu nếu không phải đơn hủy hoặc hoàn tiền
             }
+
             if (order.Refunds != null && order.Refunds.Any())
             {
                 var approvedRefunds = order.Refunds
                     .Where(r => r.Status == "Approved")
                     .Sum(r => r.RefundAmount ?? 0);
 
-                totalRefundAmount += approvedRefunds;
+                totalRefundAmount += approvedRefunds;  // Tính tổng số tiền hoàn lại
             }
         }
 
@@ -124,18 +220,19 @@ public class RevenueService : IRevenueService
 
         foreach (var order in previousPeriodOrders)
         {
-            if (order.Status == OrderStatusData.Cancel ||
-                order.Status == OrderStatusData.Rejected)
+            // Loại bỏ các đơn hàng hủy và hoàn tiền khỏi doanh thu kỳ trước
+            if (order.Status != OrderStatusData.Cancel && order.Status != OrderStatusData.Refunded)
             {
-                currentRevenue = test - order.TotalAmount;
+                previousRevenue += order.TotalAmount;  // Chỉ cộng vào doanh thu nếu không phải đơn hủy hoặc hoàn tiền
             }
+
             if (order.Refunds != null && order.Refunds.Any())
             {
                 var approvedRefunds = order.Refunds
                     .Where(r => r.Status == "Approved")
                     .Sum(r => r.RefundAmount ?? 0);
 
-                totalRefundAmount += approvedRefunds;
+                previousRefundAmount += approvedRefunds;  // Tính tổng số tiền hoàn lại trong kỳ trước
             }
         }
 
@@ -155,7 +252,7 @@ public class RevenueService : IRevenueService
             AdjustedRevenue = adjustedCurrentRevenue,
             PreviousPeriodRevenue = adjustedPreviousRevenue,
             RevenueGrowthPercent = Math.Round(revenueGrowth, 2),
-            TotalOrders = completedOrders.Count,
+            TotalOrders = completedOrders.Count,  // Tổng số đơn hàng
             AverageOrderValue = completedOrders.Count > 0 ? adjustedCurrentRevenue / completedOrders.Count : 0,
             TotalCustomers = completedOrders.Select(o => o.UserId).Distinct().Count(),
             RevenueByMonth = GetRevenueByMonth(completedOrders, fromDate, toDate),
@@ -171,6 +268,7 @@ public class RevenueService : IRevenueService
         };
 
         return new BusinessResult(Const.SUCCESS_READ_CODE, "Lấy tổng quan doanh thu thành công", result);
+
     }
 
 
