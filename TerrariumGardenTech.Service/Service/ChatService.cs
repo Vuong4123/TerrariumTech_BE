@@ -214,13 +214,15 @@ public class ChatService : IChatService
             var chat = await _unitOfWork.Chat.GetChatWithMessagesAsync(request.ChatId, currentUserId);
             if (chat == null)
                 return new BusinessResult(Const.FAIL_CREATE_CODE, "Chat not found or access denied");
-
+            // Ví dụ: Nếu người dùng ở múi giờ Việt Nam, bạn có thể dùng "SE Asia Standard Time"
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Múi giờ của người dùng (ví dụ: Vietnam)
+            var localTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone); // Chuyển đổi giờ UTC sang giờ người dùng
             var message = new ChatMessage
             {
                 ChatId = request.ChatId,
                 SenderId = currentUserId,
                 Content = request.Content,
-                SentAt = DateTime.UtcNow,
+                SentAt = localTime,
                 IsRead = false, 
                 IsDeleted = false  
             };
